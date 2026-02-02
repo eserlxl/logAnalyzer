@@ -50,8 +50,10 @@ build-coverage/
 ###############################################################################
 # CMAKE / NINJA / MAKE
 ###############################################################################
+!CMakeLists.txt
 CMakeCache.txt
 CMakeFiles/
+CMAKE/
 cmake_install.cmake
 DartConfiguration.tcl
 CTestTestfile.cmake
