@@ -38,16 +38,18 @@ TEST_F(LogAnalyzerTest, AnalyzeSuccess) {
         "[2023-01-01 10:00:02] ERROR: Failed to connect to DB"
     });
 
-    auto result = analyzer.analyze(testLogFile);
-    ASSERT_TRUE(result.has_value());
-    ASSERT_EQ(result.value(), 3);
+    AnalysisReport report = analyzer.analyze(testLogFile);
+    ASSERT_EQ(report.status, ParseError::SUCCESS);
+    ASSERT_EQ(report.linesProcessed, 3);
+    ASSERT_EQ(report.successfulParses, 3);
+    ASSERT_TRUE(report.parseErrors.empty());
     ASSERT_EQ(analyzer.getEntries().size(), 3);
 }
 
 TEST_F(LogAnalyzerTest, AnalyzeFileOpenFailed) {
-    auto result = analyzer.analyze("non_existent_file.log");
-    ASSERT_FALSE(result.has_value());
-    ASSERT_EQ(result.error(), ParseError::FILE_OPEN_FAILED);
+    AnalysisReport report = analyzer.analyze("non_existent_file.log");
+    ASSERT_EQ(report.status, ParseError::FILE_OPEN_FAILED);
+    ASSERT_FALSE(report.parseErrors.empty());
 }
 
 TEST_F(LogAnalyzerTest, AnalyzeInvalidRegex) {
@@ -55,9 +57,9 @@ TEST_F(LogAnalyzerTest, AnalyzeInvalidRegex) {
         "[2023-01-01 10:00:00] INFO: Application started"
     });
     // Malformed regex pattern
-    auto result = analyzer.analyze(testLogFile, R"([)"); 
-    ASSERT_FALSE(result.has_value());
-    ASSERT_EQ(result.error(), ParseError::INVALID_REGEX_PATTERN);
+    AnalysisReport report = analyzer.analyze(testLogFile, R"([)"); 
+    ASSERT_EQ(report.status, ParseError::INVALID_REGEX_PATTERN);
+    ASSERT_FALSE(report.parseErrors.empty());
 }
 
 TEST_F(LogAnalyzerTest, AnalyzePartialFailure) {
@@ -66,9 +68,12 @@ TEST_F(LogAnalyzerTest, AnalyzePartialFailure) {
         "This is an invalid log line",
         "[2023-01-01 10:00:01] ERROR: Another valid line"
     });
-    auto result = analyzer.analyze(testLogFile);
-    ASSERT_FALSE(result.has_value()); // Expecting an error due to partial failure
-    ASSERT_EQ(result.error(), ParseError::PARTIAL_FAILURE);
+    AnalysisReport report = analyzer.analyze(testLogFile);
+    ASSERT_EQ(report.status, ParseError::PARTIAL_FAILURE);
+    ASSERT_EQ(report.linesProcessed, 3);
+    ASSERT_EQ(report.successfulParses, 2);
+    ASSERT_EQ(report.parseErrors.size(), 1);
+    ASSERT_EQ(report.parseErrors[0].first, 2); // Line number of error
     ASSERT_EQ(analyzer.getEntries().size(), 3); // 3 entries total (2 valid, 1 UNKNOWN)
     ASSERT_EQ(analyzer.getEntries()[1].level, LogLevel::UNKNOWN);
 }
@@ -78,9 +83,11 @@ TEST_F(LogAnalyzerTest, AnalyzePartialFailureAllInvalid) {
         "This is an invalid log line",
         "Another invalid line"
     });
-    auto result = analyzer.analyze(testLogFile);
-    ASSERT_FALSE(result.has_value());
-    ASSERT_EQ(result.error(), ParseError::PARTIAL_FAILURE);
+    AnalysisReport report = analyzer.analyze(testLogFile);
+    ASSERT_EQ(report.status, ParseError::PARTIAL_FAILURE);
+    ASSERT_EQ(report.linesProcessed, 2);
+    ASSERT_EQ(report.successfulParses, 0);
+    ASSERT_EQ(report.parseErrors.size(), 2);
     ASSERT_EQ(analyzer.getEntries().size(), 2); // Both are UNKNOWN
 }
 
@@ -157,6 +164,38 @@ TEST_F(LogAnalyzerTest, GetFrequencyDistribution) {
 
     // Window 3: 10:00:20 to 10:00:29
     // Expected: DEBUG: 1
+    ASSERT_EQ(distribution[2].totalCount, 1);
+    ASSERT_EQ(distribution[2].counts[LogLevel::DEBUG], 1);
+}
+
+TEST_F(LogAnalyzerTest, GetFrequencyDistributionOptimized) {
+    createDummyLogFile(testLogFile, {
+        "[2023-01-01 10:00:00] INFO: Log 1",
+        "[2023-01-01 10:00:05] WARNING: Log 2",
+        "[2023-01-01 10:00:10] INFO: Log 3",
+        "[2023-01-01 10:00:14] ERROR: Log 4",
+        "[2023-01-01 10:00:18] INFO: Log 5",
+        "[2023-01-01 10:00:20] DEBUG: Log 6"
+    });
+    analyzer.analyze(testLogFile);
+
+    // Test with 10 second window
+    auto distribution = analyzer.getFrequencyDistributionOptimized(std::chrono::seconds(10));
+    
+    ASSERT_EQ(distribution.size(), 3); // 0-10s, 10-20s, 20-30s
+
+    // Window 1: Starts at 10:00:00
+    ASSERT_EQ(distribution[0].totalCount, 2);
+    ASSERT_EQ(distribution[0].counts[LogLevel::INFO], 1);
+    ASSERT_EQ(distribution[0].counts[LogLevel::WARNING], 1);
+    ASSERT_EQ(distribution[0].counts[LogLevel::ERROR], 0);
+
+    // Window 2: Starts at 10:00:10
+    ASSERT_EQ(distribution[1].totalCount, 3);
+    ASSERT_EQ(distribution[1].counts[LogLevel::INFO], 2);
+    ASSERT_EQ(distribution[1].counts[LogLevel::ERROR], 1);
+
+    // Window 3: Starts at 10:00:20
     ASSERT_EQ(distribution[2].totalCount, 1);
     ASSERT_EQ(distribution[2].counts[LogLevel::DEBUG], 1);
 }

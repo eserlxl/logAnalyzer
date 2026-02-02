@@ -46,6 +46,22 @@ enum class ParseError {
 
 
 
+// New struct for comprehensive analysis results (Iteration 1 Feature)
+
+struct AnalysisReport {
+
+    size_t linesProcessed = 0;
+
+    size_t successfulParses = 0;
+
+    std::vector<std::pair<size_t, std::string>> parseErrors; // line number -> error reason
+
+    ParseError status = ParseError::SUCCESS;
+
+};
+
+
+
 // New struct for time-windowed statistics (Iteration 1 Feature)
 
 struct TimeWindowStats {
@@ -96,8 +112,8 @@ enum class SortOrder {
 class LogAnalyzer {
 public:
     LogAnalyzer();
-    // Modified analyze (Breaking change if return type was void)
-    std::expected<size_t, ParseError> analyze(const std::string& filePath, const std::string& pattern = "");
+    // Modified analyze to return a detailed report
+    AnalysisReport analyze(const std::string& filePath, const std::string& pattern = "");
     
     // Function signature for streaming (Iteration 1 Feature)
     void analyzeStream(
@@ -140,6 +156,8 @@ public:
     std::vector<TimeWindowStats> getFrequencyDistribution(
         std::chrono::seconds windowSize
     ) const;
+    // Optimized O(N) implementation of distribution (Iteration 1 Feature)
+    std::vector<TimeWindowStats> getFrequencyDistributionOptimized(std::chrono::seconds windowSize) const;
 
     // New API Extensions for Iteration 1 - Multi-file Merge
     void merge(const LogAnalyzer& other);

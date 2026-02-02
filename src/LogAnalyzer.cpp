@@ -258,106 +258,137 @@ std::string LogAnalyzer::getSummaryString() const {
 }
 
 // Modified analyze (Breaking change from void)
-std::expected<size_t, ParseError> LogAnalyzer::analyze(const std::string& filePath, const std::string& pattern) {
+AnalysisReport LogAnalyzer::analyze(const std::string& filePath, const std::string& pattern) {
+    AnalysisReport report;
+    report.linesProcessed = 0;
+    report.successfulParses = 0;
+    report.status = ParseError::SUCCESS;
+
     std::ifstream file(filePath);
     if (!file.is_open()) {
-        std::cerr << "Could not open file: " << filePath << std::endl;
-        return std::unexpected(ParseError::FILE_OPEN_FAILED);
+        report.status = ParseError::FILE_OPEN_FAILED;
+        report.parseErrors.push_back({0, "Could not open file: " + filePath});
+        return report;
     }
 
-    clear();
+    clear(); // Clears existing entries and level counts
 
     std::string line;
     // Default regex for log lines like: [2023-10-27 10:00:00] INFO: My message
     // Also consider optional milliseconds: [2023-10-27 10:00:00.123] INFO: My message
+    // Pattern captures: 1: timestamp (with optional milliseconds), 2: log level, 3: message
     std::string finalPattern = pattern.empty() ? R"(\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{3})?)\]\s+([A-Z]+):\s+(.*))" : pattern;
     
     std::regex logRegex;
     try {
         logRegex = std::regex(finalPattern);
     } catch (const std::regex_error& e) {
-        std::cerr << "Invalid regex pattern provided: " << e.what() << std::endl;
-        return std::unexpected(ParseError::INVALID_REGEX_PATTERN);
+        report.status = ParseError::INVALID_REGEX_PATTERN;
+        report.parseErrors.push_back({0, "Invalid regex pattern provided: " + std::string(e.what())});
+        return report;
     }
     
     std::smatch match;
-    size_t successfulParses = 0;
-    bool partialFailure = false;
+    size_t currentLineNumber = 0;
 
     while (std::getline(file, line)) {
+        currentLineNumber++;
+        report.linesProcessed++;
+
         if (std::regex_search(line, match, logRegex) && match.size() == 4) {
             LogEntry entry;
+            bool timestampParseFailed = false;
             
-            // Parse timestamp
             std::string timestampStr = match[1].str();
             std::tm tm = {};
             std::istringstream ss(timestampStr);
-            
-            // Handle optional milliseconds
-            if (timestampStr.length() > 19 && timestampStr[19] == '.') { // Check for milliseconds
-                // Parse up to seconds, then handle milliseconds
+            long long milliseconds = 0;
+
+            if (timestampStr.length() > 19 && timestampStr[19] == '.') { // Contains milliseconds
                 ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
                 if (!ss.fail()) {
-                    long long milliseconds = 0;
                     ss.ignore(1); // Skip the dot
                     std::string ms_str;
                     ss >> ms_str;
                     if (!ms_str.empty()) {
                         try {
                             milliseconds = std::stoll(ms_str);
-                        } catch (...) {
-                            // Ignore malformed milliseconds for now, treat as no milliseconds
+                        } catch (const std::out_of_range& oor) {
+                            // Milliseconds value too large/small, but date/time still parsed.
+                            // Treat as 0 milliseconds and note the error.
+                            milliseconds = 0;
+                            report.parseErrors.push_back({currentLineNumber, "Malformed milliseconds in timestamp for line: " + line});
+                        } catch (const std::invalid_argument& ia) {
+                            // Non-numeric milliseconds, but date/time still parsed.
+                            milliseconds = 0;
+                            report.parseErrors.push_back({currentLineNumber, "Non-numeric milliseconds in timestamp for line: " + line});
                         }
                     }
                     entry.timestamp = std::chrono::system_clock::from_time_t(std::mktime(&tm)) + std::chrono::milliseconds(milliseconds);
                 } else {
-                    entry.timestamp = std::chrono::system_clock::now(); // Fallback
-                    partialFailure = true;
+                    timestampParseFailed = true;
                 }
-            } else {
+            } else { // No milliseconds
                 ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
                 if (!ss.fail()) {
                     entry.timestamp = std::chrono::system_clock::from_time_t(std::mktime(&tm));
                 } else {
-                    entry.timestamp = std::chrono::system_clock::now(); // Fallback
-                    partialFailure = true;
+                    timestampParseFailed = true;
                 }
             }
 
-            entry.level = stringToLogLevel(match[2].str());
-            entry.message = match[3].str();
-            
-            entries.push_back(entry);
-            levelCounts[entry.level]++;
-            successfulParses++;
+            if (timestampParseFailed) {
+                // If timestamp parsing failed, log it as an error for this line
+                report.parseErrors.push_back({currentLineNumber, "Timestamp parsing failed for line: " + line});
+                
+                // Still create a LogEntry but mark it as UNKNOWN and use current time
+                entry.timestamp = std::chrono::system_clock::now();
+                entry.level = LogLevel::UNKNOWN; // Fallback level
+                entry.message = line; // Store the original full line as message
+                
+                entries.push_back(entry);
+                levelCounts[entry.level]++; // Increment UNKNOWN level count
+            } else {
+                // Timestamp parsed successfully, proceed with other fields
+                entry.level = stringToLogLevel(match[2].str());
+                entry.message = match[3].str();
+                
+                entries.push_back(entry);
+                levelCounts[entry.level]++;
+                report.successfulParses++;
+            }
         } else {
-            // If a line doesn't match the pattern, it's an UNKNOWN entry, and counts as a partial failure
+            // Line does not match the log pattern
+            report.parseErrors.push_back({currentLineNumber, "Line does not match log pattern: " + line});
+            
+            // Create an UNKNOWN LogEntry for this line
             LogEntry entry;
             entry.timestamp = std::chrono::system_clock::now(); 
             entry.level = LogLevel::UNKNOWN;
-            entry.message = line;
+            entry.message = line; // The entire line is the message
+            
             entries.push_back(entry);
             levelCounts[LogLevel::UNKNOWN]++;
-            partialFailure = true;
         }
     }
     file.close();
 
-    if (successfulParses > 0 && partialFailure) {
-        // If some lines parsed and some failed, we return the successful count,
-        // but the ParseError::PARTIAL_FAILURE context is lost in the return type.
-        // The design specified "returns the number of successfully parsed entries on success, or a ParseError code on failure".
-        // This implies if there's an error code, it's a failure.
-        // To accurately reflect partial failure when some lines were parsed,
-        // we should probably return a success with the count, and the user can check entries for UNKNOWN.
-        // For now, sticking to the error design: if there's any partial failure, it's an error.
-        // This makes `analyze` return either a count (pure success) or an error (any failure).
-        return std::unexpected(ParseError::PARTIAL_FAILURE);
-    } else if (successfulParses == 0 && partialFailure) {
-        // All lines failed to parse or file was empty, but no other error like regex or file open
-        return std::unexpected(ParseError::PARTIAL_FAILURE); // Consider this a total failure if nothing parsed
+    // Determine final status based on parsing results
+    if (report.successfulParses == 0 && report.linesProcessed > 0 && !report.parseErrors.empty()) {
+        // If file had lines, but none parsed successfully, and there are errors
+        report.status = ParseError::PARTIAL_FAILURE; // Consider this a total failure in terms of successful parses
+    } else if (report.successfulParses > 0 && report.successfulParses < report.linesProcessed) {
+        // Some lines parsed, some failed
+        report.status = ParseError::PARTIAL_FAILURE;
+    } else if (report.linesProcessed > 0 && report.successfulParses == report.linesProcessed) {
+        // All lines parsed successfully
+        report.status = ParseError::SUCCESS;
+    } else if (report.linesProcessed == 0) {
+        // Empty file or no lines. No errors, so success.
+        report.status = ParseError::SUCCESS;
     }
-    return successfulParses;
+
+    return report;
 }
 
 // Function signature for streaming (Iteration 1 Feature)
@@ -543,7 +574,7 @@ std::vector<TimeWindowStats> LogAnalyzer::getFrequencyDistribution(
         });
     
     auto minTime = minmax_ts.first->timestamp;
-    auto maxTime = minmax_ts.second->timestamp;
+    auto maxTime = minmax_ts.second->timestamp; // Restored maxTime
 
     // Iterate through time windows
     auto currentWindowStart = minTime;
@@ -580,6 +611,58 @@ std::vector<TimeWindowStats> LogAnalyzer::getFrequencyDistribution(
 
     return distribution;
 }
+
+// Optimized O(N) implementation of distribution (Iteration 1 Feature)
+std::vector<TimeWindowStats> LogAnalyzer::getFrequencyDistributionOptimized(
+    std::chrono::seconds windowSize
+) const {
+    std::vector<TimeWindowStats> distribution;
+    if (entries.empty() || windowSize <= std::chrono::seconds(0)) {
+        return distribution;
+    }
+
+    // Initialize the first window's statistics, starting from the first log entry's timestamp
+    TimeWindowStats currentStats;
+    currentStats.windowStart = entries.front().timestamp; // Assumes entries are sorted by timestamp
+    currentStats.totalCount = 0;
+    currentStats.counts[LogLevel::INFO] = 0; 
+    currentStats.counts[LogLevel::WARNING] = 0;
+    currentStats.counts[LogLevel::ERROR] = 0;
+    currentStats.counts[LogLevel::DEBUG] = 0;
+    currentStats.counts[LogLevel::UNKNOWN] = 0;
+
+    for (const auto& entry : entries) {
+        // While the current entry's timestamp is past the current window's end boundary
+        while (entry.timestamp >= (currentStats.windowStart + windowSize)) {
+            // Add the completed window's statistics to the distribution
+            distribution.push_back(currentStats);
+
+            // Prepare for the next window
+            currentStats.windowStart += windowSize;
+            currentStats.totalCount = 0;
+            currentStats.counts.clear(); // Clear map to reset all levels to 0
+            currentStats.counts[LogLevel::INFO] = 0; 
+            currentStats.counts[LogLevel::WARNING] = 0;
+            currentStats.counts[LogLevel::ERROR] = 0;
+            currentStats.counts[LogLevel::DEBUG] = 0;
+            currentStats.counts[LogLevel::UNKNOWN] = 0;
+        }
+        
+        // Add the entry to the current window's statistics
+        currentStats.counts[entry.level]++;
+        currentStats.totalCount++;
+    }
+
+    // Add the last accumulated window's statistics if it contains entries
+    // or if it's the only window and there were entries processed.
+    if (currentStats.totalCount > 0 || distribution.empty()) {
+        distribution.push_back(currentStats);
+    }
+    
+    return distribution;
+}
+
+// New API Extensions for Iteration 1 - Multi-file Merge
 
 // New API Extensions for Iteration 1 - Multi-file Merge
 void LogAnalyzer::merge(const LogAnalyzer& other) {

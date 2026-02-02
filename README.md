@@ -4,7 +4,7 @@ A simple C++ tool to analyze log files.
 
 ## Features
 - Parses log files with format: `[timestamp] LEVEL: message`
-- Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, TRACE, FATAL).
+- Generates a summary of log levels (INFO, WARNING, ERROR, CRITICAL, DEBUG, TRACE, FATAL).
 - Ability to filter logs by level.
 - Ability to filter logs by message keyword.
 - Ability to save analysis summary to an output file.
@@ -27,6 +27,7 @@ make
 ./logAnalyzer path/to/your/logfile.log --keyword "failed"
 ./logAnalyzer path/to/your/logfile.log --level WARNING --keyword "memory" --output filtered_warnings.txt
 ./logAnalyzer path/to/your/logfile.log --level FATAL
+./logAnalyzer path/to/your/logfile.log --level CRITICAL
 ```
 
 ## Example Log Format
