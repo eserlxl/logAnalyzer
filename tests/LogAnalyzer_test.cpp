@@ -316,6 +316,23 @@ TEST_F(LogAnalyzerTest, FormatTimestampCustom) {
   ASSERT_EQ(formatted, "[10:30:15]");
 }
 
+// This test was duplicated
+// TEST_F(LogAnalyzerTest, PrintFilteredEntriesCustomFormat) {
+//   createDummyLogFile(testLogFile,
+//                      {"[2023-01-01 10:00:00] INFO: Message One",
+//                       "[2023-01-01 10:00:01] WARNING: Message Two"});
+//   analyzer.analyze(testLogFile);
+// 
+//   FilterCriteria criteria;
+//   std::ostringstream oss;
+//   analyzer.printFilteredEntries(
+//       oss, criteria, "Level: {level}, Time: {timestamp}, Msg: {message}");
+//   std::string expectedOutput =
+//       "Level: INFO, Time: 2023-01-01 10:00:00, Msg: Message One\n"
+//       "Level: WARNING, Time: 2023-01-01 10:00:01, Msg: Message Two\n";
+//   ASSERT_EQ(oss.str(), expectedOutput);
+// }
+
 TEST_F(LogAnalyzerTest, PrintFilteredEntriesCustomFormat) {
   createDummyLogFile(testLogFile,
                      {"[2023-01-01 10:00:00] INFO: Message One",
@@ -331,6 +348,14 @@ TEST_F(LogAnalyzerTest, PrintFilteredEntriesCustomFormat) {
       "Level: WARNING, Time: 2023-01-01 10:00:01, Msg: Message Two\n";
   ASSERT_EQ(oss.str(), expectedOutput);
 }
+
+// Helper analyzer for testing runAnalysis
+class CountAnalyzer : public ILogAnalyzer {
+public:
+  size_t count = 0;
+  void processEntry(const LogEntry &) override { count++; }
+  void finalize() override {}
+};
 
 // --- Iteration 1 Feature Tests ---
 
@@ -450,6 +475,133 @@ TEST_F(LogAnalyzerTest, AverageEntryRate) {
 
   // 4 entries over 10 seconds = 0.4 entries/sec
   ASSERT_NEAR(analyzer.getAverageEntryRate(), 0.4, 0.001);
+}
+
+TEST_F(LogAnalyzerTest, IndependentIterators) {
+  createDummyLogFile(testLogFile,
+                     {"[2023-01-01 10:00:00] INFO: Line 1",
+                      "[2023-01-01 10:00:01] INFO: Line 2"});
+  ASSERT_TRUE(analyzer.open(testLogFile).has_value());
+  const auto &view = analyzer.getView();
+
+  auto it1 = view.begin();
+  auto it2 = view.begin();
+
+  ASSERT_TRUE(it1->has_value());
+  ASSERT_TRUE(it2->has_value());
+  ASSERT_EQ((*it1)->message, "Line 1");
+  ASSERT_EQ((*it2)->message, "Line 1");
+
+  ++it1;
+  ASSERT_EQ((*it1)->message, "Line 2");
+  ASSERT_EQ((*it2)->message, "Line 1"); // it2 should remain at Line 1
+
+  ++it2;
+  ASSERT_EQ((*it2)->message, "Line 2");
+}
+
+TEST_F(LogAnalyzerTest, RunAnalysisWithPluggableAnalyzer) {
+  createDummyLogFile(testLogFile,
+                     {"[2023-01-01 10:00:00] INFO: Match",
+                      "[2023-01-01 10:00:01] ERROR: No match",
+                      "[2023-01-01 10:00:02] INFO: Match"});
+  analyzer.open(testLogFile);
+
+  CountAnalyzer myAnalyzer;
+  LevelFilter infoFilter(LogLevel::INFO);
+
+  analyzer.runAnalysis(myAnalyzer, &infoFilter);
+
+  ASSERT_EQ(myAnalyzer.count, 2);
+}
+
+TEST_F(LogAnalyzerTest, MergeSortedViews) {
+  createDummyLogFile("log1.log", {"[2023-01-01 10:00:00] INFO: Log 1A",
+                                  "[2023-01-01 10:00:02] INFO: Log 1B"});
+  createDummyLogFile("log2.log", {"[2023-01-01 10:00:01] INFO: Log 2A",
+                                  "[2023-01-01 10:00:03] INFO: Log 2B"});
+
+  LogFileView view1("log1.log", std::make_unique<DefaultLogParser>());
+  LogFileView view2("log2.log", std::make_unique<DefaultLogParser>());
+
+  std::vector<LogFileView> sources;
+  sources.push_back(std::move(view1));
+  sources.push_back(std::move(view2));
+
+  LogFileView mergedView = LogAnalyzer::merge_sorted(sources);
+
+  std::vector<std::string> messages;
+  for (auto it = mergedView.begin(); it != mergedView.end(); ++it) {
+    if (it->has_value()) {
+      messages.push_back((*it)->message);
+    }
+  }
+
+  ASSERT_EQ(messages.size(), 4);
+  ASSERT_EQ(messages[0], "Log 1A");
+  ASSERT_EQ(messages[1], "Log 2A");
+  ASSERT_EQ(messages[2], "Log 1B");
+  ASSERT_EQ(messages[3], "Log 2B");
+
+  std::remove("log1.log");
+  std::remove("log2.log");
+}
+
+TEST_F(LogAnalyzerTest, JsonExport) {
+  createDummyLogFile(testLogFile,
+                     {"[2023-01-01 10:00:00] INFO: Msg1",
+                      "[2023-01-01 10:00:01] ERROR: Msg2"});
+  analyzer.load(testLogFile);
+
+  std::ostringstream oss;
+  FilterCriteria criteria;
+  analyzer.exportAsJson(oss, criteria, true, true);
+
+  std::string json = oss.str();
+  ASSERT_NE(json.find("\"totalEntries\": 2"), std::string::npos);
+  ASSERT_NE(json.find("\"message\": \"Msg1\""), std::string::npos);
+  ASSERT_NE(json.find("\"message\": \"Msg2\""), std::string::npos);
+  ASSERT_NE(json.find("\"level\": \"INFO\""), std::string::npos);
+  ASSERT_NE(json.find("\"level\": \"ERROR\""), std::string::npos);
+}
+
+TEST_F(LogAnalyzerTest, FilterSetLogic) {
+  LogEntry entry;
+  entry.level = LogLevel::ERROR;
+  entry.message = "Critical failure in database";
+  entry.timestamp = std::chrono::system_clock::now();
+
+  auto levelFilter = std::make_shared<LevelFilter>(LogLevel::ERROR);
+  auto keywordFilter = std::make_shared<KeywordFilter>("database");
+  auto mismatchFilter = std::make_shared<KeywordFilter>("network");
+
+  FilterSet andSet(FilterSet::Logic::AND);
+  andSet.add(levelFilter);
+  andSet.add(keywordFilter);
+  ASSERT_TRUE(andSet.matches(entry));
+
+  andSet.add(mismatchFilter);
+  ASSERT_FALSE(andSet.matches(entry));
+
+  FilterSet orSet(FilterSet::Logic::OR);
+  orSet.add(levelFilter);
+  orSet.add(mismatchFilter);
+  ASSERT_TRUE(orSet.matches(entry));
+}
+
+TEST_F(LogAnalyzerTest, RegexFiltering) {
+  createDummyLogFile(testLogFile,
+                     {"[2023-01-01 10:00:00] INFO: User 'admin' logged in",
+                      "[2023-01-01 10:00:01] INFO: User 'guest' logged in",
+                      "[2023-01-01 10:00:02] ERROR: Database connection lost"});
+  analyzer.load(testLogFile);
+
+  FilterCriteria criteria;
+  criteria.regexPattern = "User '.*' logged in";
+  auto filtered = analyzer.getFilteredEntries(criteria);
+  ASSERT_EQ(filtered.size(), 2);
+  ASSERT_EQ(filtered[0].message, "User 'admin' logged in");
+  ASSERT_EQ(filtered[1].message, "User 'guest' logged in");
 }
 
 int main(int argc, char **argv) {

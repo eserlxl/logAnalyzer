@@ -35,6 +35,11 @@ struct LogParseError {
   ParseError code = ParseError::SUCCESS;
   std::string message;
   size_t lineNumber = 0;
+
+  bool operator==(const LogParseError &other) const {
+    return code == other.code && message == other.message &&
+           lineNumber == other.lineNumber;
+  }
 };
 
 // New struct for comprehensive analysis results (Iteration 1 Feature)
@@ -67,6 +72,11 @@ struct LogEntry {
   std::chrono::system_clock::time_point timestamp;
   LogLevel level;
   std::string message;
+
+  bool operator==(const LogEntry &other) const {
+    return id == other.id && timestamp == other.timestamp &&
+           level == other.level && message == other.message;
+  }
 };
 
 // Interface for pluggable log parsers
@@ -116,135 +126,152 @@ struct FilterCriteria {
 // Sorting Functionality enums
 enum class SortBy { TIMESTAMP, LEVEL, MESSAGE };
 
-// --- Iterator-Based Processing & Ranges (The Core Change) ---
-
-class LogEntryIterator {
-public:
-  using iterator_category = std::input_iterator_tag;
-  using value_type = std::expected<LogEntry, LogParseError>;
-  using difference_type = std::ptrdiff_t;
-  using pointer = const value_type *;
-  using reference = const value_type &;
-
-  LogEntryIterator() : isAtEnd_(true) {} // Default constructor for end iterator
-  LogEntryIterator(const LogEntryIterator &) = default; // Make copyable
-  LogEntryIterator &
-  operator=(const LogEntryIterator &) = default;              // Make copyable
-  LogEntryIterator(LogEntryIterator &&) = default;            // Allow move
-  LogEntryIterator &operator=(LogEntryIterator &&) = default; // Allow move
-
-  // Constructor for begin() iterator
-  LogEntryIterator(std::shared_ptr<std::ifstream> stream,
-                   const ILogParser *parser)
-      : fileStream_(std::move(stream)), parser_(parser), lineNumber_(0) {
-    if (!fileStream_ || !fileStream_->is_open()) {
-      isAtEnd_ = true;
-      currentValue_ = std::unexpected(
-          LogParseError{ParseError::FILE_OPEN_FAILED,
-                        "File stream not open for iterator.", 0});
-      return;
-    }
-    readNextLine(); // Read the first entry
-  }
-
-  reference operator*() const { return currentValue_; }
-  pointer operator->() const { return &currentValue_; }
-  LogEntryIterator &operator++() {
-    if (!isAtEnd_) {
-      readNextLine();
-    }
-    return *this;
-  }
-  LogEntryIterator operator++(int) { // Post-increment
-    LogEntryIterator temp = *this;
-    ++(*this);
-    return temp;
-  }
-
-  bool operator==(const LogEntryIterator &other) const {
-    if (isAtEnd_ && other.isAtEnd_)
-      return true; // Both are end iterators
-    if (isAtEnd_ != other.isAtEnd_)
-      return false; // One is end, other is not
-    // Compare stream positions and shared_ptr identity (if relevant)
-    return fileStream_ == other.fileStream_ &&
-           fileStream_->tellg() == other.fileStream_->tellg();
-  }
-  bool operator!=(const LogEntryIterator &other) const {
-    return !(*this == other);
-  }
-
-private:
-  void readNextLine() {
-    currentLine_.clear(); // Clear previous line content
-    // Store current stream position before reading
-    // std::streampos currentPos = fileStream_->tellg(); // Not strictly needed
-    // here, just read
-
-    if (std::getline(*fileStream_, currentLine_)) {
-      lineNumber_++;
-      if (parser_) {
-        if (auto parsedEntry = parser_->parseLine(currentLine_, lineNumber_)) {
-          currentValue_ = parsedEntry.value();
-        } else {
-          currentValue_ = std::unexpected(LogParseError{
-              ParseError::PARTIAL_FAILURE,
-              "Failed to parse log line: " + currentLine_, lineNumber_});
-        }
-      } else {
-        currentValue_ = std::unexpected(LogParseError{
-            ParseError::PARTIAL_FAILURE,
-            "No parser available for log line: " + currentLine_, lineNumber_});
-      }
-    } else {
-      isAtEnd_ = true;
-      // No need to close the shared stream here. It will be closed when all
-      // shared_ptr instances are destroyed.
-    }
-  }
-
-  std::shared_ptr<std::ifstream> fileStream_; // Use shared_ptr for ifstream
-  const ILogParser *parser_ =
-      nullptr; // Raw pointer, ownership is with LogFileView
-  std::string currentLine_;
-  value_type currentValue_; // Stores the current LogEntry or error
-  bool isAtEnd_ = false;
-  size_t lineNumber_ = 0;
-};
-
 // A view over a log file that provides iterators for lazy parsing.
 class LogFileView {
 public:
-  LogFileView(const std::string &filePath, std::unique_ptr<ILogParser> parser)
-      : filePath_(filePath),
-        parser_(std::move(
-            parser)) // sharedFileStream_ is default-initialized (nullptr)
-  {
-    sharedFileStream_ = std::make_shared<std::ifstream>(); // Initialize here
-    sharedFileStream_->open(filePath_);
-    if (!sharedFileStream_->is_open()) {
-      throw std::runtime_error("File could not be opened.");
+  LogFileView(const std::string &filePath, std::unique_ptr<ILogParser> parser,
+              bool isTemporary = false)
+      : filePath_(filePath), parser_(std::move(parser)),
+        isTemporary_(isTemporary) {}
+
+  ~LogFileView() {
+    if (isTemporary_ && !filePath_.empty()) {
+      std::remove(filePath_.c_str());
     }
-    // Error handling for file opening can be added here if necessary.
-    // The iterator's constructor checks for !is_open() and reports an error.
   }
+
+  // Support move semantics
+  LogFileView(LogFileView &&other) noexcept
+      : filePath_(std::move(other.filePath_)),
+        parser_(std::move(other.parser_)), isTemporary_(other.isTemporary_) {
+    other.isTemporary_ = false; // Prevent deletion by the moved-from object
+  }
+
+  LogFileView &operator=(LogFileView &&other) noexcept {
+    if (this != &other) {
+      if (isTemporary_ && !filePath_.empty()) {
+        std::remove(filePath_.c_str());
+      }
+      filePath_ = std::move(other.filePath_);
+      parser_ = std::move(other.parser_);
+      isTemporary_ = other.isTemporary_;
+      other.isTemporary_ = false;
+    }
+    return *this;
+  }
+
+  // Delete copy constructor and assignment
+  LogFileView(const LogFileView &) = delete;
+  LogFileView &operator=(const LogFileView &) = delete;
+
+  // LogEntryIterator now needs the file path and a clone of the parser
+  class LogEntryIterator {
+  public:
+    using iterator_category = std::input_iterator_tag;
+    using value_type = std::expected<LogEntry, LogParseError>;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const value_type *;
+    using reference = const value_type &;
+
+    LogEntryIterator() : isAtEnd_(true) {} // Default constructor for end iterator
+
+    // Constructor for begin() iterator
+    LogEntryIterator(const std::string &filePath, const ILogParser *parser)
+        : fileStream_(std::make_unique<std::ifstream>()),
+          parser_(parser->clone()), // Iterator owns its own cloned parser
+          lineNumber_(0) {
+      fileStream_->open(filePath);
+      if (!fileStream_->is_open()) {
+        isAtEnd_ = true;
+        currentValue_ = std::unexpected(
+            LogParseError{ParseError::FILE_OPEN_FAILED,
+                          "File could not be opened by iterator.", 0});
+        return;
+      }
+      readNextLine(); // Read the first entry
+    }
+
+    // Explicitly delete copy constructor and assignment operator to prevent
+    // accidental copying of unique_ptr and associated stream state.
+    LogEntryIterator(const LogEntryIterator &) = delete;
+    LogEntryIterator &operator=(const LogEntryIterator &) = delete;
+
+    // Allow move semantics
+    LogEntryIterator(LogEntryIterator &&) = default;
+    LogEntryIterator &operator=(LogEntryIterator &&) = default;
+
+    reference operator*() const { return currentValue_; }
+    pointer operator->() const { return &currentValue_; }
+    LogEntryIterator &operator++() {
+      if (!isAtEnd_) {
+        readNextLine();
+      }
+      return *this;
+    }
+    LogEntryIterator operator++(int) { // Post-increment
+      LogEntryIterator temp = std::move(*this); // Use move constructor
+      ++(*this);
+      return temp;
+    }
+
+    bool operator==(const LogEntryIterator &other) const {
+      if (isAtEnd_ && other.isAtEnd_)
+        return true; // Both are end iterators
+      if (isAtEnd_ != other.isAtEnd_)
+        return false; // One is end, other is not
+      // Compare current values if both are not at end.
+      // This might not be strictly necessary for input iterators,
+      // but helps with robust comparisons.
+      return (currentValue_ == other.currentValue_) &&
+             (lineNumber_ == other.lineNumber_);
+    }
+    bool operator!=(const LogEntryIterator &other) const {
+      return !(*this == other);
+    }
+
+  private:
+    void readNextLine() {
+      currentLine_.clear(); // Clear previous line content
+      if (std::getline(*fileStream_, currentLine_)) {
+        lineNumber_++;
+        if (parser_) {
+          if (auto parsedEntry =
+                  parser_->parseLine(currentLine_, lineNumber_)) {
+            currentValue_ = parsedEntry.value();
+          } else {
+            currentValue_ = std::unexpected(LogParseError{
+                ParseError::PARTIAL_FAILURE,
+                "Failed to parse log line: " + currentLine_, lineNumber_});
+          }
+        } else {
+          currentValue_ = std::unexpected(LogParseError{
+              ParseError::PARTIAL_FAILURE,
+              "No parser available for log line: " + currentLine_, lineNumber_});
+        }
+      } else {
+        isAtEnd_ = true;
+        // The unique_ptr will close the file when it goes out of scope.
+      }
+    }
+
+    std::unique_ptr<std::ifstream> fileStream_; // Each iterator owns its ifstream
+    std::unique_ptr<ILogParser> parser_; // Each iterator owns its cloned parser
+    std::string currentLine_;
+    value_type currentValue_; // Stores the current LogEntry or error
+    bool isAtEnd_ = false;
+    size_t lineNumber_ = 0;
+  };
 
   inline LogEntryIterator begin() const {
-    // Return an iterator initialized with the shared stream and parser
-    return LogEntryIterator(sharedFileStream_, parser_.get());
+    return LogEntryIterator(filePath_, parser_.get()); // Pass path and parser ptr
   }
 
-  inline LogEntryIterator end() const {
-    // The end iterator is default-constructed
-    return LogEntryIterator();
-  }
+  inline LogEntryIterator end() const { return LogEntryIterator(); }
 
 private:
   std::string filePath_;
   std::unique_ptr<ILogParser> parser_;
-  std::shared_ptr<std::ifstream> sharedFileStream_; // Managed by LogFileView
-
-  friend class LogEntryIterator; // Grant friendship to access private members
+  bool isTemporary_ = false;
 };
 
 // --- Pluggable Analysis Framework ---
@@ -343,6 +370,18 @@ private:
   std::regex pattern_;
 };
 
+// Adapter to use FilterCriteria with the new IFilter interface
+class CriteriaToFilterAdapter : public IFilter {
+public:
+  explicit CriteriaToFilterAdapter(const FilterCriteria &criteria)
+      : criteria_(criteria) {}
+
+  bool matches(const LogEntry &entry) const override;
+
+private:
+  FilterCriteria criteria_;
+};
+
 // --- Asynchronous Operation Control ---
 struct AsyncControl {
   std::jthread worker;
@@ -364,6 +403,8 @@ public:
   open(const std::string &filePath,
        std::unique_ptr<ILogParser> parser = nullptr);
   void setFilter(std::shared_ptr<IFilter> filter);
+  void addFilter(std::shared_ptr<IFilter> filter); // Adds to a FilterSet (AND)
+  void clearFilters();
   const LogFileView &getView() const; // Return by const reference
 
   // --- Asynchronous Operations ---
@@ -396,9 +437,9 @@ public:
   LogLevel resolveLogLevel(const std::string &levelStr) const;
   void exportAsCsv(std::ostream &out,
                    const FilterCriteria &filter = FilterCriteria{}) const;
-  std::string
+  static std::string
   formatTimestamp(std::chrono::system_clock::time_point tp,
-                  std::string_view format = "%Y-%m-%d %H:%M:%S") const;
+                  std::string_view format = "%Y-%m-%d %H:%M:%S");
   std::vector<LogEntry> getSortedFilteredEntries(const FilterCriteria &criteria,
                                                  SortBy sortBy,
                                                  SortOrder sortOrder) const;
@@ -440,15 +481,15 @@ public:
 
 private:
   // Private Members
+  std::unique_ptr<ILogParser> defaultParser_;
   std::map<LogLevel, int> levelCounts;
   std::map<std::string, LogLevel, std::less<>> customLevelMappings;
   std::unique_ptr<LogFileView> log_source_view_;
   std::shared_ptr<IFilter> active_filter_;
   std::unique_ptr<AsyncControl> async_control_;
-  std::unique_ptr<ILogParser> defaultParser_;
   const ILogParser *getCurrentParser() const;
   const IFilter *getActiveFilter() const;
-  AnalysisReport lastReport;
+  mutable AnalysisReport lastReport;
   mutable std::vector<LogEntry> entries_;
 };
 #endif // LOG_ANALYZER_H
