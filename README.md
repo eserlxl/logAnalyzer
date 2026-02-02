@@ -4,26 +4,30 @@ A simple C++ tool to analyze log files.
 
 ## Features
 
-- Parses **multiple** log files with a flexible format, including support for milliseconds in timestamps: `[timestamp] LEVEL: message`.
-- Supports custom regex patterns for parsing log lines, allowing analysis of diverse log formats.
-- **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
-- Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, UNKNOWN).
-- Ability to filter logs by:
+- **Memory-Efficient Processing**: Utilizes a lazy, iterator-based approach to handle very large files with minimal memory usage by default. Operations like sorting or global statistics that require the full dataset will buffer entries in memory.
+- Parses **multiple** log files and can merge sorted sources efficiently.
+- **Pluggable Architecture**:
+    - **Custom Parsers**: Define your own log parsing logic by implementing the `ILogParser` interface, going beyond simple regex.
+    - **Custom Analyzers**: Create custom analysis routines with the `ILogAnalyzer` interface.
+- **Advanced Filtering**: Build complex filter expressions with `AND`/`OR` logic to pinpoint exact log messages. Basic filtering is still supported for:
     - Specific log levels.
     - Message keyword (case-sensitive or insensitive).
     - Regular expression patterns in messages.
     - Time range (start and end timestamps).
+- **Asynchronous Processing**: Load and analyze files asynchronously with support for cancellation.
+- **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
+- Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, UNKNOWN).
 - Ability to sort filtered logs by timestamp, level, or message, in ascending or descending order.
 - Ability to save analysis results to an output file in various formats (text, JSON, **CSV**).
 - **Customizable text output format.**
-- Provides statistical analysis including:
+- Provides statistical analysis (may require buffering data in memory):
     - Counts of unique messages.
     - Top N most frequent messages (default is 10).
     - **Log frequency distribution over a specified time window.**
     - **Average log entry rate (entries/second).**
     - **Identification of time gaps between log entries longer than a specified duration.**
 - Supports JSON output, with options for pretty-printing and including a summary.
-- **Streaming mode for processing very large files with low memory usage (incompatible with sorting and global statistics).**
+- Provides detailed error reports on parsing failures, including line numbers.
 
 
 ## Building the project
