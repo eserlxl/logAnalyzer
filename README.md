@@ -6,6 +6,7 @@ A simple C++ tool to analyze log files.
 - Parses log files with format: `[timestamp] LEVEL: message`
 - Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG).
 - Ability to filter logs by level.
+- Ability to filter logs by message keyword.
 - Ability to save analysis summary to an output file.
 
 ## Building the project
@@ -22,6 +23,9 @@ make
 ```bash
 ./logAnalyzer path/to/your/logfile.log
 ./logAnalyzer path/to/your/logfile.log --output analysis_summary.txt
+./logAnalyzer path/to/your/logfile.log --level ERROR
+./logAnalyzer path/to/your/logfile.log --keyword "failed"
+./logAnalyzer path/to/your/logfile.log --level WARNING --keyword "memory" --output filtered_warnings.txt
 ```
 
 ## Example Log Format
