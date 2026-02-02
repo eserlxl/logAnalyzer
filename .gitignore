@@ -53,7 +53,7 @@ build-coverage/
 !CMakeLists.txt
 CMakeCache.txt
 CMakeFiles/
-CMAKE/
+CMake/
 cmake_install.cmake
 DartConfiguration.tcl
 CTestTestfile.cmake
