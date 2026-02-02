@@ -3,8 +3,10 @@
 A simple C++ tool to analyze log files.
 
 ## Features
-- Parses log files with a flexible format, including support for milliseconds in timestamps: `[timestamp] LEVEL: message`.
+
+- Parses **multiple** log files with a flexible format, including support for milliseconds in timestamps: `[timestamp] LEVEL: message`.
 - Supports custom regex patterns for parsing log lines, allowing analysis of diverse log formats.
+- **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
 - Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, UNKNOWN).
 - Ability to filter logs by:
     - Specific log levels.
@@ -12,11 +14,16 @@ A simple C++ tool to analyze log files.
     - Regular expression patterns in messages.
     - Time range (start and end timestamps).
 - Ability to sort filtered logs by timestamp, level, or message, in ascending or descending order.
-- Ability to save analysis results to an output file in various formats (text, JSON).
+- Ability to save analysis results to an output file in various formats (text, JSON, **CSV**).
+- **Customizable text output format.**
 - Provides statistical analysis including:
     - Counts of unique messages.
-    - Top N most frequent messages.
+    - Top N most frequent messages (default is 10).
+    - **Log frequency distribution over a specified time window.**
+    - **Average log entry rate (entries/second).**
+    - **Identification of time gaps between log entries longer than a specified duration.**
 - Supports JSON output, with options for pretty-printing and including a summary.
+- **Streaming mode for processing very large files with low memory usage (incompatible with sorting and global statistics).**
 
 
 ## Building the project
@@ -31,8 +38,11 @@ make
 ## Running the project
 
 ```bash
-# Get a summary of the log file
+# Get a summary of a single log file
 ./logAnalyzer path/to/your/logfile.log
+
+# Analyze multiple log files at once
+./logAnalyzer path/to/file1.log path/to/file2.log
 
 # Save a summary to a file
 ./logAnalyzer path/to/your/logfile.log --output analysis_summary.txt
@@ -56,11 +66,38 @@ make
 ./logAnalyzer path/to/your/logfile.log --level ERROR --sort-by level --order asc
 ./logAnalyzer path/to/your/logfile.log --level ERROR --sort-by msg --order desc
 
+# Show counts of unique messages
+./logAnalyzer path/to/your/logfile.log --unique-messages
+
 # Show the top 5 most frequent log messages
 ./logAnalyzer path/to/your/logfile.log --top-messages 5
 
+# Show the top 10 (default) most frequent messages
+./logAnalyzer path/to/your/logfile.log --top-messages
+
 # Export filtered logs to a pretty-printed JSON file, including a summary
-./logAnalyzer path/to/your/logfile.log --level WARNING --keyword "memory" --format json --pretty --include-summary --output filtered_warnings.json
+./logAnalyzer path/to/your/logfile.log --level WARNING --format json --pretty --include-summary --output filtered_warnings.json
+
+# Export filtered logs to a CSV file
+./logAnalyzer path/to/your/logfile.log --level ERROR --format csv --output errors.csv
+
+# Use a custom text format for the output
+./logAnalyzer path/to/your/logfile.log --level INFO --text-format "[{level}] {message}"
+
+# Map a custom log level 'FATAL' to the standard 'ERROR' level for parsing
+./logAnalyzer path/to/your/logfile.log --map-level FATAL=ERROR --level ERROR
+
+# Show log frequency distribution in 60-second windows
+./logAnalyzer path/to/your/logfile.log --stats-window 60
+
+# Find time gaps in logs longer than 500 milliseconds
+./logAnalyzer path/to/your/logfile.log --find-gaps 500
+
+# Show the average log entry rate
+./logAnalyzer path/to/your/logfile.log --rate
+
+# Process a very large log file in streaming mode (filtering is supported, sorting is not)
+./logAnalyzer path/to/large_logfile.log --stream --level ERROR --keyword "critical"
 
 # Complex example: Filter for errors containing 'database', sort them by time, and save to a file
 ./logAnalyzer path/to/your/logfile.log --level ERROR --keyword "database" --sort-by time --order desc --output db_errors.log
