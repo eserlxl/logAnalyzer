@@ -332,6 +332,125 @@ TEST_F(LogAnalyzerTest, PrintFilteredEntriesCustomFormat) {
     ASSERT_EQ(oss.str(), expectedOutput);
 }
 
+// --- Iteration 1 Feature Tests ---
+
+TEST_F(LogAnalyzerTest, LoadExpectedSuccess) {
+    createDummyLogFile(testLogFile, {"[2023-01-01 10:00:00] INFO: Test"});
+    auto result = analyzer.load(testLogFile);
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(analyzer.getEntries().size(), 1);
+    ASSERT_EQ(analyzer.getAnalysisReport().status, ParseError::SUCCESS);
+}
+
+TEST_F(LogAnalyzerTest, LoadExpectedFileFail) {
+    auto result = analyzer.load("non_existent_file.log");
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, ParseError::FILE_OPEN_FAILED);
+    ASSERT_EQ(analyzer.getAnalysisReport().status, ParseError::FILE_OPEN_FAILED);
+}
+
+TEST_F(LogAnalyzerTest, AppendSuccess) {
+    createDummyLogFile(testLogFile, {"[2023-01-01 10:00:01] INFO: First file"});
+    analyzer.load(testLogFile);
+    ASSERT_EQ(analyzer.getEntries().size(), 1);
+
+    createDummyLogFile("log2.log", {"[2023-01-01 10:00:00] DEBUG: Second file"});
+    auto result = analyzer.append("log2.log");
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(analyzer.getEntries().size(), 2);
+    ASSERT_EQ(analyzer.getEntries()[0].level, LogLevel::DEBUG); // Check sorting
+    ASSERT_EQ(analyzer.getEntries()[1].level, LogLevel::INFO);
+    std::remove("log2.log");
+}
+
+TEST_F(LogAnalyzerTest, LoadAsync) {
+    createDummyLogFile(testLogFile, {"[2023-01-01 10:00:00] INFO: Async test"});
+    std::future<AnalysisReport> futureReport = analyzer.load_async(testLogFile);
+    
+    // You can do other work here...
+    
+    AnalysisReport report = futureReport.get(); // Wait for completion
+    ASSERT_EQ(report.status, ParseError::SUCCESS);
+    ASSERT_EQ(analyzer.getEntries().size(), 1);
+    ASSERT_EQ(analyzer.getEntries()[0].message, "Async test");
+}
+
+TEST_F(LogAnalyzerTest, EntriesView) {
+    createDummyLogFile(testLogFile, {
+        "[2023-01-01 10:00:00] INFO: Entry 1",
+        "[2023-01-01 10:00:01] WARNING: Entry 2"
+    });
+    analyzer.load(testLogFile);
+    
+    std::span<const LogEntry> view = analyzer.entries_view();
+    ASSERT_EQ(view.size(), 2);
+    ASSERT_EQ(view[0].message, "Entry 1");
+    ASSERT_EQ(view[1].message, "Entry 2");
+}
+
+TEST_F(LogAnalyzerTest, CustomLogLevelMapping) {
+    analyzer.setCustomLogLevelMapping("CRITICAL", LogLevel::ERROR);
+    analyzer.setCustomLogLevelMapping("trace", LogLevel::DEBUG);
+
+    createDummyLogFile(testLogFile, {
+        "[2023-01-01 10:00:00] CRITICAL: System failure",
+        "[2023-01-01 10:00:01] TRACE: function entered"
+    });
+    analyzer.load(testLogFile);
+
+    ASSERT_EQ(analyzer.getEntries().size(), 2);
+    ASSERT_EQ(analyzer.getEntries()[0].level, LogLevel::ERROR);
+    ASSERT_EQ(analyzer.getEntries()[1].level, LogLevel::DEBUG);
+}
+
+TEST_F(LogAnalyzerTest, CsvExport) {
+    createDummyLogFile(testLogFile, {
+        "[2023-01-01 10:00:00] INFO: Simple message",
+        "[2023-01-01 10:00:01] WARNING: Message with, a comma",
+        "[2023-01-01 10:00:02] ERROR: Message with \"quotes\""
+    });
+    analyzer.load(testLogFile);
+
+    std::ostringstream oss;
+    analyzer.exportAsCsv(oss);
+    
+    std::string expected = 
+        "Timestamp,Level,Message\n"
+        "2023-01-01 10:00:00,INFO,Simple message\n"
+        "2023-01-01 10:00:01,WARNING,\"Message with, a comma\"\n"
+        "2023-01-01 10:00:02,ERROR,\"Message with \"\"quotes\"\"\"\n";
+
+    ASSERT_EQ(oss.str(), expected);
+}
+
+TEST_F(LogAnalyzerTest, TimeGaps) {
+    createDummyLogFile(testLogFile, {
+        "[2023-01-01 10:00:00] INFO: A",
+        "[2023-01-01 10:00:01] INFO: B", // 1s gap
+        "[2023-01-01 10:00:05] INFO: C", // 4s gap
+        "[2023-01-01 10:00:15] INFO: D"  // 10s gap
+    });
+    analyzer.load(testLogFile);
+    
+    auto gaps = analyzer.findTimeGaps(std::chrono::seconds(2));
+    ASSERT_EQ(gaps.size(), 2);
+    ASSERT_EQ(std::chrono::duration_cast<std::chrono::seconds>(gaps[0].duration).count(), 4);
+    ASSERT_EQ(std::chrono::duration_cast<std::chrono::seconds>(gaps[1].duration).count(), 10);
+}
+
+TEST_F(LogAnalyzerTest, AverageEntryRate) {
+    createDummyLogFile(testLogFile, {
+        "[2023-01-01 10:00:00] INFO: A",
+        "[2023-01-01 10:00:01] INFO: B",
+        "[2023-01-01 10:00:02] INFO: C",
+        "[2023-01-01 10:00:10] INFO: D" // Total duration 10s, 4 entries
+    });
+    analyzer.load(testLogFile);
+
+    // 4 entries over 10 seconds = 0.4 entries/sec
+    ASSERT_NEAR(analyzer.getAverageEntryRate(), 0.4, 0.001);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

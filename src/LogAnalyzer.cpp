@@ -9,6 +9,7 @@
 #include <format>    // For std::format (C++20)
 #include <numeric>   // For std::iota, etc.
 #include <chrono>    // For std::chrono utilities
+#include <future>    // For std::async
 
 // Helper function to convert string to LogLevel enum
 LogLevel LogAnalyzer::stringToLogLevel(const std::string& levelStr) {
@@ -45,11 +46,71 @@ void LogAnalyzer::clear() {
     levelCounts[LogLevel::ERROR] = 0;
     levelCounts[LogLevel::DEBUG] = 0;
     levelCounts[LogLevel::UNKNOWN] = 0;
+    lastReport = AnalysisReport(); // Reset report
 }
 
 const std::vector<LogEntry>& LogAnalyzer::getEntries() const {
     return entries;
 }
+
+// View-based access (Iteration 1 Feature)
+std::span<const LogEntry> LogAnalyzer::entries_view() const {
+    return std::span<const LogEntry>(entries);
+}
+
+void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel) {
+    std::string key(levelString);
+    std::transform(key.begin(), key.end(), key.begin(), ::toupper);
+    customLevelMappings[key] = mappedLevel;
+}
+
+LogLevel LogAnalyzer::resolveLogLevel(const std::string& levelStr) const {
+    std::string upperLevelStr = levelStr;
+    std::transform(upperLevelStr.begin(), upperLevelStr.end(), upperLevelStr.begin(), ::toupper);
+    
+    // Check custom mappings first
+    if (auto it = customLevelMappings.find(upperLevelStr); it != customLevelMappings.end()) {
+        return it->second;
+    }
+    
+    // Fallback to static default mapping
+    return stringToLogLevel(levelStr);
+}
+
+void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter) const {
+    std::vector<LogEntry> entriesToExport = getFilteredEntries(filter);
+    
+    // Write Header
+    out << "Timestamp,Level,Message\n";
+    
+    for (const auto& entry : entriesToExport) {
+        out << formatTimestamp(entry.timestamp) << ",";
+        out << logLevelToString(entry.level) << ",";
+        
+        // Escape message for CSV
+        std::string msg = entry.message;
+        bool needsQuotes = false;
+        if (msg.find(',') != std::string::npos || msg.find('"') != std::string::npos || msg.find('\n') != std::string::npos) {
+            needsQuotes = true;
+        }
+        
+        if (needsQuotes) {
+            out << "\"";
+            for (char c : msg) {
+                if (c == '"') {
+                    out << "\"\""; // Double quotes
+                } else {
+                    out << c;
+                }
+            }
+            out << "\"";
+        } else {
+            out << msg;
+        }
+        out << "\n";
+    }
+}
+
 
 // Helper for timestamp formatting (Iteration 1 Feature)
 std::string LogAnalyzer::formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format) const {
@@ -257,8 +318,8 @@ std::string LogAnalyzer::getSummaryString() const {
     return ss.str();
 }
 
-// Modified analyze (Breaking change from void)
-AnalysisReport LogAnalyzer::analyze(const std::string& filePath, const std::string& pattern) {
+// New private parser to be used by load, append, and analyze
+std::expected<void, LogParseError> LogAnalyzer::parseFile(const std::string& filePath, const std::string& pattern, bool appendMode) {
     AnalysisReport report;
     report.linesProcessed = 0;
     report.successfulParses = 0;
@@ -266,26 +327,27 @@ AnalysisReport LogAnalyzer::analyze(const std::string& filePath, const std::stri
 
     std::ifstream file(filePath);
     if (!file.is_open()) {
-        report.status = ParseError::FILE_OPEN_FAILED;
-        report.parseErrors.push_back({0, "Could not open file: " + filePath});
-        return report;
+        LogParseError err{ParseError::FILE_OPEN_FAILED, "Could not open file: " + filePath, 0};
+        lastReport.status = err.code;
+        lastReport.parseErrors.push_back({err.lineNumber, err.message});
+        return std::unexpected(err);
     }
 
-    clear(); // Clears existing entries and level counts
+    if (!appendMode) {
+        clear();
+    }
 
     std::string line;
-    // Default regex for log lines like: [2023-10-27 10:00:00] INFO: My message
-    // Also consider optional milliseconds: [2023-10-27 10:00:00.123] INFO: My message
-    // Pattern captures: 1: timestamp (with optional milliseconds), 2: log level, 3: message
     std::string finalPattern = pattern.empty() ? R"(\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{3})?)\]\s+([A-Z]+):\s+(.*))" : pattern;
     
     std::regex logRegex;
     try {
         logRegex = std::regex(finalPattern);
     } catch (const std::regex_error& e) {
-        report.status = ParseError::INVALID_REGEX_PATTERN;
-        report.parseErrors.push_back({0, "Invalid regex pattern provided: " + std::string(e.what())});
-        return report;
+        LogParseError err{ParseError::INVALID_REGEX_PATTERN, "Invalid regex pattern provided: " + std::string(e.what()), 0};
+        lastReport.status = err.code;
+        lastReport.parseErrors.push_back({err.lineNumber, err.message});
+        return std::unexpected(err);
     }
     
     std::smatch match;
@@ -314,12 +376,9 @@ AnalysisReport LogAnalyzer::analyze(const std::string& filePath, const std::stri
                         try {
                             milliseconds = std::stoll(ms_str);
                         } catch (const std::out_of_range& oor) {
-                            // Milliseconds value too large/small, but date/time still parsed.
-                            // Treat as 0 milliseconds and note the error.
                             milliseconds = 0;
                             report.parseErrors.push_back({currentLineNumber, "Malformed milliseconds in timestamp for line: " + line});
                         } catch (const std::invalid_argument& ia) {
-                            // Non-numeric milliseconds, but date/time still parsed.
                             milliseconds = 0;
                             report.parseErrors.push_back({currentLineNumber, "Non-numeric milliseconds in timestamp for line: " + line});
                         }
@@ -338,57 +397,72 @@ AnalysisReport LogAnalyzer::analyze(const std::string& filePath, const std::stri
             }
 
             if (timestampParseFailed) {
-                // If timestamp parsing failed, log it as an error for this line
                 report.parseErrors.push_back({currentLineNumber, "Timestamp parsing failed for line: " + line});
-                
-                // Still create a LogEntry but mark it as UNKNOWN and use current time
                 entry.timestamp = std::chrono::system_clock::now();
-                entry.level = LogLevel::UNKNOWN; // Fallback level
-                entry.message = line; // Store the original full line as message
-                
+                entry.level = LogLevel::UNKNOWN;
+                entry.message = line;
                 entries.push_back(entry);
-                levelCounts[entry.level]++; // Increment UNKNOWN level count
+                levelCounts[entry.level]++;
             } else {
-                // Timestamp parsed successfully, proceed with other fields
-                entry.level = stringToLogLevel(match[2].str());
+                entry.level = resolveLogLevel(match[2].str());
                 entry.message = match[3].str();
-                
                 entries.push_back(entry);
                 levelCounts[entry.level]++;
                 report.successfulParses++;
             }
         } else {
-            // Line does not match the log pattern
             report.parseErrors.push_back({currentLineNumber, "Line does not match log pattern: " + line});
-            
-            // Create an UNKNOWN LogEntry for this line
             LogEntry entry;
             entry.timestamp = std::chrono::system_clock::now(); 
             entry.level = LogLevel::UNKNOWN;
-            entry.message = line; // The entire line is the message
-            
+            entry.message = line;
             entries.push_back(entry);
             levelCounts[LogLevel::UNKNOWN]++;
         }
     }
     file.close();
 
-    // Determine final status based on parsing results
-    if (report.successfulParses == 0 && report.linesProcessed > 0 && !report.parseErrors.empty()) {
-        // If file had lines, but none parsed successfully, and there are errors
-        report.status = ParseError::PARTIAL_FAILURE; // Consider this a total failure in terms of successful parses
-    } else if (report.successfulParses > 0 && report.successfulParses < report.linesProcessed) {
-        // Some lines parsed, some failed
+    if (report.successfulParses < report.linesProcessed) {
         report.status = ParseError::PARTIAL_FAILURE;
-    } else if (report.linesProcessed > 0 && report.successfulParses == report.linesProcessed) {
-        // All lines parsed successfully
-        report.status = ParseError::SUCCESS;
-    } else if (report.linesProcessed == 0) {
-        // Empty file or no lines. No errors, so success.
-        report.status = ParseError::SUCCESS;
     }
 
-    return report;
+    lastReport = report;
+
+    if (appendMode) {
+        // Re-sort the combined entries by timestamp
+        std::ranges::sort(entries, [](const LogEntry& a, const LogEntry& b) {
+            return a.timestamp < b.timestamp;
+        });
+    }
+
+    return {}; // Success
+}
+
+std::expected<void, LogParseError> LogAnalyzer::load(const std::string& filePath, const std::string& pattern) {
+    return parseFile(filePath, pattern, false);
+}
+
+std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePath, const std::string& pattern) {
+    return parseFile(filePath, pattern, true);
+}
+
+std::future<AnalysisReport> LogAnalyzer::load_async(const std::string& filePath, const std::string& pattern) {
+    // This captures 'this' to call the member function. The user of the API
+    // is responsible for ensuring thread safety, i.e., not calling other methods
+    // on this LogAnalyzer instance until the future is ready.
+    return std::async(std::launch::async, [this, filePath, pattern] {
+        return this->analyze(filePath, pattern);
+    });
+}
+
+// Modified analyze to use the new internal parser
+AnalysisReport LogAnalyzer::analyze(const std::string& filePath, const std::string& pattern) {
+    auto result = parseFile(filePath, pattern, false);
+    if (!result.has_value()) {
+        // analyze needs to return a full report even on total failure.
+        // lastReport is already set inside parseFile for failure cases.
+    }
+    return lastReport;
 }
 
 // Function signature for streaming (Iteration 1 Feature)
@@ -451,7 +525,7 @@ void LogAnalyzer::analyzeStream(
             }
 
             if (parsedSuccessfully) {
-                entry.level = stringToLogLevel(match[2].str());
+                entry.level = resolveLogLevel(match[2].str());
                 entry.message = match[3].str();
             }
         }
@@ -490,7 +564,7 @@ void LogAnalyzer::exportAsJson(std::ostream& out, const FilterCriteria& filter, 
             filteredCounts[logLevelToString(entry.level)]++;
         }
         
-        int count = 0;
+        size_t count = 0;
         for (const auto& [levelStr, num] : filteredCounts) {
             if (prettyPrint) out << "    ";
             out << "\"" << levelStr << "\": " << num;
@@ -559,6 +633,34 @@ void LogAnalyzer::exportAsJson(std::ostream& out, const FilterCriteria& filter, 
 }
 
 // New API Extensions for Iteration 1 - Advanced Statistical Analysis
+
+std::vector<TimeGap> LogAnalyzer::findTimeGaps(std::chrono::milliseconds minGapDuration) const {
+    std::vector<TimeGap> gaps;
+    if (entries.size() < 2) return gaps;
+
+    // Entries are assumed to be sorted (by merge or load)
+    for (size_t i = 0; i < entries.size() - 1; ++i) {
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(entries[i+1].timestamp - entries[i].timestamp);
+        if (duration > minGapDuration) {
+            gaps.push_back({entries[i].timestamp, entries[i+1].timestamp, duration});
+        }
+    }
+    return gaps;
+}
+
+double LogAnalyzer::getAverageEntryRate() const {
+    if (entries.size() < 2) return 0.0;
+
+    auto minmax = std::minmax_element(entries.begin(), entries.end(), [](const LogEntry& a, const LogEntry& b) {
+        return a.timestamp < b.timestamp;
+    });
+
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(minmax.second->timestamp - minmax.first->timestamp);
+    if (duration.count() == 0) return static_cast<double>(entries.size());
+
+    return static_cast<double>(entries.size()) / duration.count();
+}
+
 std::vector<TimeWindowStats> LogAnalyzer::getFrequencyDistribution(
     std::chrono::seconds windowSize
 ) const {
