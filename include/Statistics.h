@@ -1,35 +1,83 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
-#include "LogTypes.h"
-#include <map>
-#include <string>
 #include <vector>
 #include <chrono>
+#include <map>
+#include <string>
+#include <functional>
+#include <optional>
+#include <span>
+
+#include "LogTypes.h"
 
 class Statistics {
 public:
-    // Calculates the frequency of each log level
-    std::map<LogLevel, int> calculateLogLevelDistribution(const std::vector<LogEntry>& entries);
+    // Constructor taking a non-owning view of the log entries.
+    // The caller is responsible for ensuring the underlying data outlives this object.
+    explicit Statistics(std::span<const LogEntry> entries);
 
-    // Calculates the count of unique messages
-    std::map<std::string, int> calculateUniqueMessageCounts(const std::vector<LogEntry>& entries);
+    // Disable copy and move semantics for simplicity in this iteration.
+    Statistics(const Statistics&) = delete;
+    Statistics& operator=(const Statistics&) = delete;
+    Statistics(Statistics&&) = delete;
+    Statistics& operator=(Statistics&&) = delete;
 
-    // Identifies the top N most frequent messages
-    std::vector<std::pair<std::string, int>> getTopMessages(const std::vector<LogEntry>& entries, int n);
+    // --- Existing Methods (Refactored) ---
 
-    // Calculates log frequency over time windows
-    std::vector<TimeWindowStats> getLogFrequencyDistributionOverTime(
-        const std::vector<LogEntry>& entries, 
-        std::chrono::seconds windowSize);
+    // No longer take 'entries' as an argument.
+    std::map<LogLevel, int> calculateLogLevelDistribution() const;
+    std::map<std::string, int> calculateUniqueMessageCounts() const;
 
-    // Finds time gaps in log entries
-    std::vector<TimeGap> findTimeGaps(
-        const std::vector<LogEntry>& entries, 
-        std::chrono::milliseconds minGapDuration);
+    // --- API Extensions & New Functionality ---
+    
+    // getTopMessages becomes getRankedMessages with more options
+    enum class SortOrder { Ascending, Descending };
+    std::vector<std::pair<std::string, int>> getRankedMessages(
+        size_t n, 
+        SortOrder order = SortOrder::Descending) const;
 
-    // Calculates the average entry rate
-    double calculateAverageEntryRate(const std::vector<LogEntry>& entries);
+    // More efficient time-based calculations
+    std::vector<TimeWindowStats> getLogFrequencyDistributionOverTime(std::chrono::seconds windowSize) const;
+    std::vector<TimeGap> findTimeGaps(std::chrono::milliseconds minGapDuration) const;
+    double calculateAverageEntryRate() const;
+    
+    // --- New Methods for Iteration 5 ---
+
+    // Grouping by a key extractor function.
+    // Allows grouping by sourceFile, structuredField keys, etc.
+    using GroupKeyExtractor = std::function<std::optional<std::string>(const LogEntry&)>;
+    std::map<std::string, int> calculateDistributionByGroup(GroupKeyExtractor extractor) const;
+
+    // Time Gap Percentiles
+    // Calculates the time gap duration at a given percentile (e.g., 0.99 for p99).
+    std::chrono::nanoseconds getTimeGapPercentile(double percentile) const;
+
+    // Burst Detection
+    struct LogBurst {
+        std::chrono::system_clock::time_point startTime;
+        std::chrono::system_clock::time_point endTime;
+        size_t eventCount;
+        double peakRate; // events per second
+    };
+    std::vector<LogBurst> findLogBursts(std::chrono::seconds windowSize, double thresholdMultiplier) const;
+
+private:
+    // Non-owning view of the original data.
+    std::span<const LogEntry> m_entries; 
+
+    // Internal copy of entries, sorted by timestamp. For efficient time-based lookups.
+    std::vector<LogEntry> m_sortedEntries; 
+
+    // Cache for time gaps, computed on demand.
+    mutable std::vector<std::chrono::nanoseconds> m_timeGaps;
+    mutable bool m_timeGapsCalculated = false;
+
+    // Helper to lazily compute time gaps.
+    void ensureTimeGapsAreCalculated() const;
+
+    // Helper to find the index of a log entry by its timestamp.
+    size_t findIndexByTimestamp(std::chrono::system_clock::time_point ts) const;
 };
 
 #endif // STATISTICS_H

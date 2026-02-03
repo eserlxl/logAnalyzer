@@ -26,10 +26,13 @@ A simple C++ tool to analyze log files.
 - **Customizable text output format.**
 - Provides statistical analysis (may require buffering data in memory):
     - Counts of unique messages.
-    - Top N most frequent messages (default is 10).
+    - Top N most frequent messages (default is 10), sortable in ascending or descending order.
     - **Log frequency distribution over a specified time window.**
     - **Average log entry rate (entries/second).**
     - **Identification of time gaps between log entries longer than a specified duration.**
+    - Percentile analysis of time gaps (e.g., p99 of time between log entries).
+    - Distribution by custom criteria (e.g., source file, specific log fields using a key extractor).
+    - Detection of log bursts (periods of elevated log activity) including start time, end time, event count, and peak rate.
 - Supports JSON output, with options for pretty-printing and including a summary.
 - Provides detailed error reports on parsing failures, including line numbers.
 - **Contextual Log Viewing**: When filtering, optionally display N lines before and M lines after each matched log entry for better understanding of the event context.

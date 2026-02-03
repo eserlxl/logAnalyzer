@@ -103,13 +103,13 @@ struct TimeWindowStats {
 
 // LogEntry structure enhancement
 struct LogEntry {
-  size_t id; // Unique identifier for each log entry
+  size_t id = 0; // Unique identifier for each log entry
   std::string sourceFile; // The file from which this entry was read
   std::chrono::system_clock::time_point timestamp;
   LogLevel level;
   std::string message;
   std::map<std::string, std::string>
-      structuredFields; // For structured data
+      structuredFields = {}; // For structured data
 
   bool operator==(const LogEntry &other) const {
     return id == other.id && timestamp == other.timestamp &&
