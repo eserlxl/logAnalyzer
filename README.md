@@ -44,6 +44,15 @@ cmake ..
 make
 ```
 
+## Running Tests
+
+After building the project, you can run the unit tests using CTest:
+
+```bash
+cd build
+ctest --verbose
+```
+
 ## Running the project
 
 ```bash

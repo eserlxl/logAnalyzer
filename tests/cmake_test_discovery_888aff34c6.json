@@ -1,0 +1,97 @@
+{
+  "tests": 17,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "FilterTest",
+      "tests": 17,
+      "testsuite": [
+        {
+          "name": "SourceFileFilterLiteral",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 32
+        },
+        {
+          "name": "SourceFileFilterGlob",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 44
+        },
+        {
+          "name": "SourceFileFilterRegex",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 60
+        },
+        {
+          "name": "FieldExistsFilter",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 74
+        },
+        {
+          "name": "FieldValueFilter",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 82
+        },
+        {
+          "name": "FieldValueFilterRegex",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 95
+        },
+        {
+          "name": "FieldValueFilterRegexCaseSensitive",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 108
+        },
+        {
+          "name": "PredicateFilter",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 116
+        },
+        {
+          "name": "LogLevelSetFilter",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 126
+        },
+        {
+          "name": "KeywordFilterSingle",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 136
+        },
+        {
+          "name": "KeywordFilterSingleCaseInsensitive",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 144
+        },
+        {
+          "name": "KeywordFilterMultiAny",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 154
+        },
+        {
+          "name": "KeywordFilterMultiAll",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 164
+        },
+        {
+          "name": "RegexFilterCaseSensitive",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 174
+        },
+        {
+          "name": "RegexFilterCaseInsensitive",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 186
+        },
+        {
+          "name": "TimeRangeFilterFromStrings",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 196
+        },
+        {
+          "name": "TimeRangeFilterSince",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/Filter_test.cpp",
+          "line": 217
+        }
+      ]
+    }
+  ]
+}
