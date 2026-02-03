@@ -34,6 +34,18 @@ enum class PatternType { Literal, Regex, Wildcard };
 
 enum class LogLevel { TRACE, DEBUG, INFO, WARNING, ERROR, FATAL, UNKNOWN };
 
+enum class ParseResultStatus {
+    SUCCESS,                // Parsing successful
+    PATTERN_MISMATCH,       // The log line did not match the parser's regex pattern
+    TIMESTAMP_PARSE_ERROR,  // Failed to parse the timestamp field
+    LEVEL_PARSE_ERROR,      // Failed to parse the log level field or level is unknown
+    FIELD_PARSE_ERROR,      // General error parsing a specific field (not timestamp/level)
+    BUFFERED_CONTINUATION,  // Line was buffered as a continuation of a multi-line entry (no full entry returned yet)
+    UNMATCHED_START_PATTERN // (For multi-line parsers) Line did not match the start pattern and was not a continuation.
+                            // If logEntryStartPattern is configured, this could indicate a line that doesn't belong to any entry,
+                            // or it's the start of an entry that just doesn't match the start pattern.
+};
+
 // New enum to specify which LogEntry field a regex capture group maps to
 enum class LogEntryField {
   UNKNOWN,
@@ -48,8 +60,7 @@ enum class LogEntryField {
 struct FieldMapping {
   LogEntryField field = LogEntryField::UNKNOWN;
   std::optional<size_t> groupIndex; // Use std::optional to represent unset index
-  std::string format;    // Optional: format string for TIMESTAMP (e.g., "%Y-%m-%d %H:%M:%S")
-                         //           or delimiter for STRUCTURED_FIELD (e.g., "=" for key=value pairs)
+  std::vector<std::string> formats; // Replaces 'format' for TIMESTAMP, used for kv delimiter for STRUCTURED_FIELD
   std::string structuredFieldName; // Required if field is STRUCTURED_FIELD, key for the map
 
   // Default constructor
@@ -57,11 +68,11 @@ struct FieldMapping {
 
   // Constructor for non-structured fields
   FieldMapping(LogEntryField f, int gi, const std::string& fmt = "")
-      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), format(fmt) {}
+      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), formats({fmt}) {}
 
-  // Constructor for structured fields
-  FieldMapping(LogEntryField f, int gi, const std::string& fmt, const std::string& sfn)
-      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), format(fmt), structuredFieldName(sfn) {}
+  // Constructor for structured fields (kv_delimiter is now part of formats vector)
+  FieldMapping(LogEntryField f, int gi, const std::string& sfn, const std::string& kv_delimiter = "=")
+      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), formats({kv_delimiter}), structuredFieldName(sfn) {}
 };
 
 // Enum for Parse Errors
@@ -127,10 +138,23 @@ struct LogEntry {
 
 // New struct for returning detailed parse results
 struct ParseResult {
-  std::optional<LogEntry> entry;
+  // Existing field for backward compatibility; will be derived from 'status'
+  // For new code, prefer checking 'status == ParseResultStatus::SUCCESS'.
   bool success = false;
+
+  // New: Provides granular status of the parsing attempt.
+  ParseResultStatus status = ParseResultStatus::SUCCESS;
+
+  LogEntry entry; // The parsed log entry (valid only if status is SUCCESS)
+
+  // Existing: Human-readable error message.
   std::string errorMessage;
+
+  // Existing: The part of the log line that caused the failure.
   std::string failingPart;
+
+  // New: Structured details about the error, e.g., {"field": "timestamp", "value": "invalid_date"}.
+  std::map<std::string, std::string> errorDetails;
 };
 
 #endif // LOG_TYPES_H
