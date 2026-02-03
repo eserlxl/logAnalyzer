@@ -16,6 +16,7 @@ A simple C++ tool to analyze log files.
     - Time range (start and end timestamps).
 - **Asynchronous Processing**: Load and analyze files asynchronously with support for cancellation.
 - **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
+- **Custom Timestamp Formats**: Specify the timestamp format of your log files using `strftime` patterns to ensure correct parsing.
 - Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, UNKNOWN).
 - Ability to sort filtered logs by timestamp, level, or message, in ascending or descending order.
 - Ability to save analysis results to an output file in various formats (text, JSON, **CSV**).
@@ -90,6 +91,9 @@ make
 
 # Map a custom log level 'FATAL' to the standard 'ERROR' level for parsing
 ./logAnalyzer path/to/your/logfile.log --map-level FATAL=ERROR --level ERROR
+
+# Specify a custom timestamp format for parsing (e.g., ISO 8601 with milliseconds)
+./logAnalyzer path/to/your/logfile.log --timestamp-format "%Y-%m-%d %H:%M:%S.%f"
 
 # Show log frequency distribution in 60-second windows
 ./logAnalyzer path/to/your/logfile.log --stats-window 60

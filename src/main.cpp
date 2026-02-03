@@ -1,65 +1,77 @@
 #include "LogAnalyzer.h"
-#include <algorithm> // For std::transform
-#include <chrono>    // For std::chrono::system_clock::time_point
+#include "Utils.h"
+#include "Filter.h"
+#include <CLI/CLI.hpp>
+#include <nlohmann/json.hpp>
+#include <algorithm>
+#include <chrono>
 #include <fstream>
-#include <iomanip> // For std::get_time
+#include <iomanip>
 #include <iostream>
-#include <optional> // For std::optional
-#include <sstream>
+#include <optional>
 #include <string>
 #include <vector>
+#include <unistd.h> // For isatty
 
-// Helper function to split a string by a delimiter
-std::vector<std::string> splitString(const std::string &s, char delimiter) {
-  std::vector<std::string> tokens;
-  std::string token;
-  std::istringstream tokenStream(s);
-  while (std::getline(tokenStream, token, delimiter)) {
-    tokens.push_back(token);
-  }
-  return tokens;
-}
+using json = nlohmann::json;
 
-// Helper to parse timestamp from CLI
+// Function to parse timestamp, now using Utils
 std::optional<std::chrono::system_clock::time_point>
-parseCommandLineTimestamp(const std::string &tsStr) {
-  std::tm tm = {};
-  std::istringstream ss(tsStr);
-  ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
-  if (ss.fail()) {
-    // Try without seconds if parsing fails
-    ss.clear();
-    ss.str(tsStr);
+stringToTimePointWrapper(const std::string &tsStr) {
+    if (tsStr.empty()) return std::nullopt;
+    
+    // Try parsing as absolute time
+    std::tm tm = {};
+    std::istringstream ss(tsStr);
+    ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+    if (!ss.fail()) return std::chrono::system_clock::from_time_t(std::mktime(&tm));
+
+    ss.clear(); ss.str(tsStr);
     ss >> std::get_time(&tm, "%Y-%m-%d %H:%M");
-    if (ss.fail()) {
-      // Try with date only
-      ss.clear();
-      ss.str(tsStr);
-      ss >> std::get_time(&tm, "%Y-%m-%d");
-      if (ss.fail())
-        return std::nullopt;
+    if (!ss.fail()) return std::chrono::system_clock::from_time_t(std::mktime(&tm));
+
+    ss.clear(); ss.str(tsStr);
+    ss >> std::get_time(&tm, "%Y-%m-%d");
+    if (!ss.fail()) return std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    
+    // Try parsing as relative time
+    auto relativeTimeResult = Utils::parseRelativeTime(tsStr);
+    if (relativeTimeResult.has_value()) {
+        return relativeTimeResult.value();
     }
-  }
-  return std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    
+    return std::nullopt;
 }
 
-// Configuration struct to hold parsed arguments
+// Helper to validate timestamp CLI option
+std::string validateTimestamp(const std::string &tsStr) {
+    if (tsStr.empty()) return tsStr; // Optional, so empty is fine
+    if (stringToTimePointWrapper(tsStr).has_value()) {
+        return tsStr;
+    }
+    throw CLI::ValidationError("Invalid time format. Expected YYYY-MM-DD [HH:MM[:SS]], or relative time like '1h ago'.");
+}
+
 struct Config {
   std::vector<std::string> filePaths;
   std::vector<LogLevel> filterLevels;
-  std::string filterKeyword;
-  std::string regexPattern;
+  std::vector<std::string> filterKeywords;
+  std::vector<std::string> excludeKeywords;
+  std::vector<std::string> regexPatterns;
+  std::vector<std::string> excludeRegexPatterns;
   bool keywordCaseSensitive = false;
   std::optional<std::chrono::system_clock::time_point> startTime;
   std::optional<std::chrono::system_clock::time_point> endTime;
+  std::optional<std::chrono::seconds> duration;
+  std::optional<LogLevel> minLogLevel;
+  CompositeFilter::Logic filterLogic = CompositeFilter::Logic::AND;
 
   SortBy sortBy = SortBy::TIMESTAMP;
   SortOrder sortOrder = SortOrder::ASCENDING;
 
   std::string customPattern;
-  std::string outputFormat = "text"; // Default to text
-  std::string outputPath;            // Empty means stdout
-  bool showHelp = false;
+  std::string outputFormat = "text";
+  std::string outputPath;
   bool includeSummary = false;
   bool prettyPrint = false;
   std::string textOutputFormat = "{timestamp} [{level}] {message}";
@@ -71,387 +83,173 @@ struct Config {
   std::optional<std::chrono::seconds> statsWindow;
   std::optional<std::chrono::milliseconds> findGapsDuration;
   bool showEntryRate = false;
-};
 
-void printHelp() {
-  std::cout << "Usage: logAnalyzer <log_file_path...> [options]" << std::endl;
-  std::cout << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --level <LEVEL1,LEVEL2>   Filter by log levels (e.g., "
-               "ERROR,WARNING)"
-            << std::endl;
-  std::cout
-      << "  --keyword <STRING>        Filter messages containing specific text"
-      << std::endl;
-  std::cout << "  --case-sensitive          Make keyword filter case-sensitive"
-            << std::endl;
-  std::cout << "  --regex <PATTERN>         Filter messages using regex "
-               "(overrides --keyword)"
-            << std::endl;
-  std::cout << "  --start <\"YYYY-MM-DD HH:MM:SS\"> Start time filter (e.g., "
-               "\"2023-10-27 10:00:00\")"
-            << std::endl;
-  std::cout << "  --end <\"YYYY-MM-DD HH:MM:SS\">   End time filter (e.g., "
-               "\"2023-10-27 11:00:00\")"
-            << std::endl;
-  std::cout
-      << "  --sort-by <time|level|msg> Sort entries by field (default: time)"
-      << std::endl;
-  std::cout << "  --order <asc|desc>        Sort order (default: asc)"
-            << std::endl;
-  std::cout << "  --pattern <REGEX>         Custom regex for parsing log lines "
-               "(default: [YYYY-MM-DD HH:MM:SS] LEVEL: MESSAGE)"
-            << std::endl;
-  std::cout << "  --format <text|json|csv>  Output format (default: text)"
-            << std::endl;
-  std::cout << "  --output <file_path>      Redirect output to a file"
-            << std::endl;
-  std::cout << "  --text-format <STRING>    Custom format string for text "
-               "output (e.g., \"{level} {message}\")"
-            << std::endl;
-  std::cout << "  --include-summary         Include summary in JSON output"
-            << std::endl;
-  std::cout << "  --pretty                  Pretty-print JSON output"
-            << std::endl;
-  std::cout << "  --unique-messages         Show counts of unique messages"
-            << std::endl;
-  std::cout << "  --top-messages [N]        Show top N most frequent messages "
-               "(default: 10)"
-            << std::endl;
-  std::cout << "  --stream                  Enable streaming mode for large "
-               "files (incompatible with sorting)"
-            << std::endl;
-  std::cout << "  --map-level <FROM=TO>     Map a custom log level string to a "
-               "standard one (e.g., FATAL=ERROR)"
-            << std::endl;
-  std::cout << "  --stats-window <SECONDS>  Show log frequency distribution "
-               "over a time window"
-            << std::endl;
-  std::cout << "  --find-gaps <MS>          Find time gaps in logs longer than "
-               "the specified milliseconds"
-            << std::endl;
-  std::cout << "  --rate                    Calculate and show the average log "
-               "entry rate (entries/second)"
-            << std::endl;
-  std::cout << "  --help                    Show this help message"
-            << std::endl;
-}
+  enum class ColorOption { ALWAYS, AUTO, NEVER };
+  ColorOption colorOption = ColorOption::AUTO;
+  char csvSeparator = ',';
+  std::string configFile;
+};
 
 int main(int argc, char *argv[]) {
   Config config;
+  CLI::App app{"Log Analyzer Tool"};
 
-  // Parse arguments
-  for (int i = 1; i < argc; ++i) {
-    std::string arg = argv[i];
+  app.set_config("--config", "", "Read options from a configuration file", false);
 
-    if (arg == "--help") {
-      config.showHelp = true;
-      break;
-    } else if (arg == "--level") {
-      if (++i < argc) {
-        std::vector<std::string> levelStrs = splitString(argv[i], ',');
-        for (const auto &levelStr : levelStrs) {
-          LogLevel level = LogAnalyzer::stringToLogLevel(levelStr);
-          if (level != LogLevel::UNKNOWN) {
-            config.filterLevels.push_back(level);
+  // Positional Arguments
+  app.add_option("log_files", config.filePaths, "Path to log files or '-' for stdin")
+     ->check(CLI::ExistingFile | CLI::IsMember({"-"}));
+
+  // Filters
+  std::map<std::string, LogLevel> levelMap{
+      {"DEBUG", LogLevel::DEBUG}, {"INFO", LogLevel::INFO},
+      {"WARNING", LogLevel::WARNING}, {"ERROR", LogLevel::ERROR},
+      {"UNKNOWN", LogLevel::UNKNOWN}, {"TRACE", LogLevel::TRACE}, {"FATAL", LogLevel::FATAL}
+  };
+
+  app.add_option("--level", config.filterLevels, "Filter by log levels (e.g., ERROR,WARNING)")
+     ->transform(CLI::CheckedTransformer(levelMap, CLI::ignore_case));
+     
+  app.add_option("--min-level", config.minLogLevel, "Filter entries with level greater than or equal to a specified level")
+     ->transform(CLI::CheckedTransformer(levelMap, CLI::ignore_case));
+
+  app.add_option("--keyword", config.filterKeywords, "Filter messages containing specific text");
+  app.add_option("--exclude-keyword", config.excludeKeywords, "Exclude log entries containing a specific keyword");
+     
+  app.add_flag("--case-sensitive", config.keywordCaseSensitive, "Make keyword filter case-sensitive");
+  
+  app.add_option("--regex", config.regexPatterns, "Filter messages using regex");
+  app.add_option("--exclude-regex", config.excludeRegexPatterns, "Filter out log entries matching a specific regular expression");
+
+  std::map<std::string, CompositeFilter::Logic> logicMap{
+      {"AND", CompositeFilter::Logic::AND}, {"OR", CompositeFilter::Logic::OR}
+  };
+  app.add_option("--logic", config.filterLogic, "Logic to combine multiple filters of the same type (AND or OR)")
+     ->transform(CLI::CheckedTransformer(logicMap, CLI::ignore_case));
+
+  std::string startTimeStr, endTimeStr;
+  app.add_option("--start", startTimeStr, "Start time filter (YYYY-MM-DD HH:MM:SS or relative like '1h ago')")
+     ->check(validateTimestamp);
+  app.add_option("--end", endTimeStr, "End time filter (YYYY-MM-DD HH:MM:SS or relative like '1h ago')")
+     ->check(validateTimestamp);
+  
+  std::string durationStr;
+  app.add_option("--duration", durationStr, "Duration for time filtering (e.g., '30m', '1h')");
+
+  // Sorting
+  std::map<std::string, SortBy> sortMap{
+      {"time", SortBy::TIMESTAMP}, {"level", SortBy::LEVEL}, {"msg", SortBy::MESSAGE}
+  };
+  app.add_option("--sort-by", config.sortBy, "Sort entries by field")
+     ->transform(CLI::CheckedTransformer(sortMap, CLI::ignore_case));
+  
+  std::map<std::string, SortOrder> orderMap{
+      {"asc", SortOrder::ASCENDING}, {"desc", SortOrder::DESCENDING}
+  };
+  app.add_option("--order", config.sortOrder, "Sort order")
+     ->transform(CLI::CheckedTransformer(orderMap, CLI::ignore_case));
+
+  // Output Configuration
+  app.add_option("--pattern", config.customPattern, "Custom regex for parsing log lines");
+  app.add_option("--format", config.outputFormat, "Output format (text, json, csv)")
+     ->check(CLI::IsMember({"text", "json", "csv"}));
+  app.add_option("--output", config.outputPath, "Redirect output to a file");
+  app.add_option("--text-format", config.textOutputFormat, "Custom format string for text output. Available: {timestamp}, {level}, {message}, {lineNumber}, {fileName}, {elapsedTime}.");
+  
+  app.add_flag("--include-summary", config.includeSummary, "Include summary in JSON output");
+  app.add_flag("--pretty", config.prettyPrint, "Pretty-print JSON output");
+
+  std::map<std::string, Config::ColorOption> colorMap{
+      {"always", Config::ColorOption::ALWAYS}, {"auto", Config::ColorOption::AUTO}, {"never", Config::ColorOption::NEVER}
+  };
+  app.add_option("--color", config.colorOption, "Control output color (always, auto, never)")
+     ->transform(CLI::CheckedTransformer(colorMap, CLI::ignore_case));
+
+  app.add_option("--csv-sep", config.csvSeparator, "Custom separator for CSV output (defaults to ',')");
+
+  // Analysis Options
+  app.add_flag("--unique-messages", config.showUniqueMessages, "Show counts of unique messages");
+  
+  auto *topMsgOpt = app.add_flag("--top-messages", config.showTopMessages, "Show top N most frequent messages");
+  app.add_option("top_n", config.topMessagesCount, "Number of top messages to show")
+     ->needs(topMsgOpt);
+
+  app.add_flag("--stream", config.streamMode, "Enable streaming mode for large files");
+
+  // Custom Level Mapping
+  app.add_option_function<std::vector<std::string>>("--map-level", [&](const std::vector<std::string>& val){
+      for(const auto& s : val) {
+          auto pos = s.find('=');
+          if(pos == std::string::npos) throw CLI::ValidationError("Invalid KEY=VALUE format for --map-level");
+          std::string from = s.substr(0, pos);
+          std::string to = s.substr(pos + 1);
+          std::string toUpper = to;
+          std::transform(toUpper.begin(), toUpper.end(), toUpper.begin(), ::toupper);
+          
+          if(levelMap.count(toUpper)) {
+              config.customLogLevelMappings.push_back({from, levelMap.at(toUpper)});
           } else {
-            std::cerr << "Warning: Unknown log level '" << levelStr
-                      << "' ignored." << std::endl;
+              throw CLI::ValidationError("Invalid log level in --map-level: " + to);
           }
-        }
-      } else {
-        std::cerr << "Error: --level requires an argument." << std::endl;
-        return 1;
       }
-    } else if (arg == "--keyword") {
-      if (++i < argc)
-        config.filterKeyword = argv[i];
-      else {
-        std::cerr << "Error: --keyword requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--case-sensitive") {
-      config.keywordCaseSensitive = true;
-    } else if (arg == "--regex") {
-      if (++i < argc)
-        config.regexPattern = argv[i];
-      else {
-        std::cerr << "Error: --regex requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--start") {
-      if (++i < argc) {
-        config.startTime = parseCommandLineTimestamp(argv[i]);
-        if (!config.startTime) {
-          std::cerr << "Error: Invalid start time format. Use \"YYYY-MM-DD "
-                       "HH:MM:SS\"."
-                    << std::endl;
-          return 1;
-        }
-      } else {
-        std::cerr << "Error: --start requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--end") {
-      if (++i < argc) {
-        config.endTime = parseCommandLineTimestamp(argv[i]);
-        if (!config.endTime) {
-          std::cerr
-              << "Error: Invalid end time format. Use \"YYYY-MM-DD HH:MM:SS\"."
-              << std::endl;
-          return 1;
-        }
-      } else {
-        std::cerr << "Error: --end requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--sort-by") {
-      if (++i < argc) {
-        std::string sb = argv[i];
-        std::transform(sb.begin(), sb.end(), sb.begin(), ::tolower);
-        if (sb == "time")
-          config.sortBy = SortBy::TIMESTAMP;
-        else if (sb == "level")
-          config.sortBy = SortBy::LEVEL;
-        else if (sb == "msg")
-          config.sortBy = SortBy::MESSAGE;
-        else {
-          std::cerr << "Error: Invalid --sort-by value. Use 'time', 'level', "
-                       "or 'msg'."
-                    << std::endl;
-          return 1;
-        }
-      } else {
-        std::cerr << "Error: --sort-by requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--order") {
-      if (++i < argc) {
-        std::string so = argv[i];
-        std::transform(so.begin(), so.end(), so.begin(), ::tolower);
-        if (so == "asc")
-          config.sortOrder = SortOrder::ASCENDING;
-        else if (so == "desc")
-          config.sortOrder = SortOrder::DESCENDING;
-        else {
-          std::cerr << "Error: Invalid --order value. Use 'asc' or 'desc'."
-                    << std::endl;
-          return 1;
-        }
-      } else {
-        std::cerr << "Error: --order requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--pattern") {
-      if (++i < argc)
-        config.customPattern = argv[i];
-      else {
-        std::cerr << "Error: --pattern requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--format") {
-      if (++i < argc) {
-        std::string format = argv[i];
-        std::transform(format.begin(), format.end(), format.begin(), ::tolower);
-        if (format == "text" || format == "json" || format == "csv") {
-          config.outputFormat = format;
-        } else {
-          std::cerr << "Error: Invalid output format '" << argv[i]
-                    << "'. Must be 'text', 'json', or 'csv'." << std::endl;
-          return 1;
-        }
-      } else {
-        std::cerr << "Error: --format requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--output") {
-      if (++i < argc)
-        config.outputPath = argv[i];
-      else {
-        std::cerr << "Error: --output requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--text-format") {
-      if (++i < argc)
-        config.textOutputFormat = argv[i];
-      else {
-        std::cerr << "Error: --text-format requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--include-summary") {
-      config.includeSummary = true;
-    } else if (arg == "--pretty") {
-      config.prettyPrint = true;
-    } else if (arg == "--unique-messages") {
-      config.showUniqueMessages = true;
-    } else if (arg == "--top-messages") {
-      config.showTopMessages = true;
-      if (i + 1 < argc &&
-          argv[i + 1][0] != '-') { // Check if next arg is not another option
-        try {
-          config.topMessagesCount = std::stoi(argv[++i]);
-        } catch (const std::exception &e) {
-          std::cerr << "Error: Invalid number for --top-messages. " << e.what()
-                    << std::endl;
-          return 1;
-        }
-      }
-    } else if (arg == "--stream") {
-      config.streamMode = true;
-    } else if (arg == "--map-level") {
-      if (++i < argc) {
-        std::string mapStr = argv[i];
-        size_t eqPos = mapStr.find('=');
-        if (eqPos != std::string::npos) {
-          std::string from = mapStr.substr(0, eqPos);
-          std::string to = mapStr.substr(eqPos + 1);
-          LogLevel mappedLevel = LogAnalyzer::stringToLogLevel(to);
-          if (mappedLevel != LogLevel::UNKNOWN) {
-            config.customLogLevelMappings.push_back({from, mappedLevel});
-          } else {
-            std::cerr << "Error: Invalid target log level for --map-level: '"
-                      << to << "'." << std::endl;
-            return 1;
-          }
-        } else {
-          std::cerr << "Error: --map-level argument format should be KEY=LEVEL."
-                    << std::endl;
-          return 1;
-        }
-      } else {
-        std::cerr << "Error: --map-level requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--stats-window") {
-      if (++i < argc) {
-        try {
-          config.statsWindow = std::chrono::seconds(std::stoi(argv[i]));
-        } catch (const std::exception &e) {
-          std::cerr << "Error: Invalid number for --stats-window. " << e.what()
-                    << std::endl;
-          return 1;
-        }
-      } else {
-        std::cerr << "Error: --stats-window requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--find-gaps") {
-      if (++i < argc) {
-        try {
-          config.findGapsDuration =
-              std::chrono::milliseconds(std::stoi(argv[i]));
-        } catch (const std::exception &e) {
-          std::cerr << "Error: Invalid number for --find-gaps. " << e.what()
-                    << std::endl;
-          return 1;
-        }
-      } else {
-        std::cerr << "Error: --find-gaps requires an argument." << std::endl;
-        return 1;
-      }
-    } else if (arg == "--rate") {
-      config.showEntryRate = true;
-    } else {
-      // Positional argument, assume it's a file path
-      config.filePaths.push_back(arg);
-    }
+  }, "Map custom log levels (KEY=LEVEL)");
+
+  // Stats
+  int statsWindowSec = 0;
+  app.add_option("--stats-window", statsWindowSec, "Show log frequency distribution over a time window (seconds)");
+  
+  int gapDurationMs = 0;
+  app.add_option("--find-gaps", gapDurationMs, "Find time gaps longer than X ms");
+
+  app.add_flag("--rate", config.showEntryRate, "Calculate and show average log entry rate");
+
+  try {
+      app.parse(argc, argv);
+  } catch (const CLI::ParseError &e) {
+      return app.exit(e);
   }
 
-  if (config.showHelp) {
-    printHelp();
-    return 0;
+  // Post-processing options
+  if(!startTimeStr.empty()) config.startTime = stringToTimePointWrapper(startTimeStr);
+  if(!endTimeStr.empty()) config.endTime = stringToTimePointWrapper(endTimeStr);
+  if (!durationStr.empty()) {
+      auto parsedDuration = Utils::parseDuration(durationStr);
+      if (parsedDuration.has_value()) {
+          config.duration = parsedDuration.value();
+      } else {
+          std::cerr << "Error parsing --duration: " << parsedDuration.error() << std::endl;
+          return 1;
+      }
   }
 
-  if (config.streamMode) {
-    if (config.sortBy != SortBy::TIMESTAMP ||
-        config.sortOrder != SortOrder::ASCENDING) {
-      std::cerr << "Error: --stream is incompatible with --sort-by. Streaming "
-                   "mode does not support sorting."
-                << std::endl;
-      return 1;
-    }
-    if (config.showUniqueMessages) {
-      std::cerr << "Error: --stream is incompatible with --unique-messages. "
-                   "Unique message counts require global knowledge."
-                << std::endl;
-      return 1;
-    }
-    if (config.showTopMessages) {
-      std::cerr << "Error: --stream is incompatible with --top-messages. Top "
-                   "messages require global knowledge."
-                << std::endl;
-      return 1;
-    }
-    if (!config.filePaths.empty() && config.filePaths.size() > 1) {
-      std::cerr << "Error: --stream is not compatible with multiple input "
-                   "files. Please provide a single file for streaming."
-                << std::endl;
-      return 1;
-    }
+  if (config.duration.has_value()) {
+      if (config.startTime.has_value() && !config.endTime.has_value()) {
+          config.endTime = *config.startTime + *config.duration;
+      } else if (!config.startTime.has_value() && config.endTime.has_value()) {
+          config.startTime = *config.endTime - *config.duration;
+      } else if (!config.startTime.has_value() && !config.endTime.has_value()){
+          std::cerr << "Error: --duration requires either --start or --end to be specified." << std::endl;
+          return 1;
+      }
   }
 
-  if (config.filePaths.empty() &&
-      !config.streamMode) { // If no file paths and not in streaming mode
-    std::cerr << "Error: No log file path provided and not in streaming mode."
-              << std::endl;
-    printHelp();
-    return 1;
+  if(statsWindowSec > 0) config.statsWindow = std::chrono::seconds(statsWindowSec);
+  if(gapDurationMs > 0) config.findGapsDuration = std::chrono::milliseconds(gapDurationMs);
+
+  // Logic Validation
+  if (config.streamMode && (config.showUniqueMessages || config.showTopMessages)) {
+      std::cerr << "Error: --stream is incompatible with --unique-messages or --top-messages." << std::endl;
+      return 1;
+  }
+  if (config.filePaths.empty()) {
+      std::cerr << "Error: No log files provided. Use '-' for stdin or provide file paths." << std::endl;
+      std::cout << app.help() << std::endl;
+      return 1;
   }
 
   LogAnalyzer analyzer;
-
-  // Apply custom log level mappings
   for (const auto &mapping : config.customLogLevelMappings) {
     analyzer.setCustomLogLevelMapping(mapping.first, mapping.second);
-  }
-
-  if (!config.streamMode) {
-    // Load the first file, then append others
-    if (!config.filePaths.empty()) {
-      auto report = analyzer.analyze(
-          config.filePaths[0],
-          config
-              .customPattern); // The analyze method now returns AnalysisReport
-      if (report.status != ParseError::SUCCESS &&
-          report.status != ParseError::PARTIAL_FAILURE) {
-        std::cerr << "Error analyzing file " << config.filePaths[0]
-                  << ". Status: ";
-        if (report.status == ParseError::FILE_OPEN_FAILED) {
-          std::cerr << "File open failed.";
-        } else if (report.status == ParseError::INVALID_REGEX_PATTERN) {
-          std::cerr << "Invalid regex pattern.";
-        } else {
-          std::cerr << "Unknown error.";
-        }
-        if (!report.parseErrors.empty()) {
-          std::cerr << " First parse error: " << report.parseErrors[0].second;
-        }
-        std::cerr << std::endl;
-        return 1;
-      }
-      if (!report.parseErrors.empty()) {
-        std::cerr << "Warning: " << report.parseErrors.size()
-                  << " lines failed to parse in " << config.filePaths[0]
-                  << std::endl;
-      }
-
-      for (size_t i = 1; i < config.filePaths.size(); ++i) {
-        auto result =
-            analyzer.append(config.filePaths[i], config.customPattern);
-        if (!result) { // std::expected holds the error on failure
-          std::cerr << "Error appending file " << config.filePaths[i] << ": "
-                    << result.error().message << std::endl;
-          return 1;
-        }
-        auto appendReport =
-            analyzer.getAnalysisReport(); // Get report for append operation
-        if (!appendReport.parseErrors.empty()) {
-          std::cerr << "Warning: " << appendReport.parseErrors.size()
-                    << " lines failed to parse in " << config.filePaths[i]
-                    << std::endl;
-        }
-      }
-    }
   }
 
   std::ofstream outFile;
@@ -459,234 +257,167 @@ int main(int argc, char *argv[]) {
   if (!config.outputPath.empty()) {
     outFile.open(config.outputPath);
     if (!outFile.is_open()) {
-      std::cerr << "Error: Could not open output file: " << config.outputPath
-                << std::endl;
+      std::cerr << "Error: Could not open output file: " << config.outputPath << std::endl;
       return 1;
     }
     outputStream = &outFile;
   }
+  
+  bool useColors = (config.colorOption == Config::ColorOption::ALWAYS) || 
+                   (config.colorOption == Config::ColorOption::AUTO && isatty(fileno(stdout)));
 
-  FilterCriteria criteria;
-  criteria.levels = config.filterLevels;
-  criteria.keyword = config.filterKeyword;
-  criteria.regexPattern = config.regexPattern;
-  criteria.keywordCaseSensitive = config.keywordCaseSensitive;
-  criteria.startTime = config.startTime;
-  criteria.endTime = config.endTime;
+  auto rootFilter = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
 
-  if (config.streamMode) {
-    // In streaming mode, only text and CSV output are supported for entries
-    if (config.outputFormat != "text" && config.outputFormat != "csv") {
-      std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output "
-                   "format."
-                << std::endl;
-      return 1;
-    }
-
-    auto streamEntryCallback = [&](const LogEntry &entry) {
-      // Apply filtering criteria within the callback
-      bool matchesLevel = criteria.levels.empty();
-      if (!criteria.levels.empty()) {
-        for (LogLevel level : criteria.levels) {
-          if (entry.level == level) {
-            matchesLevel = true;
-            break;
-          }
-        }
-      }
-
-      bool matchesKeyword = true;
-      if (!criteria.keyword.empty()) {
-        if (criteria.keywordCaseSensitive) {
-          matchesKeyword =
-              (entry.message.find(criteria.keyword) != std::string::npos);
-        } else {
-          std::string messageLower = entry.message;
-          std::transform(messageLower.begin(), messageLower.end(),
-                         messageLower.begin(), ::tolower);
-          std::string keywordLower = criteria.keyword;
-          std::transform(keywordLower.begin(), keywordLower.end(),
-                         keywordLower.begin(), ::tolower);
-          matchesKeyword =
-              (messageLower.find(keywordLower) != std::string::npos);
-        }
-      }
-
-      bool matchesRegex = true;
-      if (!criteria.regexPattern.empty()) {
-        try {
-          std::regex re(criteria.regexPattern);
-          matchesRegex = std::regex_search(entry.message, re);
-        } catch (const std::regex_error &e) {
-          // This error should ideally be caught earlier during argument parsing
-          // But as a fallback, we'll treat it as not matching
-          matchesRegex = false;
-        }
-      }
-
-      bool matchesTime = true;
-      if (criteria.startTime && entry.timestamp < *criteria.startTime)
-        matchesTime = false;
-      if (criteria.endTime && entry.timestamp > *criteria.endTime)
-        matchesTime = false;
-
-      if (matchesLevel && matchesKeyword && matchesRegex && matchesTime) {
-        if (config.outputFormat == "text") {
-          std::string output = config.textOutputFormat;
-          auto replaceAll = [&](std::string &str, const std::string &from,
-                                const std::string &to) {
-            size_t start_pos = 0;
-            while ((start_pos = str.find(from, start_pos)) !=
-                   std::string::npos) {
-              str.replace(start_pos, from.length(), to);
-              start_pos += to.length();
-            }
-          };
-          replaceAll(
-              output, "{timestamp}",
-              analyzer.formatTimestamp(entry.timestamp, "%Y-%m-%d %H:%M:%S"));
-          replaceAll(output, "{level}",
-                     LogAnalyzer::logLevelToString(entry.level));
-          replaceAll(output, "{message}", entry.message);
-          *outputStream << output << std::endl;
-        } else if (config.outputFormat == "csv") {
-          // Simplified CSV output for streaming
-          *outputStream << "\""
-                        << analyzer.formatTimestamp(entry.timestamp,
-                                                    "%Y-%m-%d %H:%M:%S")
-                        << "\",\"" << LogAnalyzer::logLevelToString(entry.level)
-                        << "\",\"" << entry.message << "\"" << std::endl;
-        }
-      }
-      return true; // Continue processing stream
-    };
-
-    // Assuming only one file for streaming due to conflict check
-    if (!config.filePaths.empty()) {
-      analyzer.analyzeStream(config.filePaths[0], streamEntryCallback,
-                             config.customPattern);
-    } else {
-      // Should not happen if argument parsing is correct (file path required if
-      // not streaming)
-      std::cerr << "Error: No file specified for streaming analysis."
-                << std::endl;
-      return 1;
-    }
-
-  } else { // Not streaming mode
-    if (config.statsWindow) {
-      *outputStream << "--- Log Frequency Distribution (Window: "
-                    << config.statsWindow->count() << "s) ---" << std::endl;
-      for (const auto &stats :
-           analyzer.getFrequencyDistributionOptimized(*config.statsWindow)) {
-        *outputStream << analyzer.formatTimestamp(stats.windowStart,
-                                                  "%Y-%m-%d %H:%M:%S")
-                      << ": Total=" << stats.totalCount;
-        for (const auto &levelCount : stats.counts) {
-          *outputStream << ", "
-                        << LogAnalyzer::logLevelToString(levelCount.first)
-                        << "=" << levelCount.second;
-        }
-        *outputStream << std::endl;
-      }
-    }
-    if (config.findGapsDuration) {
-      *outputStream << "--- Time Gaps (Min Duration: "
-                    << config.findGapsDuration->count() << "ms) ---"
-                    << std::endl;
-      for (const auto &gap : analyzer.findTimeGaps(*config.findGapsDuration)) {
-        *outputStream << "Gap from "
-                      << analyzer.formatTimestamp(gap.start,
-                                                  "%Y-%m-%d %H:%M:%S")
-                      << " to "
-                      << analyzer.formatTimestamp(gap.end, "%Y-%m-%d %H:%M:%S")
-                      << " (Duration: "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(
-                             gap.duration)
-                             .count()
-                      << "ms)" << std::endl;
-      }
-    }
-    if (config.showEntryRate) {
-      *outputStream << "--- Average Entry Rate ---" << std::endl;
-      *outputStream << "Average entries/second: " << std::fixed
-                    << std::setprecision(2) << analyzer.getAverageEntryRate()
-                    << std::endl;
-    }
-
-    // If any specific statistical analysis was requested, we don't proceed with
-    // other output types unless they are explicitly requested and make sense.
-    // For simplicity, if stats are requested, only stats are printed.
-    bool statsRequested = config.statsWindow.has_value() ||
-                          config.findGapsDuration.has_value() ||
-                          config.showEntryRate;
-
-    if (!statsRequested) {
-      if (config.outputFormat == "json") {
-        analyzer.exportAsJson(*outputStream, criteria, config.includeSummary,
-                              config.prettyPrint);
-      } else if (config.outputFormat == "csv") {
-        analyzer.exportAsCsv(*outputStream, criteria);
-      } else { // text format
-        if (config.showUniqueMessages) {
-          *outputStream << "--- Unique Message Counts ---" << std::endl;
-          for (const auto &pair : analyzer.getUniqueMessageCounts()) {
-            *outputStream << "\"" << pair.first << "\": " << pair.second
-                          << std::endl;
-          }
-        } else if (config.showTopMessages) {
-          *outputStream << "--- Top " << config.topMessagesCount
-                        << " Most Frequent Messages ---" << std::endl;
-          for (const auto &pair :
-               analyzer.getTopMessages(config.topMessagesCount)) {
-            *outputStream << "\"" << pair.first << "\": " << pair.second
-                          << std::endl;
-          }
-        } else if (config.filterLevels.empty() &&
-                   config.filterKeyword.empty() &&
-                   config.regexPattern.empty() && !config.startTime &&
-                   !config.endTime) {
-          // If no filters and no specific analysis, print summary
-          analyzer.printSummary(*outputStream);
-        } else {
-          // Otherwise, print filtered and sorted entries
-          std::vector<LogEntry> entriesToPrint =
-              analyzer.getSortedFilteredEntries(criteria, config.sortBy,
-                                                config.sortOrder);
-          *outputStream << "--- Filtered and Sorted Log Entries ---"
-                        << std::endl;
-          // Manually format each entry using the custom format string
-          for (const auto &entry : entriesToPrint) {
-            std::string output = config.textOutputFormat;
-
-            auto replaceAll = [&](std::string &str, const std::string &from,
-                                  const std::string &to) {
-              size_t start_pos = 0;
-              while ((start_pos = str.find(from, start_pos)) !=
-                     std::string::npos) {
-                str.replace(start_pos, from.length(), to);
-                start_pos += to.length();
-              }
-            };
-
-            replaceAll(
-                output, "{timestamp}",
-                analyzer.formatTimestamp(entry.timestamp, "%Y-%m-%d %H:%M:%S"));
-            replaceAll(output, "{level}",
-                       LogAnalyzer::logLevelToString(entry.level));
-            replaceAll(output, "{message}", entry.message);
-
-            *outputStream << output << std::endl;
-          }
-          *outputStream << "Total filtered entries: " << entriesToPrint.size()
-                        << std::endl;
-        }
-      }
-    }
+  // Inclusion filters
+  auto inclusionFilters = std::make_shared<CompositeFilter>(config.filterLogic);
+  if (config.minLogLevel.has_value()) inclusionFilters->add(std::make_shared<MinLevelFilter>(*config.minLogLevel));
+  if (!config.filterLevels.empty()) {
+      auto levelSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
+      for (auto l : config.filterLevels) levelSet->add(std::make_shared<LevelFilter>(l));
+      inclusionFilters->add(levelSet);
   }
+  if (!config.filterKeywords.empty()) {
+      auto keywordSet = std::make_shared<CompositeFilter>(config.filterLogic);
+      for (const auto& keyword : config.filterKeywords) keywordSet->add(std::make_shared<KeywordFilter>(keyword, config.keywordCaseSensitive));
+      inclusionFilters->add(keywordSet);
+  }
+  if (!config.regexPatterns.empty()) {
+      auto regexSet = std::make_shared<CompositeFilter>(config.filterLogic);
+      for (const auto& regex : config.regexPatterns) regexSet->add(std::make_shared<RegexFilter>(regex));
+      inclusionFilters->add(regexSet);
+  }
+  rootFilter->add(inclusionFilters);
 
-  if (outFile.is_open()) {
-    outFile.close();
+  // Exclusion filters (always ANDed)
+  if (!config.excludeKeywords.empty()) {
+      auto exclusionSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
+      for (const auto& keyword : config.excludeKeywords) exclusionSet->add(std::make_shared<KeywordFilter>(keyword, config.keywordCaseSensitive));
+      rootFilter->add(std::make_shared<ExclusionFilter>(exclusionSet));
+  }
+  if (!config.excludeRegexPatterns.empty()) {
+      auto exclusionSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
+      for (const auto& regex : config.excludeRegexPatterns) exclusionSet->add(std::make_shared<RegexFilter>(regex));
+      rootFilter->add(std::make_shared<ExclusionFilter>(exclusionSet));
+  }
+  
+  if (config.startTime || config.endTime) {
+      rootFilter->add(std::make_shared<TimeRangeFilter>(
+          config.startTime.value_or(std::chrono::system_clock::time_point::min()),
+          config.endTime.value_or(std::chrono::system_clock::time_point::max())
+      ));
+  }
+  
+  if (config.streamMode) {
+      if (config.outputFormat != "text" && config.outputFormat != "csv") {
+          std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << std::endl;
+          return 1;
+      }
+      auto streamEntryCallback = [&](const LogEntry &entry) {
+          if (rootFilter->matches(entry)) {
+               if (config.outputFormat == "text") {
+                    *outputStream << analyzer.formatEntry(entry, config.textOutputFormat, useColors) << std::endl;
+               } else { // CSV
+                   *outputStream << "\"" << LogAnalyzer::formatTimestamp(entry.timestamp) << "\"" << config.csvSeparator
+                                 << "\"" << LogAnalyzer::logLevelToString(entry.level) << "\"" << config.csvSeparator
+                                 << "\"" << entry.message << "\"" 
+                                 << config.csvSeparator << "\"" << entry.sourceFile << "\"" << std::endl;
+               }
+          }
+          return true;
+      };
+      analyzer.analyzeStream(config.filePaths, streamEntryCallback, config.customPattern);
+  } else {
+      for (const auto& path : config.filePaths) {
+          if(auto res = analyzer.append(path, config.customPattern); !res) {
+               std::cerr << "Error analyzing file " << path << ": " << res.error().message << std::endl;
+               return 1;
+          }
+      }
+      std::vector<LogEntry> filteredEntries;
+      for (const auto& entry : analyzer.getEntries()) {
+          if (rootFilter->matches(entry)) {
+              filteredEntries.push_back(entry);
+          }
+      }
+      
+      // Sorting
+      if (config.sortBy != SortBy::TIMESTAMP || config.sortOrder != SortOrder::ASCENDING) {
+          std::sort(filteredEntries.begin(), filteredEntries.end(), [&](const LogEntry& a, const LogEntry& b) {
+              if (config.sortBy == SortBy::TIMESTAMP) {
+                  return config.sortOrder == SortOrder::ASCENDING ? a.timestamp < b.timestamp : a.timestamp > b.timestamp;
+              } else if (config.sortBy == SortBy::LEVEL) {
+                  return config.sortOrder == SortOrder::ASCENDING ? a.level < b.level : a.level > b.level;
+              } else { // MESSAGE
+                  return config.sortOrder == SortOrder::ASCENDING ? a.message < b.message : a.message > b.message;
+              }
+          });
+      }
+      
+      if (config.outputFormat == "text") {
+          for(const auto& entry : filteredEntries) {
+              *outputStream << analyzer.formatEntry(entry, config.textOutputFormat, useColors) << std::endl;
+          }
+      } else if (config.outputFormat == "csv") {
+          *outputStream << "Timestamp" << config.csvSeparator << "Level" << config.csvSeparator << "Message" << config.csvSeparator << "File\n";
+          for (const auto& entry : filteredEntries) {
+              *outputStream << LogAnalyzer::formatTimestamp(entry.timestamp) << config.csvSeparator
+                            << LogAnalyzer::logLevelToString(entry.level) << config.csvSeparator;
+              std::string msg = entry.message;
+              bool needsQuotes = msg.find(config.csvSeparator) != std::string::npos || msg.find('"') != std::string::npos;
+              if (needsQuotes) {
+                  Utils::replaceAll(msg, "\"", "\"\"");
+                  *outputStream << "\"" << msg << "\"";
+              } else {
+                  *outputStream << msg;
+              }
+              *outputStream << config.csvSeparator << entry.sourceFile << "\n";
+          }
+      } else if (config.outputFormat == "json") {
+           json j;
+           if (config.includeSummary) {
+               j["totalEntries"] = filteredEntries.size();
+           }
+           j["entries"] = json::array();
+           for (const auto& entry : filteredEntries) {
+               j["entries"].push_back({
+                   {"timestamp", LogAnalyzer::formatTimestamp(entry.timestamp)},
+                   {"level", LogAnalyzer::logLevelToString(entry.level)},
+                   {"message", entry.message},
+                   {"file", entry.sourceFile}
+               });
+           }
+           if (config.prettyPrint) {
+               *outputStream << std::setw(4) << j << std::endl;
+           } else {
+               *outputStream << j << std::endl;
+           }
+      }
+      
+      if (config.showUniqueMessages) {
+          std::map<std::string, int> counts;
+          for (const auto& entry : filteredEntries) counts[entry.message]++;
+          *outputStream << "\nUnique Messages: " << counts.size() << "\n";
+      }
+      
+      if (config.showTopMessages) {
+          std::map<std::string, int> counts;
+          for (const auto& entry : filteredEntries) counts[entry.message]++;
+          std::vector<std::pair<std::string, int>> sorted(counts.begin(), counts.end());
+          std::sort(sorted.begin(), sorted.end(), [](const auto& a, const auto& b){ return a.second > b.second; });
+          *outputStream << "\nTop " << config.topMessagesCount << " Messages:\n";
+          for (int i=0; i < std::min((int)sorted.size(), config.topMessagesCount); ++i) {
+              *outputStream << sorted[i].second << ": " << sorted[i].first << "\n";
+          }
+      }
+
+      if (config.showEntryRate) {
+           if (filteredEntries.size() > 1) {
+               auto dur = filteredEntries.back().timestamp - filteredEntries.front().timestamp;
+               auto secs = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
+               double rate = secs > 0 ? (double)filteredEntries.size() / secs : filteredEntries.size();
+               *outputStream << "\nAverage Entry Rate: " << rate << " entries/sec\n";
+           }
+      }
   }
 
   return 0;
