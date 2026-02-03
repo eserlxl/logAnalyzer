@@ -317,8 +317,8 @@ int main(int argc, char *argv[]) {
                if (config.outputFormat == "text") {
                     *outputStream << analyzer.formatEntry(entry, config.textOutputFormat, useColors) << std::endl;
                } else { // CSV
-                   *outputStream << "\"" << LogAnalyzer::formatTimestamp(entry.timestamp) << "\"" << config.csvSeparator
-                                 << "\"" << LogAnalyzer::logLevelToString(entry.level) << "\"" << config.csvSeparator
+                   *outputStream << "\"" << analyzer.formatTimestamp(entry.timestamp) << "\"" << config.csvSeparator
+                                 << "\"" << analyzer.logLevelToString(entry.level) << "\"" << config.csvSeparator
                                  << "\"" << entry.message << "\"" 
                                  << config.csvSeparator << "\"" << entry.sourceFile << "\"" << std::endl;
                }
@@ -360,8 +360,8 @@ int main(int argc, char *argv[]) {
       } else if (config.outputFormat == "csv") {
           *outputStream << "Timestamp" << config.csvSeparator << "Level" << config.csvSeparator << "Message" << config.csvSeparator << "File\n";
           for (const auto& entry : filteredEntries) {
-              *outputStream << LogAnalyzer::formatTimestamp(entry.timestamp) << config.csvSeparator
-                            << LogAnalyzer::logLevelToString(entry.level) << config.csvSeparator;
+              *outputStream << analyzer.formatTimestamp(entry.timestamp) << config.csvSeparator
+                            << analyzer.logLevelToString(entry.level) << config.csvSeparator;
               std::string msg = entry.message;
               bool needsQuotes = msg.find(config.csvSeparator) != std::string::npos || msg.find('"') != std::string::npos;
               if (needsQuotes) {
@@ -379,9 +379,9 @@ int main(int argc, char *argv[]) {
            }
            j["entries"] = json::array();
            for (const auto& entry : filteredEntries) {
-               j["entries"].push_back({
-                   {"timestamp", LogAnalyzer::formatTimestamp(entry.timestamp)},
-                   {"level", LogAnalyzer::logLevelToString(entry.level)},
+               j["entries"].push_back(json{
+                   {"timestamp", analyzer.formatTimestamp(entry.timestamp)},
+                   {"level", analyzer.logLevelToString(entry.level)},
                    {"message", entry.message},
                    {"file", entry.sourceFile}
                });

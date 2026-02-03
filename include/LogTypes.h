@@ -6,11 +6,55 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <cctype> // Required for std::tolower
+
+// Case-insensitive comparator for strings (moved from LogParser.h as it's a generic utility)
+struct ci_less {
+  struct nocase_compare {
+    bool operator()(const unsigned char &c1, const unsigned char &c2) const {
+      return std::tolower(c1) < std::tolower(c2);
+    }
+  };
+  bool operator()(const std::string &s1, const std::string &s2) const {
+    return std::lexicographical_compare(s1.begin(), s1.end(), s2.begin(),
+                                        s2.end(), nocase_compare());
+  }
+};
 
 // Enum for different pattern matching types
 enum class PatternType { Literal, Glob, Regex };
 
 enum class LogLevel { TRACE, DEBUG, INFO, WARNING, ERROR, FATAL, UNKNOWN };
+
+// New enum to specify which LogEntry field a regex capture group maps to
+enum class LogEntryField {
+  UNKNOWN,
+  TIMESTAMP,
+  LEVEL,
+  MESSAGE,
+  SOURCE_FILE, // Maps to LogEntry::sourceFile
+  STRUCTURED_FIELD // For fields that go into LogEntry::structuredFields
+};
+
+// New struct to define the mapping from a regex capture group to a LogEntry field
+struct FieldMapping {
+  LogEntryField field = LogEntryField::UNKNOWN;
+  int groupIndex = -1; // Use index instead of name (0 for full match, 1 for first capture group, etc.)
+  std::string format;    // Optional: format string for TIMESTAMP (e.g., "%Y-%m-%d %H:%M:%S")
+                         //           or delimiter for STRUCTURED_FIELD (e.g., "=" for key=value pairs)
+  std::string structuredFieldName; // Required if field is STRUCTURED_FIELD, key for the map
+
+  // Default constructor
+  FieldMapping() = default;
+
+  // Constructor for non-structured fields
+  FieldMapping(LogEntryField f, int gi, const std::string& fmt = "")
+      : field(f), groupIndex(gi), format(fmt) {}
+
+  // Constructor for structured fields
+  FieldMapping(LogEntryField f, int gi, const std::string& fmt, const std::string& sfn)
+      : field(f), groupIndex(gi), format(fmt), structuredFieldName(sfn) {}
+};
 
 // Enum for Parse Errors
 enum class ParseError {

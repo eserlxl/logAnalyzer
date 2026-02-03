@@ -13,6 +13,29 @@
 #include <expected>
 #include "Utils.h" // For time parsing utilities
 
+// Defines criteria for filtering log entries.
+struct FilterCriteria {
+    std::set<LogLevel> levels;
+    std::optional<std::chrono::system_clock::time_point> startTime;
+    std::optional<std::chrono::system_clock::time_point> endTime;
+    std::string keyword;
+    bool keywordCaseSensitive = false;
+    std::string regexPattern;
+};
+
+// Enum for sorting criteria.
+enum class SortBy {
+    TIMESTAMP,
+    LEVEL,
+    MESSAGE
+};
+
+// Enum for sorting order.
+enum class SortOrder {
+    ASCENDING,
+    DESCENDING
+};
+
 class IFilter {
 public:
     virtual ~IFilter() = default;
