@@ -6,6 +6,8 @@
 #include <string_view>
 #include <chrono>
 #include <expected> // For std::expected
+#include <algorithm> // For std::equal, std::search
+#include <cctype> // For std::tolower
 
 namespace Utils {
 
@@ -78,12 +80,51 @@ std::expected<std::chrono::system_clock::time_point, std::string> parseAbsoluteT
 // and also falling back to relative time parsing.
 std::expected<std::chrono::system_clock::time_point, std::string> parseTime(const std::string& timeStr);
 
+// Parses a date string (e.g., "YYYY-MM-DD", "YYYY/MM/DD") into a time range for that entire day.
+// Returns a pair: first is 00:00:00 of the day, second is 23:59:59.999... of the day.
+std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, std::string>
+parseDayRange(const std::string& dateString);
+
+// Validates a timestamp string for CLI options. Throws CLI::ValidationError on failure.
+std::string validateTimestampCliOption(const std::string &tsStr);
+
 // Escapes a string for JSON output, handling special characters like quotes, backslashes, and control characters.
 std::string escapeJsonString(const std::string& input);
 
-// Helper to validate timestamp CLI option
-// This function parses the timestamp string and throws CLI::ValidationError if parsing fails.
-std::string validateTimestampCliOption(const std::string &tsStr);
+// Converts a glob pattern string into a regex pattern string.
+// Handles '*' as '.*' and '?' as '.'
+std::string globToRegex(const std::string& globPattern);
+
+// Helper to compare strings case-insensitively
+inline bool caseInsensitiveEquals(const std::string& str1, const std::string& str2) {
+    if (str1.length() != str2.length()) {
+        return false;
+    }
+    return std::equal(str1.begin(), str1.end(),
+                      str2.begin(), str2.end(),
+                      [](char a, char b) {
+                          return std::tolower(static_cast<unsigned char>(a)) ==
+                                 std::tolower(static_cast<unsigned char>(b));
+                      });
+}
+
+// Helper to search for a substring case-insensitively
+inline bool caseInsensitiveSearch(const std::string& text, const std::string& keyword) {
+    if (keyword.empty()) {
+        return true; // Empty keyword is considered to be found everywhere
+    }
+    if (text.length() < keyword.length()) {
+        return false;
+    }
+    
+    auto it = std::search(text.begin(), text.end(),
+                          keyword.begin(), keyword.end(),
+                          [](char a, char b) {
+                              return std::tolower(static_cast<unsigned char>(a)) ==
+                                     std::tolower(static_cast<unsigned char>(b));
+                          });
+    return it != text.end();
+}
 
 } // namespace Utils
 

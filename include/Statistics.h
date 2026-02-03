@@ -8,20 +8,21 @@
 #include <functional>
 #include <optional>
 #include <span>
+#include <mutex>
 
 #include "LogTypes.h"
 
 class Statistics {
 public:
     // Constructor taking a non-owning view of the log entries.
-    // The caller is responsible for ensuring the underlying data outlives this object.
+    // The class makes an internal copy, so the original data's lifetime is not an issue.
     explicit Statistics(std::span<const LogEntry> entries);
 
-    // Disable copy and move semantics for simplicity in this iteration.
+    // Enable move semantics.
     Statistics(const Statistics&) = delete;
     Statistics& operator=(const Statistics&) = delete;
-    Statistics(Statistics&&) = delete;
-    Statistics& operator=(Statistics&&) = delete;
+    Statistics(Statistics&&) = default;
+    Statistics& operator=(Statistics&&) = default;
 
     // --- Existing Methods (Refactored) ---
 
@@ -63,15 +64,12 @@ public:
     std::vector<LogBurst> findLogBursts(std::chrono::seconds windowSize, double thresholdMultiplier) const;
 
 private:
-    // Non-owning view of the original data.
-    std::span<const LogEntry> m_entries; 
-
     // Internal copy of entries, sorted by timestamp. For efficient time-based lookups.
     std::vector<LogEntry> m_sortedEntries; 
 
     // Cache for time gaps, computed on demand.
     mutable std::vector<std::chrono::nanoseconds> m_timeGaps;
-    mutable bool m_timeGapsCalculated = false;
+    mutable std::once_flag m_timeGapsCalculatedFlag;
 
     // Helper to lazily compute time gaps.
     void ensureTimeGapsAreCalculated() const;

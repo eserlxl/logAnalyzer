@@ -343,6 +343,40 @@ std::string escapeJsonString(const std::string& input) {
     return oss.str();
 }
 
+std::string globToRegex(const std::string& globPattern) {
+    std::string regexPattern = "^"; // Anchor to the start of the string
+    for (char c : globPattern) {
+        switch (c) {
+            case '*':
+                regexPattern += ".*";
+                break;
+            case '?':
+                regexPattern += ".";
+                break;
+            case '.':
+            case '+':
+            case '^':
+            case '$':
+            case '(':
+            case ')':
+            case '[':
+            case ']':
+            case '{':
+            case '}':
+            case '|':
+            case '\\':
+                regexPattern += '\\'; // Escape regex special characters
+                regexPattern += c;
+                break;
+            default:
+                regexPattern += c;
+                break;
+        }
+    }
+    regexPattern += "$"; // Anchor to the end of the string
+    return regexPattern;
+}
+
 std::string validateTimestampCliOption(const std::string &tsStr) {
     if (tsStr.empty()) return tsStr; // Optional, so empty is fine
     auto timePointResult = Utils::parseTime(tsStr);
@@ -350,6 +384,63 @@ std::string validateTimestampCliOption(const std::string &tsStr) {
         return tsStr; // Return the string if successful
     }
     throw CLI::ValidationError("Invalid time format: " + timePointResult.error() + ". Expected formats: 'YYYY-MM-DD HH:MM:SS', ISO 8601, Unix timestamp, or relative time like '1h ago'.");
+}
+
+std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, std::string>
+parseDayRange(const std::string& dateString) {
+    std::tm tm = {};
+    std::istringstream ss(dateString);
+
+    // Try YYYY-MM-DD
+    ss.clear(); ss.seekg(0);
+    ss >> std::get_time(&tm, "%Y-%m-%d");
+    if (!ss.fail() && ss.eof()) {
+        goto success_parse_date;
+    }
+
+    // Try YYYY/MM/DD
+    ss.clear(); ss.seekg(0);
+    ss >> std::get_time(&tm, "%Y/%m/%d");
+    if (!ss.fail() && ss.eof()) {
+        goto success_parse_date;
+    }
+
+    // Try MM-DD-YYYY
+    ss.clear(); ss.seekg(0);
+    ss >> std::get_time(&tm, "%m-%d-%Y");
+    if (!ss.fail() && ss.eof()) {
+        goto success_parse_date;
+    }
+
+    // Try MM/DD/YYYY
+    ss.clear(); ss.seekg(0);
+    ss >> std::get_time(&tm, "%m/%d/%Y");
+    if (!ss.fail() && ss.eof()) {
+        goto success_parse_date;
+    }
+
+    return std::unexpected("Invalid date format for day range. Expected 'YYYY-MM-DD', 'YYYY/MM/DD', 'MM-DD-YYYY', or 'MM/DD/YYYY'.");
+
+success_parse_date:
+    // Set time to beginning of the day (00:00:00)
+    tm.tm_hour = 0;
+    tm.tm_min = 0;
+    tm.tm_sec = 0;
+    auto startOfDay = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+
+    // Set time to end of the day (23:59:59)
+    tm.tm_hour = 23;
+    tm.tm_min = 59;
+    tm.tm_sec = 59;
+    auto endOfDay = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+
+    // mktime can adjust tm_mday if tm_hour, tm_min, tm_sec cause overflow for that month/year.
+    // Ensure endOfDay is indeed on the same date as startOfDay or the next day if time rolls over.
+    // For simplicity, we directly set to 23:59:59.
+    // If we want actual "end of day" with sub-second precision, it's typically start of next day minus epsilon.
+    // For this context, 23:59:59 is sufficient.
+
+    return std::make_pair(startOfDay, endOfDay);
 }
 
 } // namespace Utils

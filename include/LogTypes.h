@@ -30,7 +30,7 @@ struct ci_less {
 };
 
 // Enum for different pattern matching types
-enum class PatternType { Literal, Glob, Regex };
+enum class PatternType { Literal, Regex, Wildcard };
 
 enum class LogLevel { TRACE, DEBUG, INFO, WARNING, ERROR, FATAL, UNKNOWN };
 

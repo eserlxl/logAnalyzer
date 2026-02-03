@@ -3,26 +3,226 @@
 #include <algorithm>
 #include <cctype>
 
-namespace {
-// Helper for case-insensitive string comparison
-bool caseInsensitiveEquals(const std::string& str1, const std::string& str2) {
-    return std::equal(str1.begin(), str1.end(),
-                      str2.begin(), str2.end(),
-                      [](char a, char b){
-                          return std::tolower(a) == std::tolower(b);
-                      });
+
+namespace Detail {
+    std::optional<std::string> getNestedValue(const LogEntry& entry, const std::string& fieldPath) {
+        // Since LogEntry::structuredFields is a map<string, string>,
+        // "nested" access means searching for a key that matches the full path.
+        // E.g., for "user.id", it looks for a key "user.id".
+        auto it = entry.structuredFields.find(fieldPath);
+        if (it != entry.structuredFields.end()) {
+            return it->second;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<double> getNestedNumericValue(const LogEntry& entry, const std::string& fieldPath) {
+        auto strValueOpt = getNestedValue(entry, fieldPath);
+        if (strValueOpt) {
+            try {
+                // Attempt to convert string to double
+                return std::stod(*strValueOpt);
+            } catch (const std::invalid_argument& e) {
+                // Not a valid number
+            } catch (const std::out_of_range& e) {
+                // Number out of range
+            }
+        }
+        return std::nullopt;
+    }
+
+    std::optional<bool> getNestedBoolValue(const LogEntry& entry, const std::string& fieldPath) {
+        auto strValueOpt = getNestedValue(entry, fieldPath);
+        if (strValueOpt) {
+            std::string lowerStr = Utils::toLower(*strValueOpt);
+            if (lowerStr == "true" || lowerStr == "1" || lowerStr == "t" || lowerStr == "yes") {
+                return true;
+            } else if (lowerStr == "false" || lowerStr == "0" || lowerStr == "f" || lowerStr == "no") {
+                return false;
+            }
+        }
+        return std::nullopt;
+    }
+} // namespace Detail
+
+NumericComparisonFilter::NumericComparisonFilter(std::string fieldKey, double value, Operator op)
+    : fieldKey_(std::move(fieldKey)), value_(value), op_(op) {}
+
+bool NumericComparisonFilter::matches(const LogEntry &entry) const {
+    auto it = entry.structuredFields.find(fieldKey_);
+    if (it == entry.structuredFields.end()) {
+        return false; // Field not found
+    }
+
+    try {
+        double actualValue = std::stod(it->second);
+        switch (op_) {
+            case Operator::EQ:  return actualValue == value_;
+            case Operator::NEQ: return actualValue != value_;
+            case Operator::GT:  return actualValue > value_;
+            case Operator::LT:  return actualValue < value_;
+            case Operator::GTE: return actualValue >= value_;
+            case Operator::LTE: return actualValue <= value_;
+        }
+    } catch (const std::invalid_argument& e) {
+        // Value is not a valid number, so it cannot match
+    } catch (const std::out_of_range& e) {
+        // Value is out of range for double, so it cannot match
+    }
+    return false;
 }
 
-// Helper for case-insensitive substring search
-bool caseInsensitiveSearch(const std::string& text, const std::string& keyword) {
-    auto it = std::search(
-        text.begin(), text.end(),
-        keyword.begin(), keyword.end(),
-        [](char ch1, char ch2) { return std::tolower(ch1) == std::tolower(ch2); }
-    );
-    return it != text.end();
+BoolFilter::BoolFilter(std::string fieldKey, bool value)
+    : fieldKey_(std::move(fieldKey)), value_(value) {}
+
+bool BoolFilter::matches(const LogEntry &entry) const {
+    auto it = entry.structuredFields.find(fieldKey_);
+    if (it == entry.structuredFields.end()) {
+        return false; // Field not found
+    }
+
+    std::string lowerStr = Utils::toLower(it->second);
+    if (value_) {
+        return (lowerStr == "true" || lowerStr == "1" || lowerStr == "t" || lowerStr == "yes");
+    } else {
+        return (lowerStr == "false" || lowerStr == "0" || lowerStr == "f" || lowerStr == "no");
+    }
 }
-} // anonymous namespace
+
+NestedFieldValueFilter::NestedFieldValueFilter(std::string fieldPath,
+                                               std::string valuePattern,
+                                               PatternType type,
+                                               bool caseSensitive)
+    : fieldPath_(std::move(fieldPath)),
+      valuePattern_(std::move(valuePattern)),
+      type_(type),
+      caseSensitive_(caseSensitive)
+{
+    if (type_ == PatternType::Regex) {
+        auto flags = std::regex::ECMAScript;
+        if (!caseSensitive_) {
+            flags |= std::regex::icase;
+        }
+        regexPattern_.emplace(valuePattern_, flags);
+    } else if (type_ == PatternType::Wildcard) {
+        std::string regexStr = Utils::globToRegex(valuePattern_);
+        regexPattern_.emplace(regexStr, caseSensitive_ ? std::regex::ECMAScript : std::regex::icase);
+    }
+}
+
+bool NestedFieldValueFilter::matches(const LogEntry &entry) const {
+    auto actualValueOpt = Detail::getNestedValue(entry, fieldPath_);
+    if (!actualValueOpt) {
+        return false; // Nested field not found
+    }
+
+    const std::string& actualValue = *actualValueOpt;
+
+    if (type_ == PatternType::Literal) {
+        if (caseSensitive_) {
+            return actualValue == valuePattern_;
+        } else {
+            return Utils::caseInsensitiveEquals(actualValue, valuePattern_);
+        }
+    } else if (type_ == PatternType::Wildcard) {
+        if (regexPattern_.has_value()) {
+            return std::regex_match(actualValue, *regexPattern_);
+        }
+        return false; // Should not happen
+    } else { // PatternType::Regex
+        if (regexPattern_.has_value()) {
+            return std::regex_search(actualValue, *regexPattern_);
+        }
+        return false; // Should not happen
+    }
+}
+
+NestedNumericComparisonFilter::NestedNumericComparisonFilter(std::string fieldPath,
+                                                           double value,
+                                                           NumericComparisonFilter::Operator op)
+    : fieldPath_(std::move(fieldPath)), value_(value), op_(op) {}
+
+bool NestedNumericComparisonFilter::matches(const LogEntry &entry) const {
+    auto actualValueOpt = Detail::getNestedNumericValue(entry, fieldPath_);
+    if (!actualValueOpt) {
+        return false; // Nested field not found or not a valid number
+    }
+
+    double actualValue = *actualValueOpt;
+    switch (op_) {
+        case NumericComparisonFilter::Operator::EQ:  return actualValue == value_;
+        case NumericComparisonFilter::Operator::NEQ: return actualValue != value_;
+        case NumericComparisonFilter::Operator::GT:  return actualValue > value_;
+        case NumericComparisonFilter::Operator::LT:  return actualValue < value_;
+        case NumericComparisonFilter::Operator::GTE: return actualValue >= value_;
+        case NumericComparisonFilter::Operator::LTE: return actualValue <= value_;
+    }
+    return false; // Should be unreachable
+}
+
+NestedBoolFilter::NestedBoolFilter(std::string fieldPath, bool value)
+    : fieldPath_(std::move(fieldPath)), value_(value) {}
+
+bool NestedBoolFilter::matches(const LogEntry &entry) const {
+    auto actualValueOpt = Detail::getNestedBoolValue(entry, fieldPath_);
+    if (!actualValueOpt) {
+        return false; // Nested field not found or not a valid boolean string
+    }
+    return *actualValueOpt == value_;
+}
+
+ValueSetFilter::ValueSetFilter(std::string fieldKey, std::set<std::string> values, bool caseSensitive)
+    : fieldKey_(std::move(fieldKey)), caseSensitive_(caseSensitive) {
+    if (caseSensitive_) {
+        valueSet_ = std::move(values);
+    } else {
+        for (const auto& val : values) {
+            valueSet_.insert(Utils::toLower(val));
+        }
+    }
+}
+
+bool ValueSetFilter::matches(const LogEntry &entry) const {
+    auto it = entry.structuredFields.find(fieldKey_);
+    if (it == entry.structuredFields.end()) {
+        return false; // Field not found
+    }
+
+    const std::string& actualValue = it->second;
+    if (caseSensitive_) {
+        return valueSet_.count(actualValue) > 0;
+    } else {
+        return valueSet_.count(Utils::toLower(actualValue)) > 0;
+    }
+}
+
+NestedValueSetFilter::NestedValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive)
+    : fieldPath_(std::move(fieldPath)), caseSensitive_(caseSensitive) {
+    if (caseSensitive_) {
+        valueSet_ = std::move(values);
+    } else {
+        for (const auto& val : values) {
+            valueSet_.insert(Utils::toLower(val));
+        }
+    }
+}
+
+bool NestedValueSetFilter::matches(const LogEntry &entry) const {
+    auto actualValueOpt = Detail::getNestedValue(entry, fieldPath_);
+    if (!actualValueOpt) {
+        return false; // Nested field not found
+    }
+
+    const std::string& actualValue = *actualValueOpt;
+    if (caseSensitive_) {
+        return valueSet_.count(actualValue) > 0;
+    } else {
+        return valueSet_.count(Utils::toLower(actualValue)) > 0;
+    }
+}
+
+
+
 
 SourceFileFilter::SourceFileFilter(std::string pattern, PatternType type, bool caseSensitive)
     : pattern_(std::move(pattern)), type_(type), caseSensitive_(caseSensitive) {
@@ -31,34 +231,10 @@ SourceFileFilter::SourceFileFilter(std::string pattern, PatternType type, bool c
         if (!caseSensitive_) {
             flags |= std::regex::icase;
         }
-        regexPattern_ = std::regex(pattern_, flags);
-    } else if (type_ == PatternType::Glob) {
-        // Convert glob pattern to regex for internal use
-        std::string regexStr;
-        for (char c : pattern_) {
-            switch (c) {
-                case '*':  regexStr += ".*"; break;
-                case '?':  regexStr += "."; break;
-                case '.':  regexStr += "\\."; break;
-                // Escape other regex special characters if they appear in a literal glob part
-                case '+':
-                case '(':
-                case ')':
-                case '[':
-                case ']':
-                case '{':
-                case '}':
-                case '^':
-                case '$':
-                case '|':
-                case '\\':
-                    regexStr += '\\';
-                    regexStr += c;
-                    break;
-                default:   regexStr += c; break;
-            }
-        }
-        regexPattern_ = std::regex(regexStr, caseSensitive_ ? std::regex::ECMAScript : std::regex::icase);
+        regexPattern_.emplace(pattern_, flags);
+    } else if (type_ == PatternType::Wildcard) {
+        std::string regexStr = Utils::globToRegex(pattern_);
+        regexPattern_.emplace(regexStr, caseSensitive_ ? std::regex::ECMAScript : std::regex::icase);
     }
 }
 
@@ -67,17 +243,21 @@ bool SourceFileFilter::matches(const LogEntry &entry) const {
         if (caseSensitive_) {
             return entry.sourceFile == pattern_;
         } else {
-            return caseInsensitiveEquals(entry.sourceFile, pattern_);
+            return Utils::caseInsensitiveEquals(entry.sourceFile, pattern_);
         }
-    } else if (type_ == PatternType::Glob) {
-        // We converted glob to regex in the constructor
-        return std::regex_match(entry.sourceFile, regexPattern_);
+    } else if (type_ == PatternType::Wildcard) {
+        if (regexPattern_.has_value()) {
+            return std::regex_match(entry.sourceFile, *regexPattern_);
+        }
+        return false; // Should not happen if constructed correctly
     } else { // PatternType::Regex
-        return std::regex_search(entry.sourceFile, regexPattern_);
+        if (regexPattern_.has_value()) {
+            return std::regex_search(entry.sourceFile, *regexPattern_);
+        }
+        return false; // Should not happen if constructed correctly
     }
 }
-
-FieldExistsFilter::FieldExistsFilter(std::string fieldKey) : fieldKey_(std::move(fieldKey)) {}
+    FieldExistsFilter::FieldExistsFilter(std::string fieldKey) : fieldKey_(std::move(fieldKey)) {}
 
 bool FieldExistsFilter::matches(const LogEntry &entry) const {
     return entry.structuredFields.count(fieldKey_) > 0;
@@ -90,34 +270,10 @@ FieldValueFilter::FieldValueFilter(std::string fieldKey, std::string valuePatter
         if (!caseSensitive_) {
             flags |= std::regex::icase;
         }
-        regexPattern_ = std::regex(valuePattern_, flags);
-    } else if (type_ == PatternType::Glob) {
-        // Convert glob pattern to regex for internal use
-        std::string regexStr;
-        for (char c : valuePattern_) {
-            switch (c) {
-                case '*':  regexStr += ".*"; break;
-                case '?':  regexStr += "."; break;
-                case '.':  regexStr += "\\."; break;
-                // Escape other regex special characters if they appear in a literal glob part
-                case '+':
-                case '(':
-                case ')':
-                case '[':
-                case ']':
-                case '{':
-                case '}':
-                case '^':
-                case '$':
-                case '|':
-                case '\\':
-                    regexStr += '\\';
-                    regexStr += c;
-                    break;
-                default:   regexStr += c; break;
-            }
-        }
-        regexPattern_ = std::regex(regexStr, caseSensitive_ ? std::regex::ECMAScript : std::regex::icase);
+        regexPattern_.emplace(valuePattern_, flags);
+    } else if (type_ == PatternType::Wildcard) {
+        std::string regexStr = Utils::globToRegex(valuePattern_);
+        regexPattern_.emplace(regexStr, caseSensitive_ ? std::regex::ECMAScript : std::regex::icase);
     }
 }
 
@@ -133,13 +289,19 @@ bool FieldValueFilter::matches(const LogEntry &entry) const {
         if (caseSensitive_) {
             return actualValue == valuePattern_;
         } else {
-            return caseInsensitiveEquals(actualValue, valuePattern_);
+            return Utils::caseInsensitiveEquals(actualValue, valuePattern_);
         }
-    } else if (type_ == PatternType::Glob) {
-        return std::regex_match(actualValue, regexPattern_);
+    } else if (type_ == PatternType::Wildcard) {
+        if (regexPattern_.has_value()) {
+            return std::regex_match(actualValue, *regexPattern_);
+        }
+        return false; // Should not happen
     } else { // PatternType::Regex
-        return std::regex_search(actualValue, regexPattern_);
+        if (regexPattern_.has_value()) {
+            return std::regex_search(actualValue, *regexPattern_);
         }
+        return false; // Should not happen
+    }
 }
 
 PredicateFilter::PredicateFilter(PredicateFilter::Predicate predicate) : predicate_(std::move(predicate)) {}
@@ -168,7 +330,7 @@ bool KeywordFilter::matches(const LogEntry &entry) const {
         if (isCaseSensitive_) {
             return text.find(keyword) != std::string::npos;
         } else {
-            return caseInsensitiveSearch(text, keyword);
+            return Utils::caseInsensitiveSearch(text, keyword);
         }
     };
 
@@ -189,11 +351,20 @@ bool KeywordFilter::matches(const LogEntry &entry) const {
     }
 }
 
+std::expected<std::shared_ptr<RegexFilter>, std::string> RegexFilter::create(std::string pattern, bool caseSensitive) {
+    try {
+        // Use 'new' to call the private constructor, then wrap in shared_ptr
+        return std::shared_ptr<RegexFilter>(new RegexFilter(std::move(pattern), caseSensitive));
+    } catch (const std::regex_error& e) {
+        return std::unexpected<std::string>("Invalid regex pattern: " + std::string(e.what()));
+    }
+}
+
 RegexFilter::RegexFilter(std::string pattern, std::regex_constants::syntax_option_type flags)
-    : pattern_(pattern, flags) {}
+    : pattern_(std::move(pattern), flags) {}
 
 RegexFilter::RegexFilter(std::string pattern, bool caseSensitive)
-    : pattern_(pattern, caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase) {}
+    : pattern_(std::move(pattern), caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase) {}
 bool RegexFilter::matches(const LogEntry &entry) const {
     return std::regex_search(entry.message, pattern_);
 }
@@ -226,6 +397,14 @@ std::expected<TimeRangeFilter, std::string> TimeRangeFilter::since(const std::st
     }
     // 'since' creates a range from the relative time up to now.
     return TimeRangeFilter(*startTime, std::chrono::system_clock::now());
+}
+
+std::expected<TimeRangeFilter, std::string> TimeRangeFilter::forDay(const std::string& dateString) {
+    auto dayRange = Utils::parseDayRange(dateString);
+    if (!dayRange) {
+        return std::unexpected(dayRange.error());
+    }
+    return TimeRangeFilter(dayRange->first, dayRange->second);
 }
 
 bool CompositeFilter::matches(const LogEntry &entry) const {

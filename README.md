@@ -9,8 +9,8 @@ A simple C++ tool to analyze log files.
 - **Pluggable Architecture**:
     - **Custom Parsers**: Define your own log parsing logic by implementing the `ILogParser` interface, going beyond simple regex.
     - **Custom Analyzers**: Create custom analysis routines with the `ILogAnalyzer` interface.
-- **Advanced Filtering**: Build complex filter expressions with `AND`/`OR` logic to pinpoint exact log messages. Basic filtering is still supported for:
-    - Specific log levels.
+- **Advanced Filtering**: Build complex filter expressions with `AND`/`OR`/`NOT` logic to pinpoint exact log messages. Basic filtering is still supported for:
+    - Specific log levels (e.g., `ERROR,WARNING`), or filter by minimum level (e.g., `level >= WARNING`).
     - Message keyword (case-sensitive or insensitive).
     - Regular expression patterns in messages.
     - Time range (start and end timestamps). Supports absolute formats (`YYYY-MM-DD HH:MM:SS`, ISO 8601), relative times (`1h ago`, `yesterday`), and Unix timestamps.
@@ -20,6 +20,7 @@ A simple C++ tool to analyze log files.
 - **Live Tail (Follow) Mode**: Monitor new entries in log files in real-time, ideal for continuous monitoring.
 - **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
 - **Custom Timestamp Formats**: Specify the timestamp format of your log files using `strftime` patterns to ensure correct parsing.
+- **Configurable Log Line Patterns**: Define custom regular expressions to parse entire log lines and extract specific fields like timestamp, level, message, source, and function, offering flexibility beyond standard formats.
 - Generates a summary of log levels (INFO, WARNING, ERROR, CRITICAL, DEBUG, TRACE, FATAL, UNKNOWN).
 - Ability to sort filtered logs by timestamp, level, or message, in ascending or descending order.
 - Ability to save analysis results to an output file in various formats (text, JSON, CSV, YAML, **XML**).
@@ -125,6 +126,10 @@ ctest --verbose
 
 # Specify a custom timestamp format for parsing (e.g., ISO 8601 with milliseconds)
 ./logAnalyzer path/to/your/logfile.log --timestamp-format "%Y-%m-%d %H:%M:%S.%f"
+
+# Specify a custom regex pattern for parsing log lines
+# This example assumes a log line like "[2023-10-27 10:00:00 INFO] (main.cpp:123) My message"
+./logAnalyzer path/to/your/logfile.log --log-pattern "^\\[(.*?)\\s(.*?)\\]\\s\\((.*?):(\\d+)\\)\\s(.*)$" --pattern-fields "timestamp,level,source,line,message"
 
 # Show log frequency distribution in 5-minute windows
 ./logAnalyzer path/to/your/logfile.log --stats-window 5m

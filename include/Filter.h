@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <chrono>
 #include <expected>
+#include <optional> // For std::optional
 #include "Utils.h" // For time parsing utilities
 
 // Defines criteria for filtering log entries.
@@ -52,7 +53,7 @@ private:
     std::string pattern_;
     PatternType type_;
     bool caseSensitive_;
-    std::regex regexPattern_;
+    std::optional<std::regex> regexPattern_;
 };
 
 class FieldExistsFilter : public IFilter {
@@ -77,7 +78,7 @@ private:
     std::string valuePattern_;
     PatternType type_;
     bool caseSensitive_;
-    std::regex regexPattern_;
+    std::optional<std::regex> regexPattern_;
 };
 
 #include <set> // For std::set
@@ -136,10 +137,12 @@ private:
 
 class RegexFilter : public IFilter {
 public:
-    explicit RegexFilter(std::string pattern, std::regex_constants::syntax_option_type flags = std::regex::ECMAScript);
-    explicit RegexFilter(std::string pattern, bool caseSensitive);
+    static std::expected<std::shared_ptr<RegexFilter>, std::string> create(std::string pattern, bool caseSensitive = false);
     bool matches(const LogEntry &entry) const override;
+
 private:
+    explicit RegexFilter(std::string pattern, std::regex_constants::syntax_option_type flags);
+    explicit RegexFilter(std::string pattern, bool caseSensitive);
     std::regex pattern_;
 };
 
@@ -151,6 +154,7 @@ public:
                     std::chrono::system_clock::time_point end);
 
     static std::expected<TimeRangeFilter, std::string> fromStrings(const std::string& start, const std::string& end);
+    static std::expected<TimeRangeFilter, std::string> forDay(const std::string& dateString);
     static std::expected<TimeRangeFilter, std::string> since(const std::string& relativeTime);
 
     bool matches(const LogEntry &entry) const override;
@@ -180,6 +184,96 @@ public:
 private:
     Logic logic_;
     std::vector<std::shared_ptr<IFilter>> filters_;
+};
+
+class NumericComparisonFilter : public IFilter {
+public:
+    enum class Operator {
+        EQ,  // Equal to
+        NEQ, // Not equal to
+        GT,  // Greater than
+        LT,  // Less than
+        GTE, // Greater than or equal to
+        LTE  // Less than or equal to
+    };
+
+    NumericComparisonFilter(std::string fieldKey, double value, Operator op);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldKey_;
+    double value_;
+    Operator op_;
+};
+
+class BoolFilter : public IFilter {
+public:
+    explicit BoolFilter(std::string fieldKey, bool value);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldKey_;
+    bool value_;
+};
+
+// Internal helper for nested field access (declaration only)
+namespace Detail {
+    std::optional<std::string> getNestedValue(const LogEntry& entry, const std::string& fieldPath);
+    std::optional<double> getNestedNumericValue(const LogEntry& entry, const std::string& fieldPath);
+    std::optional<bool> getNestedBoolValue(const LogEntry& entry, const std::string& fieldPath);
+}
+
+class NestedFieldValueFilter : public IFilter {
+public:
+    NestedFieldValueFilter(std::string fieldPath,
+                           std::string valuePattern,
+                           PatternType type = PatternType::Literal,
+                           bool caseSensitive = false);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldPath_;
+    std::string valuePattern_;
+    PatternType type_;
+    bool caseSensitive_;
+    std::optional<std::regex> regexPattern_;
+};
+
+class NestedNumericComparisonFilter : public IFilter {
+public:
+    // Operator enum as in NumericComparisonFilter
+    explicit NestedNumericComparisonFilter(std::string fieldPath, double value, NumericComparisonFilter::Operator op);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldPath_;
+    double value_;
+    NumericComparisonFilter::Operator op_;
+};
+
+class NestedBoolFilter : public IFilter {
+public:
+    explicit NestedBoolFilter(std::string fieldPath, bool value);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldPath_;
+    bool value_;
+};
+
+class ValueSetFilter : public IFilter {
+public:
+    ValueSetFilter(std::string fieldKey, std::set<std::string> values, bool caseSensitive = false);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldKey_;
+    std::set<std::string> valueSet_;
+    bool caseSensitive_;
+};
+
+class NestedValueSetFilter : public IFilter {
+public:
+    NestedValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive = false);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldPath_;
+    std::set<std::string> valueSet_;
+    bool caseSensitive_;
 };
 
 #endif // FILTER_H

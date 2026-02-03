@@ -5,7 +5,7 @@
 #include <iostream> // For debug prints
 
 Statistics::Statistics(std::span<const LogEntry> entries)
-    : m_entries(entries), m_sortedEntries(entries.begin(), entries.end()) {
+    : m_sortedEntries(entries.begin(), entries.end()) {
     std::sort(m_sortedEntries.begin(), m_sortedEntries.end(), [](const auto& a, const auto& b) {
         return a.timestamp < b.timestamp;
     });
@@ -13,7 +13,7 @@ Statistics::Statistics(std::span<const LogEntry> entries)
 
 std::map<LogLevel, int> Statistics::calculateLogLevelDistribution() const {
     std::map<LogLevel, int> distribution;
-    for (const auto& entry : m_entries) {
+    for (const auto& entry : m_sortedEntries) {
         distribution[entry.level]++;
     }
     return distribution;
@@ -21,7 +21,7 @@ std::map<LogLevel, int> Statistics::calculateLogLevelDistribution() const {
 
 std::map<std::string, int> Statistics::calculateUniqueMessageCounts() const {
     std::map<std::string, int> counts;
-    for (const auto& entry : m_entries) {
+    for (const auto& entry : m_sortedEntries) {
         counts[entry.message]++;
     }
     return counts;
@@ -61,36 +61,22 @@ std::vector<TimeWindowStats> Statistics::getLogFrequencyDistributionOverTime(std
     const auto minTime = m_sortedEntries.front().timestamp;
     const auto maxTime = m_sortedEntries.back().timestamp;
 
-    auto currentWindowStart = minTime;
     auto it_entry_current = m_sortedEntries.begin();
 
-    while (currentWindowStart <= maxTime || (result.empty() && !m_sortedEntries.empty())) {
+    for (auto currentWindowStart = minTime; currentWindowStart <= maxTime; currentWindowStart += windowSize) {
         TimeWindowStats stats;
         stats.windowStart = currentWindowStart;
         stats.windowEnd = currentWindowStart + windowSize;
         stats.totalCount = 0;
 
-        // Skip entries that are before the current window's start.
-        while (it_entry_current != m_sortedEntries.end() && it_entry_current->timestamp < stats.windowStart) {
-            ++it_entry_current;
-        }
-
         // Iterate through entries belonging to the current window [stats.windowStart, stats.windowEnd)
-        auto window_iterator = it_entry_current;
-        while (window_iterator != m_sortedEntries.end() && window_iterator->timestamp < stats.windowEnd) {
-            stats.counts[window_iterator->level]++;
+        while (it_entry_current != m_sortedEntries.end() && it_entry_current->timestamp < stats.windowEnd) {
+            stats.counts[it_entry_current->level]++;
             stats.totalCount++;
-            ++window_iterator;
+            ++it_entry_current;
         }
         
         result.push_back(stats);
-        
-        currentWindowStart += windowSize;
-        it_entry_current = window_iterator;
-
-        if (it_entry_current == m_sortedEntries.end() && currentWindowStart > maxTime && !result.empty()) {
-            break;
-        }
     }
 
     return result;
@@ -132,7 +118,7 @@ double Statistics::calculateAverageEntryRate() const {
 
 std::map<std::string, int> Statistics::calculateDistributionByGroup(GroupKeyExtractor extractor) const {
     std::map<std::string, int> distribution;
-    for (const auto& entry : m_entries) {
+    for (const auto& entry : m_sortedEntries) {
         if (auto key = extractor(entry)) {
             distribution[*key]++;
         }
@@ -141,21 +127,18 @@ std::map<std::string, int> Statistics::calculateDistributionByGroup(GroupKeyExtr
 }
 
 void Statistics::ensureTimeGapsAreCalculated() const {
-    if (m_timeGapsCalculated) {
-        return;
-    }
-    if (m_sortedEntries.size() < 2) {
-        m_timeGapsCalculated = true;
-        return;
-    }
+    std::call_once(m_timeGapsCalculatedFlag, [this]() {
+        if (m_sortedEntries.size() < 2) {
+            return;
+        }
 
-    m_timeGaps.reserve(m_sortedEntries.size() - 1);
-    for (size_t i = 0; i < m_sortedEntries.size() - 1; ++i) {
-        auto diff = m_sortedEntries[i+1].timestamp - m_sortedEntries[i].timestamp;
-        m_timeGaps.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(diff));
-    }
-    std::sort(m_timeGaps.begin(), m_timeGaps.end());
-    m_timeGapsCalculated = true;
+        m_timeGaps.reserve(m_sortedEntries.size() - 1);
+        for (size_t i = 0; i < m_sortedEntries.size() - 1; ++i) {
+            auto diff = m_sortedEntries[i+1].timestamp - m_sortedEntries[i].timestamp;
+            m_timeGaps.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(diff));
+        }
+        std::sort(m_timeGaps.begin(), m_timeGaps.end());
+    });
 }
 
 std::chrono::nanoseconds Statistics::getTimeGapPercentile(double percentile) const {
@@ -210,17 +193,12 @@ std::vector<Statistics::LogBurst> Statistics::findLogBursts(std::chrono::seconds
 
     const double overallAverageRate = calculateAverageEntryRate();
     if (overallAverageRate == 0) {
+        // If overall average rate is 0, there are no events or only one event, thus no bursts.
         return {};
     }
     
     const double rateThreshold = overallAverageRate * thresholdMultiplier;
     std::vector<LogBurst> bursts;
-
-    std::cerr << "--- findLogBursts Debug ---" << std::endl;
-    std::cerr << "Overall Average Rate: " << overallAverageRate << " e/s" << std::endl;
-    std::cerr << "Threshold Multiplier: " << thresholdMultiplier << std::endl;
-    std::cerr << "Rate Threshold: " << rateThreshold << " e/s" << std::endl;
-    std::cerr << "Window Size: " << windowSize.count() << "s" << std::endl;
     
     size_t left = 0;
     for (size_t right = 0; right < m_sortedEntries.size(); ++right) {
@@ -235,62 +213,47 @@ std::vector<Statistics::LogBurst> Statistics::findLogBursts(std::chrono::seconds
         const auto windowDuration = currentEntry.timestamp - m_sortedEntries[left].timestamp;
         const auto windowDurationSec = std::chrono::duration_cast<std::chrono::duration<double>>(windowDuration).count();
 
+        // Rate calculation: events per second.
+        // If windowDurationSec is 0 (all events at the same timestamp), consider the rate to be
+        // the number of events, interpreting it as `events / 1 second` for comparison.
+        // This avoids division by zero and provides a quantifiable 'burstiness' for instantaneous events.
         double currentRate = (windowDurationSec > 0) ? (currentWindowEvents / windowDurationSec) : static_cast<double>(currentWindowEvents);
 
-        std::cerr << "Iteration right=" << right << ", left=" << left << std::endl;
-        std::cerr << "  Window: [" << std::chrono::duration_cast<std::chrono::milliseconds>(m_sortedEntries[left].timestamp.time_since_epoch()).count() << "ms, "
-                  << std::chrono::duration_cast<std::chrono::milliseconds>(currentEntry.timestamp.time_since_epoch()).count() << "ms]" << std::endl;
-        std::cerr << "  Current Window Events: " << currentWindowEvents << ", Duration: " << windowDurationSec << "s, Rate: " << currentRate << " e/s" << std::endl;
-
-
         if (currentRate > rateThreshold) {
-            std::cerr << "  Rate " << currentRate << " > Threshold " << rateThreshold << ". Potential burst." << std::endl;
             if (!bursts.empty() && bursts.back().endTime >= m_sortedEntries[left].timestamp) {
                 // Merge with the previous burst.
-                std::cerr << "    Merging with previous burst." << std::endl;
                 size_t startIdxOfPrevBurst = findIndexByTimestamp(bursts.back().startTime);
+                // As bursts.back().startTime is always derived from m_sortedEntries[left].timestamp,
+                // findIndexByTimestamp should always return a valid index.
+                // If it somehow fails, it would indicate a logical inconsistency, but we proceed
+                // assuming a valid index is found.
+                
+                // Update the end time to the current entry's timestamp.
+                bursts.back().endTime = currentEntry.timestamp;
 
-                if (startIdxOfPrevBurst != static_cast<size_t>(-1)) {
-                    // A merge is happening. Update the end time to the current entry's timestamp.
-                    bursts.back().endTime = currentEntry.timestamp;
-
-                    // Recalculate eventCount to span from the original start to the new end.
-                    bursts.back().eventCount = right - startIdxOfPrevBurst + 1;
-                    
-                    // Recalculate the duration and rate for the entire merged burst.
-                    const auto mergedDuration = std::chrono::duration_cast<std::chrono::duration<double>>(
-                        bursts.back().endTime - bursts.back().startTime).count();
-                    
-                    if (mergedDuration > 0) {
-                        bursts.back().peakRate = static_cast<double>(bursts.back().eventCount) / mergedDuration;
-                    } else {
-                        bursts.back().peakRate = static_cast<double>(bursts.back().eventCount); // Handle zero duration case
-                    }
-                    std::cerr << "    Merged Burst updated: Start=" << std::chrono::duration_cast<std::chrono::milliseconds>(bursts.back().startTime.time_since_epoch()).count() << "ms, End="
-                              << std::chrono::duration_cast<std::chrono::milliseconds>(bursts.back().endTime.time_since_epoch()).count() << "ms, Count=" << bursts.back().eventCount
-                              << ", Rate=" << bursts.back().peakRate << std::endl;
+                // Recalculate eventCount to span from the original start to the new end.
+                bursts.back().eventCount = right - startIdxOfPrevBurst + 1;
+                
+                // Recalculate the duration and rate for the entire merged burst.
+                const auto mergedDuration = std::chrono::duration_cast<std::chrono::duration<double>>(
+                    bursts.back().endTime - bursts.back().startTime).count();
+                
+                if (mergedDuration > 0) {
+                    bursts.back().peakRate = static_cast<double>(bursts.back().eventCount) / mergedDuration;
                 } else {
-                    // Fallback: If `startTime` not found, we can't precisely update `eventCount`.
-                    // This scenario should ideally not occur if `startTime` is always from `m_sortedEntries`.
-                    // For this iteration, we prioritize accurate `eventCount` and assume `findIndexByTimestamp` works.
-                    // If it fails, `eventCount` will remain the old value from before the merge, which is incorrect.
-                    std::cerr << "    WARNING: startIdxOfPrevBurst not found for merging." << std::endl;
+                    // Handle zero duration case for merged burst: use event count as rate.
+                    bursts.back().peakRate = static_cast<double>(bursts.back().eventCount);
                 }
             } else {
                 // This is a new burst.
-                std::cerr << "    Creating new burst." << std::endl;
                 bursts.push_back({
                     m_sortedEntries[left].timestamp,   // startTime of the new burst
                     currentEntry.timestamp,            // endTime of the new burst
                     currentWindowEvents,               // eventCount for this new burst
                     currentRate                        // peakRate for this new burst
                 });
-                 std::cerr << "    New Burst created: Start=" << std::chrono::duration_cast<std::chrono::milliseconds>(bursts.back().startTime.time_since_epoch()).count() << "ms, End="
-                              << std::chrono::duration_cast<std::chrono::milliseconds>(bursts.back().endTime.time_since_epoch()).count() << "ms, Count=" << bursts.back().eventCount
-                              << ", Rate=" << bursts.back().peakRate << std::endl;
             }
         }
     }
-    std::cerr << "--- findLogBursts Debug End ---" << std::endl;
     return bursts;
 }

@@ -87,9 +87,9 @@ TEST_F(StatisticsTest, GetRankedMessagesDescending) {
     EXPECT_EQ(ranked[0].first, "Burst event");
     EXPECT_EQ(ranked[0].second, 4);
     EXPECT_EQ(ranked[1].first, "Begin process");
-    EXPECT_EQ(ranked[1].second, 2); // Changed from 3
-    EXPECT_EQ(ranked[2].first, "Connection timeout"); // Was 2, still 2
-    EXPECT_EQ(ranked[2].second, 2); // Was 2, still 2
+    EXPECT_EQ(ranked[1].second, 2); 
+    EXPECT_EQ(ranked[2].first, "Connection timeout"); 
+    EXPECT_EQ(ranked[2].second, 2); 
 }
 
 TEST_F(StatisticsTest, GetRankedMessagesAscending) {
@@ -106,6 +106,105 @@ TEST_F(StatisticsTest, GetRankedMessagesAscending) {
     EXPECT_EQ(ranked[5].first, "Burst event");
     EXPECT_EQ(ranked[5].second, 4);
 }
+
+// Test for getLogFrequencyDistributionOverTime
+TEST_F(StatisticsTest, GetLogFrequencyDistributionOverTimeEmpty) {
+    std::vector<LogEntry> emptyEntries;
+    Statistics stats(emptyEntries);
+    auto dist = stats.getLogFrequencyDistributionOverTime(1s);
+    ASSERT_TRUE(dist.empty());
+}
+
+TEST_F(StatisticsTest, GetLogFrequencyDistributionOverTimeSingleEntry) {
+    auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> singleEntry = {
+        {0, "test.cpp", now, LogLevel::INFO, "Single", {}}
+    };
+    Statistics stats(singleEntry);
+    auto dist = stats.getLogFrequencyDistributionOverTime(1s);
+    ASSERT_EQ(dist.size(), 1);
+    EXPECT_EQ(dist[0].windowStart, now);
+    EXPECT_EQ(dist[0].totalCount, 1);
+    EXPECT_EQ(dist[0].counts[LogLevel::INFO], 1);
+}
+
+TEST_F(StatisticsTest, GetLogFrequencyDistributionOverTimeNormalData) {
+    auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> testEntries = {
+        {0, "test.cpp", now + 0s, LogLevel::INFO, "Log1", {}},
+        {0, "test.cpp", now + 0s + 500ms, LogLevel::DEBUG, "Log2", {}},
+        {0, "test.cpp", now + 1s + 100ms, LogLevel::INFO, "Log3", {}},
+        {0, "test.cpp", now + 1s + 600ms, LogLevel::WARNING, "Log4", {}},
+        {0, "test.cpp", now + 2s + 200ms, LogLevel::ERROR, "Log5", {}}
+    };
+    Statistics stats(testEntries);
+
+    // Window size 1 second
+    // Window 0: [now, now+1s) -> Log1, Log2 (2 events)
+    // Window 1: [now+1s, now+2s) -> Log3, Log4 (2 events)
+    // Window 2: [now+2s, now+3s) -> Log5 (1 event)
+    auto dist = stats.getLogFrequencyDistributionOverTime(1s);
+    ASSERT_EQ(dist.size(), 3);
+
+    EXPECT_EQ(dist[0].totalCount, 2);
+    EXPECT_EQ(dist[0].counts[LogLevel::INFO], 1);
+    EXPECT_EQ(dist[0].counts[LogLevel::DEBUG], 1);
+
+    EXPECT_EQ(dist[1].totalCount, 2);
+    EXPECT_EQ(dist[1].counts[LogLevel::INFO], 1);
+    EXPECT_EQ(dist[1].counts[LogLevel::WARNING], 1);
+
+    EXPECT_EQ(dist[2].totalCount, 1);
+    EXPECT_EQ(dist[2].counts[LogLevel::ERROR], 1);
+}
+
+TEST_F(StatisticsTest, GetLogFrequencyDistributionOverTimeWithLargeGaps) {
+    auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> testEntries = {
+        {0, "test.cpp", now + 0s, LogLevel::INFO, "Log1", {}},
+        {0, "test.cpp", now + 10s, LogLevel::INFO, "Log2", {}}, // Large gap
+        {0, "test.cpp", now + 10s + 500ms, LogLevel::INFO, "Log3", {}}
+    };
+    Statistics stats(testEntries);
+
+    // Window size 1 second
+    // Window 0: [now, now+1s) -> Log1 (1 event)
+    // Window 1-9: Empty
+    // Window 10: [now+10s, now+11s) -> Log2, Log3 (2 events)
+    auto dist = stats.getLogFrequencyDistributionOverTime(1s);
+    ASSERT_EQ(dist.size(), 11); // 0s, 1s, ..., 9s, 10s
+
+    EXPECT_EQ(dist[0].totalCount, 1);
+    EXPECT_EQ(dist[0].counts[LogLevel::INFO], 1);
+
+    for (size_t i = 1; i < 10; ++i) {
+        EXPECT_EQ(dist[i].totalCount, 0) << "Window " << i << " should be empty";
+    }
+
+    EXPECT_EQ(dist[10].totalCount, 2);
+    EXPECT_EQ(dist[10].counts[LogLevel::INFO], 2);
+}
+
+TEST_F(StatisticsTest, GetLogFrequencyDistributionOverTimeAllInOneWindow) {
+    auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> testEntries = {
+        {0, "test.cpp", now + 0s, LogLevel::INFO, "Log1", {}},
+        {0, "test.cpp", now + 1s, LogLevel::DEBUG, "Log2", {}},
+        {0, "test.cpp", now + 2s, LogLevel::WARNING, "Log3", {}}
+    };
+    Statistics stats(testEntries);
+
+    // Window size 10 seconds, all logs should be in the first window
+    auto dist = stats.getLogFrequencyDistributionOverTime(10s);
+    ASSERT_EQ(dist.size(), 1);
+
+    EXPECT_EQ(dist[0].totalCount, 3);
+    EXPECT_EQ(dist[0].counts[LogLevel::INFO], 1);
+    EXPECT_EQ(dist[0].counts[LogLevel::DEBUG], 1);
+    EXPECT_EQ(dist[0].counts[LogLevel::WARNING], 1);
+}
+
+
 
 TEST_F(StatisticsTest, CalculateDistributionByGroup) {
     Statistics stats(entries);
@@ -151,6 +250,21 @@ TEST_F(StatisticsTest, GetTimeGapPercentile) {
     EXPECT_NEAR(gapStats.getTimeGapPercentile(0.5).count(), std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(2.5)).count(), 1.0); // Interpolated
 }
 
+TEST_F(StatisticsTest, GetTimeGapPercentileInvalidArgs) {
+    Statistics stats(entries);
+    EXPECT_THROW(stats.getTimeGapPercentile(-0.1), std::invalid_argument);
+    EXPECT_THROW(stats.getTimeGapPercentile(1.1), std::invalid_argument);
+}
+
+TEST_F(StatisticsTest, FindTimeGapsNoGapsFound) {
+    Statistics stats(entries);
+    // There are gaps, but none are larger than 3s, except one.
+    // The largest gap is 2s. Let's set minGap to 3s.
+    auto gaps = stats.findTimeGaps(3s);
+    EXPECT_TRUE(gaps.empty());
+}
+
+
 TEST_F(StatisticsTest, FindTimeGaps) {
     // This test also has an expectation related to the gaps, let's re-evaluate.
     // The previous analysis assumed a 6s gap.
@@ -191,8 +305,126 @@ TEST_F(StatisticsTest, FindLogBursts) {
     auto bursts = stats.findLogBursts(1s, 3.0);
 
     ASSERT_EQ(bursts.size(), 1);
-    EXPECT_EQ(bursts[0].eventCount, 5); // Changed from 4
-    EXPECT_NEAR(bursts[0].peakRate, 5.0, 0.1); // Changed from 4.0 / 0.3
+    EXPECT_EQ(bursts[0].eventCount, 5); 
+    EXPECT_NEAR(bursts[0].peakRate, 5.0, 0.1); 
+}
+
+TEST_F(StatisticsTest, FindLogBurstsMergingScenarios) {
+    auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> mergeEntries = {
+        {0, "test.cpp", now + 0s, LogLevel::INFO, "Normal", {}},
+        {0, "test.cpp", now + 1s, LogLevel::ERROR, "Burst1", {}},
+        {0, "test.cpp", now + 1s + 100ms, LogLevel::ERROR, "Burst1", {}},
+        {0, "test.cpp", now + 1s + 200ms, LogLevel::ERROR, "Burst1", {}}, // End of first burst
+
+        {0, "test.cpp", now + 1s + 800ms, LogLevel::ERROR, "Burst2", {}}, // Starts shortly after first
+        {0, "test.cpp", now + 1s + 900ms, LogLevel::ERROR, "Burst2", {}},
+        {0, "test.cpp", now + 2s, LogLevel::ERROR, "Burst2", {}}, // End of second burst
+
+        {0, "test.cpp", now + 5s, LogLevel::INFO, "Normal", {}}
+    };
+    Statistics stats(mergeEntries);
+
+    // Overall average rate (7 entries in 5 seconds) = 1.4 e/s
+    // Threshold multiplier 2.0 -> threshold = 2.8 e/s
+    // Window size 1s:
+    // First burst: 3 events in 0.2s -> 15 e/s (above threshold)
+    // Second burst: 3 events in 0.2s -> 15 e/s (above threshold)
+    // They should merge because the second burst starts before the window size of the first burst ends relative to its end time (1s window).
+    // Specifically, previous burst ends at now+1s+200ms. If the next relevant entry (now+1s+800ms) falls within (now+1s+200ms, now+1s+200ms+1s], it should merge.
+    // 1s+800ms is within 1s+200ms to 2s+200ms. So they merge.
+
+    auto bursts = stats.findLogBursts(1s, 2.0);
+    ASSERT_EQ(bursts.size(), 1);
+    EXPECT_EQ(bursts[0].eventCount, 6); // All 6 burst events
+    EXPECT_NEAR(bursts[0].peakRate, 6.0, 0.1);
+    EXPECT_EQ(bursts[0].startTime, now + 1s);
+    EXPECT_EQ(bursts[0].endTime, now + 2s);
+}
+
+TEST_F(StatisticsTest, FindLogBurstsMultipleDistinctBursts) {
+    auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> distinctEntries = {
+        {0, "test.cpp", now + 0s, LogLevel::INFO, "Normal", {}},
+        {0, "test.cpp", now + 1s, LogLevel::ERROR, "BurstA", {}},
+        {0, "test.cpp", now + 1s + 100ms, LogLevel::ERROR, "BurstA", {}},
+        {0, "test.cpp", now + 1s + 200ms, LogLevel::ERROR, "BurstA", {}}, // End of BurstA
+
+        {0, "test.cpp", now + 5s, LogLevel::INFO, "Normal", {}}, // Gap
+        
+        {0, "test.cpp", now + 6s, LogLevel::ERROR, "BurstB", {}},
+        {0, "test.cpp", now + 6s + 100ms, LogLevel::ERROR, "BurstB", {}}, // End of BurstB
+
+        {0, "test.cpp", now + 10s, LogLevel::INFO, "Normal", {}}
+    };
+    Statistics stats(distinctEntries);
+
+    // Overall average rate (7 entries in 10 seconds) = 0.7 e/s
+    // Threshold multiplier 3.0 -> threshold = 2.1 e/s
+    // BurstA: 3 events in 0.2s -> 15 e/s (above threshold)
+    // BurstB: 2 events in 0.1s -> 20 e/s (above threshold)
+    auto bursts = stats.findLogBursts(1s, 3.0);
+
+    ASSERT_EQ(bursts.size(), 2);
+
+    EXPECT_EQ(bursts[0].eventCount, 3);
+    EXPECT_NEAR(bursts[0].peakRate, 15.0, 0.1);
+    EXPECT_EQ(bursts[0].startTime, now + 1s);
+    EXPECT_EQ(bursts[0].endTime, now + 1s + 200ms);
+
+    EXPECT_EQ(bursts[1].eventCount, 2);
+    EXPECT_NEAR(bursts[1].peakRate, 20.0, 0.1);
+    EXPECT_EQ(bursts[1].startTime, now + 6s);
+    EXPECT_EQ(bursts[1].endTime, now + 6s + 100ms);
+}
+
+TEST_F(StatisticsTest, FindLogBurstsAtEdges) {
+    auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> edgeEntries = {
+        {0, "test.cpp", now + 0s, LogLevel::ERROR, "EdgeBurst", {}},
+        {0, "test.cpp", now + 0s + 100ms, LogLevel::ERROR, "EdgeBurst", {}},
+
+        {0, "test.cpp", now + 5s, LogLevel::INFO, "Normal", {}},
+        {0, "test.cpp", now + 6s, LogLevel::INFO, "Normal", {}},
+
+        {0, "test.cpp", now + 9s, LogLevel::ERROR, "EdgeBurst", {}},
+        {0, "test.cpp", now + 9s + 100ms, LogLevel::ERROR, "EdgeBurst", {}}
+    };
+    Statistics stats(edgeEntries);
+
+    // Overall average rate (6 entries in 9.1 seconds) = ~0.66 e/s
+    // Threshold multiplier 5.0 -> threshold = ~3.3 e/s
+    // Each burst: 2 events in 0.1s -> 20 e/s (above threshold)
+    auto bursts = stats.findLogBursts(1s, 5.0);
+
+    ASSERT_EQ(bursts.size(), 2);
+
+    EXPECT_EQ(bursts[0].eventCount, 2);
+    EXPECT_NEAR(bursts[0].peakRate, 20.0, 0.1);
+    EXPECT_EQ(bursts[0].startTime, now + 0s);
+    EXPECT_EQ(bursts[0].endTime, now + 0s + 100ms);
+
+    EXPECT_EQ(bursts[1].eventCount, 2);
+    EXPECT_NEAR(bursts[1].peakRate, 20.0, 0.1);
+    EXPECT_EQ(bursts[1].startTime, now + 9s);
+    EXPECT_EQ(bursts[1].endTime, now + 9s + 100ms);
+}
+
+TEST_F(StatisticsTest, FindLogBurstsNoBursts) {
+    auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> noBurstEntries = {
+        {0, "test.cpp", now + 0s, LogLevel::INFO, "Normal", {}},
+        {0, "test.cpp", now + 2s, LogLevel::INFO, "Normal", {}},
+        {0, "test.cpp", now + 4s, LogLevel::INFO, "Normal", {}},
+        {0, "test.cpp", now + 6s, LogLevel::INFO, "Normal", {}}
+    };
+    Statistics stats(noBurstEntries);
+
+    // Overall average rate (4 entries in 6 seconds) = ~0.66 e/s
+    // Threshold multiplier 2.0 -> threshold = ~1.33 e/s
+    // Max rate in any 1s window will be 1 event/s (1 event in 2s window, 0.5 e/s; 1 event in 1s window, 1 e/s).
+    auto bursts = stats.findLogBursts(1s, 2.0);
+    ASSERT_TRUE(bursts.empty());
 }
 
 TEST_F(StatisticsTest, EmptyEntries) {
