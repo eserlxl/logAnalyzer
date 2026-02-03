@@ -68,13 +68,30 @@ struct FieldMapping {
 
   // Constructor for non-structured fields
   FieldMapping(LogEntryField f, int gi, const std::string& fmt = "")
-      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), formats({fmt}) {}
+      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))) {
+    if (!fmt.empty()) {
+        formats.push_back(fmt);
+    }
+  }
+
+  // Constructor for non-structured fields accepting C-style strings
+  FieldMapping(LogEntryField f, int gi, const char* fmt)
+      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))) {
+    if (fmt != nullptr) {
+        formats.push_back(fmt);
+    }
+  }
 
   // Constructor for structured fields (kv_delimiter is now part of formats vector)
   FieldMapping(LogEntryField f, int gi, const std::string& sfn, const std::string& kv_delimiter = "=")
       : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), formats({kv_delimiter}), structuredFieldName(sfn) {}
-};
 
+  // Explicitly defined copy and move constructors/assignment operators for robust vector usage
+  FieldMapping(const FieldMapping&) = default;
+  FieldMapping(FieldMapping&&) = default;
+  FieldMapping& operator=(const FieldMapping&) = default;
+  FieldMapping& operator=(FieldMapping&&) = default;
+};
 // Enum for Parse Errors
 enum class ParseError {
   SUCCESS,

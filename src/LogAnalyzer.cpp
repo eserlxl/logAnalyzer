@@ -46,7 +46,7 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string &filePath, const st
             std::vector<FieldMapping> currentFieldMappings;
             if (pattern == LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN) {
                 // If using the default regex pattern, infer the field mappings
-                currentFieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, std::string("%Y-%m-%d %H:%M:%S"));
+                currentFieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
                 currentFieldMappings.emplace_back(LogEntryField::LEVEL, 2);
                 currentFieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
             }
@@ -74,9 +74,9 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string &filePath, const st
         lastReport.linesProcessed++;
         auto result = parser->parseLine(line, lineNumber);
         if (result.success) {
-            result.entry->sourceFile = filePath;
+            result.entry.sourceFile = filePath;
             lastReport.successfulParses++;
-            entries_.push_back(*result.entry);
+            entries_.push_back(result.entry);
         } else {
             lastReport.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.errorMessage, lineNumber});
             // Store even unparseable lines as UNKNOWN entries for context.
@@ -186,8 +186,8 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
             lineNumber++;
             auto result = parser->parseLine(line, lineNumber);
             if (result.success) {
-                result.entry->sourceFile = (filePath == "-" ? "stdin" : filePath);
-                if (!entryCallback(*result.entry)) {
+                result.entry.sourceFile = (filePath == "-" ? "stdin" : filePath);
+                if (!entryCallback(result.entry)) {
                     shouldContinue = false;
                     break; // Callback returned false, stop processing this file
                 }
@@ -240,8 +240,8 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
         lineNumber++;
         auto result = parser->parseLine(line, lineNumber);
         if (result.success) {
-            result.entry->sourceFile = filePath;
-            newEntries.push_back(*result.entry);
+            result.entry.sourceFile = filePath;
+            newEntries.push_back(result.entry);
         } else {
             LogEntry partialEntry;
             partialEntry.level = LogLevel::UNKNOWN;

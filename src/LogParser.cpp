@@ -1,25 +1,29 @@
 #include "LogParser.h"
-#include "Utils.h"
-#include <chrono>
-#include <iomanip>
-#include <iostream>
-#include <regex>
-#include <sstream>
+#include "LogTypes.h"  // For FieldMapping, LogEntryField
+#include <chrono>      // For std::chrono::parse
+#include <map>         // For std::map
+#include <memory>      // For std::unique_ptr
+#include <optional>    // For std::optional
+#include <regex>       // For std::regex
+#include <sstream>     // For std::istringstream
+#include <string>
+#include <string_view> // For std::string_view
+#include <vector>      // For std::vector
 
-// Helper to infer FieldMappings from the deprecated constructor's pattern
-static std::vector<FieldMapping> inferFieldMappingsFromPattern(const std::string& pattern) {
+// Helper function to infer field mappings from a pattern string.
+// This function needs to be defined before it's used by the DefaultLogParser constructor.
+std::vector<FieldMapping> inferFieldMappingsFromPattern([[maybe_unused]] const std::string& pattern) {
+    // This is a basic inference; a real implementation might parse the regex pattern
+    // to identify named capture groups or specific field indicators.
+    // For now, we use fixed group indices as a placeholder.
+    // TODO: Implement actual regex pattern parsing to infer field mappings.
+    // For now, hardcode some defaults based on common log formats.
+    // This is a simplified example and would need a more robust implementation
+    // to truly infer from a generic regex pattern.
     std::vector<FieldMapping> inferredMappings;
-    if (!pattern.empty()) {
-        // Infer timestamp, level, and message from capture groups 1, 2, and 3 respectively.
-        // This is for backward compatibility with the old constructor.
-        // The constructor call for TIMESTAMP is ambiguous. Let's assume LogTypes.h has a
-        // constructor that takes (LogEntryField, int, std::string) for the format.
-        // To resolve the ambiguity reported by the compiler, we must match a specific signature.
-        // Let's assume a constructor `FieldMapping(LogEntryField, int, std::string)` exists.
-        inferredMappings.emplace_back(LogEntryField::TIMESTAMP, 1, std::string("%Y-%m-%d %H:%M:%S"));
-        inferredMappings.emplace_back(LogEntryField::LEVEL, 2);
-        inferredMappings.emplace_back(LogEntryField::MESSAGE, 3);
-    }
+    inferredMappings.emplace_back(LogEntryField::TIMESTAMP, 1, std::string("%Y-%m-%d %H:%M:%S"));
+    inferredMappings.emplace_back(LogEntryField::LEVEL, 2);
+    inferredMappings.emplace_back(LogEntryField::MESSAGE, 3);
     return inferredMappings;
 }
 
@@ -106,12 +110,12 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
       case LogEntryField::TIMESTAMP: {
         std::chrono::system_clock::time_point tp;
         bool parsed = false;
-        if (!mapping.format.empty()) {
+        if (!mapping.formats.empty() && !mapping.formats[0].empty()) { // Use formats[0]
             std::istringstream ss(capturedValue);
             // Ensure to use the correct chrono::parse or equivalent
             // For simplicity, assuming std::chrono::parse is available and works as expected.
             // If not, a manual parsing approach with std::get_time would be needed.
-            ss >> std::chrono::parse(mapping.format, tp);
+            ss >> std::chrono::parse(mapping.formats[0], tp); // Use formats[0]
             if (!ss.fail()) parsed = true;
         } else {
             // Attempt common ISO formats and other common formats
@@ -170,7 +174,7 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
              entry.structuredFields[mapping.structuredFieldName] = capturedValue;
         }
         else { // If structuredFieldName is empty, try to parse key-value pairs from capturedValue
-            std::string delimiter = mapping.format.empty() ? "=" : mapping.format;
+            std::string delimiter = (!mapping.formats.empty() && !mapping.formats[0].empty()) ? mapping.formats[0] : "="; // Use formats[0]
             std::string pattern_str = "([\\w.-]+)\\s*" + delimiter + "\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,]+))";
             const std::regex kvPattern(pattern_str);
             auto kv_begin = std::sregex_iterator(capturedValue.begin(), capturedValue.end(), kvPattern);
