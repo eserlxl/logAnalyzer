@@ -8,6 +8,7 @@
 #include <vector> // Required for std::vector in split
 #include <filesystem> // Required for std::filesystem utilities
 #include <ctime>      // Required for std::mktime, std::time_t, std::tm, and timegm (non-standard but common)
+#include <CLI/CLI.hpp> // Required for CLI::ValidationError
 // No need to explicitly include <string> as it's included by Utils.h
 // No need to explicitly include <locale> for ::tolower/::toupper in this context,
 // but it's good to be aware for wider character sets.
@@ -340,6 +341,15 @@ std::string escapeJsonString(const std::string& input) {
         }
     }
     return oss.str();
+}
+
+std::string validateTimestampCliOption(const std::string &tsStr) {
+    if (tsStr.empty()) return tsStr; // Optional, so empty is fine
+    auto timePointResult = Utils::parseTime(tsStr);
+    if (timePointResult.has_value()) {
+        return tsStr; // Return the string if successful
+    }
+    throw CLI::ValidationError("Invalid time format: " + timePointResult.error() + ". Expected formats: 'YYYY-MM-DD HH:MM:SS', ISO 8601, Unix timestamp, or relative time like '1h ago'.");
 }
 
 } // namespace Utils

@@ -19,42 +19,42 @@
         {
           "name": "AnalyzeStreamFileOpenError",
           "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
-          "line": 87
+          "line": 86
         },
         {
           "name": "AnalyzeStreamInvalidRegexError",
           "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
-          "line": 106
+          "line": 105
         },
         {
           "name": "GetFilteredEntriesInvalidRegex",
           "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
-          "line": 133
+          "line": 132
         },
         {
           "name": "ExportAsCsvEdgeCases",
           "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
-          "line": 155
+          "line": 163
         },
         {
           "name": "ExportAsJsonEdgeCases",
           "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
-          "line": 193
+          "line": 201
         },
         {
           "name": "GetFrequencyDistributionEdgeCases",
           "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
-          "line": 258
+          "line": 266
         },
         {
           "name": "AppendCorrectness",
           "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
-          "line": 337
+          "line": 345
         },
         {
           "name": "Concurrency_Placeholder",
           "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
-          "line": 392
+          "line": 400
         }
       ]
     }

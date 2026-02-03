@@ -33,8 +33,7 @@ public:
     // Deprecated constructor, now delegates to the new one
     [[deprecated("Use constructor with fieldMappings for explicit control.")]]
     DefaultLogParser(
-        std::string pattern = "",
-        const std::map<std::string, LogLevel, ci_less> &mappings = {}
+        std::string pattern = ""
     );
 
     ParseResult parseLine(std::string_view line,
@@ -48,6 +47,8 @@ private:
     std::string patternString; // Store pattern string to allow cloning
     std::vector<FieldMapping> fieldMappings; // Renamed from fieldMappings_
     std::map<std::string, LogLevel, ci_less> customLevelMappings;
+
+    static const std::map<std::string, LogLevel, ci_less> DEFAULT_LEVEL_MAPPINGS;
 };
 
 #endif // LOG_PARSER_H

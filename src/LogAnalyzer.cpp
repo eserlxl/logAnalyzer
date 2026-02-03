@@ -22,7 +22,7 @@
 #include <string_view> // For std::string_view
 #include <span> // For std::span
 
-LogAnalyzer::LogAnalyzer() : defaultParser_(std::make_unique<DefaultLogParser>(std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN), customLevelMappings)) {}
+LogAnalyzer::LogAnalyzer() : defaultParser_(std::make_unique<DefaultLogParser>(std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN))) {}
 
 void LogAnalyzer::clear() {
     std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety

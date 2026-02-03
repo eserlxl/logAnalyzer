@@ -81,6 +81,10 @@ std::expected<std::chrono::system_clock::time_point, std::string> parseTime(cons
 // Escapes a string for JSON output, handling special characters like quotes, backslashes, and control characters.
 std::string escapeJsonString(const std::string& input);
 
+// Helper to validate timestamp CLI option
+// This function parses the timestamp string and throws CLI::ValidationError if parsing fails.
+std::string validateTimestampCliOption(const std::string &tsStr);
+
 } // namespace Utils
 
 #endif // UTILS_H

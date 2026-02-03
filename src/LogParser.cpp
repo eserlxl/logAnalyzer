@@ -28,6 +28,15 @@ std::regex ILogParser::getLineFilterRegexCompiled() const {
   return std::regex(getLineFilterRegex(), std::regex::optimize);
 }
 
+const std::map<std::string, LogLevel, ci_less> DefaultLogParser::DEFAULT_LEVEL_MAPPINGS = {
+    {"TRACE", LogLevel::TRACE},
+    {"DEBUG", LogLevel::DEBUG},
+    {"INFO", LogLevel::INFO},
+    {"WARNING", LogLevel::WARNING},
+    {"ERROR", LogLevel::ERROR},
+    {"FATAL", LogLevel::FATAL}
+};
+
 // New constructor with field mappings
 DefaultLogParser::DefaultLogParser(
     std::string pattern,
@@ -40,12 +49,11 @@ DefaultLogParser::DefaultLogParser(
 
 // Deprecated constructor, delegates to the new one
 DefaultLogParser::DefaultLogParser(
-    std::string pattern,
-    const std::map<std::string, LogLevel, ci_less> &mappings)
+    std::string pattern)
     : DefaultLogParser(
         pattern,
         inferFieldMappingsFromPattern(pattern),
-        mappings) {}
+        {}) {}
 
 ParseResult DefaultLogParser::parseLine(std::string_view line,
                                         size_t lineNumber) const {
@@ -112,8 +120,17 @@ ParseResult DefaultLogParser::parseLine(std::string_view line,
         break;
       }
       case LogEntryField::LEVEL: {
-        auto it = customLevelMappings.find(capturedValue);
-        entry.level = (it != customLevelMappings.end()) ? it->second : LogLevel::UNKNOWN;
+        auto custom_it = customLevelMappings.find(capturedValue);
+        if (custom_it != customLevelMappings.end()) {
+            entry.level = custom_it->second;
+        } else {
+            auto default_it = DEFAULT_LEVEL_MAPPINGS.find(capturedValue);
+            if (default_it != DEFAULT_LEVEL_MAPPINGS.end()) {
+                entry.level = default_it->second;
+            } else {
+                entry.level = LogLevel::UNKNOWN;
+            }
+        }
         break;
       }
       case LogEntryField::MESSAGE: {
