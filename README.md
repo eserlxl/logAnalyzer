@@ -13,14 +13,14 @@ A simple C++ tool to analyze log files.
     - Specific log levels.
     - Message keyword (case-sensitive or insensitive).
     - Regular expression patterns in messages.
-    - Time range (start and end timestamps).
+    - Time range (start and end timestamps). Supports absolute formats (`YYYY-MM-DD HH:MM:SS`, ISO 8601), relative times (`1h ago`, `yesterday`), and Unix timestamps.
     - Source file (e.g., `main.cpp`).
     - Function name (e.g., `init_module`).
 - **Asynchronous Processing**: Load and analyze files asynchronously with support for cancellation.
 - **Live Tail (Follow) Mode**: Monitor new entries in log files in real-time, ideal for continuous monitoring.
 - **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
 - **Custom Timestamp Formats**: Specify the timestamp format of your log files using `strftime` patterns to ensure correct parsing.
-- Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, UNKNOWN).
+- Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, TRACE, FATAL, UNKNOWN).
 - Ability to sort filtered logs by timestamp, level, or message, in ascending or descending order.
 - Ability to save analysis results to an output file in various formats (text, JSON, **CSV**).
 - **Customizable text output format.**
@@ -77,8 +77,11 @@ ctest --verbose
 # Filter by a regular expression
 ./logAnalyzer path/to/your/logfile.log --regex "Connection timed out|refused"
 
-# Filter by a time range
+# Filter by a time range using absolute, relative, or other formats
 ./logAnalyzer path/to/your/logfile.log --start "2023-10-27 10:00:00" --end "2023-10-27 10:05:00"
+./logAnalyzer path/to/your/logfile.log --start "2h ago" --end "1h ago"
+./logAnalyzer path/to/your/logfile.log --start "yesterday"
+./logAnalyzer path/to/your/logfile.log --start "2023-11-21T15:00:00Z"
 
 # Filter by source file
 ./logAnalyzer path/to/your/logfile.log --source-file "main.cpp"
@@ -114,11 +117,11 @@ ctest --verbose
 # Specify a custom timestamp format for parsing (e.g., ISO 8601 with milliseconds)
 ./logAnalyzer path/to/your/logfile.log --timestamp-format "%Y-%m-%d %H:%M:%S.%f"
 
-# Show log frequency distribution in 60-second windows
-./logAnalyzer path/to/your/logfile.log --stats-window 60
+# Show log frequency distribution in 5-minute windows
+./logAnalyzer path/to/your/logfile.log --stats-window 5m
 
 # Find time gaps in logs longer than 500 milliseconds
-./logAnalyzer path/to/your/logfile.log --find-gaps 500
+./logAnalyzer path/to/your/logfile.log --find-gaps 500ms
 
 # Show the average log entry rate
 ./logAnalyzer path/to/your/logfile.log --rate

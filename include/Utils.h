@@ -26,6 +26,7 @@ namespace AnsiColor {
 } // namespace AnsiColor
 
 LogLevel stringToLogLevel(const std::string &levelStr);
+LogLevel stringToLogLevelIgnoreCase(const std::string &levelStr);
 std::string logLevelToString(LogLevel level);
 std::string formatTimestamp(std::chrono::system_clock::time_point tp,
                              std::string_view format = "%Y-%m-%d %H:%M:%S");
@@ -33,14 +34,46 @@ std::string formatTimestamp(std::chrono::system_clock::time_point tp,
 // Replaces all occurrences of 'from' with 'to' in 'str'
 void replaceAll(std::string &str, const std::string &from, const std::string &to);
 
+// Replaces all occurrences of 'from' with 'to' in 'str', ignoring case
+void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to);
+
+// Returns a new string with leading and trailing whitespace characters removed.
+std::string trim(const std::string& str, const std::string& whitespace = " \t\n\r\f\v");
+
+// Splits str into a std::vector<std::string> using delimiter as the separator.
+std::vector<std::string> split(const std::string& str, char delimiter);
+
+// Returns a new string with all characters converted to lower case.
+std::string toLower(const std::string& str);
+
+// Returns a new string with all characters converted to upper case.
+std::string toUpper(const std::string& str);
+
+// File System Utilities
+// Returns true if filePath points to an existing regular file, false otherwise.
+bool fileExists(const std::string& filePath);
+
+// Returns the filename component of filePath (e.g., "file.txt" from "/path/to/file.txt").
+std::string getFileName(const std::string& filePath);
+
+// Returns the extension of filePath (e.g., "txt" from "/path/to/file.txt"). Returns an empty string if no extension.
+std::string getFileExtension(const std::string& filePath);
+
+// Returns the directory component of filePath (e.g., "/path/to/" from "/path/to/file.txt").
+std::string getDirectory(const std::string& filePath);
+
 // Parses a duration string (e.g., "10s", "5m", "2h", "1d") into std::chrono::seconds.
-std::expected<std::chrono::seconds, std::string> parseDuration(const std::string& durationStr);
+std::expected<std::chrono::seconds, std::string> parseDuration(const std::string& durationStr, bool allowExtendedUnits = false);
 
 // Calculates a time point relative to the current time (e.g., "1h ago").
 std::expected<std::chrono::system_clock::time_point, std::string> parseRelativeTime(const std::string& timeStr);
 
 // Parses an absolute time string (e.g., "2023-01-01 12:30:00") into std::chrono::system_clock::time_point.
 std::expected<std::chrono::system_clock::time_point, std::string> parseAbsoluteTime(const std::string& timeStr);
+
+// Parses a time string, supporting multiple absolute formats (YYYY-MM-DD HH:MM:SS, ISO 8601, Unix timestamp)
+// and also falling back to relative time parsing.
+std::expected<std::chrono::system_clock::time_point, std::string> parseTime(const std::string& timeStr);
 
 } // namespace Utils
 
