@@ -36,7 +36,7 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string &filePath, const st
     std::ifstream file(filePath);
     if (!file.is_open()) {
         lastReport.status = ParseError::FILE_OPEN_FAILED;
-        lastReport.parseErrors.emplace_back(0, "Could not open file.");
+        lastReport.parseErrors.emplace_back(LogParseError{ParseError::FILE_OPEN_FAILED, "Could not open file.", 0});
         return lastReport;
     }
 
@@ -56,7 +56,7 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string &filePath, const st
             parser = std::make_unique<DefaultLogParser>(pattern, currentFieldMappings, customLevelMappings);
         } catch (const std::regex_error& e) {
             lastReport.status = ParseError::INVALID_REGEX_PATTERN;
-            lastReport.parseErrors.emplace_back(0, e.what());
+            lastReport.parseErrors.emplace_back(LogParseError{ParseError::INVALID_REGEX_PATTERN, e.what(), 0});
             return lastReport;
         }
     } else {
@@ -78,7 +78,7 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string &filePath, const st
             lastReport.successfulParses++;
             entries_.push_back(*result.entry);
         } else {
-            lastReport.parseErrors.emplace_back(lineNumber, result.errorMessage);
+            lastReport.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.errorMessage, lineNumber});
             // Store even unparseable lines as UNKNOWN entries for context.
             LogEntry partialEntry;
             partialEntry.level = LogLevel::UNKNOWN;

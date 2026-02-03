@@ -20,7 +20,7 @@ A simple C++ tool to analyze log files.
 - **Live Tail (Follow) Mode**: Monitor new entries in log files in real-time, ideal for continuous monitoring.
 - **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
 - **Custom Timestamp Formats**: Specify the timestamp format of your log files using `strftime` patterns to ensure correct parsing.
-- Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, TRACE, FATAL, UNKNOWN).
+- Generates a summary of log levels (INFO, WARNING, ERROR, CRITICAL, DEBUG, TRACE, FATAL, UNKNOWN).
 - Ability to sort filtered logs by timestamp, level, or message, in ascending or descending order.
 - Ability to save analysis results to an output file in various formats (text, JSON, CSV, YAML, **XML**).
 - **Customizable text output format.**

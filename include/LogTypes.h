@@ -7,12 +7,20 @@
 #include <string>
 #include <vector>
 #include <cctype> // Required for std::tolower
+#include <locale> // Required for std::locale, std::use_facet, std::ctype
+#include <limits> // Required for std::numeric_limits
 
 // Case-insensitive comparator for strings (moved from LogParser.h as it's a generic utility)
 struct ci_less {
   struct nocase_compare {
-    bool operator()(const unsigned char &c1, const unsigned char &c2) const {
-      return std::tolower(c1) < std::tolower(c2);
+    // Using static const std::locale classic_locale for efficiency and locale-independence
+    char toLowerChar(char c) const {
+      static const std::locale classic_locale;
+      return std::use_facet<std::ctype<char>>(classic_locale).tolower(c);
+    }
+
+    bool operator()(char c1, char c2) const {
+      return toLowerChar(c1) < toLowerChar(c2);
     }
   };
   bool operator()(const std::string &s1, const std::string &s2) const {
@@ -39,7 +47,7 @@ enum class LogEntryField {
 // New struct to define the mapping from a regex capture group to a LogEntry field
 struct FieldMapping {
   LogEntryField field = LogEntryField::UNKNOWN;
-  int groupIndex = -1; // Use index instead of name (0 for full match, 1 for first capture group, etc.)
+  std::optional<size_t> groupIndex; // Use std::optional to represent unset index
   std::string format;    // Optional: format string for TIMESTAMP (e.g., "%Y-%m-%d %H:%M:%S")
                          //           or delimiter for STRUCTURED_FIELD (e.g., "=" for key=value pairs)
   std::string structuredFieldName; // Required if field is STRUCTURED_FIELD, key for the map
@@ -49,11 +57,11 @@ struct FieldMapping {
 
   // Constructor for non-structured fields
   FieldMapping(LogEntryField f, int gi, const std::string& fmt = "")
-      : field(f), groupIndex(gi), format(fmt) {}
+      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), format(fmt) {}
 
   // Constructor for structured fields
   FieldMapping(LogEntryField f, int gi, const std::string& fmt, const std::string& sfn)
-      : field(f), groupIndex(gi), format(fmt), structuredFieldName(sfn) {}
+      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), format(fmt), structuredFieldName(sfn) {}
 };
 
 // Enum for Parse Errors
@@ -80,8 +88,7 @@ struct LogParseError {
 struct AnalysisReport {
   size_t linesProcessed = 0;
   size_t successfulParses = 0;
-  std::vector<std::pair<size_t, std::string>>
-      parseErrors; // line number -> error reason
+  std::vector<LogParseError> parseErrors;
   ParseError status = ParseError::SUCCESS;
   std::string message; // Added message field
 };
@@ -103,13 +110,13 @@ struct TimeWindowStats {
 
 // LogEntry structure enhancement
 struct LogEntry {
-  size_t id = 0; // Unique identifier for each log entry
+  size_t id = std::numeric_limits<size_t>::max(); // Unique identifier for each log entry
   std::string sourceFile; // The file from which this entry was read
   std::chrono::system_clock::time_point timestamp;
   LogLevel level;
   std::string message;
   std::map<std::string, std::string>
-      structuredFields = {}; // For structured data
+      structuredFields; // For structured data
 
   bool operator==(const LogEntry &other) const {
     return id == other.id && timestamp == other.timestamp &&

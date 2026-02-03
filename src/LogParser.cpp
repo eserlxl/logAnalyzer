@@ -87,10 +87,11 @@ ParseResult DefaultLogParser::parseLine(std::string_view line,
   }
 
   for (const auto& mapping : fieldMappings) {
-    if (mapping.groupIndex < 0 || static_cast<size_t>(mapping.groupIndex) >= match.size() || !match[mapping.groupIndex].matched) {
+    // Check if groupIndex has a value and if it's a valid index for the match.
+    if (!mapping.groupIndex.has_value() || mapping.groupIndex.value() >= match.size() || !match[mapping.groupIndex.value()].matched) {
         continue;
     }
-    std::string capturedValue = match[mapping.groupIndex].str();
+    std::string capturedValue = match[mapping.groupIndex.value()].str();
 
     switch (mapping.field) {
       case LogEntryField::TIMESTAMP: {
