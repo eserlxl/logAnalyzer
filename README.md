@@ -32,6 +32,7 @@ A simple C++ tool to analyze log files.
     - **Identification of time gaps between log entries longer than a specified duration.**
 - Supports JSON output, with options for pretty-printing and including a summary.
 - Provides detailed error reports on parsing failures, including line numbers.
+- **Contextual Log Viewing**: When filtering, optionally display N lines before and M lines after each matched log entry for better understanding of the event context.
 
 
 ## Building the project
@@ -121,6 +122,9 @@ make
 
 # Complex example: Filter for errors containing 'database', sort them by time, and save to a file
 ./logAnalyzer path/to/your/logfile.log --level ERROR --keyword "database" --sort-by time --order desc --output db_errors.log
+
+# Display 5 lines before and 2 lines after an error message
+./logAnalyzer path/to/your/logfile.log --level ERROR --context 5,2
 ```
 
 ## Example Log Format

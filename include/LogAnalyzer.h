@@ -238,7 +238,7 @@ public:
   std::map<std::string, int> getUniqueMessageCounts() const;
   std::vector<std::pair<std::string, int>> getTopMessages(int n) const;
   void printFilteredEntries(std::ostream &out, const FilterCriteria &criteria,
-                            std::string_view formatString) const;
+                            std::string_view formatString = "{timestamp} [{level}] {message}") const;
   std::optional<LogEntry> findFirst(const FilterCriteria &criteria) const;
   std::optional<LogEntry> findLast(const FilterCriteria &criteria) const;
   std::string getSummaryString() const;
@@ -285,6 +285,10 @@ private:
 
   mutable AnalysisReport lastReport;
   mutable std::vector<LogEntry> entries_;
+
+  // Private non-locking helper methods
+  std::vector<LogEntry> getFilteredEntries_NoLock(const FilterCriteria& criteria) const;
+  std::map<std::string, int> getUniqueMessageCounts_NoLock() const;
   
   const ILogParser *getCurrentParser() const;
   const IFilter *getActiveFilter() const;

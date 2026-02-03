@@ -279,8 +279,8 @@ std::optional<LogEntry> LogAnalyzer::findLast(const FilterCriteria& criteria) co
     return filtered.back();
 }
 
-std::vector<LogEntry> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+// Non-locking version for internal use
+std::vector<LogEntry> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
     std::vector<LogEntry> filtered;
     
     // Audit: Filter logic might be complex. Ensure it's correctly constructed.
@@ -315,17 +315,17 @@ std::vector<LogEntry> LogAnalyzer::getFilteredEntries(const FilterCriteria& crit
         ));
     }
 
-    // If no filters were added, composite is still AND logic with no children, which means it matches everything.
-    // If criteria is empty, it should return all entries. The current logic handles this if composite is never added to.
-    // However, if criteria is empty, the composite filter will be AND with no children, which means match all.
-    // This seems correct.
-
     for (const auto& entry : entries_) {
         if (composite->matches(entry)) {
             filtered.push_back(entry);
         }
     }
     return filtered;
+}
+
+std::vector<LogEntry> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
+    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+    return getFilteredEntries_NoLock(criteria);
 }
 
 std::string LogAnalyzer::formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format) {
@@ -607,60 +607,99 @@ std::string escapeJsonString(const std::string& input) {
     return oss.str();
 }
 
-// Audit: Fragile JSON Export
-void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, bool includeSummary, bool /*prettyPrint*/) const {
-    // This implementation is a placeholder and does not handle JSON escaping correctly.
-    // It needs to be properly implemented to escape special characters in messages.
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
-    
-    auto filtered = getFilteredEntries(filter); // Already locked inside getFilteredEntries
-    
-    out << "{\n";
+void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, bool includeSummary, bool prettyPrint) const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto filtered = getFilteredEntries_NoLock(filter);
+
+    const std::string indent = prettyPrint ? "  " : "";
+    const std::string newline = prettyPrint ? "\n" : "";
+    const std::string entryIndent = prettyPrint ? "    " : "";
+
     if (includeSummary) {
-        out << "  \"totalEntries\": " << filtered.size() << ",\n";
+        out << "{" << newline;
+        out << indent << "\"summary\": {" << newline;
+        out << indent << indent << "\"totalEntries\": " << filtered.size() << newline;
+        out << indent << "}," << newline;
+        out << indent << "\"entries\": [" << newline;
+    } else {
+        out << "[" << newline;
     }
-    out << "  \"entries\": [\n";
+
     for (size_t i = 0; i < filtered.size(); ++i) {
-        out << "    { \"timestamp\": \"" << formatTimestamp(filtered[i].timestamp) << "\", "
-            << "\"level\": \"" << logLevelToString(filtered[i].level) << "\", "
-            << "\"message\": \"" << escapeJsonString(filtered[i].message) << "\", " // Use escapeJsonString
-            << "\"file\": \"" << filtered[i].sourceFile << "\" }";
-        if (i < filtered.size() - 1) out << ",";
-        out << "\n";
+        const auto& entry = filtered[i];
+        out << (includeSummary ? entryIndent : indent);
+        out << "{";
+        out << "\"timestamp\":\"" << formatTimestamp(entry.timestamp) << "\",";
+        out << "\"level\":\"" << logLevelToString(entry.level) << "\",";
+        out << "\"message\":\"" << escapeJsonString(entry.message) << "\",";
+        out << "\"file\":\"" << escapeJsonString(entry.sourceFile) << "\"";
+        out << "}";
+        if (i < filtered.size() - 1) {
+            out << ",";
+        }
+        out << newline;
     }
-    out << "  ]\n";
-    out << "}\n";
+
+    if (includeSummary) {
+        out << indent << "]" << newline;
+        out << "}" << newline;
+    } else {
+        out << "]" << newline;
+    }
 }
 
 
 
 void LogAnalyzer::printSummary(std::ostream & /*out*/) const {}
-std::vector<LogEntry> LogAnalyzer::getSortedFilteredEntries(const FilterCriteria &criteria, SortBy /*sortBy*/, SortOrder /*sortOrder*/) const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
-    // This method seems to just return filtered entries, not necessarily sorted by sortBy/sortOrder.
-    // It should either implement the sorting or be refactored.
-    // For now, it mirrors getFilteredEntries.
-    return getFilteredEntries(criteria);
+std::vector<LogEntry> LogAnalyzer::getSortedFilteredEntries(const FilterCriteria &criteria, SortBy sortBy, SortOrder sortOrder) const {
+    std::vector<LogEntry> filtered = getFilteredEntries(criteria);
+
+    auto sortLambda = [&](const LogEntry& a, const LogEntry& b) {
+        bool result = false;
+        switch (sortBy) {
+            case SortBy::TIMESTAMP:
+                result = a.timestamp < b.timestamp;
+                break;
+            case SortBy::LEVEL:
+                result = a.level < b.level;
+                break;
+            case SortBy::MESSAGE:
+                result = a.message < b.message;
+                break;
+        }
+        return (sortOrder == SortOrder::ASCENDING) ? result : !result;
+    };
+
+    std::sort(filtered.begin(), filtered.end(), sortLambda);
+
+    return filtered;
 }
-std::map<std::string, int> LogAnalyzer::getUniqueMessageCounts() const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+// Non-locking version for internal use
+std::map<std::string, int> LogAnalyzer::getUniqueMessageCounts_NoLock() const {
     std::map<std::string, int> counts;
     for (const auto& entry : entries_) {
         counts[entry.message]++;
     }
     return counts;
 }
+
+std::map<std::string, int> LogAnalyzer::getUniqueMessageCounts() const {
+    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+    return getUniqueMessageCounts_NoLock();
+}
 std::vector<std::pair<std::string, int>> LogAnalyzer::getTopMessages(int n) const {
     std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
-    auto messageCounts = getUniqueMessageCounts(); // This call is also locked
+    auto messageCounts = getUniqueMessageCounts_NoLock();
     std::vector<std::pair<std::string, int>> sortedCounts(messageCounts.begin(), messageCounts.end());
     
-    std::sort(sortedCounts.begin(), sortedCounts.end(), [](const auto& a, const auto& b) {
+    if (n < 0) n = sortedCounts.size(); // If n is negative, return all
+    n = std::min(n, static_cast<int>(sortedCounts.size())); // Cap n to the number of unique messages
+
+    std::partial_sort(sortedCounts.begin(), sortedCounts.begin() + n, sortedCounts.end(), [](const auto& a, const auto& b) {
         return a.second > b.second; // Sort by count descending
     });
     
-    if (n < 0) n = sortedCounts.size(); // If n is negative, return all
-    if (n > static_cast<int>(sortedCounts.size())) n = static_cast<int>(sortedCounts.size()); // Cap n to the number of unique messages
+    sortedCounts.resize(n); // Trim the vector to the top n elements
     
-    return std::vector<std::pair<std::string, int>>(sortedCounts.begin(), sortedCounts.begin() + n);
+    return sortedCounts;
 }
