@@ -17,6 +17,7 @@ A simple C++ tool to analyze log files.
     - Source file (e.g., `main.cpp`).
     - Function name (e.g., `init_module`).
 - **Asynchronous Processing**: Load and analyze files asynchronously with support for cancellation.
+- **Live Tail (Follow) Mode**: Monitor new entries in log files in real-time, ideal for continuous monitoring.
 - **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
 - **Custom Timestamp Formats**: Specify the timestamp format of your log files using `strftime` patterns to ensure correct parsing.
 - Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, UNKNOWN).
@@ -112,7 +113,10 @@ make
 # Show the average log entry rate
 ./logAnalyzer path/to/your/logfile.log --rate
 
-# Process a very large log file in streaming mode (filtering is supported, sorting is not)
+# Monitor new log entries in real-time (live tail)
+./logAnalyzer path/to/your/logfile.log --follow
+
+# Process a very large log file in streaming mode (filtering is supported; sorting or global stats require buffering the full dataset)
 ./logAnalyzer path/to/large_logfile.log --stream --level ERROR --keyword "critical"
 
 # Complex example: Filter for errors containing 'database', sort them by time, and save to a file
