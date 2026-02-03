@@ -16,7 +16,6 @@ public:
     void exportAsJson(
         std::ostream& os, 
         const std::vector<LogEntry>& entries, 
-        bool includeSummary, 
         bool prettyPrint);
 
     // Exports filtered log entries as CSV

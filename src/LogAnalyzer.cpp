@@ -22,7 +22,7 @@
 #include <string_view> // For std::string_view
 #include <span> // For std::span
 
-LogAnalyzer::LogAnalyzer() : defaultParser_(std::make_unique<DefaultLogParser>(R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (\w+): (.*)$)")) {} 
+LogAnalyzer::LogAnalyzer() : defaultParser_(std::make_unique<DefaultLogParser>(std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN), customLevelMappings)) {}
 
 void LogAnalyzer::clear() {
     std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
@@ -31,7 +31,7 @@ void LogAnalyzer::clear() {
     lastReport = {};
 }
 
-AnalysisReport LogAnalyzer::analyze(const std::string &filePath, const std::string &pattern) {
+AnalysisReport LogAnalyzer::loadAndReplace(const std::string &filePath, const std::string &pattern) {
     std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
     std::ifstream file(filePath);
     if (!file.is_open()) {
@@ -43,9 +43,17 @@ AnalysisReport LogAnalyzer::analyze(const std::string &filePath, const std::stri
     std::unique_ptr<ILogParser> parser;
     if (!pattern.empty()) {
         try {
-            // If a pattern is provided, use the new constructor with an empty vector for fieldMappings.
-            // This ensures we use the new constructor's logic for parsing based on the pattern.
-            parser = std::make_unique<DefaultLogParser>(pattern, std::vector<FieldMapping>{}, customLevelMappings);
+            std::vector<FieldMapping> currentFieldMappings;
+            if (pattern == LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN) {
+                // If using the default regex pattern, infer the field mappings
+                currentFieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, std::string("%Y-%m-%d %H:%M:%S"));
+                currentFieldMappings.emplace_back(LogEntryField::LEVEL, 2);
+                currentFieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
+            }
+            // For custom patterns, the original code passed an empty vector,
+            // implying the custom regex itself should handle parsing or mapping.
+            // We maintain this behavior for custom patterns.
+            parser = std::make_unique<DefaultLogParser>(pattern, currentFieldMappings, customLevelMappings);
         } catch (const std::regex_error& e) {
             lastReport.status = ParseError::INVALID_REGEX_PATTERN;
             lastReport.parseErrors.emplace_back(0, e.what());
@@ -78,6 +86,10 @@ AnalysisReport LogAnalyzer::analyze(const std::string &filePath, const std::stri
             partialEntry.sourceFile = filePath;
             partialEntry.id = lineNumber; // Assign line number as ID
             entries_.push_back(partialEntry);
+
+            // Debugging output for parse failures
+            std::cerr << "Parse Error on line " << lineNumber << ": " << result.errorMessage << std::endl;
+            std::cerr << "Failing part: " << result.failingPart << std::endl;
         }
     }
 
@@ -110,7 +122,7 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
 std::expected<void, LogParseError> LogAnalyzer::load(const std::string& filePath, const std::string& pattern) {
     // This calls analyze which is already locked.
     // No additional lock needed here unless we were directly manipulating entries_ or lastReport.
-    AnalysisReport report = analyze(filePath, pattern);
+    AnalysisReport report = loadAndReplace(filePath, pattern); // Changed from analyze
     if (report.status == ParseError::FILE_OPEN_FAILED) {
         return std::unexpected(LogParseError{report.status, "Could not open file.", 0});
     }
@@ -129,26 +141,24 @@ std::future<AnalysisReport> LogAnalyzer::loadAsync(const std::string& filePath, 
         // A safer approach would be to have a non-locking version of the core parsing logic,
         // and then apply the lock in the public methods like analyze() and load().
         // For now, we rely on the fact that analyze() will be executed in a separate thread.
-        return analyze(filePath, pattern);
+        return loadAndReplace(filePath, pattern); // Changed from analyze
     });
 }
 
-void LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern) {
+std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern) {
     // This function processes streams and doesn't directly modify `entries_` or `lastReport`.
     // It's intended for callbacks and doesn't directly interact with the thread-safe members.
     // Therefore, no lock is needed here, as it operates independently of the analyzer's main state.
     for (const auto& filePath : filePaths) {
         std::istream* input;
         std::ifstream file;
-        if (filePath == "-") {
+        if (filePath == Utils::STDIN_FILE_PATH) {
             input = &std::cin;
         } else {
             file.open(filePath);
             if (!file.is_open()) {
-                 // Log an error or handle appropriately, but don't proceed with this file.
-                 // This function doesn't have access to `lastReport` to record this error.
-                 std::cerr << "Error: Could not open file " << filePath << std::endl; // Added error logging
-                 continue;
+                 // Return structured error information instead of printing to cerr.
+                 return std::unexpected(LogParseError{ParseError::FILE_OPEN_FAILED, "Could not open file: " + filePath, 0});
             }
             input = &file;
         }
@@ -160,9 +170,8 @@ void LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::
                  parser = std::make_unique<DefaultLogParser>(pattern, std::vector<FieldMapping>{}, customLevelMappings);
             } catch (const std::regex_error& e) {
                  // Cannot report this error via `lastReport` as it's not locked/owned here.
-                 // Potentially log to cerr or ignore if pattern is invalid.
-                 std::cerr << "Error creating parser for pattern: " << pattern << " - " << e.what() << std::endl;
-                 continue; // Skip processing this file with invalid pattern
+                 // Return structured error information instead of printing to cerr.
+                 return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, "Error creating parser for pattern: " + pattern + " - " + e.what(), 0});
             }
         } else {
             // If no pattern is provided, use the default parser's regex.
@@ -197,6 +206,7 @@ void LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::
         // If the file was opened, it will be closed automatically when 'file' goes out of scope.
         if (!shouldContinue) break; // Stop processing further files if callback requested it
     }
+    return {}; // Return success if loop completed without errors
 }
 
 // Audit: Inefficient Frequency Distribution Algorithm
@@ -258,105 +268,6 @@ std::vector<TimeWindowStats> LogAnalyzer::getFrequencyDistribution(std::chrono::
     return stats;
 }
 
-// This function was a duplicate and likely meant to be optimized.
-// Since getFrequencyDistribution is already optimized, we can remove this or refactor it.
-// For now, I'll make it call the optimized version as per the header.
-std::vector<TimeWindowStats> LogAnalyzer::getFrequencyDistributionOptimized(std::chrono::seconds windowSize) const {
-    // Audit: This method is a duplicate of getFrequencyDistribution and is misleading.
-    // Refactor: Remove this or ensure it does something distinct/better. For now, it calls the existing one.
-    return getFrequencyDistribution(windowSize);
-}
-
-/*
-// Audit: Incorrect `merge_sorted` implementation.
-// Placeholder implementation to prevent segfaults.
-// In a real implementation, this would merge the sources into a temporary file.
-// This requires significant changes to LogFileView to manage the temporary file correctly.
-LogFileView LogAnalyzer::merge_sorted(std::span<LogFileView> sources) {
-    // Placeholder: Create an empty temporary file.
-    std::string tempFileName = "merged_empty_" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + ".log";
-    std::ofstream tempFile(tempFileName);
-    if (!tempFile.is_open()) {
-        // Handle error: perhaps throw an exception or return a view that signals an error.
-        // For now, proceed assuming it was created.
-    }
-    tempFile.close(); 
-    
-    // The LogFileView constructor now handles temporary file management via shared_ptr.
-    // Assuming DefaultLogParser constructor with pattern string is available and correct.
-    // The LogFileView constructor might take a parser directly.
-    // Example call: std::make_unique<DefaultLogParser>(pattern, std::vector<FieldMapping>{}, customLevelMappings)
-    // Here, we use a default pattern. The default parser needs to be constructed properly.
-    // Using the deprecated constructor here might be implied by the original code.
-    // Let's use the new constructor with an empty FieldMapping list for clarity.
-    return LogFileView(tempFileName, std::make_unique<DefaultLogParser>(R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (\w+): (.*)$)", std::vector<FieldMapping>{}, std::map<std::string, LogLevel, ci_less>{})); 
-}
-*/
-
-std::optional<LogEntry> LogAnalyzer::findFirst(const FilterCriteria& criteria) const {
-    // Calls getFilteredEntries which is locked.
-    auto filtered = getFilteredEntries(criteria);
-    if (filtered.empty()) return std::nullopt;
-    return filtered.front();
-}
-
-std::optional<LogEntry> LogAnalyzer::findLast(const FilterCriteria& criteria) const {
-    // Calls getFilteredEntries which is locked.
-    auto filtered = getFilteredEntries(criteria);
-    if (filtered.empty()) return std::nullopt;
-    return filtered.back();
-}
-
-// Non-locking version for internal use
-std::vector<LogEntry> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
-    std::vector<LogEntry> filtered;
-    
-    // Audit: Filter logic might be complex. Ensure it's correctly constructed.
-    // The current implementation uses a CompositeFilter. This is generally good.
-    auto composite = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
-    
-    if (!criteria.levels.empty()) {
-        auto levelSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
-        for (auto l : criteria.levels) {
-            levelSet->add(std::make_shared<LevelFilter>(l));
-        }
-        composite->add(levelSet);
-    }
-    if (!criteria.keyword.empty()) {
-        composite->add(std::make_shared<KeywordFilter>(criteria.keyword, criteria.keywordCaseSensitive));
-    }
-    if (!criteria.regexPattern.empty()) {
-        // Ensure regex compilation is safe. Consider exceptions.
-        try {
-            // Use the correct RegexFilter constructor, assuming it takes a string pattern.
-            composite->add(std::make_shared<RegexFilter>(criteria.regexPattern));
-        } catch (const std::regex_error& e) {
-            // How to report this? This function is const and cannot modify lastReport or throw.
-            // This suggests filters should be pre-validated or a mechanism to report errors needs to exist.
-            // For now, we log to cerr and skip adding this filter.
-            std::cerr << "Regex error in getFilteredEntries: " << e.what() << std::endl;
-        }
-    }
-    if (criteria.startTime || criteria.endTime) {
-        composite->add(std::make_shared<TimeRangeFilter>(
-            criteria.startTime.value_or(std::chrono::system_clock::time_point::min()),
-            criteria.endTime.value_or(std::chrono::system_clock::time_point::max())
-        ));
-    }
-
-    for (const auto& entry : entries_) {
-        if (composite->matches(entry)) {
-            filtered.push_back(entry);
-        }
-    }
-    return filtered;
-}
-
-std::vector<LogEntry> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
-    return getFilteredEntries_NoLock(criteria);
-}
-
 std::string LogAnalyzer::formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format) const {
     return Utils::formatTimestamp(tp, format);
 }
@@ -389,7 +300,12 @@ std::string LogAnalyzer::formatEntry(const LogEntry &entry, std::string_view for
 
 void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const {
     std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
-    auto filtered = getFilteredEntries(criteria); // This call is already locked inside
+    auto filtered_expected = getFilteredEntries(criteria); // This call is already locked inside
+    if (!filtered_expected) {
+        std::cerr << "Error filtering entries: " << filtered_expected.error().message << std::endl;
+        return;
+    }
+    const auto& filtered = filtered_expected.value();
     for (const auto& entry : filtered) {
         // Using formatEntry with useColor = false for backward compatibility.
         out << formatEntry(entry, formatString, false) << "\n";
@@ -473,7 +389,7 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
     return {};
 }
 
-std::span<const LogEntry> LogAnalyzer::entriesView() const { // Renamed from entries_view
+std::span<const LogEntry> LogAnalyzer::getEntriesView() const { // Renamed from entries_view
     std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
     return entries_;
 }
@@ -485,7 +401,12 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, c
     // CSV Header
     out << "Timestamp" << delimiter << "Level" << delimiter << "Message" << delimiter << "File\n";
     
-    auto filtered = getFilteredEntries(filter); // This call is already locked inside
+    auto filtered_expected = getFilteredEntries(filter); // This call is already locked inside
+    if (!filtered_expected) {
+        std::cerr << "Error filtering entries for CSV export: " << filtered_expected.error().message << std::endl;
+        return;
+    }
+    const auto& filtered = filtered_expected.value();
     
     for (const auto& entry : filtered) {
         out << formatTimestamp(entry.timestamp) << delimiter;
@@ -502,7 +423,7 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, c
             // Escape existing quotes by doubling them
             size_t pos = msg.find('"');
             while (pos != std::string::npos) {
-                msg.replace(pos, 1, "\"\"");
+                msg.replace(pos, 1, """");
                 pos = msg.find('"', pos + 2); // Move past the inserted quote
             }
             out << '"' << msg << '"'; // Enclose in quotes
@@ -545,69 +466,7 @@ double LogAnalyzer::getAverageEntryRate() const {
     return static_cast<double>(entries_.size()) / static_cast<double>(seconds);
 }
 
-/*
-// Open is called before loadAsync, so it doesn't need to be locked here.
-// It prepares a LogFileView for potential lazy parsing.
-void LogAnalyzer::open(const std::string& filePath, std::unique_ptr<ILogParser> parser) {
-    if (!parser) {
-        // Use default parser regex, but apply custom level mappings.
-        parser = std::make_unique<DefaultLogParser>(defaultParser_->getLineFilterRegex(), std::vector<FieldMapping>{}, customLevelMappings);
-    }
-    logSourceView_ = std::make_unique<LogFileView>(filePath, std::move(parser));
-}
 
-const LogFileView& LogAnalyzer::getView() const {
-     // This returns a const reference. The LogFileView itself is not thread-safe for its iterators.
-     // If this is called concurrently with operations that modify `entries_`, it could lead to issues.
-     // However, `getView()` is typically used for lazy parsing, which is separate from the main `entries_` buffer.
-     // The `LogFileView` itself manages its own file stream and parsing.
-     // The primary thread-safety concern is `entries_` and `lastReport`.
-     // Therefore, no lock is needed here for `logSourceView_`.
-     if (!logSourceView_) {
-         throw std::runtime_error("Log file view is not open.");
-     }
-     return *logSourceView_;
-}
-*/
-
-void LogAnalyzer::runAnalysis(class ILogAnalyzer& /*analyzer*/, const IFilter* filter) {
-    // This method performs analysis using an external analyzer.
-    // It might iterate over `entries_` or `logSourceView_`.
-    // If it iterates over `entries_`, it must be locked.
-    // If it iterates over `logSourceView_`, that's lazy parsing and should be safe as `logSourceView_` is independent.
-
-    // Check if we are using the in-memory entries or the lazy view
-    /* if (entries_.empty() && logSourceView_) {
-        // Lazy parsing: Iterate through the file view.
-        // The LogFileView iterators are not inherently thread-safe if the underlying file
-        // could be modified. However, this `runAnalysis` is typically called by a single thread.
-        // If multiple threads could call `runAnalysis` and use `logSourceView_` concurrently, 
-        // then `LogFileView` and its iterators would also need thread-safety mechanisms,
-        // or `runAnalysis` itself would need to be locked.
-        // For now, assume this is called from a single thread context or protected externally.
-        
-        for (auto it = logSourceView_->begin(); it != logSourceView_->end(); ++it) {
-            if (it->has_value()) {
-                if (!filter || filter->matches(*(*it))) { // Corrected: dereference iterator to get optional, then dereference optional
-                    analyzer.processEntry(*(*it));
-                }
-            } else {
-                // Handle parse error from iterator if necessary.
-                // For now, skipping errored entries.
-            }
-        }
-        
-    } else */ {
-        // Eager parsing: Iterate through the loaded entries. This needs to be locked.
-        std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety when accessing entries_ 
-        for (const auto& entry : entries_) {
-            if (!filter || filter->matches(entry)) {
-                // analyzer.processEntry(entry);
-            }
-        }
-    }
-    // analyzer.finalize();
-}
 
 std::string LogAnalyzer::logLevelToString(LogLevel level) const {
     return Utils::logLevelToString(level);
@@ -617,46 +476,28 @@ LogLevel LogAnalyzer::stringToLogLevel(const std::string& levelStr) {
     return Utils::stringToLogLevel(levelStr);
 }
 
-// Helper function for JSON string escaping
-// Should be in Utils.cpp or similar, but for now defined here.
-// Audit: Need to ensure this function is comprehensive for JSON escaping.
-std::string escapeJsonString(const std::string& input) {
-    std::ostringstream oss;
-    for (char c : input) {
-        switch (c) {
-            case '"': oss << "\\\""; break;
-            case '\\': oss << "\\\\"; break;
-            case '\b': oss << "\\b"; break;
-            case '\f': oss << "\\f"; break;
-            case '\n': oss << "\\n"; break;
-            case '\r': oss << "\\r"; break;
-            case '\t': oss << "\\t"; break;
-            default:
-                if (static_cast<unsigned char>(c) < 32) { // Control characters
-                    oss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(c);
-                } else {
-                    oss << c;
-                }
-                break;
-        }
-    }
-    return oss.str();
-}
+
 
 void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, bool includeSummary, bool prettyPrint) const {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto filtered = getFilteredEntries_NoLock(filter);
+    auto filtered_expected = getFilteredEntries_NoLock(filter); // Use non-locking version as we already hold the lock
+    if (!filtered_expected) {
+        std::cerr << "Error filtering entries for JSON export: " << filtered_expected.error().message << std::endl;
+        return;
+    }
+    const auto& filtered = filtered_expected.value();
 
     const std::string indent = prettyPrint ? "  " : "";
     const std::string newline = prettyPrint ? "\n" : "";
     const std::string entryIndent = prettyPrint ? "    " : "";
 
-    if (includeSummary) {
-        out << "{\"summary\": {\"totalEntries\": " << filtered.size() << "}," << newline;
-        out << indent << "\"entries\": [" << newline;
-    } else {
-        out << "[" << newline;
-    }
+    // Always output a root JSON object.
+    out << "{"
+ << newline;
+    // Ensure "summary" root element is always present for consistency.
+    // It will contain at least "totalEntries".
+    out << indent << "\"summary\": {\"totalEntries\": " << filtered.size() << "}," << newline;
+    out << indent << "\"entries\": [" << newline;
 
     for (size_t i = 0; i < filtered.size(); ++i) {
         const auto& entry = filtered[i];
@@ -664,8 +505,8 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
         out << "{";
         out << "\"timestamp\":\"" << formatTimestamp(entry.timestamp) << "\",";
         out << "\"level\":\"" << logLevelToString(entry.level) << "\",";
-        out << "\"message\":\"" << escapeJsonString(entry.message) << "\",";
-        out << "\"file\":\"" << escapeJsonString(entry.sourceFile) << "\"";
+        out << "\"message\":\"" << Utils::escapeJsonString(entry.message) << "\",";
+        out << "\"file\":\"" << Utils::escapeJsonString(entry.sourceFile) << "\"";
         out << "}";
         if (i < filtered.size() - 1) {
             out << ",";
@@ -673,22 +514,69 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
         out << newline;
     }
 
-    if (includeSummary) {
-        out << indent << "]" << newline;
-        out << "}" << newline;
-    } else {
-        out << "]" << newline;
+    out << indent << "]" << newline;
+    out << "}" << newline;
+}
+
+
+
+
+
+std::expected<std::vector<LogEntry>, LogParseError> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
+    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+    return getFilteredEntries_NoLock(criteria);
+}
+
+// Non-locking version for internal use
+std::expected<std::vector<LogEntry>, LogParseError> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
+    std::vector<LogEntry> filtered;
+    
+    auto composite = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
+    
+    if (!criteria.levels.empty()) {
+        auto levelSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
+        for (auto l : criteria.levels) {
+            levelSet->add(std::make_shared<LevelFilter>(l));
+        }
+        composite->add(levelSet);
     }
+    if (!criteria.keyword.empty()) {
+        composite->add(std::make_shared<KeywordFilter>(criteria.keyword, criteria.keywordCaseSensitive));
+    }
+    if (!criteria.regexPattern.empty()) {
+        try {
+            composite->add(std::make_shared<RegexFilter>(criteria.regexPattern));
+        } catch (const std::regex_error& e) {
+            // Audit: Regex error handling in getFilteredEntries_NoLock
+            // Propagate regex compilation errors back to the caller.
+            return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, e.what(), 0});
+        }
+    }
+    if (criteria.startTime || criteria.endTime) {
+        composite->add(std::make_shared<TimeRangeFilter>(
+            criteria.startTime.value_or(std::chrono::system_clock::time_point::min()),
+            criteria.endTime.value_or(std::chrono::system_clock::time_point::max())
+        ));
+    }
+
+    for (const auto& entry : entries_) {
+        if (composite->matches(entry)) {
+            filtered.push_back(entry);
+        }
+    }
+    return filtered;
 }
 
-
-
-void LogAnalyzer::printSummary(std::ostream& /*out*/) const {
-    // Placeholder: No specific summary logic implemented here.
-}
 
 std::vector<LogEntry> LogAnalyzer::getSortedFilteredEntries(const FilterCriteria& criteria, SortBy sortBy, SortOrder sortOrder) const {
-    std::vector<LogEntry> filtered = getFilteredEntries(criteria); // This already locks internally
+    auto filtered_expected = getFilteredEntries(criteria); // This already locks internally
+    if (!filtered_expected) {
+        // Handle the error case from getFilteredEntries.
+        // For this function, it might be appropriate to return an empty vector or rethrow.
+        // Returning empty vector for now.
+        return {};
+    }
+    std::vector<LogEntry> filtered = filtered_expected.value();
 
     auto sortLambda = [&](const LogEntry& a, const LogEntry& b) {
         bool result = false;

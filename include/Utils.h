@@ -25,6 +25,9 @@ namespace AnsiColor {
     inline const std::string UNDERLINE = "\033[4m";
 } // namespace AnsiColor
 
+// Constant for stdin file path representation
+static constexpr std::string_view STDIN_FILE_PATH = "-";
+
 LogLevel stringToLogLevel(const std::string &levelStr);
 LogLevel stringToLogLevelIgnoreCase(const std::string &levelStr);
 std::string logLevelToString(LogLevel level);
@@ -74,6 +77,9 @@ std::expected<std::chrono::system_clock::time_point, std::string> parseAbsoluteT
 // Parses a time string, supporting multiple absolute formats (YYYY-MM-DD HH:MM:SS, ISO 8601, Unix timestamp)
 // and also falling back to relative time parsing.
 std::expected<std::chrono::system_clock::time_point, std::string> parseTime(const std::string& timeStr);
+
+// Escapes a string for JSON output, handling special characters like quotes, backslashes, and control characters.
+std::string escapeJsonString(const std::string& input);
 
 } // namespace Utils
 

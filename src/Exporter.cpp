@@ -9,7 +9,6 @@ using json = nlohmann::json;
 void Exporter::exportAsJson(
     std::ostream& os, 
     const std::vector<LogEntry>& entries, 
-    bool includeSummary, 
     bool prettyPrint) {
     
     json j;
@@ -30,11 +29,12 @@ void Exporter::exportAsJson(
         j["entries"].push_back(entryJson);
     }
     
-    if (includeSummary) {
-        j["summary"] = {
-            {"count", entries.size()}
-        };
-    }
+    // Ensure "summary" root element is always present for consistency
+    j["summary"] = {
+        {"count", entries.size()}
+    };
+    // Additional summary details could be added conditionally here if needed in the future
+
     
     if (prettyPrint) {
         os << j.dump(4) << std::endl;

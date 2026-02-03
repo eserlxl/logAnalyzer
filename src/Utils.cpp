@@ -319,4 +319,27 @@ std::expected<std::chrono::system_clock::time_point, std::string> parseTime(cons
     return std::unexpected("Failed to parse time string. Unknown format.");
 }
 
+std::string escapeJsonString(const std::string& input) {
+    std::ostringstream oss;
+    for (char c : input) {
+        switch (c) {
+            case '"': oss << "\\\""; break;
+            case '\\': oss << "\\\\\\"; break;
+            case '\b': oss << "\\b"; break;
+            case '\f': oss << "\\f"; break;
+            case '\n': oss << "\\n"; break;
+            case '\r': oss << "\\r"; break;
+            case '\t': oss << "\\t"; break;
+            default:
+                if (static_cast<unsigned char>(c) < 32) { // Control characters
+                    oss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(c);
+                } else {
+                    oss << c;
+                }
+                break;
+        }
+    }
+    return oss.str();
+}
+
 } // namespace Utils

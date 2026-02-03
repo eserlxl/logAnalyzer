@@ -1,7 +1,62 @@
 {
-  "tests": 0,
+  "tests": 10,
   "name": "AllTests",
   "testsuites": [
-
+    {
+      "name": "LogAnalyzerTest",
+      "tests": 10,
+      "testsuite": [
+        {
+          "name": "SetCustomLogLevelMapping",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 27
+        },
+        {
+          "name": "DefaultLogLevelMapping",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 62
+        },
+        {
+          "name": "AnalyzeStreamFileOpenError",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 87
+        },
+        {
+          "name": "AnalyzeStreamInvalidRegexError",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 106
+        },
+        {
+          "name": "GetFilteredEntriesInvalidRegex",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 133
+        },
+        {
+          "name": "ExportAsCsvEdgeCases",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 155
+        },
+        {
+          "name": "ExportAsJsonEdgeCases",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 193
+        },
+        {
+          "name": "GetFrequencyDistributionEdgeCases",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 258
+        },
+        {
+          "name": "AppendCorrectness",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 337
+        },
+        {
+          "name": "Concurrency_Placeholder",
+          "file": "\/opt\/lxl\/c++\/logAnalyzer\/tests\/LogAnalyzer_test.cpp",
+          "line": 392
+        }
+      ]
+    }
   ]
 }

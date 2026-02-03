@@ -22,7 +22,7 @@ A simple C++ tool to analyze log files.
 - **Custom Timestamp Formats**: Specify the timestamp format of your log files using `strftime` patterns to ensure correct parsing.
 - Generates a summary of log levels (INFO, WARNING, ERROR, DEBUG, TRACE, FATAL, UNKNOWN).
 - Ability to sort filtered logs by timestamp, level, or message, in ascending or descending order.
-- Ability to save analysis results to an output file in various formats (text, JSON, **CSV**).
+- Ability to save analysis results to an output file in various formats (text, JSON, CSV, **YAML**).
 - **Customizable text output format.**
 - Provides statistical analysis (may require buffering data in memory):
     - Counts of unique messages.
@@ -110,6 +110,9 @@ ctest --verbose
 
 # Export filtered logs to a CSV file
 ./logAnalyzer path/to/your/logfile.log --level ERROR --format csv --output errors.csv
+
+# Export filtered logs to a YAML file
+./logAnalyzer path/to/your/logfile.log --level WARNING --format yaml --output warnings.yaml
 
 # Use a custom text format for the output
 ./logAnalyzer path/to/your/logfile.log --level INFO --text-format "[{level}] {message}"
