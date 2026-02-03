@@ -4,6 +4,8 @@
 #include "LogTypes.h"  // Include LogTypes first to ensure LogEntry is defined
 #include "LogParser.h" // Then include LogParser, which uses ParseResult and ILogParser
 #include "Filter.h"    // Include the new Filter header
+#include "Statistics.h"
+#include "Exporter.h"
 
 #include <atomic>
 #include <chrono>

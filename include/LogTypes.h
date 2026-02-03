@@ -7,6 +7,9 @@
 #include <string>
 #include <vector>
 
+// Enum for different pattern matching types
+enum class PatternType { Literal, Glob, Regex };
+
 enum class LogLevel { TRACE, DEBUG, INFO, WARNING, ERROR, FATAL, UNKNOWN };
 
 // Enum for Parse Errors

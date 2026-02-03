@@ -4,15 +4,76 @@
 #include "LogTypes.h"
 #include <vector>
 #include <string>
+#include <set>
+#include <functional>
 #include <memory>
 #include <regex>
 #include <algorithm>
 #include <chrono>
+#include <expected>
+#include "Utils.h" // For time parsing utilities
 
 class IFilter {
 public:
     virtual ~IFilter() = default;
     virtual bool matches(const LogEntry &entry) const = 0;
+};
+
+class SourceFileFilter : public IFilter {
+public:
+    explicit SourceFileFilter(std::string pattern,
+                              PatternType type = PatternType::Literal,
+                              bool caseSensitive = false);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string pattern_;
+    PatternType type_;
+    bool caseSensitive_;
+    std::regex regexPattern_;
+};
+
+class FieldExistsFilter : public IFilter {
+public:
+    explicit FieldExistsFilter(std::string fieldKey);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldKey_;
+};
+
+#include <functional> // For std::function
+
+class FieldValueFilter : public IFilter {
+public:
+    explicit FieldValueFilter(std::string fieldKey,
+                              std::string valuePattern,
+                              PatternType type = PatternType::Literal,
+                              bool caseSensitive = false);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::string fieldKey_;
+    std::string valuePattern_;
+    PatternType type_;
+    bool caseSensitive_;
+    std::regex regexPattern_;
+};
+
+#include <set> // For std::set
+
+class PredicateFilter : public IFilter {
+public:
+    using Predicate = std::function<bool(const LogEntry&)>;
+    explicit PredicateFilter(Predicate predicate);
+    bool matches(const LogEntry &entry) const override;
+private:
+    Predicate predicate_;
+};
+
+class LogLevelSetFilter : public IFilter {
+public:
+    explicit LogLevelSetFilter(std::set<LogLevel> allowedLevels);
+    bool matches(const LogEntry &entry) const override;
+private:
+    std::set<LogLevel> allowedLevels_;
 };
 
 class LevelFilter : public IFilter {
@@ -37,30 +98,39 @@ private:
 
 class KeywordFilter : public IFilter {
 public:
-    explicit KeywordFilter(std::string keyword, bool caseSensitive = false)
-        : keyword_(std::move(keyword)), caseSensitive_(caseSensitive) {}
+    enum class Logic { ANY, ALL };
+
+    explicit KeywordFilter(std::string keyword, bool isCaseSensitive = false);
+    explicit KeywordFilter(std::vector<std::string> keywords,
+                           Logic logic = Logic::ANY,
+                           bool isCaseSensitive = false);
     bool matches(const LogEntry &entry) const override;
 private:
-    std::string keyword_;
-    bool caseSensitive_;
+    std::vector<std::string> keywords_;
+    Logic logic_;
+    bool isCaseSensitive_;
 };
 
 class RegexFilter : public IFilter {
 public:
     explicit RegexFilter(std::string pattern, std::regex_constants::syntax_option_type flags = std::regex::ECMAScript);
+    explicit RegexFilter(std::string pattern, bool caseSensitive);
     bool matches(const LogEntry &entry) const override;
 private:
     std::regex pattern_;
 };
 
+#include <expected>
+
 class TimeRangeFilter : public IFilter {
 public:
     TimeRangeFilter(std::chrono::system_clock::time_point start,
-                    std::chrono::system_clock::time_point end)
-        : startTime_(start), endTime_(end) {}
-    bool matches(const LogEntry &entry) const override {
-        return entry.timestamp >= startTime_ && entry.timestamp < endTime_;
-    }
+                    std::chrono::system_clock::time_point end);
+
+    static std::expected<TimeRangeFilter, std::string> fromStrings(const std::string& start, const std::string& end);
+    static std::expected<TimeRangeFilter, std::string> since(const std::string& relativeTime);
+
+    bool matches(const LogEntry &entry) const override;
 private:
     std::chrono::system_clock::time_point startTime_;
     std::chrono::system_clock::time_point endTime_;

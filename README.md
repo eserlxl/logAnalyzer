@@ -14,6 +14,8 @@ A simple C++ tool to analyze log files.
     - Message keyword (case-sensitive or insensitive).
     - Regular expression patterns in messages.
     - Time range (start and end timestamps).
+    - Source file (e.g., `main.cpp`).
+    - Function name (e.g., `init_module`).
 - **Asynchronous Processing**: Load and analyze files asynchronously with support for cancellation.
 - **Maps custom log level strings to standard levels (e.g., `FATAL=ERROR`).**
 - **Custom Timestamp Formats**: Specify the timestamp format of your log files using `strftime` patterns to ensure correct parsing.
@@ -66,6 +68,12 @@ make
 
 # Filter by a time range
 ./logAnalyzer path/to/your/logfile.log --start "2023-10-27 10:00:00" --end "2023-10-27 10:05:00"
+
+# Filter by source file
+./logAnalyzer path/to/your/logfile.log --source-file "main.cpp"
+
+# Filter by function name
+./logAnalyzer path/to/your/logfile.log --function "init_module"
 
 # Sort filtered results by log level (asc) and message (desc)
 ./logAnalyzer path/to/your/logfile.log --level ERROR --sort-by level --order asc

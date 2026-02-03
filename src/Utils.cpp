@@ -90,4 +90,15 @@ std::expected<std::chrono::system_clock::time_point, std::string> parseRelativeT
     return std::unexpected("Invalid relative time format. Expected formats like '10s ago', '5m ago', '2h ago', '1d ago'.");
 }
 
+std::expected<std::chrono::system_clock::time_point, std::string> parseAbsoluteTime(const std::string& timeStr) {
+    std::tm tm = {};
+    std::stringstream ss(timeStr);
+    ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+    if (ss.fail()) {
+        return std::unexpected("Invalid absolute time format. Expected 'YYYY-MM-DD HH:MM:SS'.");
+    }
+    auto timePoint = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    return timePoint;
+}
+
 } // namespace Utils

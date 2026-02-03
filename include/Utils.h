@@ -39,6 +39,9 @@ std::expected<std::chrono::seconds, std::string> parseDuration(const std::string
 // Calculates a time point relative to the current time (e.g., "1h ago").
 std::expected<std::chrono::system_clock::time_point, std::string> parseRelativeTime(const std::string& timeStr);
 
+// Parses an absolute time string (e.g., "2023-01-01 12:30:00") into std::chrono::system_clock::time_point.
+std::expected<std::chrono::system_clock::time_point, std::string> parseAbsoluteTime(const std::string& timeStr);
+
 } // namespace Utils
 
 #endif // UTILS_H
