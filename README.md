@@ -3,7 +3,8 @@
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
+[![C++ Standard](https.img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
+[![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
 [![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](./docs/html/index.html)
 
 ## Overview
@@ -177,7 +178,7 @@ This section outlines how to get, build, and install the `logAnalyzer` tool from
 First, clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/your-org-or-username/logAnalyzer.git
+git clone https://github.com/eserlxl/logAnalyzer.git
 cd logAnalyzer
 ```
 

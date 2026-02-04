@@ -21,13 +21,13 @@
 
 // Forward declarations to break include cycles
 // Full definitions are in Filter.h, Exporter.h, Statistics.h
-enum class FilterOperator;
-enum class FilterLogicalOperator;
-enum class FilterValueType;
+enum class FilterOperator : uint8_t;
+enum class FilterLogicalOperator : uint8_t;
+enum class FilterValueType : uint8_t;
 enum class ExportFormat;
 enum class StatisticType;
-enum class SortBy;
-enum class SortOrder;
+enum class SortBy : uint8_t;
+enum class SortOrder : uint8_t;
 
 
 namespace Utils {

@@ -112,37 +112,44 @@ bool evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
 } // Unnamed namespace
 
 bool FilterExpression::evaluate(const LogEntry& entry) const {
+    bool result;
     switch (type_) {
         case ExpressionType::EMPTY:
-            return true; // An empty filter matches everything
+            result = true; // An empty filter matches everything
+            break;
         case ExpressionType::CONDITION:
-            return evaluateCondition(*condition_, entry);
+            result = evaluateCondition(*condition_, entry);
+            break;
         case ExpressionType::LOGICAL:
             switch (*logicalOperator_) {
                 case FilterLogicalOperator::AND:
+                    result = true;
                     for (const auto& expr : expressions_) {
                         if (!expr.evaluate(entry)) {
-                            return false; // Short-circuit
+                            result = false;
+                            break; // Short-circuit
                         }
                     }
-                    return true;
+                    break;
                 case FilterLogicalOperator::OR:
+                    result = false;
                     for (const auto& expr : expressions_) {
                         if (expr.evaluate(entry)) {
-                            return true; // Short-circuit
+                            result = true;
+                            break; // Short-circuit
                         }
                     }
-                    return false;
-                case FilterLogicalOperator::NOT:
-                    // 'NOT' should always have exactly one sub-expression
-                    if (!expressions_.empty()) {
-                        return !expressions_[0].evaluate(entry);
-                    }
-                    return true; // NOT applied to nothing is arguably true.
-                default:
-                    return false;
+                    break;
+                // No default needed as FilterLogicalOperator only has AND/OR now.
             }
+            break;
         default:
-            return false;
+            result = false; // Should not be reached
+            break;
     }
+
+    if (negated_) {
+        return !result;
+    }
+    return result;
 }

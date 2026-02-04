@@ -144,9 +144,8 @@ std::string filterLogicalOperatorToString(FilterLogicalOperator op) {
     switch (op) {
         case FilterLogicalOperator::AND: return "AND";
         case FilterLogicalOperator::OR: return "OR";
-        case FilterLogicalOperator::NOT: return "NOT";
-        default: return "UNKNOWN";
     }
+    return "UNKNOWN_LOGICAL_OPERATOR"; // Fallback for safety, though technically unreachable.
 }
 
 std::optional<FilterLogicalOperator> stringToFilterLogicalOperator(const std::string& opStr) {
@@ -155,7 +154,6 @@ std::optional<FilterLogicalOperator> stringToFilterLogicalOperator(const std::st
 
     if (upperOpStr == "AND") return FilterLogicalOperator::AND;
     if (upperOpStr == "OR") return FilterLogicalOperator::OR;
-    if (upperOpStr == "NOT") return FilterLogicalOperator::NOT;
     return std::nullopt;
 }
 

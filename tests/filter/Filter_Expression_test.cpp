@@ -138,13 +138,16 @@ TEST_F(FilterExpressionTest, FluentApiNot) {
     FilterExpression cond = FilterExpression::create(createCondition(LogEntryField::LEVEL, FilterOperator::EQUALS, "DEBUG"));
     FilterExpression not_cond = cond.Not();
 
-    ASSERT_TRUE(not_cond.isLogical());
-    EXPECT_EQ(*not_cond.getLogicalOperator(), FilterLogicalOperator::NOT);
-    ASSERT_EQ(not_cond.getExpressions().size(), 1);
+    // The 'not_cond' should now be a copy of 'cond' but with 'negated_' flag set to true.
+    ASSERT_TRUE(not_cond.isCondition()); // It's still a condition, but negated
+    EXPECT_TRUE(not_cond.isNegated());   // Check the new negated flag
+    EXPECT_EQ(not_cond.getCondition()->field, LogEntryField::LEVEL); // Verify it's the original condition
+    EXPECT_EQ(not_cond.getCondition()->value, "DEBUG");
     
-    // NOT(NOT(cond)) should simplify back to cond
+    // NOT(NOT(cond)) should simplify back to the original cond (not negated)
     FilterExpression not_not_cond = not_cond.Not();
     ASSERT_TRUE(not_not_cond.isCondition());
+    EXPECT_FALSE(not_not_cond.isNegated()); // Should no longer be negated
     EXPECT_EQ(not_not_cond.getCondition()->value, "DEBUG");
 }
 

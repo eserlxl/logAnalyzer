@@ -13,7 +13,7 @@
 // New: Represents a single filtering condition (leaf node in the filter tree)
 struct FilterCondition {
     LogEntryField field = LogEntryField::UNKNOWN;        // The LogEntry field to apply the filter to.
-    FilterOperator op = FilterOperator::UNKNOWN;          // The comparison operator.
+    FilterOperator op;
     
     // The value to compare against. Always stored as a string.
     // For NUMERIC and DATETIME valueTypes, this string representation will be parsed

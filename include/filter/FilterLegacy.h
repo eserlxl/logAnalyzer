@@ -17,7 +17,7 @@
 // Its role is to provide a temporary bridge for backward compatibility during migration.
 struct FilterRule {
     LogEntryField field = LogEntryField::UNKNOWN;
-    FilterOperator op = FilterOperator::UNKNOWN;
+    FilterOperator op;
     std::string value;
     bool caseSensitive = false;
 };

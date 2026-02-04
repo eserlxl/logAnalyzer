@@ -209,9 +209,9 @@ inline std::vector<std::string> LogAnalyzerSettings::validate() const {
         if (fr.field == LogEntryField::UNKNOWN) {
             errors.push_back("FilterRule has an unrecognized field.");
         }
-        if (fr.op == FilterOperator::UNKNOWN) {
-            errors.push_back("FilterRule has an unrecognized operator.");
-        }
+        // if (fr.op == FilterOperator::UNKNOWN) {
+        //     errors.push_back("FilterRule has an unrecognized operator.");
+        // }
     }
 
     if (exportSettings.fieldsToExport.empty()) {

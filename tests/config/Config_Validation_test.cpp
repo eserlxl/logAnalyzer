@@ -38,19 +38,13 @@ TEST_F(LogAnalyzerConfigTest, ValidateErrorHandling) {
     settings.fieldMappings = {}; // Clear for next test
 
 
-    // 3. FilterRule with UNKNOWN field or operator
+    // 3. FilterRule with UNKNOWN field (operator must be valid now)
     settings.filterRules = {
         FilterRule{LogEntryField::UNKNOWN, FilterOperator::EQUALS, "ERROR"}
     };
     errors = settings.validate();
     ASSERT_FALSE(errors.empty());
     ASSERT_THAT(errors[0], testing::HasSubstr("FilterRule has an unrecognized field."));
-    settings.filterRules = {
-        FilterRule{LogEntryField::LEVEL, FilterOperator::UNKNOWN, "ERROR"}
-    };
-    errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    ASSERT_THAT(errors[0], testing::HasSubstr("FilterRule has an unrecognized operator."));
     settings.filterRules = {}; // Clear for next test
 
     // 4. ExportSettings with empty fieldsToExport
@@ -73,16 +67,15 @@ TEST_F(LogAnalyzerConfigTest, ValidateErrorHandling) {
     settings.lineParsePattern = "[invalid regex"; // Invalid regex
     settings.fieldMappings = { FieldMapping{LogEntryField::TIMESTAMP, std::nullopt} }; // Missing groupIndex
     settings.exportSettings.fieldsToExport = {}; // Empty fieldsToExport
-    settings.filterRules = { FilterRule{LogEntryField::UNKNOWN, FilterOperator::UNKNOWN, "VAL"} }; // Unrecognized field and op
+    settings.filterRules = { FilterRule{LogEntryField::UNKNOWN, FilterOperator::EQUALS, "VAL"} }; // Unrecognized field. Operator will be valid.
     settings.statisticConfigs = { StatisticConfig{StatisticType::UNKNOWN} }; // Unknown statistic type
     errors = settings.validate();
-    ASSERT_EQ(errors.size(), 6); // 1 regex, 1 fieldMapping, 2 filterRule, 1 exportSettings, 1 statisticConfigs
+    ASSERT_EQ(errors.size(), 5); // 1 regex, 1 fieldMapping, 1 filterRule, 1 exportSettings, 1 statisticConfigs
     ASSERT_THAT(errors[0], testing::HasSubstr("Invalid regex pattern"));
     ASSERT_THAT(errors[1], testing::HasSubstr("FieldMapping is missing groupIndex."));
     ASSERT_THAT(errors[2], testing::HasSubstr("FilterRule has an unrecognized field."));
-    ASSERT_THAT(errors[3], testing::HasSubstr("FilterRule has an unrecognized operator."));
-    ASSERT_THAT(errors[4], testing::HasSubstr("ExportSettings 'fieldsToExport' cannot be empty."));
-    ASSERT_THAT(errors[5], testing::HasSubstr("StatisticConfig has an unrecognized type."));
+    ASSERT_THAT(errors[3], testing::HasSubstr("ExportSettings 'fieldsToExport' cannot be empty."));
+    ASSERT_THAT(errors[4], testing::HasSubstr("StatisticConfig has an unrecognized type."));
 }
 
 TEST_F(LogAnalyzerConfigTest, ValidateValidSettings) {

@@ -15,14 +15,15 @@
 class FilterExpression {
 public:
     // Default constructor (represents an empty/no-op filter)
-    FilterExpression() : type_(ExpressionType::EMPTY) {}
+    FilterExpression() : type_(ExpressionType::EMPTY), negated_(false) {} // Initialize negated_
 
     // Constructor for a single condition (leaf node)
-    FilterExpression(FilterCondition condition) : type_(ExpressionType::CONDITION), condition_(std::move(condition)) {}
+    FilterExpression(FilterCondition condition, bool negated = false) // Add negated parameter
+        : type_(ExpressionType::CONDITION), condition_(std::move(condition)), negated_(negated) {}
 
     // Constructor for logical operations
-    FilterExpression(FilterLogicalOperator op, std::vector<FilterExpression> expressions = {})
-        : type_(ExpressionType::LOGICAL), logicalOperator_(op), expressions_(std::move(expressions)) {}
+    FilterExpression(FilterLogicalOperator op, std::vector<FilterExpression> expressions = {}, bool negated = false) // Add negated parameter
+        : type_(ExpressionType::LOGICAL), logicalOperator_(op), expressions_(std::move(expressions)), negated_(negated) {}
 
     // Fluent builders for complex expressions
     static FilterExpression create(FilterCondition condition) {
@@ -49,12 +50,9 @@ public:
 
     // Applies 'NOT' to 'this' expression
     FilterExpression Not() const {
-        if (type_ == ExpressionType::LOGICAL &&
-            logicalOperator_ == FilterLogicalOperator::NOT &&
-            !expressions_.empty()) {
-            return expressions_[0]; // Simplify NOT(NOT(expr)) -> expr
-        }
-        return FilterExpression(FilterLogicalOperator::NOT, {*this});
+        FilterExpression newExpr = *this; // Create a copy
+        newExpr.negated_ = !newExpr.negated_; // Toggle negation
+        return newExpr;
     }
 
     // Forward declarations for recursive JSON conversion
@@ -67,6 +65,7 @@ public:
     const std::optional<FilterCondition>& getCondition() const { return condition_; }
     const std::optional<FilterLogicalOperator>& getLogicalOperator() const { return logicalOperator_; }
     const std::vector<FilterExpression>& getExpressions() const { return expressions_; }
+    bool isNegated() const { return negated_; } // New accessor for negation
 
     bool isCondition() const { return type_ == ExpressionType::CONDITION; }
     bool isLogical() const { return type_ == ExpressionType::LOGICAL; }
@@ -76,8 +75,9 @@ public:
 private:
     ExpressionType type_;
     std::optional<FilterCondition> condition_;
-    std::optional<FilterLogicalOperator> logicalOperator_;
+    std::optional<FilterLogicalOperator> logicalOperator_; // This will now only hold AND/OR
     std::vector<FilterExpression> expressions_;
+    bool negated_ = false; // New member to handle negation
 };
 
 
@@ -97,21 +97,31 @@ inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
             }
         }
     }
+    if (fe.isNegated()) {
+        j["negated"] = true; // Add negated flag to JSON
+    }
 }
 
 inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe) {
+    bool current_negated = false;
+    if (j.contains("negated") && j.at("negated").is_boolean()) {
+        current_negated = j.at("negated").get<bool>();
+    }
+
     if (j.contains("condition") && j.at("condition").is_object()) {
         FilterCondition fc;
         ErrorCode::Result<void> result = from_json(j.at("condition"), fc);
         if (!result.has_value()) {
             return std::unexpected(result.error());
         }
-        fe = FilterExpression(std::move(fc));
+        fe = FilterExpression(std::move(fc), current_negated); // Pass current_negated
     } else if (j.contains("operator") && j.at("operator").is_string()) {
-        auto opOpt = Utils::stringToFilterLogicalOperator(j.at("operator").get<std::string>());
+        auto opStr = j.at("operator").get<std::string>();
+        auto opOpt = Utils::stringToFilterLogicalOperator(opStr);
         if (!opOpt) {
-            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unknown filter logical operator: " + j.at("operator").get<std::string>()));
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unknown filter logical operator: " + opStr));
         }
+        
         FilterLogicalOperator op = *opOpt;
 
         std::vector<FilterExpression> operands;
@@ -124,17 +134,10 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpressi
                 }
                 operands.push_back(std::move(operand_fe));
             }
-        } else if (op != FilterLogicalOperator::NOT) {
-             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression with operator " + Utils::filterLogicalOperatorToString(op) + " must contain 'operands' array."));
-        } else if (!j.contains("operands")) {
-             // For NOT, we might be lenient or strict. The test seems to test general logical operator requirements.
-             // But FilterExpressionFromJsonMissingOperands uses AND.
-             // If AND, we fail.
-             // If NOT, we allowed it before?
-             // Let's failing generally if operands is missing, as logical operators imply operands.
-             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression with operator must contain 'operands' array."));
+        } else {
+             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression with operator " + opStr + " must contain 'operands' array."));
         }
-        fe = FilterExpression(op, std::move(operands));
+        fe = FilterExpression(op, std::move(operands), current_negated); // Pass current_negated
     } else {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression must contain either 'condition' or 'operator' with 'operands'."));
     }

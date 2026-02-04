@@ -118,19 +118,20 @@ TEST_F(FilterJsonTest, FilterExpressionToJsonLogicalNOT) {
     nlohmann::json j;
     to_json(j, fe);
 
-    ASSERT_TRUE(j.contains("operator"));
-    EXPECT_EQ(j["operator"], "NOT");
-    ASSERT_TRUE(j.contains("operands"));
-    ASSERT_EQ(j["operands"].size(), 1);
+    // After negation, the expression itself is marked as negated, not wrapped in a NOT operator.
+    ASSERT_TRUE(j.contains("condition")); // The original condition is now directly in the JSON
+    ASSERT_TRUE(j.contains("negated"));
+    EXPECT_TRUE(j["negated"].get<bool>());
 
-    // Check operand
-    EXPECT_EQ(j["operands"][0]["condition"]["field"], "LEVEL");
-    EXPECT_EQ(j["operands"][0]["condition"]["value"], "DEBUG");
+    // Check the original condition within the JSON
+    EXPECT_EQ(j["condition"]["field"], "LEVEL");
+    EXPECT_EQ(j["condition"]["op"], "EQUALS");
+    EXPECT_EQ(j["condition"]["value"], "DEBUG");
 }
 
 TEST_F(FilterJsonTest, FilterExpressionFromJsonLogicalNOT) {
     nlohmann::json j = {
-        {"operator", "NOT"},
+        {"operator", "NOT"}, // This will now cause an error during deserialization
         {"operands", nlohmann::json::array({
             {{"condition", {{"field", "message"}, {"op", "STARTS_WITH"}, {"value", "Success"}, {"value_type", "STRING"}}}}
         })}
@@ -138,17 +139,31 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonLogicalNOT) {
 
     FilterExpression fe;
     auto result = from_json(j, fe);
+    EXPECT_FALSE(result.has_value()); // Expect failure
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("Unknown filter logical operator"), std::string::npos);
+}
+
+// New test for deserializing JSON with the new "negated" flag
+TEST_F(FilterJsonTest, FilterExpressionFromJsonWithNegatedFlag) {
+    nlohmann::json j = {
+        {"condition", {
+            {"field", "message"},
+            {"op", "STARTS_WITH"},
+            {"value", "Success"},
+            {"value_type", "STRING"}
+        }},
+        {"negated", true}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
     ASSERT_TRUE(result.has_value()) << result.error().message;
 
-    ASSERT_TRUE(fe.isLogical());
-    ASSERT_TRUE(fe.getLogicalOperator().has_value());
-    EXPECT_EQ(*fe.getLogicalOperator(), FilterLogicalOperator::NOT);
-    ASSERT_EQ(fe.getExpressions().size(), 1);
-
-    // Check operand
-    ASSERT_TRUE(fe.getExpressions()[0].isCondition());
-    EXPECT_EQ(fe.getExpressions()[0].getCondition()->field, LogEntryField::MESSAGE);
-    EXPECT_EQ(fe.getExpressions()[0].getCondition()->value, "Success");
+    ASSERT_TRUE(fe.isCondition());
+    EXPECT_TRUE(fe.isNegated());
+    EXPECT_EQ(fe.getCondition()->field, LogEntryField::MESSAGE);
+    EXPECT_EQ(fe.getCondition()->value, "Success");
 }
 
 TEST_F(FilterJsonTest, FilterExpressionFromJsonNested) {

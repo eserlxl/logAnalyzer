@@ -85,14 +85,13 @@ TEST(UtilsEnumConversionTest, StringToFilterOperator) {
 TEST(UtilsEnumConversionTest, FilterLogicalOperatorToString) {
     EXPECT_EQ(Utils::filterLogicalOperatorToString(FilterLogicalOperator::AND), "AND");
     EXPECT_EQ(Utils::filterLogicalOperatorToString(FilterLogicalOperator::OR), "OR");
-    EXPECT_EQ(Utils::filterLogicalOperatorToString(FilterLogicalOperator::NOT), "NOT");
 }
 
 TEST(UtilsEnumConversionTest, StringToFilterLogicalOperator) {
     EXPECT_EQ(Utils::stringToFilterLogicalOperator("AND").value(), FilterLogicalOperator::AND);
     EXPECT_EQ(Utils::stringToFilterLogicalOperator("or").value(), FilterLogicalOperator::OR);
-    EXPECT_EQ(Utils::stringToFilterLogicalOperator("Not").value(), FilterLogicalOperator::NOT);
     EXPECT_FALSE(Utils::stringToFilterLogicalOperator("XOR").has_value());
+    EXPECT_FALSE(Utils::stringToFilterLogicalOperator("NOT").has_value()); // Now "NOT" should return nullopt
 }
 
 // --- FilterValueType Enum Conversions ---
