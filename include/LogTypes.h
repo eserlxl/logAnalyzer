@@ -214,9 +214,26 @@ struct LogEntry {
   size_t sourceLineNumber = 0; // New: Line number in the source file
   std::optional<std::chrono::system_clock::time_point> timestamp;
   LogLevel level;
-  std::string message;
-  std::map<std::string, std::string>
-      customFields; // Changed from structuredFields to customFields, to align with design and allow for any custom data
+              std::string message;
+              std::map<std::string, std::string> customFields;
+              std::vector<ErrorCode::Error> parsingErrors; // Added to store parsing errors
+          
+              // Helper to check if any parsing errors occurred
+              bool hasParsingErrors() const {
+                  return !parsingErrors.empty();
+              }
+          
+              // Helper to get all error messages concatenated
+              std::string getParsingErrorsAsString() const {
+                  std::string all_errors;
+                  for (const auto& err : parsingErrors) {
+                      if (!all_errors.empty()) {
+                          all_errors += "; ";
+                      }
+                      all_errors += err.message;
+                  }
+                  return all_errors;
+              } // Changed from structuredFields to customFields, to align with design and allow for any custom data
                     // Previously structuredFields, now intended for advanced text output formatting
   // The 'structuredFields' was already a map<string, string>, so the change is semantic and name-based.
 

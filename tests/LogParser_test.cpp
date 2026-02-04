@@ -12,7 +12,7 @@ using namespace ErrorCode;
 // Test fixture for LogParser, if needed. For now, a simple TEST is enough.
 
 TEST(LogParserErrorHandling, VariousActions) {
-    std::string pattern = R"(^(\d{4}-\d{2}-\d{2}) [(\\w+)] (.*)$)"; // Pattern for date only, time part will fail
+    std::string pattern = R"(^(\d{4}-\d{2}-\d{2})\s+\[(\w+)\]\s+(.*)$)"; // Pattern for date only, time part will fail
     std::vector<FieldMapping> mappings = {
         {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S"}, // Expecting full datetime, but only date captured
         {LogEntryField::LEVEL, 2},
@@ -34,7 +34,7 @@ TEST(LogParserErrorHandling, VariousActions) {
     ASSERT_TRUE(warnEntryResult.has_value()); // Should return a default entry
     ASSERT_FALSE(warnEntryResult.value().timestamp.has_value()); // Timestamp should be empty
     ASSERT_EQ(warnEntryResult.value().level, LogLevel::INFO); // Other fields should still be parsed
-    ASSERT_EQ(warnEntryResult.value().message, "Parse failed (warn): " + logLine); // Message indicates warn action
+    ASSERT_EQ(warnEntryResult.value().message, logLine); // Message indicates warn action
     ASSERT_NE(cerrBufferWarn.str().find("Warning (LogParser): Failed to parse timestamp"), std::string::npos); // Warning should be logged
 
     std::cerr.rdbuf(oldCerrWarn); // Restore cerr

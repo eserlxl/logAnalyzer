@@ -216,7 +216,7 @@ parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>&
         if (format.empty()) continue;
         std::stringstream ss(timeStr);
         ss >> std::get_time(&tm, format.c_str());
-        if (!ss.fail() && ss.eof()) { // ss.eof() ensures the entire string was parsed
+        if (!ss.fail() && static_cast<size_t>(ss.tellg()) == timeStr.length()) {
             auto timePoint = std::chrono::system_clock::from_time_t(std::mktime(&tm));
             return timePoint;
         }

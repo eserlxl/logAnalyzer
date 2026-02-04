@@ -15,6 +15,7 @@ enum class Code {
     StatisticNotFound,
     TimestampParsingFailed, // New error code
     SettingsRestoreFailed, // New error code
+    Unexpected, // Added Unexpected error code
     // Add more error codes as needed
 };
 
@@ -53,6 +54,9 @@ struct Error {
     static Error settingsRestoreFailed(const std::string& details) {
         return Error(Code::SettingsRestoreFailed, "Settings restore failed: " + details);
     }
+    static Error unexpected(const std::string& details) {
+        return Error(Code::Unexpected, "Unexpected error: " + details);
+    }
 
 
     // Convert to string for logging or display
@@ -70,6 +74,7 @@ struct Error {
             case Code::StatisticNotFound: codeStr = "StatisticNotFound"; break;
             case Code::TimestampParsingFailed: codeStr = "TimestampParsingFailed"; break;
             case Code::SettingsRestoreFailed: codeStr = "SettingsRestoreFailed"; break;
+            case Code::Unexpected: codeStr = "Unexpected"; break;
             default: codeStr = "UnknownCode"; break;
         }
         if (!message.empty()) {

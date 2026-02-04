@@ -77,6 +77,9 @@ struct FilterCondition {
     // For DATETIME valueType, this provides the format for parsing 'value'.
     std::optional<std::string> datetimeFormat;
 
+    // For CUSTOM field, this specifies the key in the customFields map.
+    std::optional<std::string> customField;
+
     // Default constructor
     FilterCondition() = default;
 
@@ -280,6 +283,11 @@ public:
 
     // Applies 'NOT' to 'this' expression
     FilterExpression Not() const {
+        if (type_ == ExpressionType::LOGICAL &&
+            logicalOperator_ == FilterLogicalOperator::NOT &&
+            !expressions_.empty()) {
+            return expressions_[0]; // Simplify NOT(NOT(expr)) -> expr
+        }
         return FilterExpression(FilterLogicalOperator::NOT, {*this});
     }
 
@@ -296,6 +304,8 @@ public:
 
     bool isCondition() const { return type_ == ExpressionType::CONDITION; }
     bool isLogical() const { return type_ == ExpressionType::LOGICAL; }
+
+    bool evaluate(const LogEntry& entry) const;
 
 private:
     ExpressionType type_;
