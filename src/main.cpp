@@ -1,6 +1,7 @@
 #include "LogAnalyzer.h"
 #include "Utils.h"
-#include "LogAnalyzerConfig.h"
+#include "LogAnalyzerSettings.h"
+#include "CLIConfig.h" // Added for CLIConfig
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <chrono>
@@ -15,53 +16,51 @@
 using json = nlohmann::json;
 
 int main(int argc, char *argv[]) {
-    auto expectedConfig = LogAnalyzerConfig::parseCLI(argc, argv);
+    auto expectedConfig = CLIConfig::parseCLI(argc, argv);
     if (!expectedConfig) {
         // Print the error message (which could be help text) and exit.
         std::cerr << expectedConfig.error();
         return 1;
     }
-    const auto& config = expectedConfig.value();
+    const auto& [analyzerSettings, cliOptions] = expectedConfig.value();
 
-    // The rest of the logic uses the config object
-    LogAnalyzer analyzer;
-    for (const auto &mapping : config.customLogLevelMappings) {
-        analyzer.setCustomLogLevelMapping(mapping.first, mapping.second);
-    }
+    LogAnalyzer analyzer(analyzerSettings); // Construct with settings
+
+
 
     std::ofstream outFile;
     std::ostream *outputStream = &std::cout;
-    if (!config.outputPath.empty()) {
-        outFile.open(config.outputPath);
+    if (!cliOptions.outputPath.empty()) {
+        outFile.open(cliOptions.outputPath);
         if (!outFile.is_open()) {
-            std::cerr << "Error: Could not open output file: " << config.outputPath << std::endl;
+            std::cerr << "Error: Could not open output file: " << cliOptions.outputPath << std::endl;
             return 1;
         }
         outputStream = &outFile;
     }
 
-    bool useColors = (config.colorOption == LogAnalyzerConfig::ColorOption::ALWAYS) ||
-                     (config.colorOption == LogAnalyzerConfig::ColorOption::AUTO && isatty(fileno(stdout)) && config.outputPath.empty());
+    bool useColors = (cliOptions.colorOption == CLIConfig::ColorOption::ALWAYS) ||
+                     (cliOptions.colorOption == CLIConfig::ColorOption::AUTO && isatty(fileno(stdout)) && cliOptions.outputPath.empty());
 
     // NOTE: The new --expression filter is not yet implemented. This will be part of the next stage.
     auto rootFilter = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
 
     // Inclusion filters
-    auto inclusionFilters = std::make_shared<CompositeFilter>(config.filterLogic);
-    if (config.minLogLevel.has_value()) inclusionFilters->add(std::make_shared<MinLevelFilter>(*config.minLogLevel));
-    if (!config.filterLevels.empty()) {
+    auto inclusionFilters = std::make_shared<CompositeFilter>(cliOptions.filterLogic.value_or(CompositeFilter::Logic::AND));
+    if (cliOptions.minLogLevel.has_value()) inclusionFilters->add(std::make_shared<MinLevelFilter>(*cliOptions.minLogLevel));
+    if (!cliOptions.filterLevels.empty()) {
         auto levelSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
-        for (auto l : config.filterLevels) levelSet->add(std::make_shared<LevelFilter>(l));
+        for (auto l : cliOptions.filterLevels) levelSet->add(std::make_shared<LevelFilter>(l));
         inclusionFilters->add(levelSet);
     }
-    if (!config.filterKeywords.empty()) {
-        auto keywordSet = std::make_shared<CompositeFilter>(config.filterLogic);
-        for (const auto& keyword : config.filterKeywords) keywordSet->add(std::make_shared<KeywordFilter>(keyword, config.keywordCaseSensitive));
+    if (!cliOptions.filterKeywords.empty()) {
+        auto keywordSet = std::make_shared<CompositeFilter>(cliOptions.filterLogic.value_or(CompositeFilter::Logic::AND));
+        for (const auto& keyword : cliOptions.filterKeywords) keywordSet->add(std::make_shared<KeywordFilter>(keyword, cliOptions.keywordCaseSensitive));
         inclusionFilters->add(keywordSet);
     }
-    if (!config.regexPatterns.empty()) {
-        auto regexSet = std::make_shared<CompositeFilter>(config.filterLogic);
-        for (const auto& regex : config.regexPatterns) {
+    if (!cliOptions.regexPatterns.empty()) {
+        auto regexSet = std::make_shared<CompositeFilter>(cliOptions.filterLogic.value_or(CompositeFilter::Logic::AND));
+        for (const auto& regex : cliOptions.regexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
             if (!regexFilterResult.has_value()) {
                 std::cerr << "Error: Invalid regex pattern for inclusion filter: " << regexFilterResult.error() << std::endl;
@@ -74,14 +73,14 @@ int main(int argc, char *argv[]) {
     rootFilter->add(inclusionFilters);
 
     // Exclusion filters (always ANDed)
-    if (!config.excludeKeywords.empty()) {
+    if (!cliOptions.excludeKeywords.empty()) {
         auto exclusionSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
-        for (const auto& keyword : config.excludeKeywords) exclusionSet->add(std::make_shared<KeywordFilter>(keyword, config.keywordCaseSensitive));
+        for (const auto& keyword : cliOptions.excludeKeywords) exclusionSet->add(std::make_shared<KeywordFilter>(keyword, cliOptions.keywordCaseSensitive));
         rootFilter->add(std::make_shared<ExclusionFilter>(exclusionSet));
     }
-    if (!config.excludeRegexPatterns.empty()) {
+    if (!cliOptions.excludeRegexPatterns.empty()) {
         auto exclusionSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
-        for (const auto& regex : config.excludeRegexPatterns) {
+        for (const auto& regex : cliOptions.excludeRegexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
             if (!regexFilterResult.has_value()) {
                 std::cerr << "Error: Invalid regex pattern for exclusion filter: " << regexFilterResult.error() << std::endl;
@@ -92,39 +91,42 @@ int main(int argc, char *argv[]) {
         rootFilter->add(std::make_shared<ExclusionFilter>(exclusionSet));
     }
 
-    if (config.startTime || config.endTime) {
+    if (cliOptions.startTime || cliOptions.endTime) {
         rootFilter->add(std::make_shared<TimeRangeFilter>(
-            config.startTime.value_or(std::chrono::system_clock::time_point::min()),
-            config.endTime.value_or(std::chrono::system_clock::time_point::max())
+            cliOptions.startTime.value_or(std::chrono::system_clock::time_point::min()),
+            cliOptions.endTime.value_or(std::chrono::system_clock::time_point::max())
         ));
     }
 
     // NOTE: The new --tail mode is not yet implemented. This will be part of the next stage.
-    if (config.streamMode) {
-        if (config.outputFormat != "text" && config.outputFormat != "csv") {
+    if (cliOptions.streamMode) {
+        if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv") {
             std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << std::endl;
             return 1;
         }
         auto streamEntryCallback = [&](const LogEntry &entry) {
             if (rootFilter->matches(entry)) {
-                 if (config.outputFormat == "text") {
-                      *outputStream << analyzer.formatEntry(entry, config.textOutputFormat, useColors) << std::endl;
+                 if (cliOptions.outputFormat == "text") {
+                    LogAnalyzer::FormattingOptions fmtOptions;
+                    fmtOptions.useColor = useColors;
+                    fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
+                    *outputStream << analyzer.formatEntry(entry, cliOptions.textOutputFormat, fmtOptions) << std::endl;
                  } else { // CSV
-                    // TODO: Implement configurable CSV fields from config.csvFields
-                     *outputStream << "\"" << analyzer.formatTimestamp(entry.timestamp) << "\"" << config.csvSeparator
-                                   << "\"" << analyzer.logLevelToString(entry.level) << "\"" << config.csvSeparator
+                    // TODO: Implement configurable CSV fields from cliOptions.csvFields
+                     *outputStream << "\"" << analyzer.formatTimestamp(entry.timestamp) << "\"" << cliOptions.csvSeparator
+                                   << "\"" << analyzer.logLevelToString(entry.level) << "\"" << cliOptions.csvSeparator
                                    << "\"" << entry.message << "\""
-                                   << config.csvSeparator << "\"" << entry.sourceFile << "\"" << std::endl;
+                                   << cliOptions.csvSeparator << "\"" << entry.sourceFile << "\"" << std::endl;
                  }
             }
             return true;
         };
-        // NOTE: The new config.parserErrorAction is not yet plumbed into analyzeStream.
-        analyzer.analyzeStream(config.filePaths, streamEntryCallback, config.customParserPattern);
+        // NOTE: The new cliOptions.parserErrorAction is not yet plumbed into analyzeStream.
+        analyzer.analyzeStream(cliOptions.filePaths, streamEntryCallback);
     } else {
-        for (const auto& path : config.filePaths) {
-            // NOTE: The new config.parserErrorAction is not yet plumbed into append.
-            if(auto res = analyzer.append(path, config.customParserPattern); !res) {
+        for (const auto& path : cliOptions.filePaths) {
+            // NOTE: The new cliOptions.parserErrorAction is not yet plumbed into append.
+            if(auto res = analyzer.append(path); !res) {
                  std::cerr << "Error analyzing file " << path << ": " << res.error().message << std::endl;
                  return 1;
             }
@@ -137,41 +139,44 @@ int main(int argc, char *argv[]) {
         }
 
         // Sorting
-        if (config.sortBy != SortBy::TIMESTAMP || config.sortOrder != SortOrder::ASCENDING) {
+        if (cliOptions.sortBy != SortBy::TIMESTAMP || cliOptions.sortOrder != SortOrder::ASCENDING) {
             std::sort(filteredEntries.begin(), filteredEntries.end(), [&](const LogEntry& a, const LogEntry& b) {
-                if (config.sortBy == SortBy::TIMESTAMP) {
-                    return config.sortOrder == SortOrder::ASCENDING ? a.timestamp < b.timestamp : a.timestamp > b.timestamp;
-                } else if (config.sortBy == SortBy::LEVEL) {
-                    return config.sortOrder == SortOrder::ASCENDING ? a.level < b.level : a.level > b.level;
+                if (cliOptions.sortBy == SortBy::TIMESTAMP) {
+                    return cliOptions.sortOrder == SortOrder::ASCENDING ? a.timestamp < b.timestamp : a.timestamp > b.timestamp;
+                } else if (cliOptions.sortBy == SortBy::LEVEL) {
+                    return cliOptions.sortOrder == SortOrder::ASCENDING ? a.level < b.level : a.level > b.level;
                 } else { // MESSAGE
-                    return config.sortOrder == SortOrder::ASCENDING ? a.message < b.message : a.message > b.message;
+                    return cliOptions.sortOrder == SortOrder::ASCENDING ? a.message < b.message : a.message > b.message;
                 }
             });
         }
 
-        if (config.outputFormat == "text") {
+        if (cliOptions.outputFormat == "text") {
             for(const auto& entry : filteredEntries) {
-                *outputStream << analyzer.formatEntry(entry, config.textOutputFormat, useColors) << std::endl;
+                LogAnalyzer::FormattingOptions fmtOptions;
+                fmtOptions.useColor = useColors;
+                fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
+                *outputStream << analyzer.formatEntry(entry, cliOptions.textOutputFormat, fmtOptions) << std::endl;
             }
-        } else if (config.outputFormat == "csv") {
-            // TODO: Implement configurable CSV fields from config.csvFields
-            *outputStream << "Timestamp" << config.csvSeparator << "Level" << config.csvSeparator << "Message" << config.csvSeparator << "File\n";
+        } else if (cliOptions.outputFormat == "csv") {
+            // TODO: Implement configurable CSV fields from cliOptions.csvFields
+            *outputStream << "Timestamp" << cliOptions.csvSeparator << "Level" << cliOptions.csvSeparator << "Message" << cliOptions.csvSeparator << "File\n";
             for (const auto& entry : filteredEntries) {
-                *outputStream << analyzer.formatTimestamp(entry.timestamp) << config.csvSeparator
-                              << analyzer.logLevelToString(entry.level) << config.csvSeparator;
+                *outputStream << analyzer.formatTimestamp(entry.timestamp) << cliOptions.csvSeparator
+                              << analyzer.logLevelToString(entry.level) << cliOptions.csvSeparator;
                 std::string msg = entry.message;
-                bool needsQuotes = msg.find(config.csvSeparator) != std::string::npos || msg.find('"') != std::string::npos;
+                bool needsQuotes = msg.find(cliOptions.csvSeparator) != std::string::npos || msg.find('"') != std::string::npos;
                 if (needsQuotes) {
                     Utils::replaceAll(msg, "\"", "\"\"");
                     *outputStream << "\"" << msg << "\"";
                 } else {
                     *outputStream << msg;
                 }
-                *outputStream << config.csvSeparator << entry.sourceFile << "\n";
+                *outputStream << cliOptions.csvSeparator << entry.sourceFile << "\n";
             }
-        } else if (config.outputFormat == "json") {
+        } else if (cliOptions.outputFormat == "json") {
              json j;
-             if (config.includeSummary) {
+             if (cliOptions.includeSummary) {
                  j["totalEntries"] = filteredEntries.size();
              }
              j["entries"] = json::array();
@@ -184,7 +189,7 @@ int main(int argc, char *argv[]) {
                      {"file", entry.sourceFile}
                  });
              }
-             if (config.prettyPrint) {
+             if (cliOptions.prettyPrint) {
                  *outputStream << std::setw(4) << j << std::endl;
              } else {
                  *outputStream << j << std::endl;
@@ -192,24 +197,24 @@ int main(int argc, char *argv[]) {
         }
 
         // NOTE: The statistics part will be refactored into IStatisticCollector system next.
-        if (config.showUniqueMessages) {
+        if (cliOptions.showUniqueMessages) {
             std::map<std::string, int> counts;
             for (const auto& entry : filteredEntries) counts[entry.message]++;
             *outputStream << "\nUnique Messages: " << counts.size() << "\n";
         }
 
-        if (config.showTopMessages) {
+        if (cliOptions.showTopMessages) {
             std::map<std::string, int> counts;
             for (const auto& entry : filteredEntries) counts[entry.message]++;
             std::vector<std::pair<std::string, int>> sorted(counts.begin(), counts.end());
             std::sort(sorted.begin(), sorted.end(), [](const auto& a, const auto& b){ return a.second > b.second; });
-            *outputStream << "\nTop " << config.topMessagesCount << " Messages:\n";
-            for (int i=0; i < std::min((int)sorted.size(), config.topMessagesCount); ++i) {
+            *outputStream << "\nTop " << cliOptions.topMessagesCount << " Messages:\n";
+            for (int i=0; i < std::min((int)sorted.size(), cliOptions.topMessagesCount); ++i) {
                 *outputStream << sorted[i].second << ": " << sorted[i].first << "\n";
             }
         }
 
-        if (config.showEntryRate) {
+        if (cliOptions.showEntryRate) {
              if (filteredEntries.size() > 1) {
                  auto dur = filteredEntries.back().timestamp - filteredEntries.front().timestamp;
                  auto secs = std::chrono::duration_cast<std::chrono::seconds>(dur).count();

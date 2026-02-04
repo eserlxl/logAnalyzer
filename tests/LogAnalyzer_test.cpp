@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include "LogAnalyzer.h"
 #include "LogTypes.h"
+#include "LogAnalyzerSettings.h" // Added for LogAnalyzerSettings
+#include "LogAnalyzerConfig.h" // Added for DEFAULT_LOG_REGEX_PATTERN
 #include "Utils.h" // For formatTimestamp etc.
 #include <sstream>
 #include <chrono>
@@ -39,7 +41,7 @@ TEST_F(LogAnalyzerTest, SetCustomLogLevelMapping) {
     // Use the default regex pattern, which should capture timestamp, level, message.
     // The default pattern usually covers something like: (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\S+) (.*)
     // We expect the second group to be the level.
-    AnalysisReport report = analyzer.loadAndReplace(filePath, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    AnalysisReport report = analyzer.loadAndReplace(filePath, std::string(DEFAULT_LOG_REGEX_PATTERN));
     
     // Check if loading was successful
     ASSERT_EQ(report.status, ParseError::SUCCESS);
@@ -67,7 +69,7 @@ TEST_F(LogAnalyzerTest, DefaultLogLevelMapping) {
     ofs << logContent;
     ofs.close();
 
-    AnalysisReport report = analyzer.loadAndReplace(filePath, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    AnalysisReport report = analyzer.loadAndReplace(filePath, std::string(DEFAULT_LOG_REGEX_PATTERN));
     
     ASSERT_EQ(report.status, ParseError::SUCCESS);
     ASSERT_EQ(report.successfulParses, 1);
@@ -122,7 +124,14 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {
     // Expect an error due to invalid regex pattern
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, ParseError::INVALID_REGEX_PATTERN);
-    ASSERT_NE(result.error().message.find("Error creating parser for pattern: ("), std::string::npos);
+    // Check for common messages indicating unmatched parenthesis or bracket errors for regex issues
+    ASSERT_TRUE(result.error().message.find("regex_error") != std::string::npos ||
+                result.error().message.find("Mismatched '(' and ')'") != std::string::npos ||
+                result.error().message.find("unmatched ')'") != std::string::npos ||
+                result.error().message.find("unmatched '['") != std::string::npos ||
+                result.error().message.find("unmatched '{'") != std::string::npos ||
+                result.error().message.find("invalid repetition operator") != std::string::npos ||
+                result.error().message.find("invalid character in character class") != std::string::npos);
     ASSERT_TRUE(processedEntries.empty()); // No entries should have been processed
 
     std::remove(filePaths[0].c_str());
@@ -136,7 +145,7 @@ TEST_F(LogAnalyzerTest, GetFilteredEntriesInvalidRegex) {
     std::ofstream ofs(filePath);
     ofs << logContent;
     ofs.close();
-    analyzer.loadAndReplace(filePath, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    analyzer.loadAndReplace(filePath, std::string(DEFAULT_LOG_REGEX_PATTERN));
     std::remove(filePath.c_str());
 
     FilterCriteria criteria;
@@ -177,7 +186,7 @@ TEST_F(LogAnalyzerTest, ExportAsCsvEdgeCases) {
     std::ofstream ofs(filePath);
     ofs << logContent;
     ofs.close();
-    analyzer.loadAndReplace(filePath, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    analyzer.loadAndReplace(filePath, std::string(DEFAULT_LOG_REGEX_PATTERN));
     std::remove(filePath.c_str());
 
     std::stringstream ss;
@@ -221,7 +230,7 @@ TEST_F(LogAnalyzerTest, ExportAsJsonEdgeCases) {
     std::ofstream ofs(filePath);
     ofs << logContent;
     ofs.close();
-    analyzer.loadAndReplace(filePath, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    analyzer.loadAndReplace(filePath, std::string(DEFAULT_LOG_REGEX_PATTERN));
     std::remove(filePath.c_str());
 
     // Export with pretty printing and summary
@@ -274,7 +283,7 @@ TEST_F(LogAnalyzerTest, GetFrequencyDistributionEdgeCases) {
     std::ofstream ofs(filePath);
     ofs << logContent;
     ofs.close();
-    analyzer.loadAndReplace(filePath, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    analyzer.loadAndReplace(filePath, std::string(DEFAULT_LOG_REGEX_PATTERN));
     std::remove(filePath.c_str());
 
     std::vector<TimeWindowStats> singleEntryStats = analyzer.getFrequencyDistribution(std::chrono::seconds(1));
@@ -294,7 +303,7 @@ TEST_F(LogAnalyzerTest, GetFrequencyDistributionEdgeCases) {
     ofs.open(filePath);
     ofs << logContent;
     ofs.close();
-    analyzer.loadAndReplace(filePath, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    analyzer.loadAndReplace(filePath, std::string(DEFAULT_LOG_REGEX_PATTERN));
     std::remove(filePath.c_str());
 
     // Use a window size that covers all entries
@@ -316,7 +325,7 @@ TEST_F(LogAnalyzerTest, GetFrequencyDistributionEdgeCases) {
     ofs.open(filePath);
     ofs << logContent;
     ofs.close();
-    analyzer.loadAndReplace(filePath, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    analyzer.loadAndReplace(filePath, std::string(DEFAULT_LOG_REGEX_PATTERN));
     std::remove(filePath.c_str());
 
     // Window size of 5 seconds
@@ -352,7 +361,7 @@ TEST_F(LogAnalyzerTest, AppendCorrectness) {
     ofs1 << logContent1;
     ofs1.close();
 
-    auto result1 = analyzer.append(filePath1, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    auto result1 = analyzer.append(filePath1, std::string(DEFAULT_LOG_REGEX_PATTERN));
     ASSERT_TRUE(result1.has_value());
     ASSERT_EQ(analyzer.getEntries().size(), 2);
     // Check if sorted by timestamp
@@ -369,7 +378,7 @@ TEST_F(LogAnalyzerTest, AppendCorrectness) {
     ofs2 << logContent2;
     ofs2.close();
 
-    auto result2 = analyzer.append(filePath2, std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    auto result2 = analyzer.append(filePath2, std::string(DEFAULT_LOG_REGEX_PATTERN));
     ASSERT_TRUE(result2.has_value());
     ASSERT_EQ(analyzer.getEntries().size(), 4);
     
@@ -384,7 +393,7 @@ TEST_F(LogAnalyzerTest, AppendCorrectness) {
     analyzer.clear();
 
     // 3. Append a file that fails to open
-    auto result3 = analyzer.append("non_existent_append.log", std::string(LogAnalyzer::DEFAULT_LOG_REGEX_PATTERN));
+    auto result3 = analyzer.append("non_existent_append.log", std::string(DEFAULT_LOG_REGEX_PATTERN));
     ASSERT_FALSE(result3.has_value());
     ASSERT_EQ(result3.error().code, ParseError::FILE_OPEN_FAILED);
     ASSERT_TRUE(analyzer.getEntries().empty()); // No entries should have been added

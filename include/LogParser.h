@@ -2,6 +2,7 @@
 #define LOG_PARSER_H
 
 #include "LogTypes.h" // Includes LogEntryField, FieldMapping, etc.
+#include <expected>
 #include <map>
 #include <memory>
 #include <optional>
@@ -50,6 +51,13 @@ public:
 // Default implementation of ILogParser using regex
 class DefaultLogParser : public ILogParser {
 public:
+    // Factory function to handle constructor errors
+    static std::expected<std::unique_ptr<DefaultLogParser>, LogParseError> create(
+        std::string pattern,
+        std::vector<FieldMapping> fieldMappings,
+        const std::map<std::string, LogLevel, ci_less> &levelMappings = {},
+        std::optional<std::string> logEntryStartPattern = std::nullopt);
+
     // New constructor with field mappings and level mappings, and optional log entry start pattern
     DefaultLogParser(
         std::string pattern,

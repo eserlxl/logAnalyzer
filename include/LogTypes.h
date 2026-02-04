@@ -83,8 +83,7 @@ struct FieldMapping {
   }
 
   // Constructor for structured fields (kv_delimiter is now part of formats vector)
-  FieldMapping(LogEntryField f, int gi, const std::string& sfn, const std::string& kv_delimiter = "=")
-      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), formats({kv_delimiter}), structuredFieldName(sfn) {}
+FieldMapping(LogEntryField f, int gi, const std::string& sfn, const std::string& kv_delimiter) : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), formats({kv_delimiter}), structuredFieldName(sfn) {}
 
   // Explicitly defined copy and move constructors/assignment operators for robust vector usage
   FieldMapping(const FieldMapping&) = default;

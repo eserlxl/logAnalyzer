@@ -25,9 +25,9 @@ TEST(LogParserTest, NewConstructorWithFieldMappingsAndLogLevels) {
     ParseResult result = parser.processLine(logLine, 1).value();
 
     ASSERT_TRUE(result.success);
-    ASSERT_TRUE(result.entry.has_value());
-    ASSERT_EQ(result.entry->level, LogLevel::FATAL);
-    ASSERT_EQ(result.entry->message, "User login failed.");
+    ASSERT_TRUE(result.success);
+    ASSERT_EQ(result.entry.level, LogLevel::FATAL);
+    ASSERT_EQ(result.entry.message, "User login failed.");
     // Verify timestamp (chrono::system_clock::time_point comparison is tricky, check components)
     auto expectedTime_opt = Utils::parseTime("2023-10-27 10:30:00");
     ASSERT_TRUE(expectedTime_opt.has_value());
@@ -47,9 +47,9 @@ TEST(LogParserTest, DeprecatedConstructorBackwardCompatibility) {
     ParseResult result = parser.processLine(logLine, 1).value();
 
     ASSERT_TRUE(result.success);
-    ASSERT_TRUE(result.entry.has_value());
-    ASSERT_EQ(result.entry->level, LogLevel::INFO);
-    ASSERT_EQ(result.entry->message, "Application started.");
+    ASSERT_TRUE(result.success);
+    ASSERT_EQ(result.entry.level, LogLevel::INFO);
+    ASSERT_EQ(result.entry.message, "Application started.");
     auto expectedTime_opt = Utils::parseTime("2023-01-15 14:05:30");
     ASSERT_TRUE(expectedTime_opt.has_value());
     auto expectedTime = expectedTime_opt.value();
@@ -79,9 +79,9 @@ TEST(LogParserTest, MultiLineBasic) {
     ASSERT_TRUE(res3.has_value()); // Line 1 is complete, Line 2 starts
 
     ASSERT_TRUE(res3->success);
-    ASSERT_TRUE(res3->entry.has_value());
-    ASSERT_EQ(res3->entry->level, LogLevel::INFO);
-    ASSERT_EQ(res3->entry->message, "Line 1\n  Continuation of Line 1");
+    ASSERT_TRUE(res3->success);
+    ASSERT_EQ(res3->entry.level, LogLevel::INFO);
+    ASSERT_EQ(res3->entry.message, "Line 1\n  Continuation of Line 1");
     auto expectedTime1_opt = Utils::parseTime("2023-01-01 10:00:00");
     ASSERT_TRUE(expectedTime1_opt.has_value());
     auto expectedTime1 = expectedTime1_opt.value();
@@ -92,9 +92,9 @@ TEST(LogParserTest, MultiLineBasic) {
     std::vector<ParseResult> flushed = parser.flushRemaining();
     ASSERT_EQ(flushed.size(), 1);
     ASSERT_TRUE(flushed[0].success);
-    ASSERT_TRUE(flushed[0].entry.has_value());
-    ASSERT_EQ(flushed[0].entry->level, LogLevel::DEBUG);
-    ASSERT_EQ(flushed[0].entry->message, "Line 2");
+    ASSERT_TRUE(flushed[0].success);
+    ASSERT_EQ(flushed[0].entry.level, LogLevel::DEBUG);
+    ASSERT_EQ(flushed[0].entry.message, "Line 2");
     auto expectedTime2_opt = Utils::parseTime("2023-01-01 10:00:01");
     ASSERT_TRUE(expectedTime2_opt.has_value());
     auto expectedTime2 = expectedTime2_opt.value();
@@ -106,8 +106,7 @@ TEST(LogParserTest, MultiLineBasic) {
 TEST(LogParserTest, StructuredFieldExplicitMappingWithEnhancedKeys) {
     std::string pattern = R"(^INFO: \[([^\]]+)\] (.*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::LEVEL, -1, "", ""}, // Placeholder for level, not captured by pattern for this test
-        {LogEntryField::STRUCTURED_FIELD, 1, ",", ""}, // Capture group 1 has key=value pairs, separated by comma
+        {LogEntryField::STRUCTURED_FIELD, 1, "", "="}, // Group 1 contains structured data, parse k/v by "="
         {LogEntryField::MESSAGE, 2}
     };
 
@@ -117,12 +116,12 @@ TEST(LogParserTest, StructuredFieldExplicitMappingWithEnhancedKeys) {
     ParseResult result = parser.processLine(logLine, 1).value();
 
     ASSERT_TRUE(result.success);
-    ASSERT_TRUE(result.entry.has_value());
-    ASSERT_EQ(result.entry->message, "User logged in.");
-    ASSERT_EQ(result.entry->structuredFields.size(), 3);
-    ASSERT_EQ(result.entry->structuredFields["user.id"], "123");
-    ASSERT_EQ(result.entry->structuredFields["event-name"], "login-success");
-    ASSERT_EQ(result.entry->structuredFields["proc_time"], "1.23s");
+    ASSERT_TRUE(result.success);
+    ASSERT_EQ(result.entry.message, "User logged in.");
+    ASSERT_EQ(result.entry.structuredFields.size(), 3);
+    ASSERT_EQ(result.entry.structuredFields["user.id"], "123");
+    ASSERT_EQ(result.entry.structuredFields["event-name"], "login-success");
+    ASSERT_EQ(result.entry.structuredFields["proc_time"], "1.23s");
 }
 
 // Test legacy structured field parsing from message with enhanced key regex
@@ -140,11 +139,11 @@ TEST(LogParserTest, LegacyStructuredFieldFromMessageWithEnhancedKeys) {
     ParseResult result = parser.processLine(logLine, 1).value();
 
     ASSERT_TRUE(result.success);
-    ASSERT_TRUE(result.entry.has_value());
-    ASSERT_EQ(result.entry->level, LogLevel::INFO);
-    ASSERT_EQ(result.entry->message, "User action, session.id=abc-123, action-type=\"view-page\", request_duration=100ms.");
-    ASSERT_EQ(result.entry->structuredFields.size(), 3);
-    ASSERT_EQ(result.entry->structuredFields["session.id"], "abc-123");
-    ASSERT_EQ(result.entry->structuredFields["action-type"], "view-page");
-    ASSERT_EQ(result.entry->structuredFields["request_duration"], "100ms");
+    ASSERT_TRUE(result.success);
+    ASSERT_EQ(result.entry.level, LogLevel::INFO);
+    ASSERT_EQ(result.entry.message, "User action, session.id=abc-123, action-type=\"view-page\", request_duration=100ms.");
+    ASSERT_EQ(result.entry.structuredFields.size(), 3);
+    ASSERT_EQ(result.entry.structuredFields["session.id"], "abc-123");
+    ASSERT_EQ(result.entry.structuredFields["action-type"], "view-page");
+    ASSERT_EQ(result.entry.structuredFields["request_duration"], "100ms");
 }

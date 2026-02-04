@@ -21,13 +21,33 @@ std::vector<FieldMapping> inferFieldMappingsFromPattern([[maybe_unused]] const s
     // This is a simplified example and would need a more robust implementation
     // to truly infer from a generic regex pattern.
     std::vector<FieldMapping> inferredMappings;
-    inferredMappings.emplace_back(LogEntryField::TIMESTAMP, 1, std::string("%Y-%m-%d %H:%M:%S"));
-    inferredMappings.emplace_back(LogEntryField::LEVEL, 2);
-    inferredMappings.emplace_back(LogEntryField::MESSAGE, 3);
+    inferredMappings.push_back(FieldMapping(LogEntryField::TIMESTAMP, 1, std::string("%Y-%m-%d %H:%M:%S")));
+    inferredMappings.push_back(FieldMapping(LogEntryField::LEVEL, 2));
+    inferredMappings.push_back(FieldMapping(LogEntryField::MESSAGE, 3));
     return inferredMappings;
 }
 
-// Default implementation of ILogParser::getLineFilterRegexCompiled
+// New factory function to handle regex compilation errors
+std::expected<std::unique_ptr<DefaultLogParser>, LogParseError> DefaultLogParser::create(
+    std::string pattern,
+    std::vector<FieldMapping> fieldMappings,
+    const std::map<std::string, LogLevel, ci_less>& levelMappings,
+    std::optional<std::string> logEntryStartPattern) {
+    try {
+        // Use a private constructor or a helper to avoid direct instantiation
+        // For now, we call the public constructor and catch exceptions.
+        auto parser = std::make_unique<DefaultLogParser>(
+            std::move(pattern),
+            std::move(fieldMappings),
+            levelMappings,
+            std::move(logEntryStartPattern)
+        );
+        return parser;
+    } catch (const std::regex_error& e) {
+        return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, e.what(), 0});
+    }
+}
+
 std::regex ILogParser::getLineFilterRegexCompiled() const {
   return std::regex(getLineFilterRegex(), std::regex::optimize);
 }

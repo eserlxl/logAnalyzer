@@ -13,6 +13,7 @@ macro(loganalyzer_gtest_discover_tests TEST_NAME)
     # Determine the actual working directory for this specific test.
     # The design specifies a unique, temporary location for true isolation.
     set(TEST_ACTUAL_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/Testing/Temporary/${TEST_NAME}_working_dir")
+    file(MAKE_DIRECTORY "${TEST_ACTUAL_WORKING_DIRECTORY}")
 
     # --- Handle TEST_DATA_FILES and TEST_DATA_SUBDIR ---
     set(TEST_COMMAND_PRELUDE "")
@@ -68,7 +69,7 @@ macro(loganalyzer_gtest_discover_tests TEST_NAME)
         file(APPEND "${SETUP_SCRIPT_PATH}" "endif()\n")
         set(FINAL_ADD_TEST_COMMAND ${TEST_COMMAND_PRELUDE})
     else()
-        set(FINAL_ADD_TEST_COMMAND "${TEST_NAME}") # Pass target name, gtest_discover_tests will find its path
+        set(FINAL_ADD_TEST_COMMAND "${ACTUAL_TEST_EXECUTABLE}")
     endif()
 
     # --- Combine LABELS and CATEGORIES ---

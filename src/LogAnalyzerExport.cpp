@@ -8,47 +8,6 @@ std::string LogAnalyzer::formatTimestamp(std::chrono::system_clock::time_point t
     return Utils::formatTimestamp(tp, format);
 }
 
-std::string LogAnalyzer::formatEntry(const LogEntry &entry, std::string_view format, bool useColor) const {
-    std::string output = std::string(format);
-    
-    std::string levelStr = logLevelToString(entry.level);
-    if (useColor) {
-        // Audit: Colorization logic could be more robust.
-        if (entry.level == LogLevel::ERROR || entry.level == LogLevel::FATAL) 
-            levelStr = Utils::AnsiColor::RED + levelStr + Utils::AnsiColor::RESET;
-        else if (entry.level == LogLevel::WARNING) 
-            levelStr = Utils::AnsiColor::YELLOW + levelStr + Utils::AnsiColor::RESET;
-        else if (entry.level == LogLevel::INFO) 
-            levelStr = Utils::AnsiColor::GREEN + levelStr + Utils::AnsiColor::RESET;
-        else if (entry.level == LogLevel::DEBUG || entry.level == LogLevel::TRACE) 
-            levelStr = Utils::AnsiColor::CYAN + levelStr + Utils::AnsiColor::RESET;
-        // Note: UNKNOWN level is not colored.
-    }
-
-    Utils::replaceAll(output, "{timestamp}", formatTimestamp(entry.timestamp));
-    Utils::replaceAll(output, "{level}", levelStr);
-    Utils::replaceAll(output, "{message}", entry.message);
-    Utils::replaceAll(output, "{lineNumber}", std::to_string(entry.id));
-    Utils::replaceAll(output, "{fileName}", entry.sourceFile);
-    
-    return output;
-}
-
-void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
-    auto filtered_expected = getFilteredEntries(criteria); // This call is already locked inside
-    if (!filtered_expected) {
-        std::cerr << "Error filtering entries: " << filtered_expected.error().message << std::endl;
-        return;
-    }
-    const auto& filtered = filtered_expected.value();
-    for (const auto& entry : filtered) {
-        // Using formatEntry with useColor = false for backward compatibility.
-        out << formatEntry(entry, formatString, false) << "\n";
-    }
-}
-
-// Audit: Fragile CSV Export
 void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter) const {
     std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
     
