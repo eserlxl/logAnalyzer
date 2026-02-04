@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/LogTypes.h"
+#include "utils/Utils.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -20,27 +21,39 @@ enum class StatisticType {
     UNKNOWN
 };
 
+inline void to_json(json& j, const StatisticType& st) {
+    j = Utils::statisticTypeToString(st);
+}
+
+inline void from_json(const json& j, StatisticType& st) {
+    if (j.is_string()) {
+        auto opt = Utils::stringToStatisticType(j.get<std::string>());
+        if (opt) {
+            st = *opt;
+        } else {
+            throw std::runtime_error("StatisticConfig has an unrecognized type.");
+        }
+    } else {
+        throw std::runtime_error("StatisticType must be a string.");
+    }
+}
+
 struct StatisticConfig {
     StatisticType type;
     std::map<std::string, std::string> params; // e.g., {"top_n": "10"}, {"target_field": "level"}, {"custom_field_key": "transactionId"}
 };
-
-NLOHMANN_JSON_SERIALIZE_ENUM(StatisticType, {
-    {StatisticType::UNKNOWN, "unknown"},
-    {StatisticType::UNIQUE_MESSAGES, "unique_messages"},
-    {StatisticType::TOP_MESSAGES, "top_messages"},
-    {StatisticType::ENTRY_RATE, "entry_rate"},
-    {StatisticType::LOG_LEVEL_COUNT, "count_by_level"},
-    {StatisticType::FIELD_VALUE_COUNT, "field_value_count"},
-    {StatisticType::TOP_N_FIELD_VALUES, "top_n_field_values"}
-})
 
 inline void to_json(json& j, const StatisticConfig& sc) {
     j = json{{"type", sc.type}, {"params", sc.params}};
 }
 
 inline void from_json(const json& j, StatisticConfig& sc) {
-    j.at("type").get_to(sc.type);
+    if (j.contains("type")) {
+        sc.type = j.at("type").get<StatisticType>();
+    } else {
+        throw std::runtime_error("StatisticConfig is missing 'type'.");
+    }
+    
     if (j.contains("params")) {
         j.at("params").get_to(sc.params);
     }

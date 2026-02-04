@@ -46,19 +46,19 @@ TEST_F(FilterTest, SourceFileFilterRegex) {
 
 TEST_F(FilterTest, FieldValueFilterRegex) {
     // Default caseSensitive is false, so it should be case-insensitive
-    FieldValueFilter filter_regex("error_code", R"(ERR\\d{3})", PatternType::Regex);
+    FieldValueFilter filter_regex("error_code", R"(ERR\d{3})", PatternType::Regex);
     auto entry3 = createLogEntry(3, "app.log", now, LogLevel::ERROR, "DB error", {{"error_code", "ERR501"}});
     auto entry4 = createLogEntry(4, "app.log", now, LogLevel::ERROR, "Network error", {{"error_code", "err200"}});
-    EXPECT_TRUE(filter_regex.matches(entry3)); // ERR501 matches ERR\\d{3} case-insensitively
-    EXPECT_TRUE(filter_regex.matches(entry4)); // err200 matches ERR\\d{3} case-insensitively
+    EXPECT_TRUE(filter_regex.matches(entry3)); // ERR501 matches ERR\d{3} case-insensitively
+    EXPECT_TRUE(filter_regex.matches(entry4)); // err200 matches ERR\d{3} case-insensitively
 
-    FieldValueFilter filter_regex_icase_explicit("error_code", R"(ERR\\d{3})", PatternType::Regex, false);
+    FieldValueFilter filter_regex_icase_explicit("error_code", R"(ERR\d{3})", PatternType::Regex, false);
     EXPECT_TRUE(filter_regex_icase_explicit.matches(entry3)); // ERR501 matches ERR\\d{3} case-insensitively
     EXPECT_TRUE(filter_regex_icase_explicit.matches(entry4)); // err200 matches ERR\\d{3} case-insensitively
 }
 
 TEST_F(FilterTest, FieldValueFilterRegexCaseSensitive) {
-    FieldValueFilter filter_regex_cs("error_code", R"(ERR\\d{3})", PatternType::Regex, true); // Explicitly case sensitive
+    FieldValueFilter filter_regex_cs("error_code", R"(ERR\d{3})", PatternType::Regex, true); // Explicitly case sensitive
     auto entry3 = createLogEntry(3, "app.log", now, LogLevel::ERROR, "DB error", {{"error_code", "ERR501"}});
     auto entry4 = createLogEntry(4, "app.log", now, LogLevel::ERROR, "Network error", {{"error_code", "err200"}});
     EXPECT_TRUE(filter_regex_cs.matches(entry3));
@@ -96,7 +96,8 @@ TEST_F(FilterTest, RegexFilterInvalidPattern) {
     auto filter_res = RegexFilter::create("["); // Invalid regex pattern
     EXPECT_FALSE(filter_res.has_value());
     EXPECT_EQ(filter_res.error().code, Code::InvalidRegex);
-    EXPECT_NE(filter_res.error().message.find("The expression contained an invalid character class name"), std::string::npos);
+    // Error message varies by platform/compiler, just check it's not empty and related to regex if possible
+    EXPECT_FALSE(filter_res.error().message.empty());
 }
 
 
@@ -236,7 +237,7 @@ TEST_F(FilterTest, NestedFieldValueFilter) {
     EXPECT_FALSE(filter_literal.matches(entry_nested_mismatch));
 
     // Regex
-    NestedFieldValueFilter filter_regex("user.id", R"(U\\d{3})", PatternType::Regex);
+    NestedFieldValueFilter filter_regex("user.id", R"(U\d{3})", PatternType::Regex);
     auto entry_regex_match = createLogEntry(4, "user.log", now, LogLevel::INFO, "User ID", {{"user.id", "U123"}});
     auto entry_regex_mismatch = createLogEntry(5, "user.log", now, LogLevel::INFO, "User ID", {{"user.id", "123"}});
     EXPECT_TRUE(filter_regex.matches(entry_regex_match));

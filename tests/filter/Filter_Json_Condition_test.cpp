@@ -36,7 +36,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson) {
     nlohmann::json j;
     to_json(j, fc);
 
-    EXPECT_EQ(j["field"], "timestamp");
+    EXPECT_EQ(j["field"], "TIMESTAMP");
     EXPECT_EQ(j["op"], "GREATER_THAN");
     EXPECT_EQ(j["value"], "2023-01-01T00:00:00Z");
     EXPECT_EQ(j["value_type"], "DATETIME");

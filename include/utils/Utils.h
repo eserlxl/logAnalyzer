@@ -13,6 +13,7 @@
 #include <utility>
 #include <algorithm>
 #include <cctype>
+#include <optional>
 
 #include "core/CiLess.h"     // For ci_less comparator
 #include "core/Error.h"      // For ErrorCode::Error
@@ -25,6 +26,8 @@ enum class FilterLogicalOperator;
 enum class FilterValueType;
 enum class ExportFormat;
 enum class StatisticType;
+enum class SortBy;
+enum class SortOrder;
 
 
 namespace Utils {
@@ -99,19 +102,31 @@ LogEntryField stringToLogEntryField(const std::string& fieldStr);
 // LogLevel functions are declared in LogTypes.h inside namespace Utils
 
 std::string filterOperatorToString(FilterOperator op);
-FilterOperator stringToFilterOperator(const std::string& opStr);
+std::optional<FilterOperator> stringToFilterOperator(const std::string& opStr);
 
 std::string filterLogicalOperatorToString(FilterLogicalOperator op);
-FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr);
+std::optional<FilterLogicalOperator> stringToFilterLogicalOperator(const std::string& opStr);
 
 std::string filterValueTypeToString(FilterValueType type);
-FilterValueType stringToFilterValueType(const std::string& typeStr);
+std::optional<FilterValueType> stringToFilterValueType(const std::string& typeStr);
 
 std::string exportFormatToString(ExportFormat format);
-ExportFormat stringToExportFormat(const std::string& formatStr);
+std::optional<ExportFormat> stringToExportFormat(const std::string& formatStr);
 
 std::string statisticTypeToString(StatisticType type);
-StatisticType stringToStatisticType(const std::string& typeStr);
+std::optional<StatisticType> stringToStatisticType(const std::string& typeStr);
+
+std::string patternTypeToString(PatternType type);
+std::optional<PatternType> stringToPatternType(const std::string& typeStr);
+
+std::string parseErrorToString(ParseError error);
+std::optional<ParseError> stringToParseError(const std::string& errorStr);
+
+std::string sortByToString(SortBy sort);
+std::optional<SortBy> stringToSortBy(const std::string& sortStr);
+
+std::string sortOrderToString(SortOrder order);
+std::optional<SortOrder> stringToSortOrder(const std::string& orderStr);
 
 } // namespace Utils
 

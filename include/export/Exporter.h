@@ -1,25 +1,15 @@
 #ifndef EXPORTER_H
 #define EXPORTER_H
 
-#include <nlohmann/json.hpp> // Include for nlohmann/json types
+#include <nlohmann/json.hpp>
 #include "core/LogTypes.h"
-#include "utils/Utils.h" // For string conversion utilities
-#include "utils/Utils.h" // For string conversion utilities
-#include "utils/Utils.h" // For string conversion utilities
-#include "utils/Utils.h" // For string conversion utilities
-
-// Forward declarations to break circular dependency with Utils.h
-namespace Utils {
-    std::string logEntryFieldToString(LogEntryField field);
-    LogEntryField stringToLogEntryField(const std::string& fieldStr);
-    std::string exportFormatToString(ExportFormat format);
-    ExportFormat stringToExportFormat(const std::string& formatStr);
-}
+#include "utils/Utils.h"
 #include <iostream>
 #include <vector>
 #include <string>
-#include <utility> // For std::move
-#include <optional> // For std::optional
+#include <utility>
+#include <optional>
+#include <stdexcept>
 
 // New: Enum for different export formats
 enum class ExportFormat {
@@ -115,7 +105,14 @@ inline void from_json(const nlohmann::json& j, ExportSettings& es) {
 
     if (j.contains("format")) {
         if (j.at("format").is_string()) {
-            es.format = Utils::stringToExportFormat(j.at("format").get<std::string>());
+            std::string formatStr = j.at("format").get<std::string>();
+            auto formatOpt = Utils::stringToExportFormat(formatStr);
+            if (formatOpt) {
+                es.format = *formatOpt;
+            } else {
+                 // If the string is not recognized, throw an error, as format is a critical setting.
+                 throw std::runtime_error("ExportSettings: 'format' has invalid value: " + formatStr);
+            }
         } else {
             throw std::runtime_error("ExportSettings: 'format' has invalid type. Expected string.");
         }
@@ -172,4 +169,3 @@ private:
 };
 
 #endif // EXPORTER_H
-

@@ -1,11 +1,12 @@
 #include "utils/Utils.h" // Includes all necessary declarations for Utils namespace
 #include "export/Exporter.h"
-#include "filter/Filter.h"
+#include "filter/FilterTypes.h" // Include FilterTypes.h for SortBy, SortOrder
 #include "stats/Statistics.h"
 #include <algorithm>
 #include <map>
 #include <filesystem>
 #include <string>
+#include <optional>
 
 namespace Utils {
 
@@ -69,17 +70,17 @@ std::string getDirectory(const std::string& filePath) {
 // LogEntryField
 std::string logEntryFieldToString(LogEntryField field) {
     switch (field) {
-        case LogEntryField::TIMESTAMP: return "timestamp";
-        case LogEntryField::LEVEL: return "level";
-        case LogEntryField::MESSAGE: return "message";
-        case LogEntryField::SOURCE_FILE: return "source_file";
-        case LogEntryField::LINE_NUMBER: return "line_number";
-        case LogEntryField::THREAD_ID: return "thread_id";
-        case LogEntryField::MODULE: return "module";
-        case LogEntryField::HOST: return "host";
-        case LogEntryField::CUSTOM: return "custom";
-        case LogEntryField::STRUCTURED_FIELD: return "structured_field";
-        default: return "unknown";
+        case LogEntryField::TIMESTAMP: return "TIMESTAMP";
+        case LogEntryField::LEVEL: return "LEVEL";
+        case LogEntryField::MESSAGE: return "MESSAGE";
+        case LogEntryField::SOURCE_FILE: return "SOURCE_FILE";
+        case LogEntryField::LINE_NUMBER: return "LINE_NUMBER";
+        case LogEntryField::THREAD_ID: return "THREAD_ID";
+        case LogEntryField::MODULE: return "MODULE";
+        case LogEntryField::HOST: return "HOST";
+        case LogEntryField::CUSTOM: return "CUSTOM";
+        case LogEntryField::STRUCTURED_FIELD: return "STRUCTURED_FIELD";
+        default: return "UNKNOWN";
     }
 }
 
@@ -118,7 +119,7 @@ std::string filterOperatorToString(FilterOperator op) {
     }
 }
 
-FilterOperator stringToFilterOperator(const std::string& opStr) {
+std::optional<FilterOperator> stringToFilterOperator(const std::string& opStr) {
     std::string upperOpStr = opStr;
     std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
 
@@ -132,7 +133,8 @@ FilterOperator stringToFilterOperator(const std::string& opStr) {
     if (upperOpStr == "LESS_THAN") return FilterOperator::LESS_THAN;
     if (upperOpStr == "GREATER_THAN_OR_EQUAL") return FilterOperator::GREATER_THAN_OR_EQUAL;
     if (upperOpStr == "LESS_THAN_OR_EQUAL") return FilterOperator::LESS_THAN_OR_EQUAL;
-    return FilterOperator::UNKNOWN;
+    if (upperOpStr == "REGEX_MATCH") return FilterOperator::REGEX_MATCH;
+    return std::nullopt;
 }
 
 // FilterLogicalOperator
@@ -145,14 +147,14 @@ std::string filterLogicalOperatorToString(FilterLogicalOperator op) {
     }
 }
 
-FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr) {
+std::optional<FilterLogicalOperator> stringToFilterLogicalOperator(const std::string& opStr) {
     std::string upperOpStr = opStr;
     std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
 
     if (upperOpStr == "AND") return FilterLogicalOperator::AND;
     if (upperOpStr == "OR") return FilterLogicalOperator::OR;
     if (upperOpStr == "NOT") return FilterLogicalOperator::NOT;
-    return FilterLogicalOperator::UNKNOWN;
+    return std::nullopt;
 }
 
 // FilterValueType
@@ -165,62 +167,142 @@ std::string filterValueTypeToString(FilterValueType type) {
     }
 }
 
-FilterValueType stringToFilterValueType(const std::string& typeStr) {
+std::optional<FilterValueType> stringToFilterValueType(const std::string& typeStr) {
     std::string upperTypeStr = typeStr;
     std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
 
     if (upperTypeStr == "STRING") return FilterValueType::STRING;
     if (upperTypeStr == "NUMERIC") return FilterValueType::NUMERIC;
     if (upperTypeStr == "DATETIME") return FilterValueType::DATETIME;
-    return FilterValueType::UNKNOWN;
+    return std::nullopt;
 }
 
 // ExportFormat
 std::string exportFormatToString(ExportFormat format) {
     switch (format) {
-        case ExportFormat::PLAINTEXT: return "plaintext";
-        case ExportFormat::JSON: return "json";
-        case ExportFormat::CSV: return "csv";
-        case ExportFormat::XML: return "xml";
-        default: return "unknown";
+        case ExportFormat::PLAINTEXT: return "PLAINTEXT";
+        case ExportFormat::JSON: return "JSON";
+        case ExportFormat::CSV: return "CSV";
+        case ExportFormat::XML: return "XML";
+        default: return "UNKNOWN";
     }
 }
 
-ExportFormat stringToExportFormat(const std::string& formatStr) {
+std::optional<ExportFormat> stringToExportFormat(const std::string& formatStr) {
     std::string upperFormatStr = formatStr;
     std::transform(upperFormatStr.begin(), upperFormatStr.end(), upperFormatStr.begin(), ::toupper);
 
-    if (upperFormatStr == "PLAINTEXT") return ExportFormat::PLAINTEXT;
+    if (upperFormatStr == "PLAINTEXT" || upperFormatStr == "TEXT") return ExportFormat::PLAINTEXT;
     if (upperFormatStr == "JSON") return ExportFormat::JSON;
     if (upperFormatStr == "CSV") return ExportFormat::CSV;
     if (upperFormatStr == "XML") return ExportFormat::XML;
-    return ExportFormat::UNKNOWN;
+    return std::nullopt;
 }
 
 // StatisticType
 std::string statisticTypeToString(StatisticType type) {
     switch (type) {
-        case StatisticType::UNIQUE_MESSAGES: return "unique_messages";
-        case StatisticType::TOP_MESSAGES: return "top_messages";
-        case StatisticType::ENTRY_RATE: return "entry_rate";
-        case StatisticType::LOG_LEVEL_COUNT: return "count_by_level";
-        case StatisticType::FIELD_VALUE_COUNT: return "field_value_count";
-        case StatisticType::TOP_N_FIELD_VALUES: return "top_n_field_values";
-        default: return "unknown";
+        case StatisticType::UNIQUE_MESSAGES: return "UNIQUE_MESSAGES";
+        case StatisticType::TOP_MESSAGES: return "TOP_MESSAGES";
+        case StatisticType::ENTRY_RATE: return "ENTRY_RATE";
+        case StatisticType::LOG_LEVEL_COUNT: return "COUNT_BY_LEVEL";
+        case StatisticType::FIELD_VALUE_COUNT: return "FIELD_VALUE_COUNT";
+        case StatisticType::TOP_N_FIELD_VALUES: return "TOP_N_FIELD_VALUES";
+        default: return "UNKNOWN";
     }
 }
 
-StatisticType stringToStatisticType(const std::string& typeStr) {
+std::optional<StatisticType> stringToStatisticType(const std::string& typeStr) {
     std::string upperTypeStr = typeStr;
     std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
 
     if (upperTypeStr == "UNIQUE_MESSAGES") return StatisticType::UNIQUE_MESSAGES;
     if (upperTypeStr == "TOP_MESSAGES") return StatisticType::TOP_MESSAGES;
     if (upperTypeStr == "ENTRY_RATE") return StatisticType::ENTRY_RATE;
-    if (upperTypeStr == "COUNT_BY_LEVEL") return StatisticType::LOG_LEVEL_COUNT;
+    if (upperTypeStr == "COUNT_BY_LEVEL" || upperTypeStr == "LOG_LEVEL_COUNT") return StatisticType::LOG_LEVEL_COUNT;
     if (upperTypeStr == "FIELD_VALUE_COUNT") return StatisticType::FIELD_VALUE_COUNT;
     if (upperTypeStr == "TOP_N_FIELD_VALUES") return StatisticType::TOP_N_FIELD_VALUES;
-    return StatisticType::UNKNOWN;
+    return std::nullopt;
+}
+
+// PatternType
+std::string patternTypeToString(PatternType type) {
+    switch (type) {
+        case PatternType::Literal: return "Literal";
+        case PatternType::Regex: return "Regex";
+        case PatternType::Wildcard: return "Wildcard";
+        default: return "Unknown";
+    }
+}
+
+std::optional<PatternType> stringToPatternType(const std::string& typeStr) {
+    std::string upperTypeStr = typeStr;
+    std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
+
+    if (upperTypeStr == "LITERAL") return PatternType::Literal;
+    if (upperTypeStr == "REGEX") return PatternType::Regex;
+    if (upperTypeStr == "WILDCARD") return PatternType::Wildcard;
+    return std::nullopt;
+}
+
+// ParseError
+std::string parseErrorToString(ParseError error) {
+    switch (error) {
+        case ParseError::SUCCESS: return "Success";
+        case ParseError::PARTIAL_FAILURE: return "Partial Failure";
+        case ParseError::UNKNOWN_ERROR: return "Unknown Error";
+        case ParseError::INVALID_REGEX_PATTERN: return "Invalid Regex Pattern";
+        default: return "Unknown";
+    }
+}
+
+std::optional<ParseError> stringToParseError(const std::string& errorStr) {
+    std::string upperErrorStr = errorStr;
+    std::transform(upperErrorStr.begin(), upperErrorStr.end(), upperErrorStr.begin(), ::toupper);
+
+    if (upperErrorStr == "SUCCESS") return ParseError::SUCCESS;
+    if (upperErrorStr == "PARTIAL FAILURE" || upperErrorStr == "PARTIAL_FAILURE") return ParseError::PARTIAL_FAILURE;
+    if (upperErrorStr == "UNKNOWN ERROR" || upperErrorStr == "UNKNOWN_ERROR") return ParseError::UNKNOWN_ERROR;
+    if (upperErrorStr == "INVALID REGEX PATTERN" || upperErrorStr == "INVALID_REGEX_PATTERN") return ParseError::INVALID_REGEX_PATTERN;
+    return std::nullopt;
+}
+
+// SortBy
+std::string sortByToString(SortBy sort) {
+    switch (sort) {
+        case SortBy::TIMESTAMP: return "TIMESTAMP";
+        case SortBy::LEVEL: return "LEVEL";
+        case SortBy::MESSAGE: return "MESSAGE";
+        default: return "UNKNOWN";
+    }
+}
+
+std::optional<SortBy> stringToSortBy(const std::string& sortStr) {
+    std::string upperSortStr = sortStr;
+    std::transform(upperSortStr.begin(), upperSortStr.end(), upperSortStr.begin(), ::toupper);
+
+    if (upperSortStr == "TIMESTAMP" || upperSortStr == "TIME") return SortBy::TIMESTAMP;
+    if (upperSortStr == "LEVEL") return SortBy::LEVEL;
+    if (upperSortStr == "MESSAGE" || upperSortStr == "MSG") return SortBy::MESSAGE;
+    return std::nullopt;
+}
+
+// SortOrder
+std::string sortOrderToString(SortOrder order) {
+    switch (order) {
+        case SortOrder::ASCENDING: return "ASCENDING";
+        case SortOrder::DESCENDING: return "DESCENDING";
+        default: return "UNKNOWN";
+    }
+}
+
+std::optional<SortOrder> stringToSortOrder(const std::string& orderStr) {
+    std::string upperOrderStr = orderStr;
+    std::transform(upperOrderStr.begin(), upperOrderStr.end(), upperOrderStr.begin(), ::toupper);
+
+    if (upperOrderStr == "ASCENDING" || upperOrderStr == "ASC") return SortOrder::ASCENDING;
+    if (upperOrderStr == "DESCENDING" || upperOrderStr == "DESC") return SortOrder::DESCENDING;
+    return std::nullopt;
 }
 
 } // namespace Utils

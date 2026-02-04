@@ -18,12 +18,13 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 -   [Configuration](#configuration)
 -   [Project Structure](#project-structure)
 -   [Prerequisites](#prerequisites)
--   [Getting Started](#getting-started)
--   [Build Options](#build-options)
--   [Installation](#installation)
--   [Usage](#usage)
--   [Running Tests](#running-tests)
+-   [Building and Installation](#building-and-installation)
+    -   [Getting the Code](#getting-the-code)
+    -   [Compiling the Project](#compiling-the-project)
+    -   [Build Configuration Options](#build-configuration-options)
+    -   [Installing the Executable](#installing-the-executable)
 -   [Usage Examples](#usage-examples)
+-   [Running Tests](#running-tests)
 -   [Developer Tools](#developer-tools)
 -   [Contributing](#contributing)
 -   [Code of Conduct](#code-of-conduct)
@@ -165,46 +166,54 @@ An example configuration file (`config.json`) might look like this:
     -   [nlohmann/json](https://github.com/nlohmann/json)
     -   [GoogleTest](https://github.com/google/googletest)
 
-## Getting Started
+## Building and Installation
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/your-org-or-username/logAnalyzer.git
-    cd logAnalyzer
-    ```
+This section outlines how to get, build, and install the `logAnalyzer` tool from source.
 
-2.  **Build the project:**
-    ```bash
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
-    ```
+### Getting the Code
 
-3.  **Run the executable:**
-    ```bash
-    ./bin/logAnalyzer --help
-    ```
+First, clone the repository to your local machine:
 
-## Build Options
+```bash
+git clone https://github.com/your-org-or-username/logAnalyzer.git
+cd logAnalyzer
+```
 
--   `-DBUILD_TESTING=ON/OFF`: Toggles unit tests (Default: `ON`).
--   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Build as shared library (Default: `OFF`).
--   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enables sanitizers (Default: `None`).
+### Compiling the Project
 
-Example:
+`logAnalyzer` uses CMake for its build system. Follow these steps to compile the project:
+
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
+After a successful build, the executable will be located at `./bin/logAnalyzer` relative to your build directory.
+
+### Build Configuration Options
+
+CMake offers several options to customize the build process. These can be set when running `cmake`:
+
+*   `-DBUILD_TESTING=ON/OFF`: Toggles the compilation of unit tests (Default: `ON`).
+*   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Determines whether to build `logAnalyzer` as a shared library (Default: `OFF`).
+*   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enables various sanitizers for debugging and identifying runtime errors (Default: `None`).
+
+Example of using build options:
+
 ```bash
 cmake -DBUILD_TESTING=OFF -DLOGANALYZER_USE_SANITIZER=Address ..
 ```
 
-## Installation
+### Installing the Executable
+
+To install `logAnalyzer` to your system (e.g., to `/usr/local/bin` and `/usr/local/lib`), use the CMake install command after building:
 
 ```bash
 cd build
 cmake --install . --prefix /usr/local
 ```
-
-## Usage
 
 For detailed help, run:
 ```bash

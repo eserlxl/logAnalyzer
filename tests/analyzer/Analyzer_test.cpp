@@ -57,10 +57,22 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {
     std::ofstream ofs(filePaths[0]);
     ofs << "dummy log line";
     ofs.close();
-    auto callback = [](const LogEntry&) { return true; };
-    auto result = analyzer.analyzeStream(filePaths, callback, CLIConfig::ParserErrorAction::Warn);
-    ASSERT_FALSE(result.has_value());
-    ASSERT_EQ(result.error().code, Code::InvalidRegex);
+
+    // Set invalid regex in settings
+    LogAnalyzerSettings settings = analyzer.getSettings();
+    settings.lineParsePattern = "[invalid regex";
+    // Depending on implementation, setSettings might return error or analyzeStream might.
+    // If setSettings returns error, that's also valid for this test's purpose (handling invalid regex).
+    auto setRes = analyzer.setSettings(settings);
+    if (!setRes.has_value()) {
+        ASSERT_EQ(setRes.error().code, Code::InvalidRegex);
+    } else {
+        auto callback = [](const LogEntry&) { return true; };
+        auto result = analyzer.analyzeStream(filePaths, callback, CLIConfig::ParserErrorAction::Warn);
+        ASSERT_FALSE(result.has_value());
+        ASSERT_EQ(result.error().code, Code::InvalidRegex);
+    }
+
     std::remove(filePaths[0].c_str());
 }
 
@@ -95,8 +107,8 @@ TEST_F(LogAnalyzerTest, ExportAsJsonEdgeCases) {
     ASSERT_TRUE(jEmpty["entries"].empty());
 
     std::string logContent = 
-        "2023-01-01 10:00:00 INFO First message.\n"
-        "2023-01-01 10:01:00 DEBUG Second message.\n";
+        "2023-01-01 10:00:00 INFO: First message.\n"
+        "2023-01-01 10:01:00 DEBUG: Second message.\n";
     std::string filePath = "test_json_edge_cases.log";
     std::ofstream ofs(filePath);
     ofs << logContent;

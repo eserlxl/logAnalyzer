@@ -76,10 +76,11 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     if (!j.contains("op") || !j.at("op").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'op'."));
     }
-    fc.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
-    if (fc.op == FilterOperator::UNKNOWN) {
+    auto opOpt = Utils::stringToFilterOperator(j.at("op").get<std::string>());
+    if (!opOpt) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'op' string: " + j.at("op").get<std::string>()));
     }
+    fc.op = *opOpt;
 
     if (!j.contains("value") || !j.at("value").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'value'."));
@@ -91,10 +92,11 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     }
 
     if (j.at("value_type").is_string()) {
-        fc.valueType = Utils::stringToFilterValueType(j.at("value_type").get<std::string>());
-        if (fc.valueType == FilterValueType::UNKNOWN) {
+        auto typeOpt = Utils::stringToFilterValueType(j.at("value_type").get<std::string>());
+        if (!typeOpt) {
             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'value_type' string: " + j.at("value_type").get<std::string>()));
         }
+        fc.valueType = *typeOpt;
     } else if (j.at("value_type").is_number_integer()) {
         int vt_int = j.at("value_type").get<int>();
         if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::DATETIME)) {
@@ -118,7 +120,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
 
     // Final validation: Enforce that DATETIME valueType requires a datetimeFormat.
     if (fc.valueType == FilterValueType::DATETIME && !fc.datetimeFormat.has_value()) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition with DATETIME valueType requires a 'datetimeFormat'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition with DATETIME 'value_type' requires a 'datetimeFormat'."));
     }
 
     return {}; // Success

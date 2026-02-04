@@ -37,7 +37,7 @@ TEST_F(FilterJsonTest, FilterRuleToJson) {
     nlohmann::json j;
     to_json(j, fr);
 
-    EXPECT_EQ(j["field"], "message");
+    EXPECT_EQ(j["field"], "MESSAGE");
     EXPECT_EQ(j["op"], "CONTAINS");
     EXPECT_EQ(j["value"], "error");
     EXPECT_EQ(j["caseSensitive"], true);
@@ -98,7 +98,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson) {
     nlohmann::json j;
     to_json(j, fc);
 
-    EXPECT_EQ(j["field"], "timestamp");
+    EXPECT_EQ(j["field"], "TIMESTAMP");
     EXPECT_EQ(j["op"], "GREATER_THAN");
     EXPECT_EQ(j["value"], "2023-01-01T00:00:00Z");
     EXPECT_EQ(j["value_type"], "DATETIME");

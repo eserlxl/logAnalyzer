@@ -108,29 +108,33 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpressi
         }
         fe = FilterExpression(std::move(fc));
     } else if (j.contains("operator") && j.at("operator").is_string()) {
-        FilterLogicalOperator op = Utils::stringToFilterLogicalOperator(j.at("operator").get<std::string>());
-        if (op == FilterLogicalOperator::UNKNOWN) {
+        auto opOpt = Utils::stringToFilterLogicalOperator(j.at("operator").get<std::string>());
+        if (!opOpt) {
             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unknown filter logical operator: " + j.at("operator").get<std::string>()));
-        } else {
-            std::vector<FilterExpression> operands;
-            if (j.contains("operands") && j.at("operands").is_array()) {
-                for (const auto& operand_j : j.at("operands")) {
-                    FilterExpression operand_fe;
-                    ErrorCode::Result<void> result = from_json(operand_j, operand_fe); // Recursive call
-                    if (!result.has_value()) {
-                        return std::unexpected(result.error());
-                    }
-                    operands.push_back(std::move(operand_fe));
-                }
-            } else {
-                // Allow NOT operator with no operands as it might be a placeholder or specific use case.
-                // However, generally, logical operators expect operands. If 'operands' is missing,
-                // it might indicate an issue. For now, we'll allow it and let evaluation handle it.
-                // A more strict approach would be:
-                // return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression with operator must contain 'operands' array."));
-            }
-            fe = FilterExpression(op, std::move(operands));
         }
+        FilterLogicalOperator op = *opOpt;
+
+        std::vector<FilterExpression> operands;
+        if (j.contains("operands") && j.at("operands").is_array()) {
+            for (const auto& operand_j : j.at("operands")) {
+                FilterExpression operand_fe;
+                ErrorCode::Result<void> result = from_json(operand_j, operand_fe); // Recursive call
+                if (!result.has_value()) {
+                    return std::unexpected(result.error());
+                }
+                operands.push_back(std::move(operand_fe));
+            }
+        } else if (op != FilterLogicalOperator::NOT) {
+             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression with operator " + Utils::filterLogicalOperatorToString(op) + " must contain 'operands' array."));
+        } else if (!j.contains("operands")) {
+             // For NOT, we might be lenient or strict. The test seems to test general logical operator requirements.
+             // But FilterExpressionFromJsonMissingOperands uses AND.
+             // If AND, we fail.
+             // If NOT, we allowed it before?
+             // Let's failing generally if operands is missing, as logical operators imply operands.
+             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression with operator must contain 'operands' array."));
+        }
+        fe = FilterExpression(op, std::move(operands));
     } else {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression must contain either 'condition' or 'operator' with 'operands'."));
     }

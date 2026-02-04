@@ -65,10 +65,11 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr
     if (!j.contains("op") || !j.at("op").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'op'."));
     }
-    fr.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
-    if (fr.op == FilterOperator::UNKNOWN) {
+    auto opOpt = Utils::stringToFilterOperator(j.at("op").get<std::string>());
+    if (!opOpt) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule has an unrecognized 'op' string: " + j.at("op").get<std::string>()));
     }
+    fr.op = *opOpt;
 
     if (!j.contains("value") || !j.at("value").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'value'."));

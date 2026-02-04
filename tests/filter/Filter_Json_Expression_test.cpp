@@ -35,7 +35,7 @@ TEST_F(FilterJsonTest, FilterExpressionToJsonCondition) {
     to_json(j, fe);
 
     ASSERT_TRUE(j.contains("condition"));
-    EXPECT_EQ(j["condition"]["field"], "message");
+    EXPECT_EQ(j["condition"]["field"], "MESSAGE");
     EXPECT_EQ(j["condition"]["op"], "CONTAINS");
     EXPECT_EQ(j["condition"]["value"], "hello");
 }
@@ -74,11 +74,11 @@ TEST_F(FilterJsonTest, FilterExpressionToJsonLogicalAND) {
     ASSERT_EQ(j["operands"].size(), 2);
 
     // Check first operand
-    EXPECT_EQ(j["operands"][0]["condition"]["field"], "level");
+    EXPECT_EQ(j["operands"][0]["condition"]["field"], "LEVEL");
     EXPECT_EQ(j["operands"][0]["condition"]["value"], "INFO");
 
     // Check second operand
-    EXPECT_EQ(j["operands"][1]["condition"]["field"], "message");
+    EXPECT_EQ(j["operands"][1]["condition"]["field"], "MESSAGE");
     EXPECT_EQ(j["operands"][1]["condition"]["value"], "user");
 }
 
@@ -124,7 +124,7 @@ TEST_F(FilterJsonTest, FilterExpressionToJsonLogicalNOT) {
     ASSERT_EQ(j["operands"].size(), 1);
 
     // Check operand
-    EXPECT_EQ(j["operands"][0]["condition"]["field"], "level");
+    EXPECT_EQ(j["operands"][0]["condition"]["field"], "LEVEL");
     EXPECT_EQ(j["operands"][0]["condition"]["value"], "DEBUG");
 }
 

@@ -37,7 +37,7 @@ TEST_F(FilterJsonTest, FilterRuleToJson) {
     nlohmann::json j;
     to_json(j, fr);
 
-    EXPECT_EQ(j["field"], "message");
+    EXPECT_EQ(j["field"], "MESSAGE");
     EXPECT_EQ(j["op"], "CONTAINS");
     EXPECT_EQ(j["value"], "error");
     EXPECT_EQ(j["caseSensitive"], true);

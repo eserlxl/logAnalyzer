@@ -83,10 +83,14 @@ inline std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerS
 
         // Populate filtering configuration
         if (j.contains("filterRules") && j.at("filterRules").is_array()) {
-            try {
-                settings.filterRules = j.at("filterRules").get<std::vector<FilterRule>>();
-            } catch (const std::exception& e) {
-                errors.push_back("Error parsing 'filterRules': " + std::string(e.what()));
+            for (const auto& ruleJson : j.at("filterRules")) {
+                FilterRule rule;
+                auto result = from_json(ruleJson, rule);
+                if (!result.has_value()) {
+                    errors.push_back("Error parsing 'filterRules': " + result.error().message);
+                } else {
+                    settings.filterRules.push_back(rule);
+                }
             }
         } else if (j.contains("filterRules")) {
             errors.push_back("Invalid type for 'filterRules'. Expected array.");
@@ -116,10 +120,12 @@ inline std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerS
 
         // --- Handling the new FilterExpression (Advanced Filtering) ---
         if (j.contains("rootFilterExpression") && j.at("rootFilterExpression").is_object()) {
-            try {
-                settings.rootFilterExpression = j.at("rootFilterExpression").get<FilterExpression>();
-            } catch (const std::exception& e) {
-                errors.push_back("Error parsing 'rootFilterExpression': " + std::string(e.what()));
+            FilterExpression fe;
+            auto result = from_json(j.at("rootFilterExpression"), fe);
+            if (result) {
+                settings.rootFilterExpression = fe;
+            } else {
+                errors.push_back("Error parsing 'rootFilterExpression': " + result.error().message);
             }
         } else if (j.contains("rootFilterExpression")) {
             errors.push_back("Invalid type for 'rootFilterExpression'. Expected object.");
