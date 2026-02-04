@@ -34,7 +34,7 @@ Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(const Filte
         auto regexFilterResult = RegexFilter::create(criteria.regexPattern);
         if (!regexFilterResult.has_value()) {
             // Forward the error from RegexFilter::create, which is std::string
-            return std::unexpected(Error(Code::InvalidRegex, regexFilterResult.error()));
+            return std::unexpected(ErrorCode::Error(::Code::InvalidRegex, regexFilterResult.error().toString()));
         }
         composite->add(regexFilterResult.value());
     }

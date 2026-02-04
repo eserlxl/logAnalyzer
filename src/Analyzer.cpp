@@ -85,6 +85,16 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
     }
 }
 
+LogAnalyzer::~LogAnalyzer() {
+    // Wait for any pending async tasks to complete.
+    std::unique_lock<std::mutex> lock(pendingAsyncTasksMutex_);
+    for (auto& future : pendingAsyncTasks_) {
+        if (future.valid()) {
+            future.wait();
+        }
+    }
+}
+
 Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
     std::unique_lock<std::shared_mutex> lock(stateMutex_); // Use unique_lock for modifying methods
     currentSettings_ = settings; // Assign directly, no move as settings is const&
@@ -146,7 +156,4 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
     }
 }
 
-Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
-    std::shared_lock<std::shared_mutex> lock(stateMutex_);
-    return getFilteredEntries_NoLock(criteria);
-}
+

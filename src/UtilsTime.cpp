@@ -1,5 +1,5 @@
 #include "../include/Utils.h"
-##include "LogTypes.h"
+#include "LogTypes.h"
 #include <ctime>
 #include <sstream>
 #include <iomanip>
@@ -50,14 +50,14 @@ std::expected<std::chrono::seconds, ErrorCode::Error> parseDuration(const std::s
             } else if (unit == "y") { // Approximate year as 365 days
                 total_seconds = std::chrono::days(value * 365);
             } else {
-                return std::unexpected(ErrorCode::Error(Code::InvalidTimeFormat, "Unknown duration unit with extended units enabled."));
+                return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Unknown duration unit with extended units enabled."));
             }
         } else {
-            return std::unexpected(ErrorCode::Error(Code::InvalidTimeFormat, "Unknown duration unit. Extended units are not enabled."));
+            return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Unknown duration unit. Extended units are not enabled."));
         }
         return total_seconds;
     }
-    return std::unexpected(ErrorCode::Error(Code::InvalidTimeFormat, "Invalid duration format. Expected formats like '10s', '5m', '2h', '1d' or extended units if enabled."));
+    return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Invalid duration format. Expected formats like '10s', '5m', '2h', '1d' or extended units if enabled."));
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr) {
@@ -75,7 +75,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRela
             case 'm': duration_seconds = std::chrono::minutes(value); break;
             case 'h': duration_seconds = std::chrono::hours(value); break;
             case 'd': duration_seconds = std::chrono::days(value); break;
-            default: return std::unexpected(ErrorCode::Error(Code::InvalidTimeFormat, "Unknown time unit in 'ago' expression."));
+            default: return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Unknown time unit in 'ago' expression."));
         }
         return now - duration_seconds;
     }
@@ -90,7 +90,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRela
             case 'm': duration_seconds = std::chrono::minutes(value); break;
             case 'h': duration_seconds = std::chrono::hours(value); break;
             case 'd': duration_seconds = std::chrono::days(value); break;
-            default: return std::unexpected(ErrorCode::Error(Code::InvalidTimeFormat, "Unknown time unit in 'in' expression."));
+            default: return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Unknown time unit in 'in' expression."));
         }
         return now + duration_seconds;
     }
@@ -110,7 +110,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRela
         return now + std::chrono::weeks(1);
     }
 
-    return std::unexpected(ErrorCode::Error(Code::InvalidTimeFormat, "Invalid relative time format. Expected formats like '10s ago', 'in 5m', 'yesterday', 'tomorrow', 'next week'."));
+    return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Invalid relative time format. Expected formats like '10s ago', 'in 5m', 'yesterday', 'tomorrow', 'next week'."));
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbsoluteTime(const std::string& timeStr) {
@@ -118,7 +118,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbso
     std::stringstream ss(timeStr);
     ss >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
     if (ss.fail()) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidTimeFormat, "Invalid absolute time format. Expected 'YYYY-MM-DD HH:MM:SS'."));
+        return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Invalid absolute time format. Expected 'YYYY-MM-DD HH:MM:SS'."));
     }
     auto timePoint = std::chrono::system_clock::from_time_t(std::mktime(&tm));
     return timePoint;
@@ -173,7 +173,7 @@ static std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> pa
         }
     }
     
-    return std::unexpected(ErrorCode::Error(ErrorCode::Code::InvalidTimeFormat, "Invalid ISO 8601 format."));
+    return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Invalid ISO 8601 format."));
 }
 } // namespace
 
@@ -211,7 +211,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime
         return relativeTimeResult;
     }
 
-    return std::unexpected(ErrorCode::Error(ErrorCode::Code::InvalidTimeFormat, "Failed to parse time string. Unknown format."));
+    return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Failed to parse time string. Unknown format."));
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error>
@@ -226,7 +226,7 @@ parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>&
             return timePoint;
         }
     }
-    return std::unexpected(ErrorCode::Error(ErrorCode::Code::InvalidTimeFormat, "Failed to parse time string with any provided format."));
+    return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Failed to parse time string with any provided format."));
 }
 
 std::expected<std::string, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr) {
@@ -236,7 +236,7 @@ std::expected<std::string, ErrorCode::Error> validateTimestampCliOption(const st
         return tsStr; // Return the string if successful
     }
     // Instead of throwing, return an unexpected value to match the function signature
-    return std::unexpected(ErrorCode::Error(ErrorCode::Code::InvalidTimeFormat, "Invalid time format: " + timePointResult.error().message + ". Expected formats: 'YYYY-MM-DD HH:MM:SS', ISO 8601, Unix timestamp, or relative time like '1h ago'."));
+    return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Invalid time format: " + timePointResult.error().message + ". Expected formats: 'YYYY-MM-DD HH:MM:SS', ISO 8601, Unix timestamp, or relative time like '1h ago'."));
 }
 
 std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error>
@@ -272,7 +272,7 @@ parseDayRange(const std::string& dateString) {
         goto success_parse_date;
     }
 
-    return std::unexpected(ErrorCode::Error(ErrorCode::Code::InvalidTimeFormat, "Invalid date format for day range. Expected 'YYYY-MM-DD', 'YYYY/MM/DD', 'MM-DD-YYYY', or 'MM/DD/YYYY'."));
+    return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Invalid date format for day range. Expected 'YYYY-MM-DD', 'YYYY/MM/DD', 'MM-DD-YYYY', or 'MM/DD/YYYY'."));
 
 success_parse_date:
     // Set time to beginning of the day (00:00:00)

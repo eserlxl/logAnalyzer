@@ -66,12 +66,12 @@ TEST(LogParserErrorHandling, VariousActions) {
 
 // Test invalid main regex pattern
 TEST(LogParserTest, InvalidMainRegexPattern) {
-    std::string invalidPattern = R"((.)*)"; // Invalid regex pattern
+    std::string invalidPattern = R"([)"; // Invalid regex pattern
     std::vector<FieldMapping> mappings = {};
 
     auto parserResult = DefaultLogParser::create(invalidPattern, mappings);
     ASSERT_FALSE(parserResult.has_value());
-    ASSERT_EQ(parserResult.error().code, Error::Code::InvalidRegex); // Fixed: .code() -> .code
+    ASSERT_EQ(parserResult.error().code, Code::InvalidRegex); // Fixed: .code() -> .code
     ASSERT_NE(parserResult.error().message.find("Invalid log pattern"), std::string::npos);
 }
 
@@ -83,7 +83,7 @@ TEST(LogParserTest, InvalidLogEntryStartRegexPattern) {
 
     auto parserResult = DefaultLogParser::create(pattern, mappings, {}, invalidLogEntryStartPattern);
     ASSERT_FALSE(parserResult.has_value());
-    ASSERT_EQ(parserResult.error().code, Error::Code::InvalidRegex); // Fixed: .code() -> .code
+    ASSERT_EQ(parserResult.error().code, Code::InvalidRegex); // Fixed: .code() -> .code
     ASSERT_NE(parserResult.error().message.find("Invalid log entry start pattern"), std::string::npos);
 }
 

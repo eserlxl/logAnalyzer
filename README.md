@@ -10,7 +10,6 @@
 
 ## Table of Contents
 
--   [Overview](#overview)
 -   [Features](#features)
 -   [Command-Line Interface (CLI)](#command-line-interface-cli)
 -   [Configuration](#configuration)
@@ -98,7 +97,7 @@ Run `./bin/logAnalyzer --help` for a full list of commands.
 
 ## Configuration
 
-`LogAnalyzer` can be extensively configured using a JSON configuration file. This allows for persistent and complex setups for parsing, filtering, and exporting log data, and is ideal for settings that are used repeatedly. For ad-hoc analysis, the [Command-Line Interface (CLI)](#command-line-interface-cli) is often more convenient.
+`logAnalyzer` can be extensively configured using a JSON configuration file. This allows for persistent and complex setups for parsing, filtering, and exporting log data, and is ideal for settings that are used repeatedly. For ad-hoc analysis, the [Command-Line Interface (CLI)](#command-line-interface-cli) is often more convenient.
 
 Key configurable aspects include:
 
@@ -243,7 +242,7 @@ After building, you can optionally install `logAnalyzer` to your system.
 cd build
 cmake --install . --prefix /usr/local
 ```
-By default, this will install the `logAnalyzer` executable to `/usr/local/bin`, and any associated libraries and header files to ` /usr/local/lib` and `/usr/local/include` respectively. You can change the installation root by specifying a different path for `--prefix`. For example, `--prefix ~/.local` would install it into your home directory's local binaries.
+By default, this will install the `logAnalyzer` executable to `/usr/local/bin`, and any associated libraries and header files to `/usr/local/lib` and `/usr/local/include` respectively. You can change the installation root by specifying a different path for `--prefix`. For example, `--prefix ~/.local` would install it into your home directory's local binaries.
 
 ## Usage
 

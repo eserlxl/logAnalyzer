@@ -33,7 +33,7 @@ Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     try {
         compiledLogPattern = std::regex(pattern, std::regex::optimize);
     } catch (const std::regex_error& e) {
-        return std::unexpected(Error(Error::Code::InvalidRegex, "Invalid log pattern: " + std::string(e.what())));
+        return std::unexpected(ErrorCode::Error(::Code::InvalidRegex, "Invalid log pattern: " + std::string(e.what())));
     }
 
     // 2. Compile logEntryStartRegex if provided
@@ -42,7 +42,7 @@ Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
         try {
             compiledLogEntryStartRegex = std::regex(logEntryStartPatternString_param.value(), std::regex::optimize);
         } catch (const std::regex_error& e) {
-            return std::unexpected(Error(Error::Code::InvalidRegex, "Invalid log entry start pattern: " + std::string(e.what())));
+            return std::unexpected(ErrorCode::Error(::Code::InvalidRegex, "Invalid log entry start pattern: " + std::string(e.what())));
         }
     }
 
@@ -60,7 +60,7 @@ Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
             try {
                 mapping.compiledKvPattern = std::regex(pattern_str);
             } catch (const std::regex_error& e) {
-                return std::unexpected(Error(Error::Code::InvalidRegex, "Invalid structured field pattern for delimiter '" + delimiter + "': " + std::string(e.what())));
+                return std::unexpected(ErrorCode::Error(::Code::InvalidRegex, "Invalid structured field pattern for delimiter '" + delimiter + "': " + std::string(e.what())));
             }
         }
     }
@@ -123,7 +123,7 @@ Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view line, size
   entry.level = LogLevel::UNKNOWN;
 
   if (patternString.empty()) {
-    return std::unexpected(Error(Error::Code::MalformedLogEntry, "No regex pattern provided to parser."));
+    return std::unexpected(ErrorCode::Error(::Code::MalformedLogEntry, "No regex pattern provided to parser."));
   }
 
   std::string lineStr(line);
@@ -133,7 +133,7 @@ Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view line, size
   std::smatch match;
 
   if (!std::regex_match(lineStr, match, logPattern)) {
-    return std::unexpected(Error(Error::Code::MalformedLogEntry, "Line does not match log pattern."));
+    return std::unexpected(ErrorCode::Error(::Code::MalformedLogEntry, "Line does not match log pattern."));
   }
 
   bool timestampParsingFailed = false;
@@ -222,7 +222,7 @@ Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view line, size
   }
 
   if (timestampParsingFailed) {
-      return std::unexpected(Error(Error::Code::TimestampParsingFailed, "Failed to parse timestamp in line: '" + lineStr + "' for file: " + sourceFile + " at line: " + std::to_string(lineNumber)));
+      return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Failed to parse timestamp in line: '" + lineStr + "' for file: " + sourceFile + " at line: " + std::to_string(lineNumber)));
   }
 
   return entry;

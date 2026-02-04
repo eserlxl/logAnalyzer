@@ -176,7 +176,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     } catch (const CLI::Error &e) {
         std::stringstream ss;
         app.exit(e, ss, ss);
-        return std::unexpected(Error(Error::Code::InvalidCLIOption, ss.str()));
+        return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, ss.str()));
     }
 
     // Post-processing options
@@ -185,7 +185,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         if (parsedDuration.has_value()) {
             appOptions.duration = parsedDuration.value();
         } else {
-            return std::unexpected(Error(Error::Code::InvalidArgument, "Error parsing --duration: " + parsedDuration.error().toString()));
+            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error parsing --duration: " + parsedDuration.error().toString()));
         }
     }
 
@@ -195,7 +195,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         } else if (!appOptions.startTime.has_value() && appOptions.endTime.has_value()) {
             appOptions.startTime = *appOptions.endTime - *appOptions.duration;
         } else if (!appOptions.startTime.has_value() && !appOptions.endTime.has_value()){
-            return std::unexpected(Error(Error::Code::InvalidArgument, "Error: --duration requires either --start or --end to be specified."));
+            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --duration requires either --start or --end to be specified."));
         }
     }
 
@@ -204,7 +204,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     if(appOptions.tailMode) appOptions.tailInterval = std::chrono::milliseconds(tailIntervalMs);
 
     // Logic Validation for input sources and mode compatibility
-    bool stdinExplicitlyRequested = app.get_option("stdin")->count() > 0;
+
     bool stdinViaDash = (std::find(appOptions.filePaths.begin(), appOptions.filePaths.end(), "-") != appOptions.filePaths.end());
 
     if (stdinViaDash) {
@@ -215,15 +215,15 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     }
 
     if (appOptions.readFromStdin && !appOptions.filePaths.empty()) {
-        return std::unexpected(Error(Error::Code::InvalidArgument, "Error: Cannot specify --stdin (or '-') and other file paths simultaneously."));
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: Cannot specify --stdin (or '-') and other file paths simultaneously."));
     }
 
     if (!appOptions.readFromStdin && appOptions.filePaths.empty()) {
-        return std::unexpected(Error(Error::Code::InvalidArgument, "Error: No log files or --stdin provided. Please specify input sources.\n" + app.help()));
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: No log files or --stdin provided. Please specify input sources.\n" + app.help()));
     }
 
     if (appOptions.tailMode && appOptions.readFromStdin) {
-        return std::unexpected(Error(Error::Code::InvalidArgument, "Error: --tail mode is not compatible with --stdin."));
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --tail mode is not compatible with --stdin."));
     }
 
     return std::make_pair(settings, appOptions);

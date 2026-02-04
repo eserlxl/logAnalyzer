@@ -45,7 +45,7 @@ public:
     Result<AnalysisReport> loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
 
     [[deprecated("Use loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction) instead.")]]
-    AnalysisReport loadAndReplace(const std::string& filePath, const std::string& pattern);
+    ErrorCode::Result<AnalysisReport> loadAndReplace(const std::string& filePath, const std::string& pattern);
     
     const std::vector<LogEntry>& getEntries() const;
     void setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel);
@@ -58,7 +58,7 @@ public:
     std::future<Result<AnalysisReport>> loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
 
     [[deprecated("Use loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction) instead.")]]
-    std::future<AnalysisReport> loadAsync(const std::string& filePath, const std::string& pattern);
+    std::future<ErrorCode::Result<AnalysisReport>> loadAsync(const std::string& filePath, const std::string& pattern);
     
     Result<AnalysisReport> streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
     
@@ -85,6 +85,8 @@ public:
     // Printing methods
     void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const;
     void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const;
+
+    const AnalysisReport& getLastReport() const;
 
     // Statistics Refactoring
     void addStatisticCollector(std::shared_ptr<IStatisticCollector> collector);
@@ -114,6 +116,8 @@ private:
 
     std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
     Result<void> parseStreamInternal(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction, bool replaceExisting);
+
+    void setDefaultFieldMappings(LogAnalyzerSettings& settings);
 
     // Factory method for creating statistic collectors
     static std::shared_ptr<IStatisticCollector> createStatisticCollector(const StatisticConfig& config);

@@ -14,6 +14,7 @@ enum class Code {
     InvalidCLIOption,
     StatisticNotFound,
     TimestampParsingFailed, // New error code
+    SettingsRestoreFailed, // New error code
     // Add more error codes as needed
 };
 
@@ -49,6 +50,9 @@ struct Error {
     static Error timestampParsingFailed(const std::string& details) {
         return Error(Code::TimestampParsingFailed, "Timestamp parsing failed: " + details);
     }
+    static Error settingsRestoreFailed(const std::string& details) {
+        return Error(Code::SettingsRestoreFailed, "Settings restore failed: " + details);
+    }
 
 
     // Convert to string for logging or display
@@ -65,6 +69,7 @@ struct Error {
             case Code::InvalidCLIOption: codeStr = "InvalidCLIOption"; break;
             case Code::StatisticNotFound: codeStr = "StatisticNotFound"; break;
             case Code::TimestampParsingFailed: codeStr = "TimestampParsingFailed"; break;
+            case Code::SettingsRestoreFailed: codeStr = "SettingsRestoreFailed"; break;
             default: codeStr = "UnknownCode"; break;
         }
         if (!message.empty()) {
