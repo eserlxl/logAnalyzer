@@ -22,10 +22,10 @@
 
 // Defined as in LogAnalyzer.h comment
 static constexpr std::string_view DEFAULT_LOG_REGEX_PATTERN_SV = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$)";
-static const std::string DEFAULT_LOG_REGEX_PATTERN = std::string(DEFAULT_LOG_REGEX_PATTERN_SV);
 
 // --- Static Method Implementations for LogAnalyzerSettings ---
 
+// Defined inline to avoid ODR violations when included in multiple translation units.
 inline std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings::fromJson(const std::string& jsonContent) {
     std::vector<std::string> errors;
     LogAnalyzerSettings settings;
@@ -54,7 +54,11 @@ inline std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerS
             settings.customLogLevelMappings.clear(); // Clear defaults
             for (auto const& [levelStr, levelVal] : j.at("customLogLevelMappings").items()) {
                 if (levelVal.is_string()) {
-                    settings.customLogLevelMappings[levelStr] = Utils::stringToLogLevel(levelVal.get<std::string>());
+                    LogLevel parsedLevel = Utils::stringToLogLevel(levelVal.get<std::string>());
+                    if (parsedLevel == LogLevel::UNKNOWN) {
+                        errors.push_back("Invalid custom log level string '" + levelVal.get<std::string>() + "' for key '" + levelStr + "'.");
+                    }
+                    settings.customLogLevelMappings[levelStr] = parsedLevel;
                 } else {
                     errors.push_back("Invalid type for customLogLevelMapping value for key '" + levelStr + "'. Expected string.");
                 }
@@ -117,15 +121,24 @@ inline std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerS
             } catch (const std::exception& e) {
                 errors.push_back("Error parsing 'rootFilterExpression': " + std::string(e.what()));
             }
+        } else if (j.contains("rootFilterExpression")) {
+            errors.push_back("Invalid type for 'rootFilterExpression'. Expected object.");
         }
 
     } catch (const nlohmann::json::parse_error& e) {
         errors.push_back("JSON parsing error: " + std::string(e.what()));
+    } catch (const nlohmann::json::exception& e) { // Catch nlohmann::json specific exceptions
+        errors.push_back("JSON data error: " + std::string(e.what()));
     } catch (const std::exception& e) {
         errors.push_back("Exception during JSON processing: " + std::string(e.what()));
     }
 
     if (errors.empty()) {
+        std::vector<std::string> validationErrors = settings.validate();
+        if (!validationErrors.empty()) {
+            errors.insert(errors.end(), validationErrors.begin(), validationErrors.end());
+            return std::unexpected(errors);
+        }
         return settings;
     } else {
         return std::unexpected(errors);
@@ -152,11 +165,7 @@ inline std::string LogAnalyzerSettings::toJson() const {
     j["filterRules"] = filterRules;
     j["exportSettings"] = exportSettings;
 
-    j["statisticConfigs"] = nlohmann::json::array();
-    for (const auto& sc : statisticConfigs) {
-        nlohmann::json sc_j = sc; // Uses to_json(StatisticConfig)
-        j["statisticConfigs"].push_back(sc_j);
-    }
+    j["statisticConfigs"] = statisticConfigs;
 
     if (rootFilterExpression) {
         j["rootFilterExpression"] = *rootFilterExpression;

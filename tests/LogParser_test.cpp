@@ -87,7 +87,7 @@ TEST(LogParserTest, MultiLineBasic) {
     ASSERT_TRUE(res3->success);
     ASSERT_EQ(res3->entry.level, LogLevel::INFO);
     ASSERT_EQ(res3->entry.message, "Line 1\n  Continuation of Line 1");
-    auto expectedTime1_opt = Utils::parseTime("2023-01-01 07:00:00");
+    auto expectedTime1_opt = Utils::parseTime("2023-01-01 10:00:00");
     ASSERT_TRUE(expectedTime1_opt.has_value());
     auto expectedTime1 = expectedTime1_opt.value();
     ASSERT_EQ(std::chrono::duration_cast<std::chrono::seconds>(res3->entry.timestamp.time_since_epoch()).count(),

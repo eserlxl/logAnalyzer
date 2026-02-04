@@ -105,35 +105,37 @@ inline void to_json(nlohmann::json& j, const ExportSettings& es) {
 }
 
 inline void from_json(const nlohmann::json& j, ExportSettings& es) {
-    std::vector<std::string> errors;
-
-    if (j.contains("outputPath") && j.at("outputPath").is_string()) {
-        es.outputPath = j.at("outputPath").get<std::string>();
-    } else {
-        errors.push_back("ExportSettings is missing or has invalid 'outputPath'.");
+    if (j.contains("outputPath")) {
+        if (j.at("outputPath").is_string()) {
+            es.outputPath = j.at("outputPath").get<std::string>();
+        } else {
+            throw std::runtime_error("ExportSettings: 'outputPath' has invalid type. Expected string.");
+        }
     }
 
-    if (j.contains("format") && j.at("format").is_string()) {
-        es.format = Utils::stringToExportFormat(j.at("format").get<std::string>());
-    } else {
-        errors.push_back("ExportSettings is missing or has invalid 'format'.");
+    if (j.contains("format")) {
+        if (j.at("format").is_string()) {
+            es.format = Utils::stringToExportFormat(j.at("format").get<std::string>());
+        } else {
+            throw std::runtime_error("ExportSettings: 'format' has invalid type. Expected string.");
+        }
     }
 
-    if (j.contains("fieldsToExport") && j.at("fieldsToExport").is_array()) {
-        es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
-    } else {
-        errors.push_back("ExportSettings is missing or has invalid 'fieldsToExport'.");
+    if (j.contains("fieldsToExport")) {
+        if (j.at("fieldsToExport").is_array()) {
+            es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
+        } else {
+            throw std::runtime_error("ExportSettings: 'fieldsToExport' has invalid type. Expected array.");
+        }
     }
 
-    if (j.contains("includeHeader") && j.at("includeHeader").is_boolean()) {
-        es.includeHeader = j.at("includeHeader").get<bool>();
-    } else {
-        // Default to true if not specified or invalid
-        es.includeHeader = true;
-    }
-
-    if (!errors.empty()) {
-        throw std::runtime_error(errors[0]);
+    if (j.contains("includeHeader")) {
+        if (j.at("includeHeader").is_boolean()) {
+            es.includeHeader = j.at("includeHeader").get<bool>();
+        } else {
+            // As per existing logic, if present but invalid type, default to true
+            es.includeHeader = true; 
+        }
     }
 }
 

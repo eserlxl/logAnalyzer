@@ -9,6 +9,7 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
 ## Table of Contents
 
 -   [Features](#features)
+-   [Configuration](#configuration)
 -   [Project Structure](#project-structure)
 -   [Prerequisites](#prerequisites)
 -   [Getting Started](#getting-started)
@@ -32,16 +33,80 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
 -   **Advanced Filtering**: Build complex filter expressions with `AND`/`OR`/`NOT` logic.
 -   **Asynchronous Processing**: Load and analyze files asynchronously with cancellation support.
 -   **Live Tail Mode**: Monitor new log entries in real-time.
--   **Customizable Parsing**:
-    -   Map custom log level strings.
-    -   Custom timestamp formats.
-    -   Configurable log line patterns via regular expressions.
--   **Statistical Analysis**:
-    -   Unique message counts and top N frequent messages.
-    -   Log frequency distribution over time.
 -   **Flexible Export**: Save results in Text, JSON, CSV, YAML, or XML formats.
 -   **Contextual Viewing**: Display surrounding lines for filtered entries.
--   **Multi-line Log Entry Support**: Define a regex pattern to identify the start of a new log entry.
+
+## Configuration
+
+`LogAnalyzer` can be extensively configured using a JSON configuration file. This allows for persistent and complex setups for parsing, filtering, and exporting log data.
+
+Key configurable aspects include:
+
+-   **Parsing Settings**:
+    -   **Log Line Pattern**: Define the regular expression to parse individual log lines.
+    -   **Field Mappings**: Map regex capture groups to meaningful log entry fields (e.g., `timestamp`, `level`, `message`).
+    -   **Custom Log Level Mappings**: Define custom string-to-level mappings (e.g., `"DEBUG": "Debug"`).
+    -   **Multi-line Log Entry Pattern**: Specify a regex to identify the start of new log entries, enabling the grouping of multi-line logs.
+    -   **Case-Sensitive Parsing**: Control case sensitivity for parsing operations.
+-   **Filtering Settings**:
+    -   **Filter Rules**: Define basic filtering criteria based on fields, operators, and values.
+    -   **Advanced Filter Expressions**: Construct complex nested `AND`/`OR`/`NOT` logic for precise log filtering.
+-   **Export Settings**:
+    -   **Export Format**: Choose the output format (e.g., JSON, CSV, Text).
+    -   **Fields to Export**: Specify which log entry fields should be included in the output.
+    -   **Output Destination**: Define the output file or stream.
+-   **Statistical Analysis Settings**:
+    -   Configure various statistics to be gathered, such as unique message counts, frequency distributions, etc.
+
+An example configuration file (`config.json`) might look like this:
+
+```json
+{
+  "lineParsePattern": "^\\\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}" ([A-Z]+): (.*)$",
+  "fieldMappings": [
+    { "field": "timestamp", "groupIndex": 1 },
+    { "field": "level", "groupIndex": 2 },
+    { "field": "message", "groupIndex": 3 }
+  ],
+  "customLogLevelMappings": {
+    "INFO": "INFO",
+    "WARN": "WARNING",
+    "ERROR": "ERROR"
+  },
+  "logEntryStartPattern": "^\\\\d{4}-\\d{2}-\\d{2}",
+  "caseSensitiveParsing": false,
+  "filterRules": [
+    { "field": "level", "operator": "EQ", "value": "ERROR" }
+  ],
+  "rootFilterExpression": {
+    "operator": "AND",
+    "operands": [
+      {
+        "type": "RULE",
+        "rule": { "field": "level", "operator": "EQ", "value": "ERROR" }
+      },
+      {
+        "type": "EXPRESSION",
+        "expression": {
+          "operator": "OR",
+          "operands": [
+            { "type": "RULE", "rule": { "field": "message", "operator": "CONTAINS", "value": "database" } },
+            { "type": "RULE", "rule": { "field": "message", "operator": "CONTAINS", "value": "network" } }
+          ]
+        }
+      }
+    ]
+  },
+  "exportSettings": {
+    "format": "json",
+    "fieldsToExport": ["timestamp", "level", "message"],
+    "outputFile": "analysis_results.json"
+  },
+  "statisticConfigs": [
+    { "type": "UNIQUE_MESSAGES", "topN": 10 }
+  ]
+}
+```
 
 ## Project Structure
 
@@ -50,8 +115,8 @@ A high-level overview of the project's directory structure:
 ```
 .
 ├── CMake/                   # CMake modules and scripts
-├── docs/                    # Doxygen configuration and documentation resources
-├── include/                 # Public header files for the logAnalyzer library
+├── docs/                    # Doxygen configuration (e.g., Doxyfile.in) and documentation resources
+├── include/                 # Public header files for the logAnalyzer library, including CMake-generated configs (e.g., LogAnalyzerConfig.h.in)
 ├── src/                     # Source files for the logAnalyzer library and main executable
 ├── tests/                   # Unit and integration tests
 ├── .gitignore               # Files ignored by Git
@@ -144,6 +209,13 @@ ctest --verbose
 ```bash
 # Export to JSON
 ./bin/logAnalyzer sample.log --format json --output results.json
+```
+
+### Using a Configuration File
+
+```bash
+# Analyze log files using settings from a JSON configuration file
+./bin/logAnalyzer sample.log --config config.json
 ```
 
 For a complete list of available command-line options and their descriptions, run:

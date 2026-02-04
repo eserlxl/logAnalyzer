@@ -242,8 +242,8 @@ public:
     FilterExpression(FilterCondition condition) : type_(ExpressionType::CONDITION), condition_(std::move(condition)) {}
 
     // Constructor for logical operations
-    FilterExpression(FilterLogicalOperator op, std::vector<FilterExpression> operands = {})
-        : type_(ExpressionType::LOGICAL), logicalOperator_(op), operands_(std::move(operands)) {}
+    FilterExpression(FilterLogicalOperator op, std::vector<FilterExpression> expressions = {})
+        : type_(ExpressionType::LOGICAL), logicalOperator_(op), expressions_(std::move(expressions)) {}
 
     // Fluent builders for complex expressions
     static FilterExpression create(FilterCondition condition) {
@@ -253,7 +253,7 @@ public:
     FilterExpression And(FilterExpression other) const {
         if (type_ == ExpressionType::LOGICAL && logicalOperator_ == FilterLogicalOperator::AND) {
             FilterExpression newExpr = *this;
-            newExpr.operands_.push_back(std::move(other));
+            newExpr.expressions_.push_back(std::move(other));
             return newExpr;
         }
         return FilterExpression(FilterLogicalOperator::AND, {*this, std::move(other)});
@@ -262,7 +262,7 @@ public:
     FilterExpression Or(FilterExpression other) const {
         if (type_ == ExpressionType::LOGICAL && logicalOperator_ == FilterLogicalOperator::OR) {
             FilterExpression newExpr = *this;
-            newExpr.operands_.push_back(std::move(other));
+            newExpr.expressions_.push_back(std::move(other));
             return newExpr;
         }
         return FilterExpression(FilterLogicalOperator::OR, {*this, std::move(other)});
@@ -282,13 +282,16 @@ public:
     ExpressionType getType() const { return type_; }
     const std::optional<FilterCondition>& getCondition() const { return condition_; }
     const std::optional<FilterLogicalOperator>& getLogicalOperator() const { return logicalOperator_; }
-    const std::vector<FilterExpression>& getOperands() const { return operands_; }
+    const std::vector<FilterExpression>& getExpressions() const { return expressions_; }
+
+    bool isCondition() const { return type_ == ExpressionType::CONDITION; }
+    bool isLogical() const { return type_ == ExpressionType::LOGICAL; }
 
 private:
     ExpressionType type_;
     std::optional<FilterCondition> condition_;
     std::optional<FilterLogicalOperator> logicalOperator_;
-    std::vector<FilterExpression> operands_;
+    std::vector<FilterExpression> expressions_;
 };
 
 // Forward declarations to break circular dependency with Utils.h
@@ -303,10 +306,9 @@ inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
         j["condition"] = *fe.getCondition();
     } else if (fe.getType() == FilterExpression::ExpressionType::LOGICAL) {
         j["operator"] = Utils::filterLogicalOperatorToString(*fe.getLogicalOperator());
-        if (!fe.getOperands().empty()) {
-            j["operands"] = nlohmann::json::array();
-            for (const auto& operand : fe.getOperands()) {
-                nlohmann::json operand_j;
+        if (!fe.getExpressions().empty()) {
+                    j["operands"] = nlohmann::json::array();
+                    for (const auto& operand : fe.getExpressions()) {                nlohmann::json operand_j;
                 to_json(operand_j, operand); // Recursive call
                 j["operands"].push_back(operand_j);
             }

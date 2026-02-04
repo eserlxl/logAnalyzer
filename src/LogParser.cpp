@@ -103,6 +103,10 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
   }
 
   std::string lineStr(line);
+  // Trim trailing carriage return if present, as std::getline might leave it from Windows line endings
+  if (!lineStr.empty() && lineStr.back() == '\r') {
+      lineStr.pop_back();
+  }
   std::smatch match;
 
   if (!std::regex_match(lineStr, match, logPattern)) {

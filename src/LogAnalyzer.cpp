@@ -139,7 +139,7 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string& filePath, const st
     LogAnalyzerSettings oldSettings = getSettings();
     LogAnalyzerSettings tempSettings = oldSettings;
     tempSettings.lineParsePattern = pattern;
-    if (pattern == DEFAULT_LOG_REGEX_PATTERN) {
+    if (pattern == DEFAULT_LOG_REGEX_PATTERN_SV) {
         tempSettings.fieldMappings.clear();
         tempSettings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
         tempSettings.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
@@ -229,7 +229,7 @@ std::future<AnalysisReport> LogAnalyzer::loadAsync(const std::string& filePath, 
         LogAnalyzerSettings oldSettings = getSettings();
         LogAnalyzerSettings tempSettings = oldSettings;
         tempSettings.lineParsePattern = pattern;
-        if (pattern == DEFAULT_LOG_REGEX_PATTERN) {
+        if (pattern == std::string(DEFAULT_LOG_REGEX_PATTERN_SV)) {
             tempSettings.fieldMappings.clear();
             tempSettings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
             tempSettings.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
@@ -361,7 +361,7 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
     LogAnalyzerSettings oldSettings = getSettings();
     LogAnalyzerSettings tempSettings = oldSettings;
     tempSettings.lineParsePattern = pattern;
-    if (pattern == DEFAULT_LOG_REGEX_PATTERN) {
+    if (pattern == std::string(DEFAULT_LOG_REGEX_PATTERN_SV)) {
         tempSettings.fieldMappings.clear();
         tempSettings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
         tempSettings.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
@@ -425,7 +425,7 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
     LogAnalyzerSettings oldSettings = getSettings();
     LogAnalyzerSettings tempSettings = oldSettings;
     tempSettings.lineParsePattern = pattern;
-    if (pattern == DEFAULT_LOG_REGEX_PATTERN) {
+    if (pattern == std::string(DEFAULT_LOG_REGEX_PATTERN_SV)) {
         tempSettings.fieldMappings.clear();
         tempSettings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
         tempSettings.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
