@@ -177,7 +177,7 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
         entry.message = capturedValue;
         // Legacy structured field parsing from MESSAGE if no explicit STRUCTURED_FIELD mapping is present
         if (!structuredFieldsExplicitlyMapped) {
-            const std::regex kvPattern_legacy("([\\w.-]+)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,]+))");
+            const std::regex kvPattern_legacy("([\\w.-]+)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,.]+))");
             auto words_begin = std::sregex_iterator(entry.message.begin(), entry.message.end(), kvPattern_legacy);
             auto words_end = std::sregex_iterator();
             for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
@@ -243,7 +243,7 @@ std::optional<ParseResult> DefaultLogParser::processLine(std::string_view line, 
 
     std::string lineStr(line);
     bool startsNewEntry = false;
-    if (logEntryStartRegex.has_value() && std::regex_match(lineStr, *logEntryStartRegex)) {
+    if (logEntryStartRegex.has_value() && std::regex_search(lineStr, *logEntryStartRegex)) {
         startsNewEntry = true;
     }
 

@@ -66,7 +66,7 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
  << newline;
     // Ensure "summary" root element is always present for consistency.
     // It will contain at least "totalEntries".
-    out << indent << "\"summary\": {\"totalEntries\": " << filtered.size() << "}," << newline;
+    out << indent << "\"summary\":{\"totalEntries\": " << filtered.size() << "}," << newline;
     out << indent << "\"entries\": [" << newline;
 
     for (size_t i = 0; i < filtered.size(); ++i) {

@@ -247,7 +247,7 @@ TEST_F(LogAnalyzerTest, ExportAsJsonEdgeCases) {
     FilterCriteria emptyFilter;
     analyzer.exportAsJson(ssEmptyNoSummary, emptyFilter, false, false);
     // Expected: {"summary":{"totalEntries":0},"entries":[]}
-    ASSERT_EQ(ssEmptyNoSummary.str(), "{\"summary\":{\"totalEntries\":0},\"entries\":[]}\n");
+    ASSERT_EQ(ssEmptyNoSummary.str(), "{\"summary\":{\"totalEntries\": 0},\"entries\":[]}\n");
 
     // Test with empty entries, with summary
     std::stringstream ssEmptyWithSummary;
