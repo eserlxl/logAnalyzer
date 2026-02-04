@@ -1,0 +1,5 @@
+if(EXISTS "/opt/lxl/c++/logAnalyzer/tests/Filter_test[1]_tests.cmake")
+  include("/opt/lxl/c++/logAnalyzer/tests/Filter_test[1]_tests.cmake")
+else()
+  add_test(Filter_test_NOT_BUILT Filter_test_NOT_BUILT)
+endif()

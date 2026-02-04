@@ -26,13 +26,13 @@ struct StatisticConfig {
 };
 
 NLOHMANN_JSON_SERIALIZE_ENUM(StatisticType, {
-    {StatisticType::UNKNOWN, "UNKNOWN"},
-    {StatisticType::UNIQUE_MESSAGES, "UNIQUE_MESSAGES"},
-    {StatisticType::TOP_MESSAGES, "TOP_MESSAGES"},
-    {StatisticType::ENTRY_RATE, "ENTRY_RATE"},
-    {StatisticType::LOG_LEVEL_COUNT, "LOG_LEVEL_COUNT"},
-    {StatisticType::FIELD_VALUE_COUNT, "FIELD_VALUE_COUNT"},
-    {StatisticType::TOP_N_FIELD_VALUES, "TOP_N_FIELD_VALUES"}
+    {StatisticType::UNKNOWN, "unknown"},
+    {StatisticType::UNIQUE_MESSAGES, "unique_messages"},
+    {StatisticType::TOP_MESSAGES, "top_messages"},
+    {StatisticType::ENTRY_RATE, "entry_rate"},
+    {StatisticType::LOG_LEVEL_COUNT, "count_by_level"},
+    {StatisticType::FIELD_VALUE_COUNT, "field_value_count"},
+    {StatisticType::TOP_N_FIELD_VALUES, "top_n_field_values"}
 })
 
 inline void to_json(json& j, const StatisticConfig& sc) {

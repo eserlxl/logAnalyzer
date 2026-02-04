@@ -88,7 +88,7 @@ json LogLevelCountCollector::generateReport() const {
     json levelCountsJson = json::object();
     for (const auto& pair : _counts) {
         // Assuming logLevelToString is available globally or via included headers
-        levelCountsJson[logLevelToString(pair.first)] = pair.second;
+        levelCountsJson[Utils::logLevelToString(pair.first)] = pair.second;
         totalEntries += pair.second;
     }
     report["total_entries"] = totalEntries;
@@ -106,7 +106,7 @@ FieldValueCountCollector::FieldValueCountCollector(const std::string& targetFiel
 std::string FieldValueCountCollector::getFieldValueAsString(const LogEntry& entry) const {
     if (_targetFieldName == "level") {
         // Assuming logLevelToString is available globally or via included headers
-        return logLevelToString(entry.level);
+        return Utils::logLevelToString(entry.level);
     } else if (_targetFieldName == "message") {
         return entry.message;
     } else if (_targetFieldName == "sourceFile") {
@@ -149,7 +149,7 @@ TopNFieldValuesCollector::TopNFieldValuesCollector(int topN, const std::string& 
 std::string TopNFieldValuesCollector::getFieldValueAsString(const LogEntry& entry) const {
     if (_targetFieldName == "level") {
         // Assuming logLevelToString is available globally or via included headers
-        return logLevelToString(entry.level);
+        return Utils::logLevelToString(entry.level);
     } else if (_targetFieldName == "message") {
         return entry.message;
     } else if (_targetFieldName == "sourceFile") {

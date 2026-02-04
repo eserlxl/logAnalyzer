@@ -1,6 +1,6 @@
 # LogAnalyzer
 
-[![Build Status](https://github.com/logAnalyzer/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/logAnalyzer/logAnalyzer/actions/workflows/ci.yml) <!-- IMPORTANT: Please update 'logAnalyzer/logAnalyzer' to your actual GitHub repository path (e.g., 'your-username/logAnalyzer' or 'your-organization/logAnalyzer') for the CI/CD build status link. -->
+[![Build Status](https://github.com/your-org-or-username/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org-or-username/logAnalyzer/actions/workflows/ci.yml) <!-- IMPORTANT: Please update 'your-org-or-username/logAnalyzer' to your actual GitHub repository path (e.g., 'your-username/logAnalyzer' or 'your-organization/logAnalyzer') for the CI/CD build status link. -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 
@@ -341,7 +341,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/YOUR_ORGANIZATION/logAnalyzer/tags).
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your-org-or-username/logAnalyzer/tags).
 
 ## Code of Conduct
 

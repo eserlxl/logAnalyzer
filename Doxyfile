@@ -1,0 +1,6 @@
+PROJECT_NAME            = "LogAnalyzer"
+PROJECT_NUMBER          = 1.1.0
+INPUT                   = /opt/lxl/c++/logAnalyzer/include
+OUTPUT_DIRECTORY        = /opt/lxl/c++/logAnalyzer/doxygen
+GENERATE_LATEX          = NO
+EXTRACT_ALL             = YES

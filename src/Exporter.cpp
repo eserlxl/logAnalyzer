@@ -79,13 +79,14 @@ std::string Exporter::formatEntryForText(
     
     if (useColors) {
         if (entry.level == LogLevel::ERROR || entry.level == LogLevel::FATAL) {
-            levelStr = Utils::AnsiColor::RED + levelStr + Utils::AnsiColor::RESET;
-        } else if (entry.level == LogLevel::WARNING) {
-            levelStr = Utils::AnsiColor::YELLOW + levelStr + Utils::AnsiColor::RESET;
-        } else if (entry.level == LogLevel::INFO) {
-            levelStr = Utils::AnsiColor::GREEN + levelStr + Utils::AnsiColor::RESET;
-        } else if (entry.level == LogLevel::DEBUG || entry.level == LogLevel::TRACE) {
-            levelStr = Utils::AnsiColor::CYAN + levelStr + Utils::AnsiColor::RESET;
+            levelStr.insert(0, Utils::AnsiColor::RED.data(), Utils::AnsiColor::RED.size());
+            levelStr.append(Utils::AnsiColor::RESET.data(), Utils::AnsiColor::RESET.size());
+            levelStr.insert(0, Utils::AnsiColor::YELLOW.data(), Utils::AnsiColor::YELLOW.size());
+            levelStr.append(Utils::AnsiColor::RESET.data(), Utils::AnsiColor::RESET.size());
+            levelStr.insert(0, Utils::AnsiColor::GREEN.data(), Utils::AnsiColor::GREEN.size());
+            levelStr.append(Utils::AnsiColor::RESET.data(), Utils::AnsiColor::RESET.size());
+            levelStr.insert(0, Utils::AnsiColor::CYAN.data(), Utils::AnsiColor::CYAN.size());
+            levelStr.append(Utils::AnsiColor::RESET.data(), Utils::AnsiColor::RESET.size());
         }
     }
     

@@ -31,18 +31,18 @@ namespace Utils {
 
 // ANSI Color Codes
 namespace AnsiColor {
-    inline const std::string RESET = "\033[0m";
-    inline const std::string RED = "\033[31m";
-    inline const std::string GREEN = "\033[32m";
-    inline const std::string YELLOW = "\033[33m";
-    inline const std::string BLUE = "\033[34m";
-    inline const std::string MAGENTA = "\033[35m";
-    inline const std::string CYAN = "\033[36m";
-    inline const std::string WHITE = "\033[37m";
-    inline const std::string BOLD = "\033[1m";
-    inline const std::string FAINT = "\033[2m";
-    inline const std::string ITALIC = "\033[3m";
-    inline const std::string UNDERLINE = "\033[4m";
+    inline constexpr std::string_view RESET = "\033[0m";
+    inline constexpr std::string_view RED = "\033[31m";
+    inline constexpr std::string_view GREEN = "\033[32m";
+    inline constexpr std::string_view YELLOW = "\033[33m";
+    inline constexpr std::string_view BLUE = "\033[34m";
+    inline constexpr std::string_view MAGENTA = "\033[35m";
+    inline constexpr std::string_view CYAN = "\033[36m";
+    inline constexpr std::string_view WHITE = "\033[37m";
+    inline constexpr std::string_view BOLD = "\033[1m";
+    inline constexpr std::string_view FAINT = "\033[2m";
+    inline constexpr std::string_view ITALIC = "\033[3m";
+    inline constexpr std::string_view UNDERLINE = "\033[4m";
 } // namespace AnsiColor
 
 // Constant for stdin file path representation
@@ -51,7 +51,6 @@ static constexpr std::string_view STDIN_FILE_PATH = "-";
 // Overload for stringToLogLevel that accepts custom mappings with ci_less comparator.
 LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &customMappings);
 LogLevel stringToLogLevel(const std::string &levelStr);
-LogLevel stringToLogLevelIgnoreCase(const std::string &levelStr);
 std::string logLevelToString(LogLevel level);
 std::string formatTimestamp(std::chrono::system_clock::time_point tp,
                              std::string_view format = "%Y-%m-%d %H:%M:%S");
@@ -63,7 +62,7 @@ void replaceAll(std::string &str, const std::string &from, const std::string &to
 void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to);
 
 // Returns a new string with leading and trailing whitespace characters removed.
-std::string trim(const std::string& str, const std::string& whitespace = " \t\n\r\f\v");
+std::string trim(const std::string& str, std::string_view whitespace = " \t\n\r\f\v");
 
 // Splits str into a std::vector<std::string> using delimiter as the separator.
 std::vector<std::string> split(const std::string& str, char delimiter);
@@ -111,7 +110,7 @@ parseDayRange(const std::string& dateString);
 
 // Validates a timestamp string for CLI options. Throws CLI::ValidationError on failure.
 // Changed return type to ErrorCode::Result<std::string> to align with other parsing functions.
-std::expected<std::string, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr);
 
 // Escapes a string for JSON output, handling special characters like quotes, backslashes, and control characters.
 std::string escapeJsonString(const std::string& input);
@@ -121,7 +120,7 @@ std::string escapeJsonString(const std::string& input);
 std::string globToRegex(const std::string& globPattern);
 
 // Helper to compare strings case-insensitively
-inline bool caseInsensitiveEquals(const std::string& str1, const std::string& str2) {
+inline bool caseInsensitiveEquals(std::string_view str1, std::string_view str2) {
     if (str1.length() != str2.length()) {
         return false;
     }
@@ -134,7 +133,7 @@ inline bool caseInsensitiveEquals(const std::string& str1, const std::string& st
 }
 
 // Helper to search for a substring case-insensitively
-inline bool caseInsensitiveSearch(const std::string& text, const std::string& keyword) {
+inline bool caseInsensitiveSearch(std::string_view text, std::string_view keyword) {
     if (keyword.empty()) {
         return true; // Empty keyword is considered to be found everywhere
     }
@@ -167,9 +166,6 @@ ExportFormat stringToExportFormat(const std::string& formatStr);
 
 std::string statisticTypeToString(StatisticType type);
 StatisticType stringToStatisticType(const std::string& typeStr);
-
-std::string statisticOutputFormatToString(StatisticOutputFormat format);
-StatisticOutputFormat stringToStatisticOutputFormat(const std::string& formatStr);
 
 } // namespace Utils
 

@@ -22,34 +22,10 @@ enum class PatternType { Literal, Regex, Wildcard };
 enum class LogLevel { TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, UNKNOWN };
 
 // Utility function to convert LogLevel enum to string
-inline std::string logLevelToString(LogLevel level) {
-    switch (level) {
-        case LogLevel::TRACE: return "TRACE";
-        case LogLevel::DEBUG: return "DEBUG";
-        case LogLevel::INFO: return "INFO";
-        case LogLevel::WARNING: return "WARNING";
-        case LogLevel::ERROR: return "ERROR";
-        case LogLevel::CRITICAL: return "CRITICAL";
-        case LogLevel::FATAL: return "FATAL";
-        case LogLevel::UNKNOWN: return "UNKNOWN";
-    }
-    return "UNKNOWN"; // Should not happen
-}
+std::string logLevelToString(LogLevel level);
 
 // Utility function to convert string to LogLevel enum (case-insensitive)
-inline LogLevel stringToLogLevel(const std::string& levelStr) {
-    std::string upperLevelStr = levelStr;
-    std::transform(upperLevelStr.begin(), upperLevelStr.end(), upperLevelStr.begin(), ::toupper);
-
-    if (upperLevelStr == "TRACE") return LogLevel::TRACE;
-    if (upperLevelStr == "DEBUG") return LogLevel::DEBUG;
-    if (upperLevelStr == "INFO") return LogLevel::INFO;
-    if (upperLevelStr == "WARNING") return LogLevel::WARNING;
-    if (upperLevelStr == "ERROR") return LogLevel::ERROR;
-    if (upperLevelStr == "CRITICAL") return LogLevel::CRITICAL;
-    if (upperLevelStr == "FATAL") return LogLevel::FATAL;
-    return LogLevel::UNKNOWN;
-}
+LogLevel stringToLogLevel(const std::string& levelStr);
 
 
 // New enum to specify which LogEntry field a regex capture group maps to

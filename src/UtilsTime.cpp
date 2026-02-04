@@ -229,13 +229,15 @@ parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>&
     return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Failed to parse time string with any provided format."));
 }
 
-std::expected<std::string, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr) {
-    if (tsStr.empty()) return tsStr; // Optional, so empty is fine
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr) {
+    if (tsStr.empty()) {
+        return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Timestamp string cannot be empty."));
+    }
     auto timePointResult = Utils::parseTime(tsStr);
     if (timePointResult.has_value()) {
-        return tsStr; // Return the string if successful
+        return timePointResult.value(); // Return the time_point if successful
     }
-    // Instead of throwing, return an unexpected value to match the function signature
+    // Return an unexpected value with the error
     return std::unexpected(ErrorCode::Error(::Code::TimestampParsingFailed, "Invalid time format: " + timePointResult.error().message + ". Expected formats: 'YYYY-MM-DD HH:MM:SS', ISO 8601, Unix timestamp, or relative time like '1h ago'."));
 }
 

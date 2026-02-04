@@ -1,94 +1,219 @@
 #include "../include/Utils.h"
+#include "LogTypes.h"
+#include "Filter.h"
+#include "Exporter.h"
+#include "Statistics.h"
 #include <algorithm>
+#include <map>
+#include <filesystem>
+#include <string>
 #include <sstream>
 #include <iomanip>
 #include <vector>
-#include <string>
+#include <regex>
+#include <set>
 
 namespace Utils {
 
-void replaceAll(std::string &str, const std::string &from, const std::string &to) {
-    size_t start_pos = 0;
-    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length();
+LogLevel stringToLogLevel(const std::string &levelStr) {
+    std::string upperLevelStr = levelStr;
+    std::transform(upperLevelStr.begin(), upperLevelStr.end(), upperLevelStr.begin(), ::toupper);
+
+    if (upperLevelStr == "TRACE") return LogLevel::TRACE;
+    if (upperLevelStr == "DEBUG") return LogLevel::DEBUG;
+    if (upperLevelStr == "INFO") return LogLevel::INFO;
+    if (upperLevelStr == "WARNING") return LogLevel::WARNING;
+    if (upperLevelStr == "ERROR") return LogLevel::ERROR;
+    if (upperLevelStr == "CRITICAL") return LogLevel::CRITICAL;
+    if (upperLevelStr == "FATAL") return LogLevel::FATAL;
+    return LogLevel::UNKNOWN;
+}
+
+LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &customMappings) {
+    // ci_less comparator handles case insensitivity directly for the map lookup.
+    auto it = customMappings.find(levelStr);
+    if (it != customMappings.end()) {
+        return it->second;
+    }
+    // Fallback to default conversion (which is case-insensitive) if not found in custom mappings.
+    return stringToLogLevel(levelStr);
+}
+
+std::string logLevelToString(LogLevel level) {
+    switch (level) {
+        case LogLevel::DEBUG: return "DEBUG";
+        case LogLevel::INFO: return "INFO";
+        case LogLevel::WARNING: return "WARNING";
+        case LogLevel::ERROR: return "ERROR";
+        case LogLevel::CRITICAL: return "CRITICAL";
+        case LogLevel::FATAL: return "FATAL";
+        case LogLevel::TRACE: return "TRACE";
+        case LogLevel::UNKNOWN: return "UNKNOWN";
+    }
+    return "UNKNOWN";
+}
+
+// File System Utilities
+bool fileExists(const std::string& filePath) {
+    return std::filesystem::is_regular_file(filePath);
+}
+
+std::string getFileName(const std::string& filePath) {
+    return std::filesystem::path(filePath).filename().string();
+}
+
+std::string getFileExtension(const std::string& filePath) {
+    return std::filesystem::path(filePath).extension().string().erase(0, 1); // erase(0,1) to remove leading dot
+}
+
+std::string getDirectory(const std::string& filePath) {
+    return std::filesystem::path(filePath).parent_path().string();
+}
+
+// Helper to convert LogEntryField enum to string
+std::string logEntryFieldToString(LogEntryField field) {
+    switch (field) {
+        case LogEntryField::TIMESTAMP: return "timestamp";
+        case LogEntryField::LEVEL: return "level";
+        case LogEntryField::MESSAGE: return "message";
+        case LogEntryField::SOURCE_FILE: return "source_file";
+        case LogEntryField::LINE_NUMBER: return "line_number";
+        case LogEntryField::THREAD_ID: return "thread_id";
+        case LogEntryField::MODULE: return "module";
+        case LogEntryField::HOST: return "host";
+        case LogEntryField::CUSTOM: return "custom";
+        case LogEntryField::STRUCTURED_FIELD: return "structured_field";
+        default: return "unknown";
     }
 }
 
-void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to) {
-    if (from.empty()) {
-        return;
+// Helper to convert string to LogEntryField enum.
+LogEntryField stringToLogEntryField(const std::string& fieldStr) {
+    std::string upperFieldStr = fieldStr;
+    std::transform(upperFieldStr.begin(), upperFieldStr.end(), upperFieldStr.begin(), ::toupper);
+
+    if (upperFieldStr == "TIMESTAMP") return LogEntryField::TIMESTAMP;
+    if (upperFieldStr == "LEVEL") return LogEntryField::LEVEL;
+    if (upperFieldStr == "MESSAGE") return LogEntryField::MESSAGE;
+    if (upperFieldStr == "SOURCE_FILE") return LogEntryField::SOURCE_FILE;
+    if (upperFieldStr == "LINE_NUMBER") return LogEntryField::LINE_NUMBER;
+    if (upperFieldStr == "THREAD_ID") return LogEntryField::THREAD_ID;
+    if (upperFieldStr == "MODULE") return LogEntryField::MODULE;
+    if (upperFieldStr == "HOST") return LogEntryField::HOST;
+    if (upperFieldStr == "CUSTOM") return LogEntryField::CUSTOM;
+    if (upperFieldStr == "STRUCTURED_FIELD") return LogEntryField::STRUCTURED_FIELD;
+    return LogEntryField::UNKNOWN;
+}
+
+// Helper to convert FilterOperator enum to string
+std::string filterOperatorToString(FilterOperator op) {
+    switch (op) {
+        case FilterOperator::EQUALS: return "EQUALS";
+        case FilterOperator::NOT_EQUALS: return "NOT_EQUALS";
+        case FilterOperator::CONTAINS: return "CONTAINS";
+        case FilterOperator::NOT_CONTAINS: return "NOT_CONTAINS";
+        case FilterOperator::STARTS_WITH: return "STARTS_WITH";
+        case FilterOperator::ENDS_WITH: return "ENDS_WITH";
+        case FilterOperator::GREATER_THAN: return "GREATER_THAN";
+        case FilterOperator::LESS_THAN: return "LESS_THAN";
+        case FilterOperator::GREATER_THAN_OR_EQUAL: return "GREATER_THAN_OR_EQUAL";
+        case FilterOperator::LESS_THAN_OR_EQUAL: return "LESS_THAN_OR_EQUAL";
+        default: return "UNKNOWN";
     }
-    std::string lowerStr = toLower(str);
-    std::string lowerFrom = toLower(from);
-    size_t start_pos = 0;
-    while ((start_pos = lowerStr.find(lowerFrom, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        lowerStr.replace(start_pos, from.length(), toLower(to)); // Keep lowerStr in sync
-        start_pos += to.length();
+}
+
+// Helper to convert string to FilterOperator enum
+FilterOperator stringToFilterOperator(const std::string& opStr) {
+    std::string upperOpStr = opStr;
+    std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
+
+    if (upperOpStr == "EQUALS") return FilterOperator::EQUALS;
+    if (upperOpStr == "NOT_EQUALS") return FilterOperator::NOT_EQUALS;
+    if (upperOpStr == "CONTAINS") return FilterOperator::CONTAINS;
+    if (upperOpStr == "NOT_CONTAINS") return FilterOperator::NOT_CONTAINS;
+    if (upperOpStr == "STARTS_WITH") return FilterOperator::STARTS_WITH;
+    if (upperOpStr == "ENDS_WITH") return FilterOperator::ENDS_WITH;
+    if (upperOpStr == "GREATER_THAN") return FilterOperator::GREATER_THAN;
+    if (upperOpStr == "LESS_THAN") return FilterOperator::LESS_THAN;
+    if (upperOpStr == "GREATER_THAN_OR_EQUAL") return FilterOperator::GREATER_THAN_OR_EQUAL;
+    if (upperOpStr == "LESS_THAN_OR_EQUAL") return FilterOperator::LESS_THAN_OR_EQUAL;
+    return FilterOperator::UNKNOWN;
+}
+
+// Helper to convert FilterLogicalOperator to string
+std::string filterLogicalOperatorToString(FilterLogicalOperator op) {
+    switch (op) {
+        case FilterLogicalOperator::AND: return "AND";
+        case FilterLogicalOperator::OR: return "OR";
+        case FilterLogicalOperator::NOT: return "NOT";
+        default: return "UNKNOWN";
     }
 }
 
-std::string trim(const std::string& str, const std::string& whitespace) {
-    const size_t strBegin = str.find_first_not_of(whitespace);
-    if (strBegin == std::string::npos)
-        return ""; // no content
+// Helper to convert string to FilterLogicalOperator
+FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr) {
+    std::string upperOpStr = opStr;
+    std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
 
-    const size_t strEnd = str.find_last_not_of(whitespace);
-    const size_t strRange = strEnd - strBegin + 1;
-
-    return str.substr(strBegin, strRange);
+    if (upperOpStr == "AND") return FilterLogicalOperator::AND;
+    if (upperOpStr == "OR") return FilterLogicalOperator::OR;
+    if (upperOpStr == "NOT") return FilterLogicalOperator::NOT;
+    return FilterLogicalOperator::UNKNOWN;
 }
 
-std::vector<std::string> split(const std::string& str, char delimiter) {
-    std::vector<std::string> tokens;
-    std::string token;
-    std::istringstream tokenStream(str);
-    while (std::getline(tokenStream, token, delimiter)) {
-        tokens.push_back(token);
+// Helper to convert ExportFormat enum to string
+std::string exportFormatToString(ExportFormat format) {
+    switch (format) {
+        case ExportFormat::PLAINTEXT: return "plaintext";
+        case ExportFormat::JSON: return "json";
+        case ExportFormat::CSV: return "csv";
+        case ExportFormat::XML: return "xml";
+        default: return "unknown";
     }
-    return tokens;
 }
 
-std::string toLower(const std::string& str) {
-    std::string lowerStr = str;
-    std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
-                   ::tolower);
-    return lowerStr;
+// Helper to convert string to ExportFormat enum
+ExportFormat stringToExportFormat(const std::string& formatStr) {
+    std::string upperFormatStr = formatStr;
+    std::transform(upperFormatStr.begin(), upperFormatStr.end(), upperFormatStr.begin(), ::toupper);
+
+    if (upperFormatStr == "PLAINTEXT") return ExportFormat::PLAINTEXT;
+    if (upperFormatStr == "JSON") return ExportFormat::JSON;
+    if (upperFormatStr == "CSV") return ExportFormat::CSV;
+    if (upperFormatStr == "XML") return ExportFormat::XML;
+    return ExportFormat::UNKNOWN;
 }
 
-std::string toUpper(const std::string& str) {
-    std::string upperStr = str;
-    std::transform(upperStr.begin(), upperStr.end(), upperStr.begin(),
-                   ::toupper);
-    return upperStr;
-}
-
-std::string escapeJsonString(const std::string& input) {
-    std::ostringstream oss;
-    for (char c : input) {
-        switch (c) {
-            case '"': oss << "\\\""; break;
-            case '\\': oss << "\\\\\\"; break;
-            case '\b': oss << "\\b"; break;
-            case '\f': oss << "\\f"; break;
-            case '\n': oss << "\\n"; break;
-            case '\r': oss << "\\r"; break;
-            case '\t': oss << "\\t"; break;
-            default:
-                if (static_cast<unsigned char>(c) < 32) { // Control characters
-                    oss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(c);
-                } else {
-                    oss << c;
-                }
-                break;
-        }
+// Helper to convert StatisticType enum to string
+std::string statisticTypeToString(StatisticType type) {
+    switch (type) {
+        case StatisticType::UNIQUE_MESSAGES: return "unique_messages";
+        case StatisticType::TOP_MESSAGES: return "top_messages";
+        case StatisticType::ENTRY_RATE: return "entry_rate";
+        case StatisticType::LOG_LEVEL_COUNT: return "count_by_level";
+        case StatisticType::FIELD_VALUE_COUNT: return "field_value_count";
+        case StatisticType::TOP_N_FIELD_VALUES: return "top_n_field_values";
+        case StatisticType::UNKNOWN: return "unknown";
     }
-    return oss.str();
+    return "unknown";
+}
+
+// Helper to convert string to StatisticType enum
+StatisticType stringToStatisticType(const std::string& typeStr) {
+    std::string upperTypeStr = typeStr;
+    std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
+
+    if (upperTypeStr == "UNIQUE_MESSAGES") return StatisticType::UNIQUE_MESSAGES;
+    if (upperTypeStr == "TOP_MESSAGES") return StatisticType::TOP_MESSAGES;
+    if (upperTypeStr == "ENTRY_RATE") return StatisticType::ENTRY_RATE;
+    if (upperTypeStr == "COUNT_BY_LEVEL") return StatisticType::LOG_LEVEL_COUNT;
+    if (upperTypeStr == "FIELD_VALUE_COUNT") return StatisticType::FIELD_VALUE_COUNT;
+    if (upperTypeStr == "TOP_N_FIELD_VALUES") return StatisticType::TOP_N_FIELD_VALUES;
+    return StatisticType::UNKNOWN;
 }
 
 std::string globToRegex(const std::string& globPattern) {
-    std::string regexPattern = "^"; // Anchor to the start of the string
+    std::string regexPattern; // Removed initial anchor
     for (char c : globPattern) {
         switch (c) {
             case '*':
@@ -97,19 +222,19 @@ std::string globToRegex(const std::string& globPattern) {
             case '?':
                 regexPattern += ".";
                 break;
-            case '.':
-            case '+':
-            case '^':
-            case '$':
-            case '(':
-            case ')':
-            case '[':
-            case ']':
-            case '{':
-            case '}':
-            case '|':
-            case '\\':
-                regexPattern += '\\'; // Escape regex special characters
+            case '.': // Fallthrough
+            case '+': // Fallthrough
+            case '^': // Fallthrough
+            case '$': // Fallthrough
+            case '(': // Fallthrough
+            case ')': // Fallthrough
+            case '[': // Fallthrough
+            case ']': // Fallthrough
+            case '{': // Fallthrough
+            case '}': // Fallthrough
+            case '|': // Fallthrough
+            case '\': // Fallthrough
+                regexPattern += '\\'; // C++ string literal for backslash
                 regexPattern += c;
                 break;
             default:
@@ -117,7 +242,7 @@ std::string globToRegex(const std::string& globPattern) {
                 break;
         }
     }
-    regexPattern += "$"; // Anchor to the end of the string
+    // Removed final anchor
     return regexPattern;
 }
 

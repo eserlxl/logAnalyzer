@@ -133,6 +133,8 @@ bool NestedFieldValueFilter::matches(const LogEntry &entry) const {
     if (type_ == PatternType::Literal) {
         if (caseSensitive_) {
             return actualValue == valuePattern_;
+        } else { // Handle case-insensitive literal match
+            return Utils::caseInsensitiveEquals(actualValue, valuePattern_);
         }
     } else if (type_ == PatternType::Wildcard) {
         if (regexPattern_.has_value()) {

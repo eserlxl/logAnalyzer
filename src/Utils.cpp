@@ -11,13 +11,16 @@
 namespace Utils {
 
 LogLevel stringToLogLevel(const std::string &levelStr) {
-    if (levelStr == "DEBUG") return LogLevel::DEBUG;
-    if (levelStr == "INFO") return LogLevel::INFO;
-    if (levelStr == "WARNING") return LogLevel::WARNING;
-    if (levelStr == "ERROR") return LogLevel::ERROR;
-    if (levelStr == "FATAL") return LogLevel::FATAL;
-    if (levelStr == "TRACE") return LogLevel::TRACE;
-    if (levelStr == "CRITICAL") return LogLevel::CRITICAL; // Added CRITICAL
+    std::string upperLevelStr = levelStr;
+    std::transform(upperLevelStr.begin(), upperLevelStr.end(), upperLevelStr.begin(), ::toupper);
+
+    if (upperLevelStr == "TRACE") return LogLevel::TRACE;
+    if (upperLevelStr == "DEBUG") return LogLevel::DEBUG;
+    if (upperLevelStr == "INFO") return LogLevel::INFO;
+    if (upperLevelStr == "WARNING") return LogLevel::WARNING;
+    if (upperLevelStr == "ERROR") return LogLevel::ERROR;
+    if (upperLevelStr == "CRITICAL") return LogLevel::CRITICAL;
+    if (upperLevelStr == "FATAL") return LogLevel::FATAL;
     return LogLevel::UNKNOWN;
 }
 
@@ -28,14 +31,7 @@ LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::strin
         return it->second;
     }
     // Fallback to default conversion (which is case-insensitive) if not found in custom mappings.
-    return stringToLogLevelIgnoreCase(levelStr);
-}
-
-LogLevel stringToLogLevelIgnoreCase(const std::string &levelStr) {
-    std::string upperLevelStr = levelStr;
-    std::transform(upperLevelStr.begin(), upperLevelStr.end(), upperLevelStr.begin(),
-                   ::toupper);
-    return stringToLogLevel(upperLevelStr);
+    return stringToLogLevel(levelStr);
 }
 
 std::string logLevelToString(LogLevel level) {
@@ -72,32 +68,35 @@ std::string getDirectory(const std::string& filePath) {
 // Helper to convert LogEntryField enum to string
 std::string logEntryFieldToString(LogEntryField field) {
     switch (field) {
-        case LogEntryField::TIMESTAMP: return "TIMESTAMP";
-        case LogEntryField::LEVEL: return "LEVEL";
-        case LogEntryField::MESSAGE: return "MESSAGE";
-        case LogEntryField::SOURCE_FILE: return "SOURCE_FILE";
-        case LogEntryField::LINE_NUMBER: return "LINE_NUMBER";
-        case LogEntryField::THREAD_ID: return "THREAD_ID";
-        case LogEntryField::MODULE: return "MODULE";
-        case LogEntryField::HOST: return "HOST";
-        case LogEntryField::CUSTOM: return "CUSTOM";
-        case LogEntryField::STRUCTURED_FIELD: return "STRUCTURED_FIELD";
-        default: return "UNKNOWN";
+        case LogEntryField::TIMESTAMP: return "timestamp";
+        case LogEntryField::LEVEL: return "level";
+        case LogEntryField::MESSAGE: return "message";
+        case LogEntryField::SOURCE_FILE: return "source_file";
+        case LogEntryField::LINE_NUMBER: return "line_number";
+        case LogEntryField::THREAD_ID: return "thread_id";
+        case LogEntryField::MODULE: return "module";
+        case LogEntryField::HOST: return "host";
+        case LogEntryField::CUSTOM: return "custom";
+        case LogEntryField::STRUCTURED_FIELD: return "structured_field";
+        default: return "unknown";
     }
 }
 
 // Helper to convert string to LogEntryField enum.
 LogEntryField stringToLogEntryField(const std::string& fieldStr) {
-    if (fieldStr == "TIMESTAMP") return LogEntryField::TIMESTAMP;
-    if (fieldStr == "LEVEL") return LogEntryField::LEVEL;
-    if (fieldStr == "MESSAGE") return LogEntryField::MESSAGE;
-    if (fieldStr == "SOURCE_FILE") return LogEntryField::SOURCE_FILE;
-    if (fieldStr == "LINE_NUMBER") return LogEntryField::LINE_NUMBER;
-    if (fieldStr == "THREAD_ID") return LogEntryField::THREAD_ID;
-    if (fieldStr == "MODULE") return LogEntryField::MODULE;
-    if (fieldStr == "HOST") return LogEntryField::HOST;
-    if (fieldStr == "CUSTOM") return LogEntryField::CUSTOM;
-    if (fieldStr == "STRUCTURED_FIELD") return LogEntryField::STRUCTURED_FIELD;
+    std::string upperFieldStr = fieldStr;
+    std::transform(upperFieldStr.begin(), upperFieldStr.end(), upperFieldStr.begin(), ::toupper);
+
+    if (upperFieldStr == "TIMESTAMP") return LogEntryField::TIMESTAMP;
+    if (upperFieldStr == "LEVEL") return LogEntryField::LEVEL;
+    if (upperFieldStr == "MESSAGE") return LogEntryField::MESSAGE;
+    if (upperFieldStr == "SOURCE_FILE") return LogEntryField::SOURCE_FILE;
+    if (upperFieldStr == "LINE_NUMBER") return LogEntryField::LINE_NUMBER;
+    if (upperFieldStr == "THREAD_ID") return LogEntryField::THREAD_ID;
+    if (upperFieldStr == "MODULE") return LogEntryField::MODULE;
+    if (upperFieldStr == "HOST") return LogEntryField::HOST;
+    if (upperFieldStr == "CUSTOM") return LogEntryField::CUSTOM;
+    if (upperFieldStr == "STRUCTURED_FIELD") return LogEntryField::STRUCTURED_FIELD;
     return LogEntryField::UNKNOWN;
 }
 
@@ -107,7 +106,7 @@ std::string filterOperatorToString(FilterOperator op) {
         case FilterOperator::EQUALS: return "EQUALS";
         case FilterOperator::NOT_EQUALS: return "NOT_EQUALS";
         case FilterOperator::CONTAINS: return "CONTAINS";
-        case FilterOperator::NOT_CONTAINS: return "NOT_CONTAINS"; // Corrected from DOES_NOT_CONTAIN
+        case FilterOperator::NOT_CONTAINS: return "NOT_CONTAINS";
         case FilterOperator::STARTS_WITH: return "STARTS_WITH";
         case FilterOperator::ENDS_WITH: return "ENDS_WITH";
         case FilterOperator::GREATER_THAN: return "GREATER_THAN";
@@ -120,16 +119,19 @@ std::string filterOperatorToString(FilterOperator op) {
 
 // Helper to convert string to FilterOperator enum
 FilterOperator stringToFilterOperator(const std::string& opStr) {
-    if (opStr == "EQUALS") return FilterOperator::EQUALS;
-    if (opStr == "NOT_EQUALS") return FilterOperator::NOT_EQUALS;
-    if (opStr == "CONTAINS") return FilterOperator::CONTAINS;
-    if (opStr == "NOT_CONTAINS") return FilterOperator::NOT_CONTAINS;
-    if (opStr == "STARTS_WITH") return FilterOperator::STARTS_WITH;
-    if (opStr == "ENDS_WITH") return FilterOperator::ENDS_WITH;
-    if (opStr == "GREATER_THAN") return FilterOperator::GREATER_THAN;
-    if (opStr == "LESS_THAN") return FilterOperator::LESS_THAN;
-    if (opStr == "GREATER_THAN_OR_EQUAL") return FilterOperator::GREATER_THAN_OR_EQUAL;
-    if (opStr == "LESS_THAN_OR_EQUAL") return FilterOperator::LESS_THAN_OR_EQUAL;
+    std::string upperOpStr = opStr;
+    std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
+
+    if (upperOpStr == "EQUALS") return FilterOperator::EQUALS;
+    if (upperOpStr == "NOT_EQUALS") return FilterOperator::NOT_EQUALS;
+    if (upperOpStr == "CONTAINS") return FilterOperator::CONTAINS;
+    if (upperOpStr == "NOT_CONTAINS") return FilterOperator::NOT_CONTAINS;
+    if (upperOpStr == "STARTS_WITH") return FilterOperator::STARTS_WITH;
+    if (upperOpStr == "ENDS_WITH") return FilterOperator::ENDS_WITH;
+    if (upperOpStr == "GREATER_THAN") return FilterOperator::GREATER_THAN;
+    if (upperOpStr == "LESS_THAN") return FilterOperator::LESS_THAN;
+    if (upperOpStr == "GREATER_THAN_OR_EQUAL") return FilterOperator::GREATER_THAN_OR_EQUAL;
+    if (upperOpStr == "LESS_THAN_OR_EQUAL") return FilterOperator::LESS_THAN_OR_EQUAL;
     return FilterOperator::UNKNOWN;
 }
 
@@ -145,48 +147,65 @@ std::string filterLogicalOperatorToString(FilterLogicalOperator op) {
 
 // Helper to convert string to FilterLogicalOperator
 FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr) {
-    if (opStr == "AND") return FilterLogicalOperator::AND;
-    if (opStr == "OR") return FilterLogicalOperator::OR;
-    if (opStr == "NOT") return FilterLogicalOperator::NOT;
+    std::string upperOpStr = opStr;
+    std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
+
+    if (upperOpStr == "AND") return FilterLogicalOperator::AND;
+    if (upperOpStr == "OR") return FilterLogicalOperator::OR;
+    if (upperOpStr == "NOT") return FilterLogicalOperator::NOT;
     return FilterLogicalOperator::UNKNOWN;
 }
 
 // Helper to convert ExportFormat enum to string
 std::string exportFormatToString(ExportFormat format) {
     switch (format) {
-        case ExportFormat::PLAINTEXT: return "PLAINTEXT";
-        case ExportFormat::JSON: return "JSON";
-        case ExportFormat::CSV: return "CSV";
-        case ExportFormat::XML: return "XML";
-        default: return "UNKNOWN";
+        case ExportFormat::PLAINTEXT: return "plaintext";
+        case ExportFormat::JSON: return "json";
+        case ExportFormat::CSV: return "csv";
+        case ExportFormat::XML: return "xml";
+        default: return "unknown";
     }
 }
 
 // Helper to convert string to ExportFormat enum
 ExportFormat stringToExportFormat(const std::string& formatStr) {
-    if (formatStr == "PLAINTEXT") return ExportFormat::PLAINTEXT;
-    if (formatStr == "JSON") return ExportFormat::JSON;
-    if (formatStr == "CSV") return ExportFormat::CSV;
-    if (formatStr == "XML") return ExportFormat::XML;
+    std::string upperFormatStr = formatStr;
+    std::transform(upperFormatStr.begin(), upperFormatStr.end(), upperFormatStr.begin(), ::toupper);
+
+    if (upperFormatStr == "PLAINTEXT") return ExportFormat::PLAINTEXT;
+    if (upperFormatStr == "JSON") return ExportFormat::JSON;
+    if (upperFormatStr == "CSV") return ExportFormat::CSV;
+    if (upperFormatStr == "XML") return ExportFormat::XML;
     return ExportFormat::UNKNOWN;
 }
 
 // Helper to convert StatisticType enum to string
 std::string statisticTypeToString(StatisticType type) {
     switch (type) {
-        case StatisticType::UNIQUE_MESSAGES: return "UNIQUE_MESSAGES";
-        case StatisticType::TOP_MESSAGES: return "TOP_MESSAGES";
-        case StatisticType::ENTRY_RATE: return "ENTRY_RATE";
-        default: return "UNKNOWN";
+        case StatisticType::UNIQUE_MESSAGES: return "unique_messages";
+        case StatisticType::TOP_MESSAGES: return "top_messages";
+        case StatisticType::ENTRY_RATE: return "entry_rate";
+        case StatisticType::LOG_LEVEL_COUNT: return "count_by_level";
+        case StatisticType::FIELD_VALUE_COUNT: return "field_value_count";
+        case StatisticType::TOP_N_FIELD_VALUES: return "top_n_field_values";
+        case StatisticType::UNKNOWN: return "unknown";
     }
+    return "unknown";
 }
 
 // Helper to convert string to StatisticType enum
 StatisticType stringToStatisticType(const std::string& typeStr) {
-    if (typeStr == "UNIQUE_MESSAGES") return StatisticType::UNIQUE_MESSAGES;
-    if (typeStr == "TOP_MESSAGES") return StatisticType::TOP_MESSAGES;
-    if (typeStr == "ENTRY_RATE") return StatisticType::ENTRY_RATE;
+    std::string upperTypeStr = typeStr;
+    std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
+
+    if (upperTypeStr == "UNIQUE_MESSAGES") return StatisticType::UNIQUE_MESSAGES;
+    if (upperTypeStr == "TOP_MESSAGES") return StatisticType::TOP_MESSAGES;
+    if (upperTypeStr == "ENTRY_RATE") return StatisticType::ENTRY_RATE;
+    if (upperTypeStr == "COUNT_BY_LEVEL") return StatisticType::LOG_LEVEL_COUNT;
+    if (upperTypeStr == "FIELD_VALUE_COUNT") return StatisticType::FIELD_VALUE_COUNT;
+    if (upperTypeStr == "TOP_N_FIELD_VALUES") return StatisticType::TOP_N_FIELD_VALUES;
     return StatisticType::UNKNOWN;
 }
 
 } // namespace Utils
+
