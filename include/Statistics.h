@@ -9,8 +9,37 @@
 #include <optional>
 #include <span>
 #include <mutex>
+#include <utility> // For std::move
 
 #include "LogTypes.h"
+
+enum class StatisticType {
+    COUNT_BY_LEVEL,         // Count log entries per level
+    COUNT_TOTAL,            // Total number of log entries
+    OCCURRENCE_COUNT,       // Count occurrences of a specific pattern/value in a field
+    TOP_N_OCCURRENCES,      // Find top N most frequent values in a field
+    TIME_RANGE,             // Analyze time distribution (e.g., first/last entry, duration)
+    CUSTOM_AGGREGATION      // Placeholder for future, more complex custom aggregates
+};
+
+// Configuration for a single statistic to be generated
+struct StatisticConfig {
+    StatisticType type;
+    std::optional<LogEntryField> field; // Field relevant for the statistic (e.g., for OCCURRENCE_COUNT)
+    std::optional<std::string> pattern; // Pattern to search for (e.g., for OCCURRENCE_COUNT)
+    std::optional<int> topN;            // For TOP_N_OCCURRENCES
+    std::optional<std::vector<LogEntryField>> groupByFields; // Group statistics by these fields
+
+    // Constructor for general statistics
+    StatisticConfig(StatisticType t) : type(t) {}
+    // Constructor for field-specific statistics
+    StatisticConfig(StatisticType t, LogEntryField f) : type(t), field(f) {}
+    // Constructor for pattern-specific statistics
+    StatisticConfig(StatisticType t, LogEntryField f, std::string p) : type(t), field(f), pattern(std::move(p)) {}
+    // Constructor for top N occurrences
+    StatisticConfig(StatisticType t, LogEntryField f, int n) : type(t), field(f), topN(n) {}
+};
+
 
 class Statistics {
 public:

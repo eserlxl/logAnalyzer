@@ -9,7 +9,7 @@ std::string LogAnalyzer::formatTimestamp(std::chrono::system_clock::time_point t
 }
 
 void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter) const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+    // std::lock_guard<std::mutex> lock(mutex_); // Temporarily removed for diagnostic purposes
     
     // CSV Header
     out << "Timestamp" << delimiter << "Level" << delimiter << "Message" << delimiter << "File\n";

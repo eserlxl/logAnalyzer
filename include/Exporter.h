@@ -6,6 +6,39 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <utility> // For std::move
+
+enum class ExportFormat {
+    PLAINTEXT,  // Raw log lines, possibly formatted
+    CSV,        // Comma Separated Values
+    JSON,       // JSON array of objects
+    XML         // XML structure
+    // Potentially more, e.g., HTML, custom templates
+};
+
+// Specifies which fields to include in the export and their order.
+struct ExportField {
+    LogEntryField field;
+    std::string customHeader; // Optional custom header for CSV/table output
+
+    ExportField(LogEntryField f, std::string header = "") : field(f), customHeader(std::move(header)) {}
+};
+
+struct ExportSettings {
+    std::string outputPath = "output.log"; // Default output file
+    ExportFormat format = ExportFormat::PLAINTEXT;
+    std::vector<ExportField> fieldsToExport; // If empty, export all available fields
+    bool includeHeader = true; // For CSV/table formats
+    // Add more options as needed, e.g., compression, encoding
+
+    // Constructor to provide sane defaults for common use cases.
+    ExportSettings() {
+        // Default fields for plaintext/csv export if none specified
+        fieldsToExport.emplace_back(LogEntryField::TIMESTAMP, "Timestamp");
+        fieldsToExport.emplace_back(LogEntryField::LEVEL, "Level");
+        fieldsToExport.emplace_back(LogEntryField::MESSAGE, "Message");
+    }
+};
 
 // Forward declaration of LogAnalyzer to avoid circular dependency if needed for utility methods
 class LogAnalyzer; 

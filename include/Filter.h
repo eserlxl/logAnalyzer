@@ -37,6 +37,34 @@ enum class SortOrder {
     DESCENDING
 };
 
+enum class FilterOperator {
+    EQUALS,             // ==
+    NOT_EQUALS,         // !=
+    CONTAINS,           // substring search
+    NOT_CONTAINS,       // not substring search
+    STARTS_WITH,        // prefix search
+    ENDS_WITH,          // suffix search
+    REGEX_MATCH,        // regex match
+    LESS_THAN,          // < (numeric/datetime)
+    GREATER_THAN,       // > (numeric/datetime)
+    LESS_THAN_OR_EQUAL, // <= (numeric/datetime)
+    GREATER_THAN_OR_EQUAL // >= (numeric/datetime)
+};
+
+// Represents a single filtering condition
+struct FilterRule {
+    LogEntryField field;        // The LogEntry field to apply the filter to
+    FilterOperator op;          // The comparison operator
+    std::string value;          // The value to compare against (string representation)
+    bool caseSensitive = false; // Whether the comparison should be case-sensitive for string ops
+    // Add an optional field for logical combination if advanced filtering is needed:
+    // std::optional<LogicalOperator> nextRuleLogic; // AND/OR with the next rule
+
+    // Constructor
+    FilterRule(LogEntryField f, FilterOperator o, std::string v, bool cs = false)
+        : field(f), op(o), value(std::move(v)), caseSensitive(cs) {}
+};
+
 class IFilter {
 public:
     virtual ~IFilter() = default;
