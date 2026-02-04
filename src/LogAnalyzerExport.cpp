@@ -8,13 +8,13 @@ std::string LogAnalyzer::formatTimestamp(std::chrono::system_clock::time_point t
     return Utils::formatTimestamp(tp, format);
 }
 
-void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter) const {
-    // std::lock_guard<std::mutex> lock(mutex_); // Temporarily removed for diagnostic purposes
+void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter, std::string_view timestampFormat) const {
+    std::lock_guard<std::mutex> lock(mutex_); // Re-enabled for thread-safety
     
     // CSV Header
     out << "Timestamp" << delimiter << "Level" << delimiter << "Message" << delimiter << "File\n";
     
-    auto filtered_expected = getFilteredEntries(filter); // This call is already locked inside
+    auto filtered_expected = getFilteredEntries_NoLock(filter); // Use non-locking version as we already hold the lock
     if (!filtered_expected) {
         std::cerr << "Error filtering entries for CSV export: " << filtered_expected.error().message << std::endl;
         return;
@@ -22,7 +22,7 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, c
     const auto& filtered = filtered_expected.value();
     
     for (const auto& entry : filtered) {
-        out << formatTimestamp(entry.timestamp) << delimiter;
+        out << formatTimestamp(entry.timestamp, timestampFormat) << delimiter;
         out << logLevelToString(entry.level) << delimiter;
         
         // Audit: Handle newlines and quotes in messages for CSV
@@ -48,7 +48,7 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, c
     }
 }
 
-void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, bool includeSummary, bool prettyPrint) const {
+void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, bool prettyPrint, std::string_view timestampFormat) const {
     std::lock_guard<std::mutex> lock(mutex_);
     auto filtered_expected = getFilteredEntries_NoLock(filter); // Use non-locking version as we already hold the lock
     if (!filtered_expected) {
@@ -71,9 +71,9 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
 
     for (size_t i = 0; i < filtered.size(); ++i) {
         const auto& entry = filtered[i];
-        out << (includeSummary ? entryIndent : indent);
+        out << entryIndent; // Always use entryIndent for log entries
         out << "{";
-        out << "\"timestamp\":\"" << formatTimestamp(entry.timestamp) << "\",";
+        out << "\"timestamp\":\"" << formatTimestamp(entry.timestamp, timestampFormat) << "\",";
         out << "\"level\":\"" << logLevelToString(entry.level) << "\",";
         out << "\"message\":\"" << Utils::escapeJsonString(entry.message) << "\",";
         out << "\"file\":\"" << Utils::escapeJsonString(entry.sourceFile) << "\"";

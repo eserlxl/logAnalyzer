@@ -1,12 +1,16 @@
-#ifndef LOG_ANALYZER_CONFIG_H
-#define LOG_ANALYZER_CONFIG_H
+#ifndef LOG_ANALYZER_SETTINGS_H
+#define LOG_ANALYZER_SETTINGS_H
 
 #include "LogTypes.h"
+#include "Filter.h"
+#include "Exporter.h"
+#include "Statistics.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <optional>
 #include <string_view>
+#include <expected>
 
 // Define DEFAULT_LOG_REGEX_PATTERN directly in LogAnalyzerConfig.h or a common header
 // to avoid circular dependency with LogAnalyzer.h
@@ -30,6 +34,42 @@ struct LogAnalyzerSettings {
     // Defines whether log parsing should be case-sensitive. Applies to regex patterns.
     bool caseSensitiveParsing = false; 
 
+    // Filter rules
+    std::vector<FilterRule> filterRules;
+    
+    // Advanced filtering expression (optional replacement for filterRules)
+    std::optional<FilterExpression> rootFilterExpression;
+
+    // Export settings
+    ExportSettings exportSettings;
+
+    // Statistics configuration
+    std::vector<StatisticConfig> statisticConfigs;
+
+    // JSON serialization/deserialization methods
+    static std::expected<LogAnalyzerSettings, std::vector<std::string>> fromJson(const std::string& jsonContent);
+    static std::expected<LogAnalyzerSettings, std::vector<std::string>> fromFile(const std::string& filePath);
+    std::string toJson() const;
+    std::vector<std::string> validate() const;
+
+    // Fluent API helpers for tests
+    LogAnalyzerSettings& setLineParsePattern(std::string p) { lineParsePattern = std::move(p); return *this; }
+    LogAnalyzerSettings& setCaseSensitiveParsing(bool b) { caseSensitiveParsing = b; return *this; }
+    LogAnalyzerSettings& setLogEntryStartPattern(std::optional<std::string> p) { logEntryStartPattern = std::move(p); return *this; }
+    LogAnalyzerSettings& addFieldMapping(LogEntryField f, int gi, const std::string& fmt = "") { 
+        fieldMappings.emplace_back(f, gi, fmt); return *this; 
+    }
+    LogAnalyzerSettings& clearFieldMappings() { fieldMappings.clear(); return *this; }
+    LogAnalyzerSettings& addCustomLogLevelMapping(std::string s, LogLevel l) { 
+        customLogLevelMappings[s] = l; return *this; 
+    }
+    LogAnalyzerSettings& clearCustomLogLevelMappings() { customLogLevelMappings.clear(); return *this; }
+    LogAnalyzerSettings& addFilterRule(FilterRule r) { filterRules.push_back(std::move(r)); return *this; }
+    LogAnalyzerSettings& clearFilterRules() { filterRules.clear(); return *this; }
+    LogAnalyzerSettings& setExportSettings(ExportSettings es) { exportSettings = std::move(es); return *this; }
+    LogAnalyzerSettings& addStatisticConfig(StatisticConfig sc) { statisticConfigs.push_back(std::move(sc)); return *this; }
+    LogAnalyzerSettings& clearStatisticConfigs() { statisticConfigs.clear(); return *this; }
+
 private: // Helper for consistency
     // Helper to initialize default field mappings.
     void initializeDefaultFieldMappings() {
@@ -49,10 +89,11 @@ public:
     // Constructor for custom patterns.
     // If 'pattern' matches DEFAULT_LOG_REGEX_PATTERN_INTERNAL, it will also initialize default field mappings.
     // Otherwise, fieldMappings will remain empty, expecting the user to provide custom mappings.
-        explicit LogAnalyzerSettings(std::string pattern)
-            : lineParsePattern(std::move(pattern))
-        {
-            // Always initialize default field mappings to provide a baseline.
-            initializeDefaultFieldMappings();
-        }};
-#endif // LOG_ANALYZER_CONFIG_H
+    explicit LogAnalyzerSettings(std::string pattern)
+        : lineParsePattern(std::move(pattern))
+    {
+        // Always initialize default field mappings to provide a baseline.
+        initializeDefaultFieldMappings();
+    }
+};
+#endif // LOG_ANALYZER_SETTINGS_H

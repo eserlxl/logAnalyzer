@@ -9,6 +9,7 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
 ## Table of Contents
 
 -   [Features](#features)
+-   [Project Structure](#project-structure)
 -   [Prerequisites](#prerequisites)
 -   [Getting Started](#getting-started)
 -   [Build Options](#build-options)
@@ -42,14 +43,31 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
 -   **Contextual Viewing**: Display surrounding lines for filtered entries.
 -   **Multi-line Log Entry Support**: Define a regex pattern to identify the start of a new log entry.
 
+## Project Structure
+
+A high-level overview of the project's directory structure:
+
+```
+.
+├── CMake/                   # CMake modules and scripts
+├── docs/                    # Doxygen configuration and documentation resources
+├── include/                 # Public header files for the logAnalyzer library
+├── src/                     # Source files for the logAnalyzer library and main executable
+├── tests/                   # Unit and integration tests
+├── .gitignore               # Files ignored by Git
+├── CODE_OF_CONDUCT.md       # Project's Code of Conduct
+├── CONTRIBUTING.md          # Guidelines for contributing to the project
+└── README.md                # This README file
+```
+
 ## Prerequisites
 
 -   **Compiler**: C++23 compatible compiler (e.g., GCC 13+, Clang 16+)
 -   **Build System**: CMake 3.20 or higher
 -   **Dependencies**: (Automatically handled via FetchContent)
-    -   [CLI11](https://github.com/CLIUtils/CLI11)
-    -   [nlohmann/json](https://github.com/nlohmann/json)
-    -   [GoogleTest](https://github.com/google/googletest)
+    -   [CLI11](https://github.com/CLIUtils/CLI11) for command-line argument parsing.
+    -   [nlohmann/json](https://github.com/nlohmann/json) for JSON handling.
+    -   [GoogleTest](https://github.com/google/googletest) for unit testing.
 
 ## Getting Started
 
@@ -74,18 +92,25 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
 
 ## Build Options
 
+The following CMake options can be used to customize the build process:
+
 -   `-DBUILD_TESTING=ON/OFF`: Toggles the compilation of unit tests (Default: `ON`).
--   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Build as a shared library (Default: `OFF`).
--   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enables sanitizers (Default: `None`).
+-   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Build the `logAnalyzer` as a shared library (Default: `OFF`).
+-   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enables various sanitizers (e.g., AddressSanitizer, UndefinedBehaviorSanitizer) to detect runtime errors (Default: `None`).
 
 ## Installation
+
+After building, you can install `logAnalyzer` to your system:
 
 ```bash
 cd build
 cmake --install . --prefix /usr/local
 ```
+This will install the executable to `/usr/local/bin` and libraries/headers to appropriate subdirectories within `/usr/local`.
 
 ## Running Tests
+
+To execute the unit and integration tests:
 
 ```bash
 cd build
@@ -121,7 +146,7 @@ ctest --verbose
 ./bin/logAnalyzer sample.log --format json --output results.json
 ```
 
-For a complete list of options, run:
+For a complete list of available command-line options and their descriptions, run:
 ```bash
 ./bin/logAnalyzer --help
 ```
@@ -132,14 +157,17 @@ For a complete list of options, run:
     ```bash
     cmake --build . --target doc
     ```
+    API documentation will be generated in `build/docs/html` (or similar, depending on your build configuration) and can be viewed by opening `index.html` in your web browser.
+
 -   **Format Code**:
     ```bash
     cmake --build . --target format
     ```
+    This command applies consistent code formatting using `clang-format` (if available) across the codebase.
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more details.
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for more details on how to get involved, report issues, and propose changes.
 
 ## Versioning
 
@@ -147,8 +175,8 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Code of Conduct
 
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the standards of behavior we expect from our community.
+Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the standards of behavior we expect from our community members and contributors.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+This project is licensed under the MIT License.

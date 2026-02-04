@@ -96,12 +96,12 @@ public:
     [[deprecated("Use append(const std::string& filePath) instead. The pattern is now configured via LogAnalyzerSettings.")]]
     std::expected<void, LogParseError> append(const std::string& filePath, const std::string& pattern);
     std::span<const LogEntry> getEntriesView() const;
-    void exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter = ',') const;
+    void exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
     std::vector<TimeGap> findTimeGaps(std::chrono::milliseconds minGapDuration) const;
     double getAverageEntryRate() const;
     std::string logLevelToString(LogLevel level) const;
     LogLevel stringToLogLevel(const std::string& levelStr);
-    void exportAsJson(std::ostream& out, const FilterCriteria& filter, bool includeSummary, bool prettyPrint) const;
+    void exportAsJson(std::ostream& out, const FilterCriteria& filter, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
     std::vector<LogEntry> getSortedFilteredEntries(const FilterCriteria& criteria, SortBy sortBy, SortOrder sortOrder) const;
     std::map<std::string, int> getUniqueMessageCounts() const;
     std::vector<std::pair<std::string, int>> getTopMessages(int n) const;

@@ -74,7 +74,7 @@ inline void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
     } // datetimeFormat is optional
 
     if (!errors.empty()) {
-        throw nlohmann::json::exception(errors.size(), errors[0].c_str());
+        throw std::runtime_error(errors[0]);
     }
 }
 
@@ -133,7 +133,7 @@ inline void from_json(const nlohmann::json& j, ExportSettings& es) {
     }
 
     if (!errors.empty()) {
-        throw nlohmann::json::exception(errors.size(), errors[0].c_str());
+        throw std::runtime_error(errors[0]);
     }
 }
 

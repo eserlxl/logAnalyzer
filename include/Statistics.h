@@ -79,7 +79,7 @@ struct StatisticConfig {
     // Constructor for top N occurrences with group by
     StatisticConfig(StatisticType t, LogEntryField f, int n, LogEntryField groupBy) 
         : type(t), field(f), topN(n), groupByField(groupBy) {}
-
+};
 
 // --- JSON Conversion for StatisticConfig ---
 inline void to_json(nlohmann::json& j, const StatisticConfig& sc) {
@@ -136,7 +136,7 @@ inline void from_json(const nlohmann::json& j, StatisticConfig& sc) {
     } // groupByField is optional
 
     if (!errors.empty()) {
-        throw nlohmann::json::exception(errors.size(), errors[0].c_str());
+        throw std::runtime_error(errors[0]);
     }
 }
 // New: Enum for how statistics results should be presented

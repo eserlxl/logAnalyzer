@@ -1,4 +1,8 @@
 #include "../include/Utils.h"
+#include "LogTypes.h"
+#include "Filter.h"
+#include "Exporter.h"
+#include "Statistics.h"
 #include <algorithm>
 #include <cctype>
 #include <iomanip>
@@ -38,6 +42,7 @@ std::string logLevelToString(LogLevel level) {
         case LogLevel::INFO: return "INFO";
         case LogLevel::WARNING: return "WARNING";
         case LogLevel::ERROR: return "ERROR";
+        case LogLevel::CRITICAL: return "CRITICAL";
         case LogLevel::FATAL: return "FATAL";
         case LogLevel::TRACE: return "TRACE";
         case LogLevel::UNKNOWN: return "UNKNOWN";

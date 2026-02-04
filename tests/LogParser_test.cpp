@@ -110,8 +110,9 @@ TEST(LogParserTest, MultiLineBasic) {
 TEST(LogParserTest, StructuredFieldExplicitMappingWithEnhancedKeys) {
     std::string pattern = R"(^INFO: \[([^\]]+)\] (.*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::STRUCTURED_FIELD, 1, "", "="}, // Group 1 contains structured data, parse k/v by "="
-        {LogEntryField::MESSAGE, 2}
+        FieldMapping(LogEntryField::TIMESTAMP, 0, "%Y-%m-%d %H:%M:%S"),
+        FieldMapping(LogEntryField::STRUCTURED_FIELD, 1, std::vector<std::string>{"", "="}), // key-value pair with '=' delimiter
+        FieldMapping(LogEntryField::MESSAGE, 2)
     };
 
     DefaultLogParser parser(pattern, mappings);

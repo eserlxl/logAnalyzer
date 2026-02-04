@@ -113,8 +113,8 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
 
   bool structuredFieldsExplicitlyMapped = false;
   for (const auto& mapping : fieldMappings) {
-      if (std::holds_alternative<LogEntryField>(mapping.field_identifier) &&
-          std::get<LogEntryField>(mapping.field_identifier) == LogEntryField::STRUCTURED_FIELD) {
+      if (std::holds_alternative<LogEntryField>(mapping.field) &&
+          std::get<LogEntryField>(mapping.field) == LogEntryField::STRUCTURED_FIELD) {
           structuredFieldsExplicitlyMapped = true;
           break;
       }
@@ -224,7 +224,7 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
                 entry.structuredFields[arg] = capturedValue;
             }
         },
-        mapping.field_identifier);
+        mapping.field);
 
     // If a parse error occurred during timestamp parsing within std::visit
     if (result.status != ParseResultStatus::SUCCESS) {

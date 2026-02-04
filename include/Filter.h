@@ -14,9 +14,6 @@
 #include <nlohmann/json.hpp> // Include for nlohmann/json types
 #include "LogTypes.h" // For LogEntryField, LogLevel and FieldMapping
 #include "Utils.h" // For string conversions and time parsing utilities
-#include "Utils.h" // For string conversions and time parsing utilities
-#include "Utils.h" // For string conversions and time parsing utilities
-#include "Utils.h" // For string conversions and time parsing utilities
 
 // Enum for sorting criteria.
 enum class SortBy {
@@ -50,7 +47,8 @@ enum class FilterOperator {
 enum class FilterLogicalOperator {
     AND,
     OR,
-    NOT // Unary operator, applied to the next expression
+    NOT, // Unary operator, applied to the next expression
+    UNKNOWN
 };
 
 // New: Enum to indicate how a filter value should be interpreted
@@ -102,6 +100,19 @@ struct FilterRule {
     bool caseSensitive = false;
 };
 
+// Legacy support / backward compatibility wrapper
+struct FilterCriteria {
+    std::vector<LogLevel> levels;
+    std::string keyword;
+    bool keywordCaseSensitive = false;
+    std::string regexPattern;
+    std::optional<std::chrono::system_clock::time_point> startTime;
+    std::optional<std::chrono::system_clock::time_point> endTime;
+
+    std::vector<FilterRule> rules;
+    // std::optional<FilterExpression> expression; // Future integration
+};
+
 // Forward declarations to break circular dependency with Utils.h
 namespace Utils {
     std::string logEntryFieldToString(LogEntryField field);
@@ -147,12 +158,77 @@ inline void from_json(const nlohmann::json& j, FilterRule& fr) {
     if (j.contains("caseSensitive") && j.at("caseSensitive").is_boolean()) {
         fr.caseSensitive = j.at("caseSensitive").get<bool>();
     } else {
-        // Default to false if not specified or invalid
         fr.caseSensitive = false;
     }
 
     if (!errors.empty()) {
-        throw nlohmann::json::exception(errors.size(), errors[0].c_str());
+        throw std::runtime_error(errors[0]);
+    }
+}
+
+// Helper to convert FilterCondition to JSON
+inline void to_json(nlohmann::json& j, const FilterCondition& fc) {
+    j = nlohmann::json{
+        {"field", Utils::logEntryFieldToString(fc.field)},
+        {"op", Utils::filterOperatorToString(fc.op)},
+        {"value", fc.value},
+        {"value_type", static_cast<int>(fc.valueType)}, // Cast to int for enum
+        {"caseSensitive", fc.caseSensitive}
+    };
+    if (fc.datetimeFormat) {
+        j["datetimeFormat"] = *fc.datetimeFormat;
+    } else {
+        j["datetimeFormat"] = nullptr;
+    }
+}
+
+// Helper to convert JSON to FilterCondition
+inline void from_json(const nlohmann::json& j, FilterCondition& fc) {
+    std::vector<std::string> errors;
+
+    if (j.contains("field") && j.at("field").is_string()) {
+        fc.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
+        if (fc.field == LogEntryField::UNKNOWN && j.at("field").get<std::string>() != "UNKNOWN") {
+             errors.push_back("FilterCondition has an unrecognized 'field' string: " + j.at("field").get<std::string>());
+        }
+    } else {
+        errors.push_back("FilterCondition is missing or has invalid 'field'.");
+    }
+
+    if (j.contains("op") && j.at("op").is_string()) {
+        fc.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
+    } else {
+        errors.push_back("FilterCondition is missing or has invalid 'op'.");
+    }
+
+    if (j.contains("value") && j.at("value").is_string()) {
+        fc.value = j.at("value").get<std::string>();
+    } else {
+        errors.push_back("FilterCondition is missing or has invalid 'value'.");
+    }
+
+    if (j.contains("value_type") && j.at("value_type").is_number_integer()) {
+        fc.valueType = static_cast<FilterValueType>(j.at("value_type").get<int>());
+    } else {
+        errors.push_back("FilterCondition is missing or has invalid 'value_type'.");
+    }
+
+    if (j.contains("caseSensitive") && j.at("caseSensitive").is_boolean()) {
+        fc.caseSensitive = j.at("caseSensitive").get<bool>();
+    } else {
+        fc.caseSensitive = false;
+    }
+
+    if (j.contains("datetimeFormat")) {
+        if (j.at("datetimeFormat").is_string()) {
+            fc.datetimeFormat = j.at("datetimeFormat").get<std::string>();
+        } else if (j.at("datetimeFormat").is_null()) {
+            fc.datetimeFormat = std::nullopt;
+        }
+    }
+
+    if (!errors.empty()) {
+        throw std::runtime_error(errors[0]);
     }
 }
 
@@ -215,9 +291,67 @@ private:
     std::vector<FilterExpression> operands_;
 };
 
-// Forward declarations for recursive JSON conversion
-inline void to_json(nlohmann::json& j, const FilterExpression& fe);
-inline void from_json(const nlohmann::json& j, FilterExpression& fe);
+// Forward declarations to break circular dependency with Utils.h
+namespace Utils {
+    std::string filterLogicalOperatorToString(FilterLogicalOperator op);
+    FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr);
+}
+
+// JSON conversion for FilterExpression (recursive)
+inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
+    if (fe.getType() == FilterExpression::ExpressionType::CONDITION) {
+        j["condition"] = *fe.getCondition();
+    } else if (fe.getType() == FilterExpression::ExpressionType::LOGICAL) {
+        j["operator"] = Utils::filterLogicalOperatorToString(*fe.getLogicalOperator());
+        if (!fe.getOperands().empty()) {
+            j["operands"] = nlohmann::json::array();
+            for (const auto& operand : fe.getOperands()) {
+                nlohmann::json operand_j;
+                to_json(operand_j, operand); // Recursive call
+                j["operands"].push_back(operand_j);
+            }
+        }
+    }
+}
+
+inline void from_json(const nlohmann::json& j, FilterExpression& fe) {
+    std::vector<std::string> errors;
+
+    if (j.contains("condition") && j.at("condition").is_object()) {
+        try {
+            fe = FilterExpression(j.at("condition").get<FilterCondition>());
+        } catch (const nlohmann::json::exception& e) {
+            errors.push_back("Error parsing condition: " + std::string(e.what()));
+        }
+    } else if (j.contains("operator") && j.at("operator").is_string()) {
+        FilterLogicalOperator op = Utils::stringToFilterLogicalOperator(j.at("operator").get<std::string>());
+        if (op == FilterLogicalOperator::UNKNOWN) {
+            errors.push_back("Unknown filter operator: " + j.at("operator").get<std::string>());
+        } else {
+            std::vector<FilterExpression> operands;
+            if (j.contains("operands") && j.at("operands").is_array()) {
+                for (const auto& operand_j : j.at("operands")) {
+                    try {
+                        FilterExpression operand_fe;
+                        from_json(operand_j, operand_fe); // Recursive call
+                        operands.push_back(operand_fe);
+                    } catch (const nlohmann::json::exception& e) {
+                        errors.push_back("Error parsing operand: " + std::string(e.what()));
+                    }
+                }
+            } else {
+                errors.push_back("FilterExpression with operator must contain 'operands' array.");
+            }
+            fe = FilterExpression(op, operands);
+        }
+    } else {
+        errors.push_back("FilterExpression must contain either 'condition' or 'operator' with 'operands'.");
+    }
+    
+    if (!errors.empty()) {
+        throw std::runtime_error(errors[0]);
+    }
+}
 
 class IFilter {
 public:
@@ -462,4 +596,3 @@ private:
 };
 
 #endif // FILTER_H
-

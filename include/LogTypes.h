@@ -68,21 +68,21 @@ enum class LogEntryField {
 
 // New struct to define the mapping from a regex capture group to a LogEntry field
 struct FieldMapping {
-  std::variant<LogEntryField, std::string> field_identifier; // New: variant
+  std::variant<LogEntryField, std::string> field; // Renamed back to field
   std::optional<size_t> groupIndex; // Use std::optional to represent unset index
   std::vector<std::string> formats; // Replaces 'format' for TIMESTAMP, used for kv delimiter for STRUCTURED_FIELD
   std::optional<std::string> customFieldType; // New: for custom fields, explicitly state the type if known (e.g., "int", "string", "datetime")
 
   // Default constructor
-  FieldMapping() : field_identifier(LogEntryField::UNKNOWN) {}
+  FieldMapping() : field(LogEntryField::UNKNOWN) {}
 
   // Constructor for enum fields (existing behavior, adapted for variant)
   FieldMapping(LogEntryField f, std::optional<size_t> groupIdx = std::nullopt, const std::vector<std::string>& fmts = {})
-      : field_identifier(f), groupIndex(groupIdx), formats(fmts) {}
+      : field(f), groupIndex(groupIdx), formats(fmts) {}
 
   // Constructor for enum fields with int groupIndex (for backward compatibility with old API)
   FieldMapping(LogEntryField f, int gi, const std::string& fmt = "")
-      : field_identifier(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))) {
+      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))) {
     if (!fmt.empty()) {
         formats.push_back(fmt);
     }
@@ -90,7 +90,7 @@ struct FieldMapping {
 
   // Constructor for enum fields with int groupIndex and const char* format (for backward compatibility)
   FieldMapping(LogEntryField f, int gi, const char* fmt)
-      : field_identifier(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))) {
+      : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))) {
     if (fmt != nullptr) {
         formats.push_back(fmt);
     }
@@ -98,11 +98,11 @@ struct FieldMapping {
 
   // Constructor for custom string fields
   FieldMapping(const std::string& customFieldName, std::optional<size_t> groupIdx = std::nullopt, const std::vector<std::string>& fmts = {}, const std::optional<std::string>& customType = std::nullopt)
-      : field_identifier(customFieldName), groupIndex(groupIdx), formats(fmts), customFieldType(customType) {}
+      : field(customFieldName), groupIndex(groupIdx), formats(fmts), customFieldType(customType) {}
 
   // Convenience overload for custom string fields with a single format string
   FieldMapping(const std::string& customFieldName, std::optional<size_t> groupIdx, const std::string& format, const std::optional<std::string>& customType = std::nullopt)
-      : field_identifier(customFieldName), groupIndex(groupIdx), formats({format}), customFieldType(customType) {}
+      : field(customFieldName), groupIndex(groupIdx), formats({format}), customFieldType(customType) {}
 
   // Explicitly defined copy and move constructors/assignment operators for robust vector usage
   FieldMapping(const FieldMapping&) = default;
@@ -119,15 +119,19 @@ namespace Utils {
 
 // --- JSON Conversion for FieldMapping ---
 inline void to_json(nlohmann::json& j, const FieldMapping& fm) {
-    j = nlohmann::json{
-        {"groupIndex", fm.groupIndex},
-        {"formats", fm.formats}
-    };
-    // Handle the variant for field_identifier
-    if (std::holds_alternative<LogEntryField>(fm.field_identifier)) {
-        j["field"] = Utils::logEntryFieldToString(std::get<LogEntryField>(fm.field_identifier));
-    } else if (std::holds_alternative<std::string>(fm.field_identifier)) {
-        j["field"] = std::get<std::string>(fm.field_identifier);
+    j = nlohmann::json::object();
+    if (fm.groupIndex) {
+        j["groupIndex"] = *fm.groupIndex;
+    } else {
+        j["groupIndex"] = nullptr;
+    }
+    j["formats"] = fm.formats;
+    
+    // Handle the variant for field
+    if (std::holds_alternative<LogEntryField>(fm.field)) {
+        j["field"] = Utils::logEntryFieldToString(std::get<LogEntryField>(fm.field));
+    } else if (std::holds_alternative<std::string>(fm.field)) {
+        j["field"] = std::get<std::string>(fm.field);
         if (fm.customFieldType) {
             j["customFieldType"] = *fm.customFieldType;
         }
@@ -138,10 +142,16 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
     std::vector<std::string> errors;
     
     // Required fields
-    if (j.contains("groupIndex") && j.at("groupIndex").is_number_integer()) {
-        fm.groupIndex = j.at("groupIndex").get<int>();
+    if (j.contains("groupIndex")) {
+        if (j.at("groupIndex").is_number_integer()) {
+            fm.groupIndex = j.at("groupIndex").get<size_t>();
+        } else if (j.at("groupIndex").is_null()) {
+            fm.groupIndex = std::nullopt;
+        } else {
+            errors.push_back("FieldMapping has invalid 'groupIndex'.");
+        }
     } else {
-        errors.push_back("FieldMapping is missing or has invalid 'groupIndex'.");
+        errors.push_back("FieldMapping is missing 'groupIndex'.");
     }
 
     if (j.contains("formats") && j.at("formats").is_array()) {
@@ -155,27 +165,25 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
             // Try to convert to standard LogEntryField first
             LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
             if (standardField != LogEntryField::UNKNOWN) {
-                fm.field_identifier = standardField;
+                fm.field = standardField;
             } else {
                 // It's not a standard field, assume it's a custom field name
-                fm.field_identifier = fieldStr;
+                fm.field = fieldStr;
                 // Check for customFieldType if it's a custom field
                 if (j.contains("customFieldType") && j.at("customFieldType").is_string()) {
                     fm.customFieldType = j.at("customFieldType").get<std::string>();
-                } else {
-                    // If it's a custom field but no type is provided, it might be an issue depending on requirements.
-                    // For now, we'll allow it but might add a validation check later.
                 }
             }
         } else {
             errors.push_back("FieldMapping 'field' must be a string.");
         }
-    } else {
+    }
+    else {
         errors.push_back("FieldMapping is missing the required 'field' key.");
     }
 
     if (!errors.empty()) {
-        throw nlohmann::json::exception(errors.size(), errors[0].c_str()); // Basic exception for now
+        throw std::runtime_error(errors[0]); // Throw standard exception
     }
 }
 // Enum for Parse Errors

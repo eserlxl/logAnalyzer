@@ -1,13 +1,24 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <string>
+#include <string_view>
+#include <vector>
+#include <chrono>
+#include <expected>
+#include <utility>
+#include <algorithm>
+#include <cctype>
+
 // Forward declarations for types used in Utils functions.
 // These are not #includes, as Utils.h should not directly include headers
 // that might circularly include Utils.h.
 enum class LogEntryField;
 enum class FilterOperator;
+enum class FilterLogicalOperator;
 enum class ExportFormat;
 enum class StatisticType;
+enum class StatisticOutputFormat;
 enum class LogLevel;
 
 namespace Utils {
