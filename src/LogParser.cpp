@@ -24,7 +24,7 @@ std::vector<FieldMapping> inferFieldMappingsFromPattern([[maybe_unused]] const s
 Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     std::string pattern,
     std::vector<FieldMapping> fieldMappings,
-    const std::map<std::string, LogLevel, ci_less>& levelMappings,
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
     std::optional<std::string> logEntryStartPattern,
     CLIConfig::ParserErrorAction errorAction) {
     try {
@@ -40,7 +40,7 @@ Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     }
 }
 
-const std::map<std::string, LogLevel, ci_less> DefaultLogParser::DEFAULT_LEVEL_MAPPINGS = {
+const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> DefaultLogParser::DEFAULT_LEVEL_MAPPINGS = {
     {"TRACE", LogLevel::TRACE},
     {"DEBUG", LogLevel::DEBUG},
     {"INFO", LogLevel::INFO},
@@ -52,7 +52,7 @@ const std::map<std::string, LogLevel, ci_less> DefaultLogParser::DEFAULT_LEVEL_M
 DefaultLogParser::DefaultLogParser(
     std::string pattern,
     std::vector<FieldMapping> fieldMappings,
-    const std::map<std::string, LogLevel, ci_less> &levelMappings,
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
     std::optional<std::string> logEntryStartPattern,
     CLIConfig::ParserErrorAction errorAction)
     : logPattern(pattern, std::regex::optimize),

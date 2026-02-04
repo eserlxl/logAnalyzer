@@ -9,7 +9,8 @@
 #include <map> // Required for std::map
 #include <filesystem> // Required for std::filesystem utilities
 #include <chrono>
-#expected>
+#include "CiLess.h" // Include the new header for ci_less comparator
+#include <expected>
 #include <utility>
 #include <algorithm>
 #include <cctype>
@@ -47,7 +48,7 @@ namespace AnsiColor {
 static constexpr std::string_view STDIN_FILE_PATH = "-";
 
 // Overload for stringToLogLevel that accepts custom mappings with ci_less comparator.
-LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, ci_less> &customMappings);
+LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &customMappings);
 LogLevel stringToLogLevel(const std::string &levelStr);
 LogLevel stringToLogLevelIgnoreCase(const std::string &levelStr);
 std::string logLevelToString(LogLevel level);

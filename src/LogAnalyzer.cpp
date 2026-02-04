@@ -28,19 +28,38 @@
 
 using namespace ErrorCode;
 
-LogAnalyzer::LogAnalyzer() : currentSettings_(), currentParser_(std::make_unique<DefaultLogParser>(currentSettings_.lineParsePattern, currentSettings_.fieldMappings, currentSettings_.customLogLevelMappings)) {}
+LogAnalyzer::LogAnalyzer() 
+    : currentSettings_(), 
+      customLogLevelMapping_(currentSettings_.customLogLevelMappings), // Initialize with settings' mappings
+      currentParser_(std::make_unique<DefaultLogParser>(
+          currentSettings_.lineParsePattern, 
+          currentSettings_.fieldMappings, 
+          customLogLevelMapping_ // Use LogAnalyzer's own mapping
+      )) {}
 
-LogAnalyzer::LogAnalyzer(LogAnalyzerSettings settings)
-    : currentSettings_(std::move(settings)),
-      currentParser_(std::make_unique<DefaultLogParser>(currentSettings_.lineParsePattern, currentSettings_.fieldMappings, currentSettings_.customLogLevelMappings)) {
+LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
+    : currentSettings_(settings), // Initialize currentSettings_ with provided settings
+      customLogLevelMapping_(settings.customLogLevelMappings), // Initialize customLogLevelMapping_ from settings
+      currentParser_(std::make_unique<DefaultLogParser>(
+          currentSettings_.lineParsePattern,
+          currentSettings_.fieldMappings,
+          customLogLevelMapping_ // Use LogAnalyzer's own mapping
+      )) {
 }
 
-Result<void> LogAnalyzer::setSettings(LogAnalyzerSettings settings) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    currentSettings_ = std::move(settings);
-    auto parser_or_error = DefaultLogParser::create(currentSettings_.lineParsePattern, currentSettings_.fieldMappings, currentSettings_.customLogLevelMappings);
+Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
+    std::unique_lock<std::shared_mutex> lock(stateMutex_); // Use unique_lock for modifying methods
+    currentSettings_ = settings; // Assign directly, no move as settings is const&
+    customLogLevelMapping_ = settings.customLogLevelMappings; // Update LogAnalyzer's own mapping
+    
+    auto parser_or_error = DefaultLogParser::create(
+        currentSettings_.lineParsePattern, 
+        currentSettings_.fieldMappings, 
+        customLogLevelMapping_ // Use LogAnalyzer's own mapping
+    );
     if (parser_or_error.has_value()) {
         currentParser_ = std::move(parser_or_error.value());
+        return {};
         return {};
     } else {
         return std::unexpected(Error(Error::Code::InvalidRegex, "Failed to create parser with new settings."));
@@ -54,19 +73,19 @@ const LogAnalyzerSettings& LogAnalyzer::getSettings() const {
 // New statistics methods
 void LogAnalyzer::addStatisticCollector(std::shared_ptr<IStatisticCollector> collector) {
     if (collector) {
-        _collectors.push_back(collector);
+        collectors_.push_back(collector);
     }
 }
 
 void LogAnalyzer::processEntryForStatistics(const LogEntry& entry) {
-    for (const auto& collector : _collectors) {
+    for (const auto& collector : collectors_) {
         collector->collect(entry);
     }
 }
 
 std::map<std::string, json> LogAnalyzer::getAllStatisticReports() const {
     std::map<std::string, json> reports;
-    for (const auto& collector : _collectors) {
+    for (const auto& collector : collectors_) {
         reports[collector->getName()] = collector->generateReport();
     }
     return reports;
@@ -124,14 +143,14 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std
 }
 
 void LogAnalyzer::clear() {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::unique_lock<std::shared_mutex> lock(stateMutex_);
     entries_.clear();
     levelCounts.clear();
     lastReport = {};
 }
 
 Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::unique_lock<std::shared_mutex> lock(stateMutex_);
     std::ifstream file(filePath);
     if (!file.is_open()) {
         return std::unexpected(Error::fileNotFound(filePath));
@@ -184,25 +203,23 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string& filePath, const st
 }
 
 const std::vector<LogEntry>& LogAnalyzer::getEntries() const {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
     return entries_;
 }
 
-std::vector<LogEntry> LogAnalyzer::getFilteredEntries(std::function<bool(const LogEntry&)> predicate) const {
-    std::lock_guard<std::mutex> lock(mutex_);
-    std::vector<LogEntry> filtered;
-    for (const auto& entry : entries_) {
-        if (predicate(entry)) {
-            filtered.push_back(entry);
-        }
-    }
-    return filtered;
-}
+
 
 void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    currentSettings_.customLogLevelMappings[std::string(levelString)] = mappedLevel;
-    currentParser_ = std::make_unique<DefaultLogParser>(currentSettings_.lineParsePattern, currentSettings_.fieldMappings, currentSettings_.customLogLevelMappings);
+    std::unique_lock<std::shared_mutex> lock(customLogLevelMappingMutex_); // Use specific mutex for this map
+    customLogLevelMapping_[std::string(levelString)] = mappedLevel;
+    // Recreate the parser with the updated customLogLevelMapping_
+    // This assumes that other settings (pattern, fieldMappings) are not changing,
+    // and customLogLevelMapping_ is independent from currentSettings_.
+    currentParser_ = std::make_unique<DefaultLogParser>(
+        currentSettings_.lineParsePattern,
+        currentSettings_.fieldMappings,
+        customLogLevelMapping_
+    );
 }
 
 Result<AnalysisReport> LogAnalyzer::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
@@ -235,7 +252,7 @@ std::future<AnalysisReport> LogAnalyzer::loadAsync(const std::string& filePath, 
 }
 
 Result<AnalysisReport> LogAnalyzer::streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::unique_lock<std::shared_mutex> lock(stateMutex_);
     auto [newEntries, report] = parseAndReport(is, sourceIdentifier, errorAction);
 
     std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
@@ -357,7 +374,7 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
 }
 
 Result<AnalysisReport> LogAnalyzer::append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::unique_lock<std::shared_mutex> lock(stateMutex_);
     std::ifstream file(filePath);
     if (!file.is_open()) {
         return std::unexpected(Error::fileNotFound(filePath));
@@ -413,16 +430,16 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
 }
 
 std::span<const LogEntry> LogAnalyzer::getEntriesView() const {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
     return entries_;
 }
 
 std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view format, const FormattingOptions& options) const {
     std::string formattedString(format);
 
-    Utils::replaceAll(formattedString, "{timestamp}", formatTimestamp(entry.timestamp, options.dateTimeFormat));
+    Utils::replaceAll(formattedString, "{timestamp}", Utils::formatTimestamp(entry.timestamp, options.dateTimeFormat));
     
-    std::string levelString = logLevelToString(entry.level);
+    std::string levelString = Utils::logLevelToString(entry.level);
     if (options.useColor) {
         std::string colorCode;
         switch (entry.level) {
@@ -480,7 +497,7 @@ std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view for
 //
 
 void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
     auto filteredEntriesExpected = getFilteredEntries_NoLock(criteria);
     if (filteredEntriesExpected.has_value()) {
         const auto& filteredEntries = filteredEntriesExpected.value();
@@ -499,7 +516,7 @@ void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& 
 }
 
 Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
     return getFilteredEntries_NoLock(criteria);
 }
 

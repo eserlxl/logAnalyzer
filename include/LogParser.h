@@ -4,6 +4,7 @@
 #include "LogTypes.h" // Includes LogEntryField, FieldMapping, etc.
 #include "CLIConfig.h" // For CLIConfig::ParserErrorAction
 #include "Error.h" // For Error struct and Result alias
+#include "CiLess.h" // For LogAnalyzer::LogAnalyzerInternal::ci_less
 #include <map>
 #include <memory>
 #include <optional>
@@ -38,7 +39,7 @@ public:
     virtual const std::vector<FieldMapping>& getFieldMappings() const = 0;
 
     // New: Returns the custom log level mappings.
-    virtual const std::map<std::string, LogLevel, ci_less>& getCustomLevelMappings() const = 0;
+    virtual const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& getCustomLevelMappings() const = 0;
 
     // New: Returns the optional pattern string used to identify the start of a log entry.
     virtual std::optional<std::string> getLogEntryStartPatternString() const = 0;
@@ -57,7 +58,7 @@ public:
     static Result<std::unique_ptr<DefaultLogParser>> create( // Changed to Result
         std::string pattern,
         std::vector<FieldMapping> fieldMappings,
-        const std::map<std::string, LogLevel, ci_less> &levelMappings = {},
+        const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings = {},
         std::optional<std::string> logEntryStartPattern = std::nullopt,
         CLIConfig::ParserErrorAction errorAction = CLIConfig::ParserErrorAction::Warn); // Added errorAction
 
@@ -65,7 +66,7 @@ public:
     DefaultLogParser(
         std::string pattern,
         std::vector<FieldMapping> fieldMappings,
-        const std::map<std::string, LogLevel, ci_less> &levelMappings = {},
+        const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings = {},
         std::optional<std::string> logEntryStartPattern = std::nullopt,
         CLIConfig::ParserErrorAction errorAction = CLIConfig::ParserErrorAction::Warn); // Added errorAction
 
@@ -86,7 +87,7 @@ public:
     // New ILogParser overrides for introspection
     std::string getPatternString() const override { return patternString; }
     const std::vector<FieldMapping>& getFieldMappings() const override { return fieldMappings; }
-    const std::map<std::string, LogLevel, ci_less>& getCustomLevelMappings() const override { return customLevelMappings; }
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& getCustomLevelMappings() const override { return customLevelMappings; }
     std::optional<std::string> getLogEntryStartPatternString() const override { return logEntryStartPatternString; }
     size_t getCurrentBufferedLineCount() const override { return bufferedLineNumbers.size(); }
     std::string_view getCurrentBufferedContent() const override { return currentLogEntryBuffer; }
@@ -95,7 +96,7 @@ private:
     std::regex logPattern;
     std::string patternString; // Store pattern string to allow cloning
     std::vector<FieldMapping> fieldMappings;
-    std::map<std::string, LogLevel, ci_less> customLevelMappings;
+    std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLevelMappings;
     std::optional<std::regex> logEntryStartRegex; // Optional regex to identify the start of a log entry
     std::optional<std::string> logEntryStartPatternString; // For cloning
 
@@ -111,7 +112,7 @@ private:
     // Internal parsing logic helper
     Result<LogEntry> parseLineInternal(std::string_view line, size_t lineNumber, const std::string& sourceFile) const; // Changed to Result<LogEntry>
 
-    static const std::map<std::string, LogLevel, ci_less> DEFAULT_LEVEL_MAPPINGS;
+    static const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> DEFAULT_LEVEL_MAPPINGS;
 
     CLIConfig::ParserErrorAction _parserErrorAction; // New: To store the error action
 };

@@ -1,6 +1,6 @@
 # LogAnalyzer
 
-[![Build Status](https://github.com/YOUR_ORGANIZATION/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_ORGANIZATION/logAnalyzer/actions/workflows/ci.yml) <!-- TODO: Update this with your actual CI/CD build status link -->
+[![Build Status](https://github.com/YOUR_ORGANIZATION/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_ORGANIZATION/logAnalyzer/actions/workflows/ci.yml) <!-- IMPORTANT: Update 'YOUR_ORGANIZATION' and the workflow path to your actual GitHub Actions CI/CD build status link. -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 

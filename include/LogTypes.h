@@ -13,25 +13,7 @@
 #include <nlohmann/json.hpp> // Required for JSON serialization
 #include "Utils.h" // Required for utility functions like logEntryFieldToString
 #include "Error.h" // New: For Error struct and Result alias
-
-// Case-insensitive comparator for strings (moved from LogParser.h as it's a generic utility)
-struct ci_less {
-  struct nocase_compare {
-    // Using static const std::locale classic_locale for efficiency and locale-independence
-    char toLowerChar(char c) const {
-      static const std::locale classic_locale;
-      return std::use_facet<std::ctype<char>>(classic_locale).tolower(c);
-    }
-
-    bool operator()(char c1, char c2) const {
-      return toLowerChar(c1) < toLowerChar(c2);
-    }
-  };
-  bool operator()(const std::string &s1, const std::string &s2) const {
-    return std::lexicographical_compare(s1.begin(), s1.end(), s2.begin(),
-                                        s2.end(), nocase_compare());
-  }
-};
+#include "CiLess.h" // Include the new header for ci_less comparator
 
 // Enum for different pattern matching types
 enum class PatternType { Literal, Regex, Wildcard };
