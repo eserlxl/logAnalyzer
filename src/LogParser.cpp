@@ -118,7 +118,7 @@ Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view line, size
             if constexpr (std::is_same_v<T, LogEntryField>) {
                 switch (arg) {
                     case LogEntryField::TIMESTAMP: {
-                        auto parsedTime = Utils::parseTime(capturedValue, mapping.formats);
+                        auto parsedTime = Utils::parseTimeWithFormats(capturedValue, mapping.formats);
                         if(parsedTime) {
                             entry.timestamp = *parsedTime;
                         } else {

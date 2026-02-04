@@ -55,30 +55,6 @@ public:
 
     [[deprecated("Use analyzeStream(const std::vector<std::string>&, std::function<bool(const LogEntry&)>, CLIConfig::ParserErrorAction) instead.")]]
     std::expected<void, LogParseError> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern);
-
-    std::vector<TimeWindowStats> getFrequencyDistribution(std::chrono::seconds windowSize) const;
-    Result<std::vector<LogEntry>> getFilteredEntries(const FilterCriteria& criteria) const;
-    std::vector<LogEntry> getFilteredEntries(std::function<bool(const LogEntry&)> predicate) const;
-
-    std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format = "%Y-%m-%d %H:%M:%S") const;
-    
-    struct FormattingOptions {
-        bool useColor = false;
-        std::string dateTimeFormat = "%Y-%m-%d %H:%M:%S";
-        bool includeStructuredFields = false;
-        std::string structuredFieldDelimiter = "; ";
-        std::string structuredFieldKvDelimiter = "=";
-    };
-
-    std::string formatEntry(const LogEntry& entry, std::string_view format, const FormattingOptions& options) const;
-
-    [[deprecated("Use formatEntry(const LogEntry&, std::string_view, const FormattingOptions&) instead.")]]
-    std::string formatEntry(const LogEntry& entry, std::string_view format, bool useColor = false) const;
-    
-    void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const;
-
-    [[deprecated("Use printFilteredEntries(std::ostream&, const FilterCriteria&, const FormattingOptions&) instead.")]]
-    void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const;
     
     Result<AnalysisReport> append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
 
@@ -87,10 +63,6 @@ public:
     
     std::span<const LogEntry> getEntriesView() const;
     void exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
-    std::vector<TimeGap> findTimeGaps(std::chrono::milliseconds minGapDuration) const;
-    
-    std::string logLevelToString(LogLevel level) const;
-    LogLevel stringToLogLevel(const std::string& levelStr);
     void exportAsJson(std::ostream& out, const FilterCriteria& filter, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
     std::vector<LogEntry> getSortedFilteredEntries(const FilterCriteria& criteria, SortBy sortBy, SortOrder sortOrder) const;
 
@@ -107,7 +79,6 @@ private:
     AnalysisReport lastReport;
     LogAnalyzerSettings currentSettings_;
     std::unique_ptr<ILogParser> currentParser_;
-    std::map<std::string, LogLevel, ci_less> customLevelMappings;
     std::vector<std::shared_ptr<IStatisticCollector>> _collectors;
 
     Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const FilterCriteria& criteria) const;

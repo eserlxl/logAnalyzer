@@ -16,7 +16,6 @@
 #include "LogTypes.h" // For LogEntryField, LogLevel and FieldMapping
 #include "Utils.h" // For string conversions and time parsing utilities
 
-using namespace ErrorCode;
 
 
 // Enum for sorting criteria.
@@ -86,8 +85,7 @@ struct FilterCondition {
     FilterCondition(LogEntryField f, FilterOperator o, std::string v, FilterValueType vt)
         : field(f), op(o), value(std::move(v)), valueType(vt) {
         if (vt == FilterValueType::DATETIME) {
-            // This constructor doesn't take datetimeFormat, so it should be handled externally or via another overload
-            // For now, it will be std::nullopt
+            throw std::invalid_argument("FilterCondition: DATETIME valueType requires a datetimeFormat.");
         }
     }
 
@@ -135,28 +133,26 @@ inline void to_json(nlohmann::json& j, const FilterRule& fr) {
     };
 }
 
-inline void from_json(const nlohmann::json& j, FilterRule& fr) {
-    std::vector<std::string> errors;
-
+inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr) {
     if (j.contains("field") && j.at("field").is_string()) {
         fr.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
-        if (fr.field == LogEntryField::UNKNOWN && j.at("field").get<std::string>() != "UNKNOWN") {
-             errors.push_back("FilterRule has an unrecognized field: " + j.at("field").get<std::string>());
+        if (fr.field == LogEntryField::UNKNOWN) { // Simplified check
+             return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterRule has an unrecognized field: " + j.at("field").get<std::string>()));
         }
     } else {
-        errors.push_back("FilterRule is missing or has invalid 'field'.");
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterRule is missing or has invalid 'field'."));
     }
 
     if (j.contains("op") && j.at("op").is_string()) {
         fr.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
     } else {
-        errors.push_back("FilterRule is missing or has invalid 'op'.");
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterRule is missing or has invalid 'op'."));
     }
 
     if (j.contains("value") && j.at("value").is_string()) {
         fr.value = j.at("value").get<std::string>();
     } else {
-        errors.push_back("FilterRule is missing or has invalid 'value'.");
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterRule is missing or has invalid 'value'."));
     }
 
     if (j.contains("caseSensitive") && j.at("caseSensitive").is_boolean()) {
@@ -165,9 +161,7 @@ inline void from_json(const nlohmann::json& j, FilterRule& fr) {
         fr.caseSensitive = false;
     }
 
-    if (!errors.empty()) {
-        throw std::runtime_error(errors[0]);
-    }
+    return {}; // Success
 }
 
 // Helper to convert FilterCondition to JSON
@@ -187,54 +181,140 @@ inline void to_json(nlohmann::json& j, const FilterCondition& fc) {
 }
 
 // Helper to convert JSON to FilterCondition
-inline void from_json(const nlohmann::json& j, FilterCondition& fc) {
-    std::vector<std::string> errors;
+
+inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterCondition& fc) {
 
     if (j.contains("field") && j.at("field").is_string()) {
-        fc.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
-        if (fc.field == LogEntryField::UNKNOWN && j.at("field").get<std::string>() != "UNKNOWN") {
-             errors.push_back("FilterCondition has an unrecognized 'field' string: " + j.at("field").get<std::string>());
-        }
+
+                fc.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
+
+                if (fc.field == LogEntryField::UNKNOWN) { // Simplified check
+
+                     return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition has an unrecognized 'field' string: " + j.at("field").get<std::string>()));
+
+                }
+
     } else {
-        errors.push_back("FilterCondition is missing or has invalid 'field'.");
+
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition is missing or has invalid 'field'."));
+
     }
+
+
 
     if (j.contains("op") && j.at("op").is_string()) {
+
         fc.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
+
     } else {
-        errors.push_back("FilterCondition is missing or has invalid 'op'.");
+
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition is missing or has invalid 'op'."));
+
     }
+
+
 
     if (j.contains("value") && j.at("value").is_string()) {
+
         fc.value = j.at("value").get<std::string>();
+
     } else {
-        errors.push_back("FilterCondition is missing or has invalid 'value'.");
+
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition is missing or has invalid 'value'."));
+
     }
+
+
 
     if (j.contains("value_type") && j.at("value_type").is_number_integer()) {
+
         fc.valueType = static_cast<FilterValueType>(j.at("value_type").get<int>());
+
     } else {
-        errors.push_back("FilterCondition is missing or has invalid 'value_type'.");
+
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition is missing or has invalid 'value_type'."));
+
     }
+
+
 
     if (j.contains("caseSensitive") && j.at("caseSensitive").is_boolean()) {
+
         fc.caseSensitive = j.at("caseSensitive").get<bool>();
+
     } else {
+
         fc.caseSensitive = false;
+
     }
 
-    if (j.contains("datetimeFormat")) {
-        if (j.at("datetimeFormat").is_string()) {
-            fc.datetimeFormat = j.at("datetimeFormat").get<std::string>();
-        } else if (j.at("datetimeFormat").is_null()) {
-            fc.datetimeFormat = std::nullopt;
+
+
+    
+
+
+
+            if (j.contains("datetimeFormat")) {
+
+
+
+                if (j.at("datetimeFormat").is_string()) {
+
+
+
+                    fc.datetimeFormat = j.at("datetimeFormat").get<std::string>();
+
+
+
+                } else if (j.at("datetimeFormat").is_null()) {
+
+
+
+                    fc.datetimeFormat = std::nullopt;
+
+
+
+                }
+
+
+
+            }
+
+
+
+            
+
+
+
+            // Medium-Risk Issue 3: Enforce datetimeFormat for DATETIME valueType
+
+
+
+            if (fc.valueType == FilterValueType::DATETIME && !fc.datetimeFormat) {
+
+
+
+                return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition with DATETIME valueType requires a datetimeFormat."));
+
+
+
+            }
+
+
+
+    
+
+
+
+            return {}; // Success
+
+
+
         }
-    }
 
-    if (!errors.empty()) {
-        throw std::runtime_error(errors[0]);
-    }
-}
+
+
+    
 
 // New: Represents a composite filter expression (tree-like structure)
 class FilterExpression {
@@ -279,7 +359,7 @@ public:
 
     // Forward declarations for recursive JSON conversion
     friend void to_json(nlohmann::json& j, const FilterExpression& fe);
-    friend void from_json(const nlohmann::json& j, FilterExpression& fe);
+    friend ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe);
 
     // Accessors for internal components (useful for evaluation)
     enum class ExpressionType { EMPTY, CONDITION, LOGICAL };
@@ -320,43 +400,39 @@ inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
     }
 }
 
-inline void from_json(const nlohmann::json& j, FilterExpression& fe) {
-    std::vector<std::string> errors;
-
+inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe) {
     if (j.contains("condition") && j.at("condition").is_object()) {
-        try {
-            fe = FilterExpression(j.at("condition").get<FilterCondition>());
-        } catch (const nlohmann::json::exception& e) {
-            errors.push_back("Error parsing condition: " + std::string(e.what()));
+        FilterCondition fc;
+        ErrorCode::Result<void> result = from_json(j.at("condition"), fc);
+        if (!result.has_value()) {
+            return std::unexpected(result.error());
         }
+        fe = FilterExpression(std::move(fc));
     } else if (j.contains("operator") && j.at("operator").is_string()) {
         FilterLogicalOperator op = Utils::stringToFilterLogicalOperator(j.at("operator").get<std::string>());
         if (op == FilterLogicalOperator::UNKNOWN) {
-            errors.push_back("Unknown filter operator: " + j.at("operator").get<std::string>());
+            return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "Unknown filter logical operator: " + j.at("operator").get<std::string>()));
         } else {
             std::vector<FilterExpression> operands;
             if (j.contains("operands") && j.at("operands").is_array()) {
                 for (const auto& operand_j : j.at("operands")) {
-                    try {
-                        FilterExpression operand_fe;
-                        from_json(operand_j, operand_fe); // Recursive call
-                        operands.push_back(operand_fe);
-                    } catch (const nlohmann::json::exception& e) {
-                        errors.push_back("Error parsing operand: " + std::string(e.what()));
+                    FilterExpression operand_fe;
+                    ErrorCode::Result<void> result = from_json(operand_j, operand_fe); // Recursive call
+                    if (!result.has_value()) {
+                        return std::unexpected(result.error());
                     }
+                    operands.push_back(std::move(operand_fe));
                 }
             } else {
-                errors.push_back("FilterExpression with operator must contain 'operands' array.");
+                return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterExpression with operator must contain 'operands' array."));
             }
-            fe = FilterExpression(op, operands);
+            fe = FilterExpression(op, std::move(operands));
         }
     } else {
-        errors.push_back("FilterExpression must contain either 'condition' or 'operator' with 'operands'.");
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterExpression must contain either 'condition' or 'operator' with 'operands'."));
     }
     
-    if (!errors.empty()) {
-        throw std::runtime_error(errors[0]);
-    }
+    return {}; // Success
 }
 
 class IFilter {
@@ -464,7 +540,7 @@ private:
 
 class RegexFilter : public IFilter {
 public:
-    static Result<std::shared_ptr<RegexFilter>> create(std::string pattern, bool caseSensitive = false);
+    static ErrorCode::Result<std::shared_ptr<RegexFilter>> create(std::string pattern, bool caseSensitive = false);
     bool matches(const LogEntry &entry) const override;
 
 private:

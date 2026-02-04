@@ -26,7 +26,18 @@ LogLevel stringToLogLevel(const std::string &levelStr) {
     if (levelStr == "ERROR") return LogLevel::ERROR;
     if (levelStr == "FATAL") return LogLevel::FATAL;
     if (levelStr == "TRACE") return LogLevel::TRACE;
+    if (levelStr == "CRITICAL") return LogLevel::CRITICAL; // Added CRITICAL
     return LogLevel::UNKNOWN;
+}
+
+LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, ci_less> &customMappings) {
+    // ci_less comparator handles case insensitivity directly for the map lookup.
+    auto it = customMappings.find(levelStr);
+    if (it != customMappings.end()) {
+        return it->second;
+    }
+    // Fallback to default conversion (which is case-insensitive) if not found in custom mappings.
+    return stringToLogLevelIgnoreCase(levelStr);
 }
 
 LogLevel stringToLogLevelIgnoreCase(const std::string &levelStr) {
@@ -323,6 +334,29 @@ std::expected<std::chrono::system_clock::time_point, std::string> parseTime(cons
     }
 
     return std::unexpected("Failed to parse time string. Unknown format.");
+}
+
+std::expected<std::chrono::system_clock::time_point, std::string>
+parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>& formats) {
+    std::tm tm = {};
+    for (const auto& format : formats) {
+        if (format.empty()) continue;
+        std::stringstream ss(timeStr);
+        // Temporarily set imbue to classic locale to prevent issues with other locales
+        // For C++20, std::chrono::parse would be better, but we are using C++23 here.
+        // For C++11/14/17, std::get_time relies on global locale, but can be influenced by imbue.
+        // For robust parsing across locales, a custom parser or Boost.DateTime would be considered.
+        // For now, assuming default "C" locale parsing for standard formats.
+        ss >> std::get_time(&tm, format.c_str());
+        if (!ss.fail() && ss.eof()) { // ss.eof() ensures the entire string was parsed
+            // Use mktime to convert tm structure to time_t in local time
+            // If format implies UTC, one would use timegm, but std::get_time doesn't inherently convey timezone.
+            // Assuming local time for formats unless explicitly specified (e.g., 'Z' in ISO 8601 handled by parseISO8601).
+            auto timePoint = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+            return timePoint;
+        }
+    }
+    return std::unexpected("Failed to parse time string with any provided format.");
 }
 
 std::string escapeJsonString(const std::string& input) {

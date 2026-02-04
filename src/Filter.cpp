@@ -353,12 +353,12 @@ bool KeywordFilter::matches(const LogEntry &entry) const {
     }
 }
 
-Result<std::shared_ptr<RegexFilter>> RegexFilter::create(std::string pattern, bool caseSensitive) {
+ErrorCode::Result<std::shared_ptr<RegexFilter>> RegexFilter::create(std::string pattern, bool caseSensitive) {
     try {
         // Use 'new' to call the private constructor, then wrap in shared_ptr
         return std::shared_ptr<RegexFilter>(new RegexFilter(std::move(pattern), caseSensitive));
     } catch (const std::regex_error& e) {
-        return std::unexpected(Error(Error::Code::InvalidRegex, "Invalid regex pattern: " + std::string(e.what())));
+        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidRegex, "Invalid regex pattern: " + std::string(e.what())));
     }
 }
 

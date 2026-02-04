@@ -81,5 +81,5 @@ public:
     json generateReport() const override;
     std::string getName() const override { return "entry_rate"; }
 private:
-    std::vector<std::chrono::system_clock::time_point> _timestamps;
+    mutable std::vector<std::chrono::system_clock::time_point> _timestamps;
 };

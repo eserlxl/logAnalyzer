@@ -275,25 +275,25 @@ Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePath
         bool shouldContinue = true;
         while (std::getline(*input, line)) {
             lineNumber++;
-            auto parseResultOpt = currentParser_->processLine(line, lineNumber);
+            auto parseResultOpt = currentParser_->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
             if (parseResultOpt.has_value()) {
                 const auto& result = parseResultOpt.value();
-                if (result.success) {
-                    LogEntry entry = result.entry;
-                    entry.sourceFile = (filePath == "-" ? "stdin" : filePath);
+                if (result.has_value()) {
+                    LogEntry entry = result.value();
+                    entry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
                     if (!entryCallback(entry)) {
                         shouldContinue = false;
                         break;
                     }
                 } else {
                     if(errorAction == CLIConfig::ParserErrorAction::Warn) {
-                        std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.errorMessage << std::endl;
+                        std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.error().message << std::endl;
                     }
                      if(errorAction != CLIConfig::ParserErrorAction::Skip) {
                         LogEntry partialEntry;
                         partialEntry.level = LogLevel::UNKNOWN;
                         partialEntry.message = line;
-                        partialEntry.sourceFile = (filePath == "-" ? "stdin" : filePath);
+                        partialEntry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
                         partialEntry.id = lineNumber;
                         if (!entryCallback(partialEntry)) {
                             shouldContinue = false;
@@ -307,16 +307,16 @@ Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePath
         
         auto flushResults = currentParser_->flushRemaining();
         for (const auto& result : flushResults) {
-            if (result.success) {
-                LogEntry entry = result.entry;
-                entry.sourceFile = (filePath == "-" ? "stdin" : filePath);
+            if (result.has_value()) {
+                LogEntry entry = result.value();
+                entry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
                 if (!entryCallback(entry)) {
                     shouldContinue = false;
                     break;
                 }
             } else {
                  if(errorAction == CLIConfig::ParserErrorAction::Warn) {
-                    std::cerr << "Warning: Failed to parse remaining buffer for " << filePath << ": " << result.errorMessage << std::endl;
+                    std::cerr << "Warning: Failed to parse remaining buffer for " << filePath << ": " << result.error().message << std::endl;
                 }
             }
             if (!shouldContinue) break;
@@ -476,13 +476,8 @@ std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view for
     return formatEntry(entry, defaultFormat, options);
 }
 
-std::string LogAnalyzer::logLevelToString(LogLevel level) const {
-    return Utils::logLevelToString(level);
-}
-
-LogLevel LogAnalyzer::stringToLogLevel(const std::string& levelStr) {
-    return Utils::stringToLogLevel(levelStr);
-}
+// Removed obsolete functions:
+//
 
 void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
     std::lock_guard<std::mutex> lock(mutex_);

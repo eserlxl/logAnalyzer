@@ -4,6 +4,7 @@
 #include <chrono>
 #include <map>
 #include <sstream> // Required for std::stringstream and std::get_time
+#include <nlohmann/json.hpp> // New include for JSON testing
 
 // Test fixture for creating LogEntry objects
 class FilterTest : public ::testing::Test {
@@ -27,6 +28,29 @@ protected:
     }
 
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+};
+
+// New test fixture for JSON serialization/deserialization tests
+class FilterJsonTest : public ::testing::Test {
+protected:
+    // Utility to create a FilterCondition
+    FilterCondition createFilterCondition(
+        LogEntryField field,
+        FilterOperator op,
+        const std::string& value,
+        FilterValueType valueType = FilterValueType::STRING,
+        bool caseSensitive = false,
+        std::optional<std::string> datetimeFormat = std::nullopt
+    ) {
+        FilterCondition fc;
+        fc.field = field;
+        fc.op = op;
+        fc.value = value;
+        fc.valueType = valueType;
+        fc.caseSensitive = caseSensitive;
+        fc.datetimeFormat = datetimeFormat;
+        return fc;
+    }
 };
 
 TEST_F(FilterTest, SourceFileFilterLiteral) {
@@ -94,19 +118,19 @@ TEST_F(FilterTest, FieldValueFilter) {
 
 TEST_F(FilterTest, FieldValueFilterRegex) {
     // Default caseSensitive is false, so it should be case-insensitive
-    FieldValueFilter filter_regex("error_code", R"(ERR\d{3})", PatternType::Regex);
+    FieldValueFilter filter_regex("error_code", R"(ERR\\d{3})", PatternType::Regex);
     auto entry3 = createLogEntry(3, "app.log", now, LogLevel::ERROR, "DB error", {{"error_code", "ERR501"}});
     auto entry4 = createLogEntry(4, "app.log", now, LogLevel::ERROR, "Network error", {{"error_code", "err200"}});
-    EXPECT_TRUE(filter_regex.matches(entry3)); // ERR501 matches ERR\d{3} case-insensitively
-    EXPECT_TRUE(filter_regex.matches(entry4)); // err200 matches ERR\d{3} case-insensitively
+    EXPECT_TRUE(filter_regex.matches(entry3)); // ERR501 matches ERR\\d{3} case-insensitively
+    EXPECT_TRUE(filter_regex.matches(entry4)); // err200 matches ERR\\d{3} case-insensitively
 
-    FieldValueFilter filter_regex_icase_explicit("error_code", R"(ERR\d{3})", PatternType::Regex, false);
-    EXPECT_TRUE(filter_regex_icase_explicit.matches(entry3)); // ERR501 matches ERR\d{3} case-insensitively
-    EXPECT_TRUE(filter_regex_icase_explicit.matches(entry4)); // err200 matches ERR\d{3} case-insensitively
+    FieldValueFilter filter_regex_icase_explicit("error_code", R"(ERR\\d{3})", PatternType::Regex, false);
+    EXPECT_TRUE(filter_regex_icase_explicit.matches(entry3)); // ERR501 matches ERR\\d{3} case-insensitively
+    EXPECT_TRUE(filter_regex_icase_explicit.matches(entry4)); // err200 matches ERR\\d{3} case-insensitively
 }
 
 TEST_F(FilterTest, FieldValueFilterRegexCaseSensitive) {
-    FieldValueFilter filter_regex_cs("error_code", R"(ERR\d{3})", PatternType::Regex, true); // Explicitly case sensitive
+    FieldValueFilter filter_regex_cs("error_code", R"(ERR\\d{3})", PatternType::Regex, true); // Explicitly case sensitive
     auto entry3 = createLogEntry(3, "app.log", now, LogLevel::ERROR, "DB error", {{"error_code", "ERR501"}});
     auto entry4 = createLogEntry(4, "app.log", now, LogLevel::ERROR, "Network error", {{"error_code", "err200"}});
     EXPECT_TRUE(filter_regex_cs.matches(entry3));
@@ -249,7 +273,8 @@ TEST_F(FilterTest, RegexFilterCaseSensitive) {
 TEST_F(FilterTest, RegexFilterInvalidPattern) {
     auto filter_res = RegexFilter::create("["); // Invalid regex pattern
     EXPECT_FALSE(filter_res.has_value());
-    EXPECT_NE(filter_res.error().find("Invalid regex pattern"), std::string::npos);
+    EXPECT_EQ(filter_res.error().code, ErrorCode::Error::Code::InvalidRegex);
+    EXPECT_NE(filter_res.error().message.find("The expression contained an invalid character class name"), std::string::npos);
 }
 
 
@@ -340,10 +365,10 @@ TEST_F(FilterTest, NestedBoolFilter) {
     EXPECT_FALSE(filter_true.matches(entry_true_nested_mismatch));
 
     NestedBoolFilter filter_false("user.is_admin", false);
-    EXPECT_FALSE(filter_false.matches(entry_true_match));
-    EXPECT_TRUE(filter_false.matches(entry_true_mismatch));
-    EXPECT_FALSE(filter_false.matches(entry_true_numeric));
     EXPECT_TRUE(filter_false.matches(createLogEntry(5, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "0"}}))); // Handle "0" as false
+    EXPECT_TRUE(filter_false.matches(createLogEntry(6, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "false"}})));
+    EXPECT_FALSE(filter_false.matches(entry_true_match));
+    EXPECT_FALSE(filter_false.matches(entry_true_numeric));
 
     // Field not found
     NestedBoolFilter missing_field_filter("user.non_existent", true);
@@ -361,7 +386,7 @@ TEST_F(FilterTest, NestedFieldValueFilter) {
     EXPECT_FALSE(filter_literal.matches(entry_nested_mismatch));
 
     // Regex
-    NestedFieldValueFilter filter_regex("user.id", R"(U\d{3})", PatternType::Regex);
+    NestedFieldValueFilter filter_regex("user.id", R"(U\\d{3})", PatternType::Regex);
     auto entry_regex_match = createLogEntry(4, "user.log", now, LogLevel::INFO, "User ID", {{"user.id", "U123"}});
     auto entry_regex_mismatch = createLogEntry(5, "user.log", now, LogLevel::INFO, "User ID", {{"user.id", "123"}});
     EXPECT_TRUE(filter_regex.matches(entry_regex_match));
@@ -447,12 +472,12 @@ TEST_F(FilterTest, TimeRangeFilterFromStrings) {
     // Invalid start time
     auto invalid_start_res = TimeRangeFilter::fromStrings("invalid-date", "2023-01-15 11:00:00");
     EXPECT_FALSE(invalid_start_res.has_value());
-    EXPECT_NE(invalid_start_res.error().find("Invalid"), std::string::npos);
+    EXPECT_NE(invalid_start_res.error().message.find("Invalid"), std::string::npos);
 
     // Invalid end time
     auto invalid_end_res = TimeRangeFilter::fromStrings("2023-01-15 10:00:00", "invalid-date");
     EXPECT_FALSE(invalid_end_res.has_value());
-    EXPECT_NE(invalid_end_res.error().find("Invalid"), std::string::npos);
+    EXPECT_NE(invalid_end_res.error().message.find("Invalid"), std::string::npos);
 }
 
 TEST_F(FilterTest, TimeRangeFilterForDay) {
@@ -491,7 +516,7 @@ TEST_F(FilterTest, TimeRangeFilterForDay) {
     // Invalid date format
     auto invalid_date_res = TimeRangeFilter::forDay("not-a-date");
     EXPECT_FALSE(invalid_date_res.has_value());
-    EXPECT_NE(invalid_date_res.error().find("Invalid date format"), std::string::npos);
+    EXPECT_NE(invalid_date_res.error().message.find("Invalid date format"), std::string::npos);
 }
 
 TEST_F(FilterTest, TimeRangeFilterSince) {
@@ -511,12 +536,12 @@ TEST_F(FilterTest, TimeRangeFilterSince) {
     // Invalid relative time
     auto invalid_rel_time_res = TimeRangeFilter::since("foo bar");
     EXPECT_FALSE(invalid_rel_time_res.has_value());
-    EXPECT_NE(invalid_rel_time_res.error().find("Invalid relative time format"), std::string::npos);
+    EXPECT_NE(invalid_rel_time_res.error().message.find("Invalid relative time format"), std::string::npos);
     
     // Another invalid relative time
     auto invalid_rel_time_res2 = TimeRangeFilter::since("1 year from now");
     EXPECT_FALSE(invalid_rel_time_res2.has_value());
-    EXPECT_NE(invalid_rel_time_res2.error().find("Invalid relative time format"), std::string::npos);
+    EXPECT_NE(invalid_rel_time_res2.error().message.find("Invalid relative time format"), std::string::npos);
 }
 
 TEST_F(FilterTest, ValueSetFilter) {
@@ -554,9 +579,398 @@ TEST_F(FilterTest, NestedValueSetFilter) {
     EXPECT_FALSE(filter_icase.matches(createLogEntry(7, "log", now, LogLevel::INFO, "msg", {{"event.type", "failed_login"}})));
 }
 
+// FilterRule JSON tests
+TEST_F(FilterJsonTest, FilterRuleToJson) {
+    FilterRule fr;
+    fr.field = LogEntryField::MESSAGE;
+    fr.op = FilterOperator::CONTAINS;
+    fr.value = "error";
+    fr.caseSensitive = true;
+
+    nlohmann::json j;
+    to_json(j, fr);
+
+    EXPECT_EQ(j["field"], "message");
+    EXPECT_EQ(j["op"], "CONTAINS");
+    EXPECT_EQ(j["value"], "error");
+    EXPECT_EQ(j["caseSensitive"], true);
+}
+
+TEST_F(FilterJsonTest, FilterRuleFromJsonSuccess) {
+    nlohmann::json j = {
+        {"field", "level"},
+        {"op", "EQUALS"},
+        {"value", "INFO"},
+        {"caseSensitive", false}
+    };
+
+    FilterRule fr;
+    auto result = from_json(j, fr);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fr.field, LogEntryField::LEVEL);
+    EXPECT_EQ(fr.op, FilterOperator::EQUALS);
+    EXPECT_EQ(fr.value, "INFO");
+    EXPECT_EQ(fr.caseSensitive, false);
+}
+
+TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidField) {
+    nlohmann::json j = {
+        {"field", "non_existent_field"},
+        {"op", "EQUALS"},
+        {"value", "INFO"}
+    };
+
+    FilterRule fr;
+    auto result = from_json(j, fr);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("unrecognized field"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterRuleFromJsonMissingField) {
+    nlohmann::json j = {
+        {"op", "EQUALS"},
+        {"value", "INFO"}
+    };
+
+    FilterRule fr;
+    auto result = from_json(j, fr);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'field'"), std::string::npos);
+}
+
+// FilterCondition JSON tests
+TEST_F(FilterJsonTest, FilterConditionToJson) {
+    FilterCondition fc = createFilterCondition(
+        LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01T00:00:00Z",
+        FilterValueType::DATETIME, false, "%Y-%m-%dT%H:%M:%SZ"
+    );
+
+    nlohmann::json j;
+    to_json(j, fc);
+
+    EXPECT_EQ(j["field"], "timestamp");
+    EXPECT_EQ(j["op"], "GREATER_THAN");
+    EXPECT_EQ(j["value"], "2023-01-01T00:00:00Z");
+    EXPECT_EQ(j["value_type"], static_cast<int>(FilterValueType::DATETIME));
+    EXPECT_EQ(j["caseSensitive"], false);
+    EXPECT_EQ(j["datetimeFormat"], "%Y-%m-%dT%H:%M:%SZ");
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonSuccess) {
+    nlohmann::json j = {
+        {"field", "message"},
+        {"op", "CONTAINS"},
+        {"value", "warning"},
+        {"value_type", static_cast<int>(FilterValueType::STRING)},
+        {"caseSensitive", true}
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fc.field, LogEntryField::MESSAGE);
+    EXPECT_EQ(fc.op, FilterOperator::CONTAINS);
+    EXPECT_EQ(fc.value, "warning");
+    EXPECT_EQ(fc.valueType, FilterValueType::STRING);
+    EXPECT_EQ(fc.caseSensitive, true);
+    EXPECT_FALSE(fc.datetimeFormat.has_value());
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeSuccess) {
+    nlohmann::json j = {
+        {"field", "timestamp"},
+        {"op", "LESS_THAN"},
+        {"value", "2023-12-31 23:59:59"},
+        {"value_type", static_cast<int>(FilterValueType::DATETIME)},
+        {"caseSensitive", false},
+        {"datetimeFormat", "%Y-%m-%d %H:%M:%S"}
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fc.field, LogEntryField::TIMESTAMP);
+    EXPECT_EQ(fc.op, FilterOperator::LESS_THAN);
+    EXPECT_EQ(fc.value, "2023-12-31 23:59:59");
+    EXPECT_EQ(fc.valueType, FilterValueType::DATETIME);
+    EXPECT_TRUE(fc.datetimeFormat.has_value());
+    EXPECT_EQ(*fc.datetimeFormat, "%Y-%m-%d %H:%M:%S");
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidField) {
+    nlohmann::json j = {
+        {"field", "bad_field"},
+        {"op", "EQUALS"},
+        {"value", "value"},
+        {"value_type", static_cast<int>(FilterValueType::STRING)}
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("unrecognized 'field' string"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonMissingOp) {
+    nlohmann::json j = {
+        {"field", "message"},
+        {"value", "value"},
+        {"value_type", static_cast<int>(FilterValueType::STRING)}
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
+}
+
+// FilterCondition datetime constructor validation
+TEST_F(FilterJsonTest, FilterConditionDatetimeConstructorValidation) {
+    // Should throw if DATETIME type is used without format
+    EXPECT_THROW(
+        FilterCondition(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01", FilterValueType::DATETIME),
+        std::invalid_argument
+    );
+
+    // Should not throw if DATETIME type is used with format
+    EXPECT_NO_THROW(
+        FilterCondition(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01", "%Y-%m-%d")
+    );
+
+    // Should not throw for other value types
+    EXPECT_NO_THROW(
+        FilterCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error", FilterValueType::STRING)
+    );
+}
+
+// FilterExpression JSON tests
+TEST_F(FilterJsonTest, FilterExpressionToJsonCondition) {
+    FilterCondition fc = createFilterCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "hello");
+    FilterExpression fe(fc);
+
+    nlohmann::json j;
+    to_json(j, fe);
+
+    ASSERT_TRUE(j.contains("condition"));
+    EXPECT_EQ(j["condition"]["field"], "message");
+    EXPECT_EQ(j["condition"]["op"], "CONTAINS");
+    EXPECT_EQ(j["condition"]["value"], "hello");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFromJsonCondition) {
+    nlohmann::json j = {
+        {"condition", {
+            {"field", "source_file"},
+            {"op", "ENDS_WITH"},
+            {"value", ".log"},
+            {"value_type", static_cast<int>(FilterValueType::STRING)}
+        }}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    ASSERT_TRUE(fe.isCondition());
+    ASSERT_TRUE(fe.getCondition().has_value());
+    EXPECT_EQ(fe.getCondition()->field, LogEntryField::SOURCE_FILE);
+    EXPECT_EQ(fe.getCondition()->op, FilterOperator::ENDS_WITH);
+    EXPECT_EQ(fe.getCondition()->value, ".log");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionToJsonLogicalAND) {
+    FilterExpression fe = FilterExpression::create(createFilterCondition(LogEntryField::LEVEL, FilterOperator::EQUALS, "INFO"))
+                            .And(FilterExpression::create(createFilterCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "user")));
+
+    nlohmann::json j;
+    to_json(j, fe);
+
+    ASSERT_TRUE(j.contains("operator"));
+    EXPECT_EQ(j["operator"], "AND");
+    ASSERT_TRUE(j.contains("operands"));
+    ASSERT_EQ(j["operands"].size(), 2);
+
+    // Check first operand
+    EXPECT_EQ(j["operands"][0]["condition"]["field"], "level");
+    EXPECT_EQ(j["operands"][0]["condition"]["value"], "INFO");
+
+    // Check second operand
+    EXPECT_EQ(j["operands"][1]["condition"]["field"], "message");
+    EXPECT_EQ(j["operands"][1]["condition"]["value"], "user");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFromJsonLogicalOR) {
+    nlohmann::json j = {
+        {"operator", "OR"},
+        {"operands", nlohmann::json::array({
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}},
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "FATAL"}, {"value_type", 0}}}}
+        })}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    ASSERT_TRUE(fe.isLogical());
+    ASSERT_TRUE(fe.getLogicalOperator().has_value());
+    EXPECT_EQ(*fe.getLogicalOperator(), FilterLogicalOperator::OR);
+    ASSERT_EQ(fe.getExpressions().size(), 2);
+
+    // Check first operand
+    ASSERT_TRUE(fe.getExpressions()[0].isCondition());
+    EXPECT_EQ(fe.getExpressions()[0].getCondition()->field, LogEntryField::LEVEL);
+    EXPECT_EQ(fe.getExpressions()[0].getCondition()->value, "ERROR");
+
+    // Check second operand
+    ASSERT_TRUE(fe.getExpressions()[1].isCondition());
+    EXPECT_EQ(fe.getExpressions()[1].getCondition()->field, LogEntryField::LEVEL);
+    EXPECT_EQ(fe.getExpressions()[1].getCondition()->value, "FATAL");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionToJsonLogicalNOT) {
+    FilterExpression fe = FilterExpression::create(createFilterCondition(LogEntryField::LEVEL, FilterOperator::EQUALS, "DEBUG"))
+                            .Not();
+
+    nlohmann::json j;
+    to_json(j, fe);
+
+    ASSERT_TRUE(j.contains("operator"));
+    EXPECT_EQ(j["operator"], "NOT");
+    ASSERT_TRUE(j.contains("operands"));
+    ASSERT_EQ(j["operands"].size(), 1);
+
+    // Check operand
+    EXPECT_EQ(j["operands"][0]["condition"]["field"], "level");
+    EXPECT_EQ(j["operands"][0]["condition"]["value"], "DEBUG");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFromJsonLogicalNOT) {
+    nlohmann::json j = {
+        {"operator", "NOT"},
+        {"operands", nlohmann::json::array({
+            {{"condition", {{"field", "message"}, {"op", "STARTS_WITH"}, {"value", "Success"}, {"value_type", 0}}}}
+        })}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    ASSERT_TRUE(fe.isLogical());
+    ASSERT_TRUE(fe.getLogicalOperator().has_value());
+    EXPECT_EQ(*fe.getLogicalOperator(), FilterLogicalOperator::NOT);
+    ASSERT_EQ(fe.getExpressions().size(), 1);
+
+    // Check operand
+    ASSERT_TRUE(fe.getExpressions()[0].isCondition());
+    EXPECT_EQ(fe.getExpressions()[0].getCondition()->field, LogEntryField::MESSAGE);
+    EXPECT_EQ(fe.getExpressions()[0].getCondition()->value, "Success");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFromJsonNested) {
+    nlohmann::json j = {
+        {"operator", "AND"},
+        {"operands", nlohmann::json::array({
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}},
+            {{"operator", "OR"},
+             {"operands", nlohmann::json::array({
+                {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "database"}, {"value_type", 0}}}},
+                {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "network"}, {"value_type", 0}}}}
+             })}
+        })}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    ASSERT_TRUE(fe.isLogical());
+    ASSERT_TRUE(fe.getLogicalOperator().has_value());
+    EXPECT_EQ(*fe.getLogicalOperator(), FilterLogicalOperator::AND);
+    ASSERT_EQ(fe.getExpressions().size(), 2);
+
+    // Check first level operand (condition)
+    ASSERT_TRUE(fe.getExpressions()[0].isCondition());
+    EXPECT_EQ(fe.getExpressions()[0].getCondition()->field, LogEntryField::LEVEL);
+    EXPECT_EQ(fe.getExpressions()[0].getCondition()->value, "ERROR");
+
+    // Check second level operand (logical OR)
+    ASSERT_TRUE(fe.getExpressions()[1].isLogical());
+    EXPECT_EQ(*fe.getExpressions()[1].getLogicalOperator(), FilterLogicalOperator::OR);
+    ASSERT_EQ(fe.getExpressions()[1].getExpressions().size(), 2);
+
+    EXPECT_EQ(fe.getExpressions()[1].getExpressions()[0].getCondition()->field, LogEntryField::MESSAGE);
+    EXPECT_EQ(fe.getExpressions()[1].getExpressions()[0].getCondition()->value, "database");
+    EXPECT_EQ(fe.getExpressions()[1].getExpressions()[1].getCondition()->field, LogEntryField::MESSAGE);
+    EXPECT_EQ(fe.getExpressions()[1].getExpressions()[1].getCondition()->value, "network");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFromJsonInvalidOperand) {
+    nlohmann::json j = {
+        {"operator", "AND"},
+        {"operands", nlohmann::json::array({
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}},
+            {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "database"}, {"value_type", 0}}}},
+            // Invalid operand: missing "op"
+            {{"condition", {{"field", "source_file"}, {"value", "main.cpp"}, {"value_type", 0}}}} 
+        })}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFromJsonMissingOperands) {
+    nlohmann::json j = {
+        {"operator", "AND"}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("must contain 'operands' array"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFromJsonUnknownOperator) {
+    nlohmann::json j = {
+        {"operator", "XOR"}, // Unknown operator
+        {"operands", nlohmann::json::array({
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}}
+        })}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("Unknown filter logical operator"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFromJsonMissingConditionOrOperator) {
+    nlohmann::json j = {
+        {"invalid_key", "some_value"}
+    };
+
+    FilterExpression fe;
+    auto result = from_json(j, fe);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("must contain either 'condition' or 'operator'"), std::string::npos);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-
-

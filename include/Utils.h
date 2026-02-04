@@ -1,11 +1,15 @@
+#include "LogTypes.h" // Ensure ci_less is declared before use
+
 #ifndef UTILS_H
 #define UTILS_H
 
 #include <string>
 #include <string_view>
-#include <vector>
+#include <vector> // Required for std::vector in split
+#include <map> // Required for std::map
+#include <filesystem> // Required for std::filesystem utilities
 #include <chrono>
-#include <expected>
+#expected>
 #include <utility>
 #include <algorithm>
 #include <cctype>
@@ -42,6 +46,8 @@ namespace AnsiColor {
 // Constant for stdin file path representation
 static constexpr std::string_view STDIN_FILE_PATH = "-";
 
+// Overload for stringToLogLevel that accepts custom mappings with ci_less comparator.
+LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, ci_less> &customMappings);
 LogLevel stringToLogLevel(const std::string &levelStr);
 LogLevel stringToLogLevelIgnoreCase(const std::string &levelStr);
 std::string logLevelToString(LogLevel level);
@@ -91,6 +97,10 @@ std::expected<std::chrono::system_clock::time_point, std::string> parseAbsoluteT
 // Parses a time string, supporting multiple absolute formats (YYYY-MM-DD HH:MM:SS, ISO 8601, Unix timestamp)
 // and also falling back to relative time parsing.
 std::expected<std::chrono::system_clock::time_point, std::string> parseTime(const std::string& timeStr);
+
+// Parses a time string using a list of provided formats.
+std::expected<std::chrono::system_clock::time_point, std::string>
+parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>& formats);
 
 // Parses a date string (e.g., "YYYY-MM-DD", "YYYY/MM/DD") into a time range for that entire day.
 // Returns a pair: first is 00:00:00 of the day, second is 23:59:59.999... of the day.
