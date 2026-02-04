@@ -114,6 +114,9 @@ private:
 
     std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
     Result<void> parseStreamInternal(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction, bool replaceExisting);
+
+    // Factory method for creating statistic collectors
+    static std::shared_ptr<IStatisticCollector> createStatisticCollector(const StatisticConfig& config);
 };
 
 #endif // LOG_ANALYZER_H

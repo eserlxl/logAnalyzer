@@ -431,7 +431,14 @@ TEST_F(LogAnalyzerConfigTest, ValidateValidSettings) {
         FilterRule{LogEntryField::LEVEL, FilterOperator::EQUALS, "INFO"}
     };
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::COUNT_TOTAL}
+        StatisticConfig{StatisticType::UNIQUE_MESSAGES},
+        StatisticConfig{StatisticType::TOP_MESSAGES, {{"top_n", "5"}}},
+        StatisticConfig{StatisticType::ENTRY_RATE},
+        StatisticConfig{StatisticType::LOG_LEVEL_COUNT},
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{"target_field", "level"}}},
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{"target_field", "message"}, {"top_n", "10"}}},
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{"target_field", "customFields"}, {"custom_field_key", "session"}}},
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{"target_field", "customFields"}, {"custom_field_key", "session"}, {"top_n", "3"}}}
     };
 
     std::vector<std::string> errors = settings.validate();
@@ -508,7 +515,7 @@ TEST_F(LogAnalyzerConfigTest, ToJsonComprehensive) {
     };
     settings.exportSettings.includeHeader = true;
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::COUNT_BY_LEVEL, LogEntryField::LEVEL}
+        StatisticConfig{StatisticType::LOG_LEVEL_COUNT},
     };
     settings.rootFilterExpression = FilterExpression{
         FilterLogicalOperator::OR,

@@ -106,6 +106,7 @@ private:
 
     std::vector<size_t> bufferedLineNumbers;
 
+public:
     // Public override for ILogParser::parseLine
     Result<LogEntry> parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const override; // Changed to Result<LogEntry>
 

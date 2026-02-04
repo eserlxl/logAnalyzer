@@ -86,7 +86,7 @@ Run `./bin/logAnalyzer --help` for a full list of commands.
 
 | Option | Description | Default |
 | --- | --- | --- |
-| `--stats NAME` | Enable a statistic collector. Can be used multiple times. Available collectors: `unique_messages`, `top_messages:N`, `entry_rate`. | |
+| `--stats NAME` | Enable a statistic collector. Can be used multiple times. Available collectors: `unique_messages`, `top_messages:N`, `entry_rate`, `level_distribution`. | |
 | `--top-messages-count N`| Sets the 'N' for the `top_messages` collector if not specified in `--stats`. | 10 |
 
 ## Configuration
@@ -294,6 +294,12 @@ This section shows a few common use cases. For a full list of flags, see the [Co
 # Get the top 5 most common error messages from a log
 ./bin/logAnalyzer system.log --level ERROR --stats top_messages:5
 ```
+
+```bash
+# Get the distribution of log levels
+./bin/logAnalyzer app.log --stats level_distribution
+```
+
 
 ### Using a Configuration File
 

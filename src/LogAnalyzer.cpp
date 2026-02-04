@@ -35,7 +35,13 @@ LogAnalyzer::LogAnalyzer()
           currentSettings_.lineParsePattern, 
           currentSettings_.fieldMappings, 
           customLogLevelMapping_ // Use LogAnalyzer's own mapping
-      )) {}
+      )) {
+    for (const auto& config : currentSettings_.statisticConfigs) {
+        if (auto collector = createStatisticCollector(config)) {
+            collectors_.push_back(collector);
+        }
+    }
+}
 
 LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
     : currentSettings_(settings), // Initialize currentSettings_ with provided settings
@@ -45,6 +51,11 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
           currentSettings_.fieldMappings,
           customLogLevelMapping_ // Use LogAnalyzer's own mapping
       )) {
+    for (const auto& config : settings.statisticConfigs) {
+        if (auto collector = createStatisticCollector(config)) {
+            collectors_.push_back(collector);
+        }
+    }
 }
 
 Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
@@ -52,6 +63,14 @@ Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
     currentSettings_ = settings; // Assign directly, no move as settings is const&
     customLogLevelMapping_ = settings.customLogLevelMappings; // Update LogAnalyzer's own mapping
     
+    // Clear existing collectors and create new ones based on the updated settings
+    collectors_.clear();
+    for (const auto& config : currentSettings_.statisticConfigs) {
+        if (auto collector = createStatisticCollector(config)) {
+            collectors_.push_back(collector);
+        }
+    }
+
     auto parser_or_error = DefaultLogParser::create(
         currentSettings_.lineParsePattern, 
         currentSettings_.fieldMappings, 
@@ -59,7 +78,6 @@ Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
     );
     if (parser_or_error.has_value()) {
         currentParser_ = std::move(parser_or_error.value());
-        return {};
         return {};
     } else {
         return std::unexpected(Error(Error::Code::InvalidRegex, "Failed to create parser with new settings."));
@@ -520,10 +538,74 @@ Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const FilterCriter
     return getFilteredEntries_NoLock(criteria);
 }
 
-Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
-    // Implementation of filtering logic
-    std::vector<LogEntry> filtered;
-    // Dummy implementation for now
-    return filtered;
+// Factory method for creating statistic collectors
+std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const StatisticConfig& config) {
+    std::string targetField;
+    std::string customFieldKey;
+    int topN = 0; // Default or parsed
+
+    // Extract common parameters first
+    auto itTargetField = config.params.find("target_field");
+    if (itTargetField != config.params.end()) {
+        targetField = itTargetField->second;
+    }
+
+    auto itCustomFieldKey = config.params.find("custom_field_key");
+    if (itCustomFieldKey != config.params.end()) {
+        customFieldKey = itCustomFieldKey->second;
+    }
+    
+    auto itTopN = config.params.find("top_n");
+    if (itTopN != config.params.end()) {
+        try {
+            topN = std::stoi(itTopN->second);
+        } catch (const std::exception& e) {
+            std::cerr << "Warning: Invalid 'top_n' parameter for statistic. Defaulting to 10. Error: " << e.what() << std::endl;
+            topN = 10; // Default value if parsing fails
+        }
+    } else {
+        topN = 10; // Default if not provided
+    }
+
+    switch (config.type) {
+        case StatisticType::UNIQUE_MESSAGES:
+            return std::make_shared<UniqueMessagesCollector>();
+        case StatisticType::TOP_MESSAGES:
+            return std::make_shared<TopMessagesCollector>(topN); // Reusing topN for backward compatibility
+        case StatisticType::ENTRY_RATE:
+            return std::make_shared<EntryRateCollector>();
+        case StatisticType::LOG_LEVEL_COUNT:
+            return std::make_shared<LogLevelCountCollector>();
+        case StatisticType::FIELD_VALUE_COUNT: {
+            if (targetField.empty()) {
+                throw std::runtime_error("FieldValueCountCollector requires 'target_field' parameter.");
+            }
+            if (targetField == "customFields") {
+                if (customFieldKey.empty()) {
+                    throw std::runtime_error("FieldValueCountCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
+                }
+                return std::make_shared<FieldValueCountCollector>(targetField, customFieldKey);
+            }
+            return std::make_shared<FieldValueCountCollector>(targetField);
+        }
+        case StatisticType::TOP_N_FIELD_VALUES: {
+            if (targetField.empty()) {
+                throw std::runtime_error("TopNFieldValuesCollector requires 'target_field' parameter.");
+            }
+            if (targetField == "customFields") {
+                if (customFieldKey.empty()) {
+                    throw std::runtime_error("TopNFieldValuesCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
+                }
+                return std::make_shared<TopNFieldValuesCollector>(topN, targetField, customFieldKey);
+            }
+            return std::make_shared<TopNFieldValuesCollector>(topN, targetField);
+        }
+        case StatisticType::UNKNOWN:
+        default:
+            std::cerr << "Warning: Attempted to create unknown statistic type." << std::endl;
+            return nullptr;
+    }
 }
+
+
 
