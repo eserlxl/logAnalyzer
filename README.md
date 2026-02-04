@@ -117,6 +117,10 @@ An example configuration file (`config.json`) might look like this:
   "filterRules": [
     { "field": "level", "operator": "EQ", "value": "ERROR" }
   ],
+  // `filterRules` support complex conditions based on log entry fields,
+  // allowing combinations of operators (e.g., EQ, NE, GT, LT, CONTAINS, REGEX)
+  // and values. Consult the Doxygen documentation for a comprehensive
+  // list of supported fields and operators.
   "exportSettings": {
     "format": "json",
     "fieldsToExport": ["timestamp", "level", "message"],
@@ -188,12 +192,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release
 ```
 
-After a successful build, the executable will be generated. You can optionally install it to a local `bin` directory for easier access:
-
-```bash
-cmake --install . --prefix dist
-# Executable is now at ./dist/bin/logAnalyzer
-```
+Upon successful compilation, the `logAnalyzer` executable will be located at `bin/logAnalyzer` within the `build` directory. For example, if you are in the `build` directory, you can run it using `./bin/logAnalyzer --help`.
 
 ### Build Configuration Options
 
@@ -211,7 +210,21 @@ cmake -DBUILD_TESTING=OFF -DLOGANALYZER_USE_SANITIZER=Address ..
 
 ### Installing the Executable
 
-To install `logAnalyzer` to your system (e.g., to `/usr/local/bin` and `/usr/local/lib`), use the CMake install command after building:
+After building, you can install `logAnalyzer` to make it easily accessible from your system's PATH.
+
+**1. Local Installation (e.g., to `dist/` directory within the project):**
+
+This is useful for local testing or packaging.
+
+```bash
+cd build
+cmake --install . --prefix dist
+# The executable will be available at ./dist/bin/logAnalyzer (relative to project root)
+```
+
+**2. System-wide Installation (e.g., to `/usr/local/bin` and `/usr/local/lib`):**
+
+To install `logAnalyzer` to your system's standard directories, use:
 
 ```bash
 cd build

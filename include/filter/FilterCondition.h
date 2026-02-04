@@ -61,6 +61,9 @@ inline void to_json(nlohmann::json& j, const FilterCondition& fc) {
     if (fc.datetimeFormat) {
         j["datetimeFormat"] = *fc.datetimeFormat;
     }
+    if (fc.customField) {
+        j["customField"] = *fc.customField;
+    }
 }
 
 // Helper to convert JSON to FilterCondition
@@ -115,6 +118,14 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
             fc.datetimeFormat = j.at("datetimeFormat").get<std::string>();
         } else if (!j.at("datetimeFormat").is_null()) {
             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'datetimeFormat' must be a string or null."));
+        }
+    }
+
+    if (j.contains("customField")) {
+        if (j.at("customField").is_string()) {
+            fc.customField = j.at("customField").get<std::string>();
+        } else if (!j.at("customField").is_null()) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'customField' must be a string or null."));
         }
     }
 

@@ -44,6 +44,28 @@ TEST_F(FilterJsonTest, FilterConditionToJson) {
     EXPECT_EQ(j["datetimeFormat"], "%Y-%m-%dT%H:%M:%SZ");
 }
 
+TEST_F(FilterJsonTest, FilterConditionToJsonWithCustomField) {
+    FilterCondition fc;
+    fc.field = LogEntryField::CUSTOM;
+    fc.op = FilterOperator::EQUALS;
+    fc.value = "my_custom_value";
+    fc.valueType = FilterValueType::STRING;
+    fc.caseSensitive = false;
+    fc.customField = "myCustomKey";
+
+    nlohmann::json j;
+    to_json(j, fc);
+
+    EXPECT_EQ(j["field"], "CUSTOM");
+    EXPECT_EQ(j["op"], "EQUALS");
+    EXPECT_EQ(j["value"], "my_custom_value");
+    EXPECT_EQ(j["value_type"], "STRING");
+    EXPECT_EQ(j["caseSensitive"], false);
+    EXPECT_TRUE(j.contains("customField"));
+    EXPECT_EQ(j["customField"], "myCustomKey");
+    EXPECT_FALSE(j.contains("datetimeFormat"));
+}
+
 TEST_F(FilterJsonTest, FilterConditionFromJsonSuccess) {
     nlohmann::json j = {
         {"field", "message"},
@@ -61,7 +83,76 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonSuccess) {
     EXPECT_EQ(fc.op, FilterOperator::CONTAINS);
     EXPECT_EQ(fc.value, "warning");
     EXPECT_EQ(fc.valueType, FilterValueType::STRING);
+    EXPECT_FALSE(fc.datetimeFormat.has_value());
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonWithCustomField) {
+    nlohmann::json j = {
+        {"field", "custom"},
+        {"op", "EQUALS"},
+        {"value", "specific_value"},
+        {"value_type", "STRING"},
+        {"caseSensitive", false},
+        {"customField", "someDynamicKey"}
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
+    EXPECT_EQ(fc.op, FilterOperator::EQUALS);
+    EXPECT_EQ(fc.value, "specific_value");
+    EXPECT_EQ(fc.valueType, FilterValueType::STRING);
+    EXPECT_EQ(fc.caseSensitive, false);
+    EXPECT_TRUE(fc.customField.has_value());
+    EXPECT_EQ(*fc.customField, "someDynamicKey");
+    EXPECT_FALSE(fc.datetimeFormat.has_value());
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonWithNullCustomField) {
+    nlohmann::json j = {
+        {"field", "custom"},
+        {"op", "EQUALS"},
+        {"value", "specific_value"},
+        {"value_type", "STRING"},
+        {"caseSensitive", false},
+        {"customField", nullptr} // Explicitly null customField
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
+    EXPECT_EQ(fc.op, FilterOperator::EQUALS);
+    EXPECT_EQ(fc.value, "specific_value");
+    EXPECT_EQ(fc.valueType, FilterValueType::STRING);
+    EXPECT_EQ(fc.caseSensitive, false);
+    EXPECT_FALSE(fc.customField.has_value()); // Should be nullopt
+    EXPECT_FALSE(fc.datetimeFormat.has_value());
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonWithoutCustomField) {
+    nlohmann::json j = {
+        {"field", "message"},
+        {"op", "CONTAINS"},
+        {"value", "warning"},
+        {"value_type", "STRING"},
+        {"caseSensitive", true}
+        // customField is entirely absent
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fc.field, LogEntryField::MESSAGE);
+    EXPECT_EQ(fc.op, FilterOperator::CONTAINS);
+    EXPECT_EQ(fc.value, "warning");
+    EXPECT_EQ(fc.valueType, FilterValueType::STRING);
     EXPECT_EQ(fc.caseSensitive, true);
+    EXPECT_FALSE(fc.customField.has_value()); // Should be nullopt
     EXPECT_FALSE(fc.datetimeFormat.has_value());
 }
 
