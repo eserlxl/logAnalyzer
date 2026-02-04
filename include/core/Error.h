@@ -1,0 +1,99 @@
+#pragma once
+
+#include <string>
+#include <expected> // For std::expected
+
+// Moved outside namespace to be globally accessible
+enum class Code {
+    Unknown,
+    InvalidArgument,
+    FileNotFound,
+    FileNotReadable,
+    InvalidRegex,
+    MalformedLogEntry,
+    InvalidCLIOption,
+    StatisticNotFound,
+    TimestampParsingFailed, // New error code
+    SettingsRestoreFailed, // New error code
+    BufferLimitExceeded, // New error code for multi-line buffer overflow
+    Unexpected, // Added Unexpected error code
+    // Add more error codes as needed
+};
+
+namespace ErrorCode {
+
+// Define a common error structure for the application
+struct Error {
+    Code code;
+    std::string message;
+
+    // Constructor
+    Error(Code c, std::string msg) : code(c), message(std::move(msg)) {}
+
+    // Default constructor for cases where only code is needed
+    Error(Code c) : code(c), message("") {}
+
+    // Static factory for common errors
+    static Error invalidArgument(const std::string& argName) {
+        return Error(Code::InvalidArgument, "Invalid argument: " + argName);
+    }
+    static Error fileNotFound(const std::string& filePath) {
+        return Error(Code::FileNotFound, "File not found: " + filePath);
+    }
+    static Error fileNotReadable(const std::string& filePath) {
+        return Error(Code::FileNotReadable, "File not readable: " + filePath);
+    }
+     static Error invalidCLIOption(const std::string& option) {
+        return Error(Code::InvalidCLIOption, "Invalid CLI option: " + option);
+    }
+    static Error statisticNotFound(const std::string& statName) {
+        return Error(Code::StatisticNotFound, "Statistic collector not found: " + statName);
+    }
+    static Error timestampParsingFailed(const std::string& details) {
+        return Error(Code::TimestampParsingFailed, "Timestamp parsing failed: " + details);
+    }
+    static Error settingsRestoreFailed(const std::string& details) {
+        return Error(Code::SettingsRestoreFailed, "Settings restore failed: " + details);
+    }
+    static Error unexpected(const std::string& details) {
+        return Error(Code::Unexpected, "Unexpected error: " + details);
+    }
+
+
+    // Convert to string for logging or display
+    std::string toString() const {
+        // This could be expanded to map enum values to human-readable strings
+        std::string codeStr;
+        switch (code) {
+            case Code::Unknown: codeStr = "Unknown"; break;
+            case Code::InvalidArgument: codeStr = "InvalidArgument"; break;
+            case Code::FileNotFound: codeStr = "FileNotFound"; break;
+            case Code::FileNotReadable: codeStr = "FileNotReadable"; break;
+            case Code::InvalidRegex: codeStr = "InvalidRegex"; break;
+            case Code::MalformedLogEntry: codeStr = "MalformedLogEntry"; break;
+            case Code::InvalidCLIOption: codeStr = "InvalidCLIOption"; break;
+            case Code::StatisticNotFound: codeStr = "StatisticNotFound"; break;
+            case Code::TimestampParsingFailed: codeStr = "TimestampParsingFailed"; break;
+            case Code::SettingsRestoreFailed: codeStr = "SettingsRestoreFailed"; break;
+            case Code::BufferLimitExceeded: codeStr = "BufferLimitExceeded"; break;
+            case Code::Unexpected: codeStr = "Unexpected"; break;
+            default: codeStr = "UnknownCode"; break;
+        }
+        if (!message.empty()) {
+            return codeStr + ": " + message;
+        }
+        return codeStr;
+    }
+};
+
+// Overload operator<< for ErrorCode::Error to enable streaming to ostream
+inline std::ostream& operator<<(std::ostream& os, const ErrorCode::Error& error) {
+    os << error.toString();
+    return os;
+}
+
+// Type alias for std::expected to simplify function signatures
+template<typename T>
+using Result = std::expected<T, Error>;
+
+} // namespace ErrorCode

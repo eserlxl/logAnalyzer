@@ -1,8 +1,8 @@
-#include "Analyzer.h"
-#include "Utils.h"
-#include "Settings.h"
-#include "CLIConfig.h" // Added for CLIConfig
-#include "Error.h" // New: For Error struct and Result alias
+#include "analyzer/Analyzer.h"
+#include "utils/Utils.h"
+#include "config/Settings.h"
+#include "config/CLIConfig.h" // Added for CLIConfig
+#include "core/Error.h" // New: For Error struct and Result alias
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <chrono>

@@ -106,7 +106,7 @@ if(NOT DEFINED LOGANALYZER_TEST_DATA_DIR)
 endif()
 
 # Find all test source files ending with _test.cpp
-file(GLOB TEST_SOURCES "*.cpp")
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 # Loop through each test source file
 foreach(TEST_SOURCE IN LISTS TEST_SOURCES)

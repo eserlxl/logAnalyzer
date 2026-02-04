@@ -1,0 +1,76 @@
+Test project /opt/lxl/c++/logAnalyzer/build
+      Start 18: LogAnalyzerTest.SetCustomLogLevelMapping
+      Start 19: LogAnalyzerTest.DefaultLogLevelMapping
+      Start 20: LogAnalyzerTest.AnalyzeStreamFileOpenError
+      Start 21: LogAnalyzerTest.AnalyzeStreamInvalidRegexError
+      Start 22: LogAnalyzerTest.GetFilteredEntriesInvalidRegex
+      Start 23: LogAnalyzerTest.ExportAsCsvEdgeCases
+      Start 24: LogAnalyzerTest.ExportAsJsonEdgeCases
+      Start 25: LogAnalyzerTest.GetFrequencyDistributionEdgeCases
+      Start 26: LogAnalyzerTest.AppendCorrectness
+      Start 27: LogAnalyzerTest.Concurrency_Placeholder
+      Start 37: StatisticsTest.FindLogBursts
+      Start 31: StatisticsTest.GetRankedMessagesDescending
+      Start 28: StatisticsTest.ConstructorSortsEntries
+      Start 30: StatisticsTest.CalculateUniqueMessageCounts
+      Start 29: StatisticsTest.CalculateLogLevelDistribution
+      Start 32: StatisticsTest.GetRankedMessagesAscending
+      Start 36: StatisticsTest.CalculateAverageEntryRate
+      Start 35: StatisticsTest.FindTimeGaps
+      Start 33: StatisticsTest.CalculateDistributionByGroup
+      Start 34: StatisticsTest.GetTimeGapPercentile
+ 1/38 Test #18: LogAnalyzerTest.SetCustomLogLevelMapping ............   Passed    0.01 sec
+ 2/38 Test #19: LogAnalyzerTest.DefaultLogLevelMapping ..............   Passed    0.01 sec
+ 3/38 Test #20: LogAnalyzerTest.AnalyzeStreamFileOpenError ..........   Passed    0.01 sec
+ 4/38 Test #21: LogAnalyzerTest.AnalyzeStreamInvalidRegexError ......   Passed    0.01 sec
+ 5/38 Test #22: LogAnalyzerTest.GetFilteredEntriesInvalidRegex ......   Passed    0.01 sec
+ 6/38 Test #24: LogAnalyzerTest.ExportAsJsonEdgeCases ...............***Failed    0.01 sec
+ 7/38 Test #25: LogAnalyzerTest.GetFrequencyDistributionEdgeCases ...***Failed    0.01 sec
+ 8/38 Test #26: LogAnalyzerTest.AppendCorrectness ...................***Failed    0.01 sec
+ 9/38 Test #27: LogAnalyzerTest.Concurrency_Placeholder .............   Passed    0.01 sec
+10/38 Test #37: StatisticsTest.FindLogBursts ........................   Passed    0.01 sec
+11/38 Test #31: StatisticsTest.GetRankedMessagesDescending ..........   Passed    0.01 sec
+12/38 Test #28: StatisticsTest.ConstructorSortsEntries ..............   Passed    0.01 sec
+13/38 Test #30: StatisticsTest.CalculateUniqueMessageCounts .........   Passed    0.01 sec
+14/38 Test #29: StatisticsTest.CalculateLogLevelDistribution ........   Passed    0.01 sec
+15/38 Test #32: StatisticsTest.GetRankedMessagesAscending ...........   Passed    0.00 sec
+16/38 Test #36: StatisticsTest.CalculateAverageEntryRate ............   Passed    0.00 sec
+17/38 Test #35: StatisticsTest.FindTimeGaps .........................   Passed    0.00 sec
+      Start 38: StatisticsTest.EmptyEntries
+      Start 17: FilterTest.TimeRangeFilterSince
+      Start  1: FilterTest.SourceFileFilterLiteral
+      Start  6: FilterTest.FieldValueFilterRegex
+      Start 16: FilterTest.TimeRangeFilterFromStrings
+      Start 15: FilterTest.RegexFilterCaseInsensitive
+      Start 13: FilterTest.KeywordFilterMultiAll
+      Start  5: FilterTest.FieldValueFilter
+      Start  2: FilterTest.SourceFileFilterGlob
+      Start 10: FilterTest.KeywordFilterSingle
+      Start  8: FilterTest.PredicateFilter
+      Start 14: FilterTest.RegexFilterCaseSensitive
+      Start  9: FilterTest.LogLevelSetFilter
+      Start  4: FilterTest.FieldExistsFilter
+      Start  3: FilterTest.SourceFileFilterRegex
+      Start 12: FilterTest.KeywordFilterMultiAny
+      Start 11: FilterTest.KeywordFilterSingleCaseInsensitive
+18/38 Test #33: StatisticsTest.CalculateDistributionByGroup .........   Passed    0.01 sec
+19/38 Test #34: StatisticsTest.GetTimeGapPercentile .................   Passed    0.01 sec
+20/38 Test #38: StatisticsTest.EmptyEntries .........................   Passed    0.01 sec
+21/38 Test #17: FilterTest.TimeRangeFilterSince .....................   Passed    0.01 sec
+22/38 Test  #1: FilterTest.SourceFileFilterLiteral ..................   Passed    0.01 sec
+23/38 Test  #6: FilterTest.FieldValueFilterRegex ....................   Passed    0.01 sec
+24/38 Test #16: FilterTest.TimeRangeFilterFromStrings ...............   Passed    0.01 sec
+25/38 Test #15: FilterTest.RegexFilterCaseInsensitive ...............   Passed    0.01 sec
+26/38 Test #13: FilterTest.KeywordFilterMultiAll ....................   Passed    0.01 sec
+27/38 Test  #5: FilterTest.FieldValueFilter .........................   Passed    0.01 sec
+28/38 Test  #2: FilterTest.SourceFileFilterGlob .....................   Passed    0.01 sec
+29/38 Test #10: FilterTest.KeywordFilterSingle ......................   Passed    0.01 sec
+30/38 Test  #8: FilterTest.PredicateFilter ..........................   Passed    0.01 sec
+31/38 Test #14: FilterTest.RegexFilterCaseSensitive .................   Passed    0.01 sec
+32/38 Test  #9: FilterTest.LogLevelSetFilter ........................   Passed    0.00 sec
+33/38 Test  #4: FilterTest.FieldExistsFilter ........................   Passed    0.00 sec
+34/38 Test  #3: FilterTest.SourceFileFilterRegex ....................   Passed    0.00 sec
+      Start  7: FilterTest.FieldValueFilterRegexCaseSensitive
+35/38 Test #12: FilterTest.KeywordFilterMultiAny ....................   Passed    0.00 sec
+36/38 Test #11: FilterTest.KeywordFilterSingleCaseInsensitive .......   Passed    0.00 sec
+37/38 Test  #7: FilterTest.FieldValueFilterRegexCaseSensitive .......   Passed    0.00 sec

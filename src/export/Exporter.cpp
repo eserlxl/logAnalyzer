@@ -1,0 +1,99 @@
+#include "export/Exporter.h"
+#include "analyzer/Analyzer.h"
+#include "utils/Utils.h"
+#include <nlohmann/json.hpp>
+#include <iomanip>
+
+using json = nlohmann::json;
+
+void Exporter::exportAsJson(
+    std::ostream& os, 
+    const std::vector<LogEntry>& entries, 
+    bool prettyPrint) {
+    
+    json j;
+    j["entries"] = json::array();
+    
+    for (const auto& entry : entries) {
+        json entryJson = {
+            {"id", entry.id},
+            {"timestamp", entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : ""},
+            {"level", Utils::logLevelToString(entry.level)},
+            {"message", entry.message}
+        };
+        
+        if (!entry.customFields.empty()) {
+            entryJson["fields"] = entry.customFields;
+        }
+        
+        j["entries"].push_back(entryJson);
+    }
+    
+    // Ensure "summary" root element is always present for consistency
+    j["summary"] = {
+        {"count", entries.size()}
+    };
+    // Additional summary details could be added conditionally here if needed in the future
+
+    
+    if (prettyPrint) {
+        os << j.dump(4) << std::endl;
+    } else {
+        os << j.dump() << std::endl;
+    }
+}
+
+void Exporter::exportAsCsv(
+    std::ostream& os, 
+    const std::vector<LogEntry>& entries, 
+    char separator) {
+    
+    os << "ID" << separator << "Timestamp" << separator << "Level" << separator << "Message" << std::endl;
+    
+    for (const auto& entry : entries) {
+        os << entry.id << separator
+           << "\"" << (entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : "") << "\"" << separator
+           << "\"" << Utils::logLevelToString(entry.level) << "\"" << separator
+           << "\"" << entry.message << "\"" << std::endl;
+    }
+}
+
+void Exporter::exportAsText(
+    std::ostream& os, 
+    const std::vector<LogEntry>& entries, 
+    const std::string& formatString,
+    bool useColors) {
+    
+    for (const auto& entry : entries) {
+        os << formatEntryForText(entry, formatString, useColors) << std::endl;
+    }
+}
+
+std::string Exporter::formatEntryForText(
+    const LogEntry& entry, 
+    const std::string& formatString, 
+    bool useColors) {
+    
+    std::string result = formatString;
+    std::string levelStr = Utils::logLevelToString(entry.level);
+    
+    if (useColors) {
+        if (entry.level == LogLevel::ERROR || entry.level == LogLevel::FATAL) {
+            levelStr.insert(0, Utils::AnsiColor::RED.data(), Utils::AnsiColor::RED.size());
+            levelStr.append(Utils::AnsiColor::RESET.data(), Utils::AnsiColor::RESET.size());
+            levelStr.insert(0, Utils::AnsiColor::YELLOW.data(), Utils::AnsiColor::YELLOW.size());
+            levelStr.append(Utils::AnsiColor::RESET.data(), Utils::AnsiColor::RESET.size());
+            levelStr.insert(0, Utils::AnsiColor::GREEN.data(), Utils::AnsiColor::GREEN.size());
+            levelStr.append(Utils::AnsiColor::RESET.data(), Utils::AnsiColor::RESET.size());
+            levelStr.insert(0, Utils::AnsiColor::CYAN.data(), Utils::AnsiColor::CYAN.size());
+            levelStr.append(Utils::AnsiColor::RESET.data(), Utils::AnsiColor::RESET.size());
+        }
+    }
+    
+    Utils::replaceAll(result, "{id}", std::to_string(entry.id));
+    Utils::replaceAll(result, "{timestamp}", entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : "");
+    Utils::replaceAll(result, "{level}", levelStr);
+    Utils::replaceAll(result, "{message}", entry.message);
+    
+    return result;
+}
