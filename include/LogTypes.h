@@ -12,20 +12,29 @@
 #include <limits> // Required for std::numeric_limits
 #include <variant> // Required for std::variant
 #include <nlohmann/json.hpp> // Required for JSON serialization
-#include "Utils.h" // Required for utility functions like logEntryFieldToString
 #include "Error.h" // New: For Error struct and Result alias
 #include "CiLess.h" // Include the new header for ci_less comparator
 
 // Enum for different pattern matching types
 enum class PatternType { Literal, Regex, Wildcard };
 
-enum class LogLevel { TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, UNKNOWN };
+enum class LogLevel {
+    TRACE,
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR,
+    CRITICAL,
+    FATAL,
+    UNKNOWN
+};
 
-// Utility function to convert LogLevel enum to string
-std::string logLevelToString(LogLevel level);
-
-// Utility function to convert string to LogLevel enum (case-insensitive)
-LogLevel stringToLogLevel(const std::string& levelStr);
+// Moved into Utils namespace
+namespace Utils {
+    LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &customMappings);
+    LogLevel stringToLogLevel(const std::string &levelStr);
+    std::string logLevelToString(LogLevel level);
+}
 
 
 // New enum to specify which LogEntry field a regex capture group maps to

@@ -1,5 +1,0 @@
-if(EXISTS "/opt/lxl/c++/logAnalyzer/tests/Config_test[1]_tests.cmake")
-  include("/opt/lxl/c++/logAnalyzer/tests/Config_test[1]_tests.cmake")
-else()
-  add_test(Config_test_NOT_BUILT Config_test_NOT_BUILT)
-endif()

@@ -63,6 +63,23 @@ Makefile.in
 *.mk
 *.make
 
+# Generated CMake files (test discovery, backup files, etc.)
+*[1-9]*.cmake
+*[1-9]_*.cmake
+*_tests.cmake
+*_discovery_*.cmake
+*_setup_data.cmake
+*_include.cmake
+
+# CPack generated files
+CPack*.cmake
+
+# Generated config and target files (from .in templates)
+*Config.cmake
+*ConfigVersion.cmake
+*Targets.cmake
+*Targets-*.cmake
+
 compile_commands.json
 
 build.ninja

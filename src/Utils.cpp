@@ -1,8 +1,7 @@
-#include "../include/Utils.h"
-#include "LogTypes.h"
-#include "Filter.h"
-#include "Exporter.h"
-#include "Statistics.h"
+#include "../include/Utils.h" // Includes all necessary declarations for Utils namespace
+#include "../include/Exporter.h"
+#include "../include/Filter.h"
+#include "../include/Statistics.h"
 #include <algorithm>
 #include <map>
 #include <filesystem>
@@ -10,6 +9,7 @@
 
 namespace Utils {
 
+// LogLevel functions (now correctly declared in LogTypes.h within Utils namespace)
 LogLevel stringToLogLevel(const std::string &levelStr) {
     std::string upperLevelStr = levelStr;
     std::transform(upperLevelStr.begin(), upperLevelStr.end(), upperLevelStr.begin(), ::toupper);
@@ -65,7 +65,8 @@ std::string getDirectory(const std::string& filePath) {
     return std::filesystem::path(filePath).parent_path().string();
 }
 
-// Helper to convert LogEntryField enum to string
+// Enum to string and string to enum conversions for various types
+// LogEntryField
 std::string logEntryFieldToString(LogEntryField field) {
     switch (field) {
         case LogEntryField::TIMESTAMP: return "timestamp";
@@ -82,7 +83,6 @@ std::string logEntryFieldToString(LogEntryField field) {
     }
 }
 
-// Helper to convert string to LogEntryField enum.
 LogEntryField stringToLogEntryField(const std::string& fieldStr) {
     std::string upperFieldStr = fieldStr;
     std::transform(upperFieldStr.begin(), upperFieldStr.end(), upperFieldStr.begin(), ::toupper);
@@ -100,7 +100,7 @@ LogEntryField stringToLogEntryField(const std::string& fieldStr) {
     return LogEntryField::UNKNOWN;
 }
 
-// Helper to convert FilterOperator enum to string
+// FilterOperator
 std::string filterOperatorToString(FilterOperator op) {
     switch (op) {
         case FilterOperator::EQUALS: return "EQUALS";
@@ -109,15 +109,15 @@ std::string filterOperatorToString(FilterOperator op) {
         case FilterOperator::NOT_CONTAINS: return "NOT_CONTAINS";
         case FilterOperator::STARTS_WITH: return "STARTS_WITH";
         case FilterOperator::ENDS_WITH: return "ENDS_WITH";
-        case FilterOperator::GREATER_THAN: return "GREATER_THAN";
+        case FilterOperator::REGEX_MATCH: return "REGEX_MATCH";
         case FilterOperator::LESS_THAN: return "LESS_THAN";
-        case FilterOperator::GREATER_THAN_OR_EQUAL: return "GREATER_THAN_OR_EQUAL";
+        case FilterOperator::GREATER_THAN: return "GREATER_THAN";
         case FilterOperator::LESS_THAN_OR_EQUAL: return "LESS_THAN_OR_EQUAL";
+        case FilterOperator::GREATER_THAN_OR_EQUAL: return "GREATER_THAN_OR_EQUAL";
         default: return "UNKNOWN";
     }
 }
 
-// Helper to convert string to FilterOperator enum
 FilterOperator stringToFilterOperator(const std::string& opStr) {
     std::string upperOpStr = opStr;
     std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
@@ -135,7 +135,7 @@ FilterOperator stringToFilterOperator(const std::string& opStr) {
     return FilterOperator::UNKNOWN;
 }
 
-// Helper to convert FilterLogicalOperator to string
+// FilterLogicalOperator
 std::string filterLogicalOperatorToString(FilterLogicalOperator op) {
     switch (op) {
         case FilterLogicalOperator::AND: return "AND";
@@ -145,7 +145,6 @@ std::string filterLogicalOperatorToString(FilterLogicalOperator op) {
     }
 }
 
-// Helper to convert string to FilterLogicalOperator
 FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr) {
     std::string upperOpStr = opStr;
     std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
@@ -156,7 +155,27 @@ FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr) {
     return FilterLogicalOperator::UNKNOWN;
 }
 
-// Helper to convert ExportFormat enum to string
+// FilterValueType
+std::string filterValueTypeToString(FilterValueType type) {
+    switch (type) {
+        case FilterValueType::STRING: return "STRING";
+        case FilterValueType::NUMERIC: return "NUMERIC";
+        case FilterValueType::DATETIME: return "DATETIME";
+        default: return "UNKNOWN";
+    }
+}
+
+FilterValueType stringToFilterValueType(const std::string& typeStr) {
+    std::string upperTypeStr = typeStr;
+    std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
+
+    if (upperTypeStr == "STRING") return FilterValueType::STRING;
+    if (upperTypeStr == "NUMERIC") return FilterValueType::NUMERIC;
+    if (upperTypeStr == "DATETIME") return FilterValueType::DATETIME;
+    return FilterValueType::UNKNOWN;
+}
+
+// ExportFormat
 std::string exportFormatToString(ExportFormat format) {
     switch (format) {
         case ExportFormat::PLAINTEXT: return "plaintext";
@@ -167,7 +186,6 @@ std::string exportFormatToString(ExportFormat format) {
     }
 }
 
-// Helper to convert string to ExportFormat enum
 ExportFormat stringToExportFormat(const std::string& formatStr) {
     std::string upperFormatStr = formatStr;
     std::transform(upperFormatStr.begin(), upperFormatStr.end(), upperFormatStr.begin(), ::toupper);
@@ -179,7 +197,7 @@ ExportFormat stringToExportFormat(const std::string& formatStr) {
     return ExportFormat::UNKNOWN;
 }
 
-// Helper to convert StatisticType enum to string
+// StatisticType
 std::string statisticTypeToString(StatisticType type) {
     switch (type) {
         case StatisticType::UNIQUE_MESSAGES: return "unique_messages";
@@ -188,12 +206,10 @@ std::string statisticTypeToString(StatisticType type) {
         case StatisticType::LOG_LEVEL_COUNT: return "count_by_level";
         case StatisticType::FIELD_VALUE_COUNT: return "field_value_count";
         case StatisticType::TOP_N_FIELD_VALUES: return "top_n_field_values";
-        case StatisticType::UNKNOWN: return "unknown";
+        default: return "unknown";
     }
-    return "unknown";
 }
 
-// Helper to convert string to StatisticType enum
 StatisticType stringToStatisticType(const std::string& typeStr) {
     std::string upperTypeStr = typeStr;
     std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
@@ -208,4 +224,3 @@ StatisticType stringToStatisticType(const std::string& typeStr) {
 }
 
 } // namespace Utils
-

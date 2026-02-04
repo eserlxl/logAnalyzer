@@ -57,20 +57,24 @@ enum class FilterLogicalOperator {
 enum class FilterValueType {
     STRING,
     NUMERIC,
-    DATETIME
+    DATETIME,
+    UNKNOWN // Added UNKNOWN enumerator
 };
 
 // New: Represents a single filtering condition (leaf node in the filter tree)
 struct FilterCondition {
-    // We are using LogEntryField for now, assuming only built-in fields can be filtered
-    // If custom fields need filtering, this would need to become a variant<LogEntryField, std::string>
-    LogEntryField field = LogEntryField::UNKNOWN;        // The LogEntry field to apply the filter to
-    FilterOperator op = FilterOperator::UNKNOWN;          // The comparison operator
-    std::string value;          // The value to compare against (string representation)
-    FilterValueType valueType = FilterValueType::STRING; // How to interpret 'value'
-    bool caseSensitive = false; // Whether the comparison should be case-sensitive for string ops
+    LogEntryField field = LogEntryField::UNKNOWN;        // The LogEntry field to apply the filter to.
+    FilterOperator op = FilterOperator::UNKNOWN;          // The comparison operator.
+    
+    // The value to compare against. Always stored as a string.
+    // For NUMERIC and DATETIME valueTypes, this string representation will be parsed
+    // into the respective type at the point of filter evaluation, not at construction.
+    std::string value;
+    
+    FilterValueType valueType = FilterValueType::STRING; // How to interpret 'value'.
+    bool caseSensitive = false; // Whether comparison is case-sensitive for string operations.
 
-    // For datetime fields, optional format string for parsing 'value'
+    // For DATETIME valueType, this provides the format for parsing 'value'.
     std::optional<std::string> datetimeFormat;
 
     // Default constructor
@@ -93,7 +97,10 @@ struct FilterCondition {
         : field(f), op(o), value(std::move(v)), valueType(FilterValueType::DATETIME), datetimeFormat(dtFormat) {}
 };
 
-// New: Represents a single filtering condition for JSON serialization (Iteration 5 specific)
+// Transitional: Represents a simplified filter rule for legacy JSON formats.
+// This is part of a transitional phase and should not be used for new development.
+// It will be fully replaced by FilterCondition and the FilterExpression system.
+// Its role is to provide a temporary bridge for backward compatibility during migration.
 struct FilterRule {
     LogEntryField field = LogEntryField::UNKNOWN;
     FilterOperator op = FilterOperator::UNKNOWN;
@@ -101,7 +108,10 @@ struct FilterRule {
     bool caseSensitive = false;
 };
 
-// Legacy support / backward compatibility wrapper
+// Legacy: A wrapper for older filter settings.
+// This struct exists for backward compatibility and is being phased out.
+// All new filtering logic must use the FilterExpression system. This struct and its
+// related logic will be removed once the migration to FilterExpression is complete.
 struct FilterCriteria {
     std::vector<LogLevel> levels;
     std::string keyword;
@@ -110,17 +120,15 @@ struct FilterCriteria {
     std::optional<std::chrono::system_clock::time_point> startTime;
     std::optional<std::chrono::system_clock::time_point> endTime;
 
-    std::vector<FilterRule> rules;
+    // The 'rules' member is part of the legacy system. It is commented out
+    // as its functionality is being replaced by FilterExpression. It was intended
+    // for a future iteration (e.g., Iteration 5) but that plan has been superseded
+    // by the more robust FilterExpression architecture.
+    // std::vector<FilterRule> rules;
     // std::optional<FilterExpression> expression; // Future integration
 };
 
-// Forward declarations to break circular dependency with Utils.h
-namespace Utils {
-    std::string logEntryFieldToString(LogEntryField field);
-    LogEntryField stringToLogEntryField(const std::string& fieldStr);
-    std::string filterOperatorToString(FilterOperator op);
-    FilterOperator stringToFilterOperator(const std::string& opStr);
-}
+
 
 // JSON conversion for FilterRule
 inline void to_json(nlohmann::json& j, const FilterRule& fr) {
@@ -133,32 +141,28 @@ inline void to_json(nlohmann::json& j, const FilterRule& fr) {
 }
 
 inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr) {
-    if (j.contains("field") && j.at("field").is_string()) {
-        fr.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
-        if (fr.field == LogEntryField::UNKNOWN) { // Simplified check
-             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule has an unrecognized field: " + j.at("field").get<std::string>()));
-        }
-    } else {
+    if (!j.contains("field") || !j.at("field").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'field'."));
     }
+    fr.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
+    if (fr.field == LogEntryField::UNKNOWN) {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule has an unrecognized field: " + j.at("field").get<std::string>()));
+    }
 
-    if (j.contains("op") && j.at("op").is_string()) {
-        fr.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
-    } else {
+    if (!j.contains("op") || !j.at("op").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'op'."));
     }
+    fr.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
+    if (fr.op == FilterOperator::UNKNOWN) {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule has an unrecognized 'op' string: " + j.at("op").get<std::string>()));
+    }
 
-    if (j.contains("value") && j.at("value").is_string()) {
-        fr.value = j.at("value").get<std::string>();
-    } else {
+    if (!j.contains("value") || !j.at("value").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'value'."));
     }
+    fr.value = j.at("value").get<std::string>();
 
-    if (j.contains("caseSensitive") && j.at("caseSensitive").is_boolean()) {
-        fr.caseSensitive = j.at("caseSensitive").get<bool>();
-    } else {
-        fr.caseSensitive = false;
-    }
+    fr.caseSensitive = j.value("caseSensitive", false);
 
     return {}; // Success
 }
@@ -169,151 +173,74 @@ inline void to_json(nlohmann::json& j, const FilterCondition& fc) {
         {"field", Utils::logEntryFieldToString(fc.field)},
         {"op", Utils::filterOperatorToString(fc.op)},
         {"value", fc.value},
-        {"value_type", static_cast<int>(fc.valueType)}, // Cast to int for enum
+        {"value_type", Utils::filterValueTypeToString(fc.valueType)},
         {"caseSensitive", fc.caseSensitive}
     };
     if (fc.datetimeFormat) {
         j["datetimeFormat"] = *fc.datetimeFormat;
-    } else {
-        j["datetimeFormat"] = nullptr;
     }
 }
 
 // Helper to convert JSON to FilterCondition
-
 inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterCondition& fc) {
-
-    if (j.contains("field") && j.at("field").is_string()) {
-
-                fc.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
-
-                if (fc.field == LogEntryField::UNKNOWN) { // Simplified check
-
-                     return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'field' string: " + j.at("field").get<std::string>()));
-
-                }
-
-    } else {
-
+    if (!j.contains("field") || !j.at("field").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'field'."));
-
+    }
+    fc.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
+    if (fc.field == LogEntryField::UNKNOWN) {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'field' string: " + j.at("field").get<std::string>()));
     }
 
-
-
-    if (j.contains("op") && j.at("op").is_string()) {
-
-        fc.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
-
-    } else {
-
+    if (!j.contains("op") || !j.at("op").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'op'."));
-
+    }
+    fc.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
+    if (fc.op == FilterOperator::UNKNOWN) {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'op' string: " + j.at("op").get<std::string>()));
     }
 
-
-
-    if (j.contains("value") && j.at("value").is_string()) {
-
-        fc.value = j.at("value").get<std::string>();
-
-    } else {
-
+    if (!j.contains("value") || !j.at("value").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'value'."));
+    }
+    fc.value = j.at("value").get<std::string>();
 
+    if (!j.contains("value_type")) {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing 'value_type'."));
     }
 
-
-
-    if (j.contains("value_type") && j.at("value_type").is_number_integer()) {
-
-        fc.valueType = static_cast<FilterValueType>(j.at("value_type").get<int>());
-
-    } else {
-
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'value_type'."));
-
-    }
-
-
-
-    if (j.contains("caseSensitive") && j.at("caseSensitive").is_boolean()) {
-
-        fc.caseSensitive = j.at("caseSensitive").get<bool>();
-
-    } else {
-
-        fc.caseSensitive = false;
-
-    }
-
-
-
-    
-
-
-
-            if (j.contains("datetimeFormat")) {
-
-
-
-                if (j.at("datetimeFormat").is_string()) {
-
-
-
-                    fc.datetimeFormat = j.at("datetimeFormat").get<std::string>();
-
-
-
-                } else if (j.at("datetimeFormat").is_null()) {
-
-
-
-                    fc.datetimeFormat = std::nullopt;
-
-
-
-                }
-
-
-
-            }
-
-
-
-            
-
-
-
-            // Medium-Risk Issue 3: Enforce datetimeFormat for DATETIME valueType
-
-
-
-            if (fc.valueType == FilterValueType::DATETIME && !fc.datetimeFormat) {
-
-
-
-                return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition with DATETIME valueType requires a datetimeFormat."));
-
-
-
-            }
-
-
-
-    
-
-
-
-            return {}; // Success
-
-
-
+    if (j.at("value_type").is_string()) {
+        fc.valueType = Utils::stringToFilterValueType(j.at("value_type").get<std::string>());
+        if (fc.valueType == FilterValueType::UNKNOWN) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'value_type' string: " + j.at("value_type").get<std::string>()));
         }
+    } else if (j.at("value_type").is_number_integer()) {
+        int vt_int = j.at("value_type").get<int>();
+        if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::DATETIME)) {
+            fc.valueType = static_cast<FilterValueType>(vt_int);
+        } else {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an invalid integer for 'value_type'. Must be between 0 and 2."));
+        }
+    } else {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'value_type' must be a string or integer."));
+    }
 
+    fc.caseSensitive = j.value("caseSensitive", false);
 
+    if (j.contains("datetimeFormat")) {
+        if (j.at("datetimeFormat").is_string()) {
+            fc.datetimeFormat = j.at("datetimeFormat").get<std::string>();
+        } else if (!j.at("datetimeFormat").is_null()) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'datetimeFormat' must be a string or null."));
+        }
+    }
 
-    
+    // Final validation: Enforce that DATETIME valueType requires a datetimeFormat.
+    if (fc.valueType == FilterValueType::DATETIME && !fc.datetimeFormat.has_value()) {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition with DATETIME valueType requires a 'datetimeFormat'."));
+    }
+
+    return {}; // Success
+}
 
 // New: Represents a composite filter expression (tree-like structure)
 class FilterExpression {
@@ -358,7 +285,7 @@ public:
 
     // Forward declarations for recursive JSON conversion
     friend void to_json(nlohmann::json& j, const FilterExpression& fe);
-    friend ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe);
+    friend inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe);
 
     // Accessors for internal components (useful for evaluation)
     enum class ExpressionType { EMPTY, CONDITION, LOGICAL };
@@ -377,12 +304,9 @@ private:
     std::vector<FilterExpression> expressions_;
 };
 
-// Forward declarations to break circular dependency with Utils.h
-namespace Utils {
-    std::string filterLogicalOperatorToString(FilterLogicalOperator op);
-    FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr);
-}
 
+
+// JSON conversion for FilterExpression (recursive)
 // JSON conversion for FilterExpression (recursive)
 inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
     if (fe.getType() == FilterExpression::ExpressionType::CONDITION) {

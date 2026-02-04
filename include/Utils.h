@@ -1,31 +1,31 @@
-#include "LogTypes.h" // Ensure ci_less is declared before use
-#include "Error.h"
+#include "LogTypes.h"   // For LogEntryField, LogLevel
 
 #ifndef UTILS_H
 #define UTILS_H
 
 #include <string>
 #include <string_view>
-#include <vector> // Required for std::vector in split
-#include <map> // Required for std::map
-#include <filesystem> // Required for std::filesystem utilities
+#include <vector>
+#include <map>
+#include <filesystem>
 #include <chrono>
-#include "CiLess.h" // Include the new header for ci_less comparator
 #include <expected>
 #include <utility>
 #include <algorithm>
 #include <cctype>
 
-// Forward declarations for types used in Utils functions.
-// These are not #includes, as Utils.h should not directly include headers
-// that might circularly include Utils.h.
-enum class LogEntryField;
+#include "CiLess.h"     // For ci_less comparator
+#include "Error.h"      // For ErrorCode::Error
+
+
+// Forward declarations to break include cycles
+// Full definitions are in Filter.h, Exporter.h, Statistics.h
 enum class FilterOperator;
 enum class FilterLogicalOperator;
+enum class FilterValueType;
 enum class ExportFormat;
 enum class StatisticType;
-enum class StatisticOutputFormat;
-enum class LogLevel;
+
 
 namespace Utils {
 
@@ -46,120 +46,66 @@ namespace AnsiColor {
 } // namespace AnsiColor
 
 // Constant for stdin file path representation
-static constexpr std::string_view STDIN_FILE_PATH = "-";
+inline constexpr std::string_view STDIN_FILE_PATH = "-"; // Made inline constexpr
 
-// Overload for stringToLogLevel that accepts custom mappings with ci_less comparator.
-LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &customMappings);
-LogLevel stringToLogLevel(const std::string &levelStr);
-std::string logLevelToString(LogLevel level);
-std::string formatTimestamp(std::chrono::system_clock::time_point tp,
-                             std::string_view format = "%Y-%m-%d %H:%M:%S");
-
-// Replaces all occurrences of 'from' with 'to' in 'str'
-void replaceAll(std::string &str, const std::string &from, const std::string &to);
-
-// Replaces all occurrences of 'from' with 'to' in 'str', ignoring case
-void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to);
-
-// Returns a new string with leading and trailing whitespace characters removed.
-std::string trim(const std::string& str, std::string_view whitespace = " \t\n\r\f\v");
-
-// Splits str into a std::vector<std::string> using delimiter as the separator.
-std::vector<std::string> split(const std::string& str, char delimiter);
-
-// Returns a new string with all characters converted to lower case.
-std::string toLower(const std::string& str);
-
-// Returns a new string with all characters converted to upper case.
-std::string toUpper(const std::string& str);
-
+// --- General Utilities (from Utils.cpp) ---
 // File System Utilities
-// Returns true if filePath points to an existing regular file, false otherwise.
 bool fileExists(const std::string& filePath);
-
-// Returns the filename component of filePath (e.g., "file.txt" from "/path/to/file.txt").
 std::string getFileName(const std::string& filePath);
-
-// Returns the extension of filePath (e.g., "txt" from "/path/to/file.txt"). Returns an empty string if no extension.
 std::string getFileExtension(const std::string& filePath);
-
-// Returns the directory component of filePath (e.g., "/path/to/" from "/path/to/file.txt").
 std::string getDirectory(const std::string& filePath);
 
-// Parses a duration string (e.g., "10s", "5m", "2h", "1d") into std::chrono::seconds.
-std::expected<std::chrono::seconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits = false);
-
-// Calculates a time point relative to the current time (e.g., "1h ago").
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr);
-
-// Parses an absolute time string (e.g., "2023-01-01 12:30:00") into std::chrono::system_clock::time_point.
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbsoluteTime(const std::string& timeStr);
-
-// Parses a time string, supporting multiple absolute formats (YYYY-MM-DD HH:MM:SS, ISO 8601, Unix timestamp)
-// and also falling back to relative time parsing.
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime(const std::string& timeStr);
-
-// Parses a time string using a list of provided formats.
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error>
-parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>& formats);
-
-// Parses a date string (e.g., "YYYY-MM-DD", "YYYY/MM/DD") into a time range for that entire day.
-// Returns a pair: first is 00:00:00 of the day, second is 23:59:59.999... of the day.
-std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error>
-parseDayRange(const std::string& dateString);
-
-// Validates a timestamp string for CLI options. Throws CLI::ValidationError on failure.
-// Changed return type to ErrorCode::Result<std::string> to align with other parsing functions.
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr);
-
-// Escapes a string for JSON output, handling special characters like quotes, backslashes, and control characters.
+// --- String Utilities (from UtilsString.cpp) ---
+void replaceAll(std::string &str, const std::string &from, const std::string &to);
+void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to);
+std::string trim(const std::string& str, std::string_view whitespace = " \t\n\r\f\v");
+std::vector<std::string> split(const std::string& str, char delimiter);
+std::string toLower(const std::string& str);
+std::string toUpper(const std::string& str);
 std::string escapeJsonString(const std::string& input);
-
-// Converts a glob pattern string into a regex pattern string.
-// Handles '*' as '.*' and '?' as '.'
 std::string globToRegex(const std::string& globPattern);
-
-// Helper to compare strings case-insensitively
 inline bool caseInsensitiveEquals(std::string_view str1, std::string_view str2) {
-    if (str1.length() != str2.length()) {
-        return false;
-    }
     return std::equal(str1.begin(), str1.end(),
                       str2.begin(), str2.end(),
                       [](char a, char b) {
-                          return std::tolower(static_cast<unsigned char>(a)) ==
-                                 std::tolower(static_cast<unsigned char>(b));
+                          return std::tolower(a) == std::tolower(b);
                       });
 }
 
 // Helper to search for a substring case-insensitively
 inline bool caseInsensitiveSearch(std::string_view text, std::string_view keyword) {
-    if (keyword.empty()) {
-        return true; // Empty keyword is considered to be found everywhere
-    }
-    if (text.length() < keyword.length()) {
-        return false;
-    }
-    
     auto it = std::search(text.begin(), text.end(),
                           keyword.begin(), keyword.end(),
-                          [](char a, char b) {
-                              return std::tolower(static_cast<unsigned char>(a)) ==
-                                     std::tolower(static_cast<unsigned char>(b));
-                          });
-    return it != text.end();
+                          [](char ch1, char ch2) { return std::tolower(ch1) == std::tolower(ch2); });
+    return (it != text.end());
 }
 
-// Enum to string and string to enum conversions for various types
-// Defined here to avoid redefinition issues and ensure single source of truth
+
+// --- Time Utilities (from UtilsTime.cpp) ---
+std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format = "%Y-%m-%d %H:%M:%S");
+std::expected<std::chrono::seconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits = false);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbsoluteTime(const std::string& timeStr);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime(const std::string& timeStr);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>& formats);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr);
+std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error> parseDayRange(const std::string& dateString);
+
+
+// --- Enum to string and string to enum conversions ---
 std::string logEntryFieldToString(LogEntryField field);
 LogEntryField stringToLogEntryField(const std::string& fieldStr);
+
+// LogLevel functions are declared in LogTypes.h inside namespace Utils
 
 std::string filterOperatorToString(FilterOperator op);
 FilterOperator stringToFilterOperator(const std::string& opStr);
 
 std::string filterLogicalOperatorToString(FilterLogicalOperator op);
 FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr);
+
+std::string filterValueTypeToString(FilterValueType type);
+FilterValueType stringToFilterValueType(const std::string& typeStr);
 
 std::string exportFormatToString(ExportFormat format);
 ExportFormat stringToExportFormat(const std::string& formatStr);

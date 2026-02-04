@@ -1,5 +1,0 @@
-if(EXISTS "/opt/lxl/c++/logAnalyzer/tests/LogParser_test[1]_tests.cmake")
-  include("/opt/lxl/c++/logAnalyzer/tests/LogParser_test[1]_tests.cmake")
-else()
-  add_test(LogParser_test_NOT_BUILT LogParser_test_NOT_BUILT)
-endif()

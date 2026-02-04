@@ -752,7 +752,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson) {
     EXPECT_EQ(j["field"], "timestamp");
     EXPECT_EQ(j["op"], "GREATER_THAN");
     EXPECT_EQ(j["value"], "2023-01-01T00:00:00Z");
-    EXPECT_EQ(j["value_type"], static_cast<int>(FilterValueType::DATETIME));
+    EXPECT_EQ(j["value_type"], "DATETIME");
     EXPECT_EQ(j["caseSensitive"], false);
     EXPECT_EQ(j["datetimeFormat"], "%Y-%m-%dT%H:%M:%SZ");
 }
@@ -762,7 +762,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonSuccess) {
         {"field", "message"},
         {"op", "CONTAINS"},
         {"value", "warning"},
-        {"value_type", static_cast<int>(FilterValueType::STRING)},
+        {"value_type", "STRING"},
         {"caseSensitive", true}
     };
 
@@ -783,7 +783,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeSuccess) {
         {"field", "timestamp"},
         {"op", "LESS_THAN"},
         {"value", "2023-12-31 23:59:59"},
-        {"value_type", static_cast<int>(FilterValueType::DATETIME)},
+        {"value_type", "DATETIME"},
         {"caseSensitive", false},
         {"datetimeFormat", "%Y-%m-%d %H:%M:%S"}
     };
@@ -829,6 +829,59 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingOp) {
     EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
 }
 
+TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidValueTypeString) {
+    nlohmann::json j = {
+        {"field", "message"},
+        {"op", "CONTAINS"},
+        {"value", "warning"},
+        {"value_type", "BAD_TYPE"}, // Invalid value_type string
+        {"caseSensitive", true}
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("unrecognized 'value_type' string"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonNumericSuccess) {
+    nlohmann::json j = {
+        {"field", "thread_id"},
+        {"op", "GREATER_THAN"},
+        {"value", "100"},
+        {"value_type", "NUMERIC"},
+        {"caseSensitive", false}
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fc.field, LogEntryField::THREAD_ID);
+    EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
+    EXPECT_EQ(fc.value, "100");
+    EXPECT_EQ(fc.valueType, FilterValueType::NUMERIC);
+    EXPECT_FALSE(fc.datetimeFormat.has_value());
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeMissingFormat) {
+    nlohmann::json j = {
+        {"field", "timestamp"},
+        {"op", "LESS_THAN"},
+        {"value", "2023-12-31 23:59:59"},
+        {"value_type", "DATETIME"},
+        {"caseSensitive", false}
+        // datetimeFormat is missing
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("with DATETIME 'value_type' requires a 'datetimeFormat'"), std::string::npos);
+}
+
 // FilterCondition datetime constructor validation
 TEST_F(FilterJsonTest, FilterConditionDatetimeConstructorValidation) {
     // Should throw if DATETIME type is used without format
@@ -868,7 +921,7 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonCondition) {
             {"field", "source_file"},
             {"op", "ENDS_WITH"},
             {"value", ".log"},
-            {"value_type", static_cast<int>(FilterValueType::STRING)}
+            {"value_type", "STRING"}
         }}
     };
 
@@ -908,8 +961,8 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonLogicalOR) {
     nlohmann::json j = {
         {"operator", "OR"},
         {"operands", nlohmann::json::array({
-            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}},
-            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "FATAL"}, {"value_type", 0}}}}
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", "STRING"}}}},
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "FATAL"}, {"value_type", "STRING"}}}}
         })}
     };
 
@@ -954,7 +1007,7 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonLogicalNOT) {
     nlohmann::json j = {
         {"operator", "NOT"},
         {"operands", nlohmann::json::array({
-            {{"condition", {{"field", "message"}, {"op", "STARTS_WITH"}, {"value", "Success"}, {"value_type", 0}}}}
+            {{"condition", {{"field", "message"}, {"op", "STARTS_WITH"}, {"value", "Success"}, {"value_type", "STRING"}}}}
         })}
     };
 
@@ -977,11 +1030,11 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonNested) {
     nlohmann::json j = {
         {"operator", "AND"},
         {"operands", nlohmann::json::array({
-            nlohmann::json {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}},
+            nlohmann::json {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", "STRING"}}}},
             nlohmann::json {{"operator", "OR"},
              {"operands", nlohmann::json::array({
-                nlohmann::json {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "database"}, {"value_type", 0}}}},
-                nlohmann::json {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "network"}, {"value_type", 0}}}}
+                nlohmann::json {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "database"}, {"value_type", "STRING"}}}},
+                nlohmann::json {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "network"}, {"value_type", "STRING"}}}}
              })}}
         })}
     };
@@ -1015,10 +1068,10 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonInvalidOperand) {
     nlohmann::json j = {
         {"operator", "AND"},
         {"operands", nlohmann::json::array({
-            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}},
-            {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "database"}, {"value_type", 0}}}},
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", "STRING"}}}},
+            {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "database"}, {"value_type", "STRING"}}}},
             // Invalid operand: missing "op"
-            {{"condition", {{"field", "source_file"}, {"value", "main.cpp"}, {"value_type", 0}}}} 
+            {{"condition", {{"field", "source_file"}, {"value", "main.cpp"}, {"value_type", "STRING"}}}} 
         })}
     };
 
@@ -1045,7 +1098,7 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonUnknownOperator) {
     nlohmann::json j = {
         {"operator", "XOR"}, // Unknown operator
         {"operands", nlohmann::json::array({
-            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}}
+            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", "STRING"}}}}
         })}
     };
 
@@ -1068,7 +1121,207 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonMissingConditionOrOperator) {
     EXPECT_NE(result.error().message.find("must contain either 'condition' or 'operator'"), std::string::npos);
 }
 
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+TEST_F(FilterJsonTest, FilterExpressionFluentApiAndOptimization) {
+    // cond1 AND cond2
+    FilterExpression cond1 = FilterExpression::create(createFilterCondition(LogEntryField::LEVEL, FilterOperator::EQUALS, "INFO"));
+    FilterExpression cond2 = FilterExpression::create(createFilterCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "user"));
+    FilterExpression expr1 = cond1.And(cond2);
+
+    ASSERT_TRUE(expr1.isLogical());
+    ASSERT_TRUE(expr1.getLogicalOperator().has_value());
+    EXPECT_EQ(*expr1.getLogicalOperator(), FilterLogicalOperator::AND);
+    ASSERT_EQ(expr1.getExpressions().size(), 2);
+    EXPECT_EQ(expr1.getExpressions()[0].getCondition()->value, "INFO");
+    EXPECT_EQ(expr1.getExpressions()[1].getCondition()->value, "user");
+
+    // (cond1 AND cond2) AND cond3 -> should be flattened to AND [cond1, cond2, cond3]
+    FilterExpression cond3 = FilterExpression::create(createFilterCondition(LogEntryField::SOURCE_FILE, FilterOperator::ENDS_WITH, ".log"));
+    FilterExpression expr2 = expr1.And(cond3);
+
+    ASSERT_TRUE(expr2.isLogical());
+    ASSERT_TRUE(expr2.getLogicalOperator().has_value());
+    EXPECT_EQ(*expr2.getLogicalOperator(), FilterLogicalOperator::AND);
+    ASSERT_EQ(expr2.getExpressions().size(), 3);
+    EXPECT_EQ(expr2.getExpressions()[0].getCondition()->value, "INFO");
+    EXPECT_EQ(expr2.getExpressions()[1].getCondition()->value, "user");
+    EXPECT_EQ(expr2.getExpressions()[2].getCondition()->value, ".log");
+
+    // cond1.Or(cond2).And(cond3) -> (cond1 OR cond2) AND cond3 (should not flatten different operators)
+    FilterExpression expr3 = cond1.Or(cond2).And(cond3);
+    ASSERT_TRUE(expr3.isLogical());
+    EXPECT_EQ(*expr3.getLogicalOperator(), FilterLogicalOperator::AND);
+    ASSERT_EQ(expr3.getExpressions().size(), 2);
+    // First operand should be the OR expression
+    ASSERT_TRUE(expr3.getExpressions()[0].isLogical());
+    EXPECT_EQ(*expr3.getExpressions()[0].getLogicalOperator(), FilterLogicalOperator::OR);
+    ASSERT_EQ(expr3.getExpressions()[0].getExpressions().size(), 2);
+    // Second operand should be cond3
+    ASSERT_TRUE(expr3.getExpressions()[1].isCondition());
+    EXPECT_EQ(expr3.getExpressions()[1].getCondition()->value, ".log");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFluentApiOrOptimization) {
+    // cond1 OR cond2
+    FilterExpression cond1 = FilterExpression::create(createFilterCondition(LogEntryField::LEVEL, FilterOperator::EQUALS, "ERROR"));
+    FilterExpression cond2 = FilterExpression::create(createFilterCondition(LogEntryField::THREAD_ID, FilterOperator::EQUALS, "123"));
+    FilterExpression expr1 = cond1.Or(cond2);
+
+    ASSERT_TRUE(expr1.isLogical());
+    ASSERT_TRUE(expr1.getLogicalOperator().has_value());
+    EXPECT_EQ(*expr1.getLogicalOperator(), FilterLogicalOperator::OR);
+    ASSERT_EQ(expr1.getExpressions().size(), 2);
+    EXPECT_EQ(expr1.getExpressions()[0].getCondition()->value, "ERROR");
+    EXPECT_EQ(expr1.getExpressions()[1].getCondition()->value, "123");
+
+    // (cond1 OR cond2) OR cond3 -> should be flattened to OR [cond1, cond2, cond3]
+    FilterExpression cond3 = FilterExpression::create(createFilterCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "Fatal"));
+    FilterExpression expr2 = expr1.Or(cond3);
+
+    ASSERT_TRUE(expr2.isLogical());
+    ASSERT_TRUE(expr2.getLogicalOperator().has_value());
+    EXPECT_EQ(*expr2.getLogicalOperator(), FilterLogicalOperator::OR);
+    ASSERT_EQ(expr2.getExpressions().size(), 3);
+    EXPECT_EQ(expr2.getExpressions()[0].getCondition()->value, "ERROR");
+    EXPECT_EQ(expr2.getExpressions()[1].getCondition()->value, "123");
+    EXPECT_EQ(expr2.getExpressions()[2].getCondition()->value, "Fatal");
+}
+
+TEST_F(FilterJsonTest, FilterExpressionFluentApiNot) {
+    FilterExpression cond = FilterExpression::create(createFilterCondition(LogEntryField::LEVEL, FilterOperator::EQUALS, "DEBUG"));
+    FilterExpression not_cond = cond.Not();
+
+    ASSERT_TRUE(not_cond.isLogical());
+    ASSERT_TRUE(not_cond.getLogicalOperator().has_value());
+    EXPECT_EQ(*not_cond.getLogicalOperator(), FilterLogicalOperator::NOT);
+    ASSERT_EQ(not_cond.getExpressions().size(), 1);
+    ASSERT_TRUE(not_cond.getExpressions()[0].isCondition());
+    EXPECT_EQ(not_cond.getExpressions()[0].getCondition()->value, "DEBUG");
+
+    // NOT (cond1 AND cond2)
+    FilterExpression cond1 = FilterExpression::create(createFilterCondition(LogEntryField::LEVEL, FilterOperator::EQUALS, "INFO"));
+    FilterExpression cond2 = FilterExpression::create(createFilterCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "user"));
+    FilterExpression not_and_expr = cond1.And(cond2).Not();
+
+    ASSERT_TRUE(not_and_expr.isLogical());
+    EXPECT_EQ(*not_and_expr.getLogicalOperator(), FilterLogicalOperator::NOT);
+    ASSERT_EQ(not_and_expr.getExpressions().size(), 1);
+    ASSERT_TRUE(not_and_expr.getExpressions()[0].isLogical());
+    EXPECT_EQ(*not_and_expr.getExpressions()[0].getLogicalOperator(), FilterLogicalOperator::AND);
+    ASSERT_EQ(not_and_expr.getExpressions()[0].getExpressions().size(), 2);
+}
+
+TEST_F(FilterJsonTest, FilterRuleFromJsonMissingOp) {
+    nlohmann::json j = {
+        {"field", "level"},
+        {"value", "INFO"}
+    };
+
+    FilterRule fr;
+    auto result = from_json(j, fr);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterRuleFromJsonMissingValue) {
+    nlohmann::json j = {
+        {"field", "level"},
+        {"op", "EQUALS"}
+    };
+
+    FilterRule fr;
+    auto result = from_json(j, fr);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'value'"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidOp) {
+    nlohmann::json j = {
+        {"field", "level"},
+        {"op", "INVALID_OP"},
+        {"value", "INFO"}
+    };
+
+    FilterRule fr;
+    auto result = from_json(j, fr);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("unrecognized 'op' string"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValue) {
+    nlohmann::json j = {
+        {"field", "message"},
+        {"op", "CONTAINS"},
+        {"value_type", "STRING"}
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'value'"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValueType) {
+    nlohmann::json j = {
+        {"field", "message"},
+        {"op", "CONTAINS"},
+        {"value", "some_value"}
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing 'value_type'"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonMalformedDatetimeFormat) {
+    nlohmann::json j = {
+        {"field", "timestamp"},
+        {"op", "LESS_THAN"},
+        {"value", "2023-12-31"},
+        {"value_type", "DATETIME"},
+        {"datetimeFormat", 12345} // Invalid type, should be string
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("'datetimeFormat' must be a string or null"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidValueTypeInt) {
+    nlohmann::json j = {
+        {"field", "message"},
+        {"op", "CONTAINS"},
+        {"value", "warning"},
+        {"value_type", 99}, // Invalid integer value
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("invalid integer for 'value_type'"), std::string::npos);
+}
+
+TEST_F(FilterJsonTest, FilterConditionFromJsonLegacyValueTypeInt) {
+    nlohmann::json j = {
+        {"field", "thread_id"},
+        {"op", "EQUALS"},
+        {"value", "42"},
+        {"value_type", 1}, // Legacy integer for NUMERIC
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+    EXPECT_EQ(fc.valueType, FilterValueType::NUMERIC);
+}
+
+TEST_F(FilterJsonTest, FilterExpressionDefaultConstructor) {
+    FilterExpression fe;
+    EXPECT_EQ(fe.getType(), FilterExpression::ExpressionType::EMPTY);
+    EXPECT_FALSE(fe.getCondition().has_value());
+    EXPECT_FALSE(fe.getLogicalOperator().has_value());
+    EXPECT_TRUE(fe.getExpressions().empty());
 }
