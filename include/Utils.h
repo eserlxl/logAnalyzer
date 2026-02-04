@@ -1,13 +1,14 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "LogTypes.h"
-#include <string>
-#include <string_view>
-#include <chrono>
-#include <expected> // For std::expected
-#include <algorithm> // For std::equal, std::search
-#include <cctype> // For std::tolower
+// Forward declarations for types used in Utils functions.
+// These are not #includes, as Utils.h should not directly include headers
+// that might circularly include Utils.h.
+enum class LogEntryField;
+enum class FilterOperator;
+enum class ExportFormat;
+enum class StatisticType;
+enum class LogLevel;
 
 namespace Utils {
 
@@ -125,6 +126,26 @@ inline bool caseInsensitiveSearch(const std::string& text, const std::string& ke
                           });
     return it != text.end();
 }
+
+// Enum to string and string to enum conversions for various types
+// Defined here to avoid redefinition issues and ensure single source of truth
+std::string logEntryFieldToString(LogEntryField field);
+LogEntryField stringToLogEntryField(const std::string& fieldStr);
+
+std::string filterOperatorToString(FilterOperator op);
+FilterOperator stringToFilterOperator(const std::string& opStr);
+
+std::string filterLogicalOperatorToString(FilterLogicalOperator op);
+FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr);
+
+std::string exportFormatToString(ExportFormat format);
+ExportFormat stringToExportFormat(const std::string& formatStr);
+
+std::string statisticTypeToString(StatisticType type);
+StatisticType stringToStatisticType(const std::string& typeStr);
+
+std::string statisticOutputFormatToString(StatisticOutputFormat format);
+StatisticOutputFormat stringToStatisticOutputFormat(const std::string& formatStr);
 
 } // namespace Utils
 

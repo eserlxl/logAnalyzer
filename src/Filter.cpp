@@ -2,6 +2,8 @@
 #include "../include/Utils.h"
 #include <algorithm>
 #include <cctype>
+#include <regex> // Added for std::regex, std::regex_match, std::regex_search, std::regex_constants
+#include <set>   // Added for std::set
 
 
 namespace Detail {

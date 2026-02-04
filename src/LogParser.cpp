@@ -113,7 +113,8 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
 
   bool structuredFieldsExplicitlyMapped = false;
   for (const auto& mapping : fieldMappings) {
-      if (mapping.field == LogEntryField::STRUCTURED_FIELD) {
+      if (std::holds_alternative<LogEntryField>(mapping.field_identifier) &&
+          std::get<LogEntryField>(mapping.field_identifier) == LogEntryField::STRUCTURED_FIELD) {
           structuredFieldsExplicitlyMapped = true;
           break;
       }
@@ -126,95 +127,108 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
     }
     std::string capturedValue = match[mapping.groupIndex.value()].str();
 
-    switch (mapping.field) {
-      case LogEntryField::TIMESTAMP: {
-        std::chrono::system_clock::time_point tp;
-        bool parsed = false;
-        if (!mapping.formats.empty() && !mapping.formats[0].empty()) { // Use formats[0]
-            std::istringstream ss(capturedValue);
-            // Ensure to use the correct chrono::parse or equivalent
-            // For simplicity, assuming std::chrono::parse is available and works as expected.
-            // If not, a manual parsing approach with std::get_time would be needed.
-            ss >> std::chrono::parse(mapping.formats[0], tp); // Use formats[0]
-            if (!ss.fail()) parsed = true;
-        } else {
-            // Attempt common ISO formats and other common formats
-            const char* isoFormats[] = {"%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"};
-            for (const char* fmt : isoFormats) {
-                std::istringstream tempSs(capturedValue);
-                tempSs >> std::chrono::parse(fmt, tp);
-                if (!tempSs.fail()) {
-                    parsed = true;
-                    break;
+    std::visit(
+        [&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, LogEntryField>) {
+                switch (arg) {
+                    case LogEntryField::TIMESTAMP: {
+                        std::chrono::system_clock::time_point tp;
+                        bool parsed = false;
+                        if (!mapping.formats.empty() && !mapping.formats[0].empty()) {
+                            std::istringstream ss(capturedValue);
+                            ss >> std::chrono::parse(mapping.formats[0], tp);
+                            if (!ss.fail()) parsed = true;
+                        } else {
+                            const char* isoFormats[] = {"%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"};
+                            for (const char* fmt : isoFormats) {
+                                std::istringstream tempSs(capturedValue);
+                                tempSs >> std::chrono::parse(fmt, tp);
+                                if (!tempSs.fail()) {
+                                    parsed = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!parsed) {
+                             result.errorMessage = "Failed to parse timestamp: " + capturedValue;
+                             result.failingPart = capturedValue;
+                             // This return will exit the lambda, not the outer function.
+                             // Need to handle this differently. For now, set an error status.
+                             result.status = ParseResultStatus::TIMESTAMP_PARSE_ERROR;
+                             return; // Exit this branch of visit
+                        }
+                        entry.timestamp = tp;
+                        break;
+                    }
+                    case LogEntryField::LEVEL: {
+                        auto custom_it = customLevelMappings.find(capturedValue);
+                        if (custom_it != customLevelMappings.end()) {
+                            entry.level = custom_it->second;
+                        } else {
+                            auto default_it = DEFAULT_LEVEL_MAPPINGS.find(capturedValue);
+                            if (default_it != DEFAULT_LEVEL_MAPPINGS.end()) {
+                                entry.level = default_it->second;
+                            } else {
+                                entry.level = LogLevel::UNKNOWN;
+                            }
+                        }
+                        break;
+                    }
+                    case LogEntryField::MESSAGE: {
+                        entry.message = capturedValue;
+                        if (!structuredFieldsExplicitlyMapped) {
+                            const std::regex kvPattern_legacy("([\\w.-]+)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,.]+))");
+                            auto words_begin = std::sregex_iterator(entry.message.begin(), entry.message.end(), kvPattern_legacy);
+                            auto words_end = std::sregex_iterator();
+                            for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
+                                std::smatch kvMatch = *i;
+                                std::string k = kvMatch[1].str();
+                                std::string v = kvMatch[2].matched ? kvMatch[2].str() : (kvMatch[3].matched ? kvMatch[3].str() : kvMatch[4].str());
+                                entry.structuredFields[k] = v;
+                            }
+                        }
+                        break;
+                    }
+                    case LogEntryField::SOURCE_FILE: {
+                        entry.sourceFile = capturedValue;
+                        break;
+                    }
+                    case LogEntryField::LINE_NUMBER:
+                    case LogEntryField::THREAD_ID:
+                    case LogEntryField::MODULE:
+                    case LogEntryField::HOST:
+                    case LogEntryField::CUSTOM:
+                    case LogEntryField::UNKNOWN:
+                        // These fields are not directly set here, or they are handled by the string alternative of field_identifier for structured fields.
+                        break;
+                    case LogEntryField::STRUCTURED_FIELD: {
+                         // If the variant holds LogEntryField::STRUCTURED_FIELD, it means we should parse key-value pairs from capturedValue
+                        std::string delimiter = (!mapping.formats.empty() && !mapping.formats[0].empty()) ? mapping.formats[0] : "=";
+                        std::string pattern_str = "([\\w.-]+)\\s*" + delimiter + "\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,]+))";
+                        const std::regex kvPattern(pattern_str);
+                        auto kv_begin = std::sregex_iterator(capturedValue.begin(), capturedValue.end(), kvPattern);
+                        auto kv_end = std::sregex_iterator();
+                        for (std::sregex_iterator i = kv_begin; i != kv_end; ++i) {
+                            std::smatch kvMatch = *i;
+                            std::string k = kvMatch[1].str();
+                            std::string v = kvMatch[2].matched ? kvMatch[2].str() : (kvMatch[3].matched ? kvMatch[3].str() : kvMatch[4].str());
+                            entry.structuredFields[k] = v;
+                        }
+                        break;
+                    }
                 }
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                // This handles custom fields and structured fields where the structuredFieldName was explicitly set
+                // The string in field_identifier is the structured field name or custom field name
+                entry.structuredFields[arg] = capturedValue;
             }
-        }
-        if (!parsed) {
-             result.errorMessage = "Failed to parse timestamp: " + capturedValue;
-             result.failingPart = capturedValue;
-             return result;
-        }
-        entry.timestamp = tp;
-        break;
-      }
-      case LogEntryField::LEVEL: {
-        auto custom_it = customLevelMappings.find(capturedValue);
-        if (custom_it != customLevelMappings.end()) {
-            entry.level = custom_it->second;
-        }
-        else {
-            auto default_it = DEFAULT_LEVEL_MAPPINGS.find(capturedValue);
-            if (default_it != DEFAULT_LEVEL_MAPPINGS.end()) {
-                entry.level = default_it->second;
-            }
-            else {
-                entry.level = LogLevel::UNKNOWN;
-            }
-        }
-        break;
-      }
-      case LogEntryField::MESSAGE: {
-        entry.message = capturedValue;
-        // Legacy structured field parsing from MESSAGE if no explicit STRUCTURED_FIELD mapping is present
-        if (!structuredFieldsExplicitlyMapped) {
-            const std::regex kvPattern_legacy("([\\w.-]+)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,.]+))");
-            auto words_begin = std::sregex_iterator(entry.message.begin(), entry.message.end(), kvPattern_legacy);
-            auto words_end = std::sregex_iterator();
-            for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
-                std::smatch kvMatch = *i;
-                std::string k = kvMatch[1].str();
-                std::string v = kvMatch[2].matched ? kvMatch[2].str() : (kvMatch[3].matched ? kvMatch[3].str() : kvMatch[4].str());
-                entry.structuredFields[k] = v;
-            }
-        }
-        break;
-      }
-      case LogEntryField::STRUCTURED_FIELD: {
-        if (!mapping.structuredFieldName.empty()) {
-             entry.structuredFields[mapping.structuredFieldName] = capturedValue;
-        }
-        else { // If structuredFieldName is empty, try to parse key-value pairs from capturedValue
-            std::string delimiter = (!mapping.formats.empty() && !mapping.formats[0].empty()) ? mapping.formats[0] : "="; // Use formats[0]
-            std::string pattern_str = "([\\w.-]+)\\s*" + delimiter + "\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,]+))";
-            const std::regex kvPattern(pattern_str);
-            auto kv_begin = std::sregex_iterator(capturedValue.begin(), capturedValue.end(), kvPattern);
-            auto kv_end = std::sregex_iterator();
-            for (std::sregex_iterator i = kv_begin; i != kv_end; ++i) {
-                std::smatch kvMatch = *i;
-                std::string k = kvMatch[1].str();
-                std::string v = kvMatch[2].matched ? kvMatch[2].str() : (kvMatch[3].matched ? kvMatch[3].str() : kvMatch[4].str());
-                entry.structuredFields[k] = v;
-            }
-        }
-        break;
-      }
-      case LogEntryField::SOURCE_FILE: {
-          entry.sourceFile = capturedValue;
-          break;
-      }
-      default:
-        // Handle other fields or ignore
-        break;
+        },
+        mapping.field_identifier);
+
+    // If a parse error occurred during timestamp parsing within std::visit
+    if (result.status != ParseResultStatus::SUCCESS) {
+        return result;
     }
   }
 

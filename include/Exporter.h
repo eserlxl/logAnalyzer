@@ -1,33 +1,87 @@
 #ifndef EXPORTER_H
 #define EXPORTER_H
 
+#include <nlohmann/json.hpp> // Include for nlohmann/json types
 #include "LogTypes.h"
-#include "Filter.h"
+#include "Utils.h" // For string conversion utilities
+#include "Utils.h" // For string conversion utilities
+#include "Utils.h" // For string conversion utilities
+#include "Utils.h" // For string conversion utilities
+
+// Forward declarations to break circular dependency with Utils.h
+namespace Utils {
+    std::string logEntryFieldToString(LogEntryField field);
+    LogEntryField stringToLogEntryField(const std::string& fieldStr);
+    std::string exportFormatToString(ExportFormat format);
+    ExportFormat stringToExportFormat(const std::string& formatStr);
+}
 #include <iostream>
 #include <vector>
 #include <string>
 #include <utility> // For std::move
+#include <optional> // For std::optional
 
+// New: Enum for different export formats
 enum class ExportFormat {
-    PLAINTEXT,  // Raw log lines, possibly formatted
-    CSV,        // Comma Separated Values
-    JSON,       // JSON array of objects
-    XML         // XML structure
-    // Potentially more, e.g., HTML, custom templates
+    PLAINTEXT,
+    JSON,
+    CSV,
+    XML,
+    UNKNOWN // Default for unrecognized formats
 };
 
-// Specifies which fields to include in the export and their order.
-struct ExportField {
-    LogEntryField field;
-    std::string customHeader; // Optional custom header for CSV/table output
+// New: Struct to define a mapping from a LogEntryField to an exported column header
+struct ExportFieldMapping {
+    LogEntryField field = LogEntryField::UNKNOWN; // The field from LogEntry to export
+    std::string customHeader; // Optional: custom header name for the exported field
+    std::optional<std::string> datetimeFormat; // Optional: format string for datetime fields
 
-    ExportField(LogEntryField f, std::string header = "") : field(f), customHeader(std::move(header)) {}
+    ExportFieldMapping() = default;
+    ExportFieldMapping(LogEntryField f, std::string header = "", std::optional<std::string> dtFormat = std::nullopt)
+        : field(f), customHeader(std::move(header)), datetimeFormat(std::move(dtFormat)) {}
 };
+
+// JSON conversion for ExportFieldMapping
+inline void to_json(nlohmann::json& j, const ExportFieldMapping& efm) {
+    j = nlohmann::json{
+        {"field", Utils::logEntryFieldToString(efm.field)},
+        {"customHeader", efm.customHeader}
+    };
+    if (efm.datetimeFormat) {
+        j["datetimeFormat"] = *efm.datetimeFormat;
+    }
+}
+
+inline void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
+    std::vector<std::string> errors;
+
+    if (j.contains("field") && j.at("field").is_string()) {
+        efm.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
+        // Note: stringToLogEntryField assumes standard fields. Custom fields would need special handling here.
+        if (efm.field == LogEntryField::UNKNOWN && j.at("field").get<std::string>() != "UNKNOWN") {
+             errors.push_back("ExportFieldMapping has an unrecognized field: " + j.at("field").get<std::string>());
+        }
+    } else {
+        errors.push_back("ExportFieldMapping is missing or has invalid 'field'.");
+    }
+
+    if (j.contains("customHeader") && j.at("customHeader").is_string()) {
+        efm.customHeader = j.at("customHeader").get<std::string>();
+    } // customHeader is optional
+
+    if (j.contains("datetimeFormat") && j.at("datetimeFormat").is_string()) {
+        efm.datetimeFormat = j.at("datetimeFormat").get<std::string>();
+    } // datetimeFormat is optional
+
+    if (!errors.empty()) {
+        throw nlohmann::json::exception(errors.size(), errors[0].c_str());
+    }
+}
 
 struct ExportSettings {
     std::string outputPath = "output.log"; // Default output file
     ExportFormat format = ExportFormat::PLAINTEXT;
-    std::vector<ExportField> fieldsToExport; // If empty, export all available fields
+    std::vector<ExportFieldMapping> fieldsToExport; // If empty, export all available fields
     bool includeHeader = true; // For CSV/table formats
     // Add more options as needed, e.g., compression, encoding
 
@@ -39,6 +93,49 @@ struct ExportSettings {
         fieldsToExport.emplace_back(LogEntryField::MESSAGE, "Message");
     }
 };
+
+// --- JSON Conversion for ExportSettings ---
+inline void to_json(nlohmann::json& j, const ExportSettings& es) {
+    j = nlohmann::json{
+        {"outputPath", es.outputPath},
+        {"format", Utils::exportFormatToString(es.format)},
+        {"fieldsToExport", es.fieldsToExport}, // Uses ExportFieldMapping to_json
+        {"includeHeader", es.includeHeader}
+    };
+}
+
+inline void from_json(const nlohmann::json& j, ExportSettings& es) {
+    std::vector<std::string> errors;
+
+    if (j.contains("outputPath") && j.at("outputPath").is_string()) {
+        es.outputPath = j.at("outputPath").get<std::string>();
+    } else {
+        errors.push_back("ExportSettings is missing or has invalid 'outputPath'.");
+    }
+
+    if (j.contains("format") && j.at("format").is_string()) {
+        es.format = Utils::stringToExportFormat(j.at("format").get<std::string>());
+    } else {
+        errors.push_back("ExportSettings is missing or has invalid 'format'.");
+    }
+
+    if (j.contains("fieldsToExport") && j.at("fieldsToExport").is_array()) {
+        es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
+    } else {
+        errors.push_back("ExportSettings is missing or has invalid 'fieldsToExport'.");
+    }
+
+    if (j.contains("includeHeader") && j.at("includeHeader").is_boolean()) {
+        es.includeHeader = j.at("includeHeader").get<bool>();
+    } else {
+        // Default to true if not specified or invalid
+        es.includeHeader = true;
+    }
+
+    if (!errors.empty()) {
+        throw nlohmann::json::exception(errors.size(), errors[0].c_str());
+    }
+}
 
 // Forward declaration of LogAnalyzer to avoid circular dependency if needed for utility methods
 class LogAnalyzer; 
@@ -73,3 +170,4 @@ private:
 };
 
 #endif // EXPORTER_H
+

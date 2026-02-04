@@ -10,8 +10,20 @@
 #include <span>
 #include <mutex>
 #include <utility> // For std::move
-
+#include <nlohmann/json.hpp> // Required for JSON serialization
 #include "LogTypes.h"
+#include "Utils.h" // Required for utility functions like logEntryFieldToString
+#include "Utils.h" // Required for utility functions like logEntryFieldToString
+#include "Utils.h" // Required for utility functions like logEntryFieldToString
+#include "Utils.h" // Required for utility functions like logEntryFieldToString
+
+// Forward declarations to break circular dependency with Utils.h
+namespace Utils {
+    std::string statisticTypeToString(StatisticType type);
+    StatisticType stringToStatisticType(const std::string& typeStr);
+    std::string logEntryFieldToString(LogEntryField field);
+    LogEntryField stringToLogEntryField(const std::string& fieldStr);
+}
 
 enum class StatisticType {
     COUNT_BY_LEVEL,         // Count log entries per level
@@ -19,25 +31,120 @@ enum class StatisticType {
     OCCURRENCE_COUNT,       // Count occurrences of a specific pattern/value in a field
     TOP_N_OCCURRENCES,      // Find top N most frequent values in a field
     TIME_RANGE,             // Analyze time distribution (e.g., first/last entry, duration)
-    CUSTOM_AGGREGATION      // Placeholder for future, more complex custom aggregates
+    CUSTOM_AGGREGATION,      // Placeholder for future, more complex custom aggregates
+
+    // New aggregation types for numeric fields
+    SUM,                 // New: Sum of numeric field values
+    AVERAGE,             // New: Average of numeric field values
+    MIN,                 // New: Minimum of numeric field values
+    MAX,                  // New: Maximum of numeric field values
+    UNKNOWN
 };
 
 // Configuration for a single statistic to be generated
 struct StatisticConfig {
     StatisticType type;
-    std::optional<LogEntryField> field; // Field relevant for the statistic (e.g., for OCCURRENCE_COUNT)
+    std::optional<LogEntryField> field; // Field relevant for the statistic (e.g., for OCCURRENCE_COUNT, SUM, AVG)
     std::optional<std::string> pattern; // Pattern to search for (e.g., for OCCURRENCE_COUNT)
     std::optional<int> topN;            // For TOP_N_OCCURRENCES
-    std::optional<std::vector<LogEntryField>> groupByFields; // Group statistics by these fields
 
-    // Constructor for general statistics
+    // New: Field to group statistics by
+    std::optional<LogEntryField> groupByField; 
+
+    // Default constructor
+    StatisticConfig() = default;
+
+    // Constructor for general statistics (no field, pattern, topN, groupByField)
     StatisticConfig(StatisticType t) : type(t) {}
-    // Constructor for field-specific statistics
+
+    // Constructor for field-specific statistics (e.g., COUNT_BY_LEVEL, SUM, AVG, MIN, MAX without group by)
     StatisticConfig(StatisticType t, LogEntryField f) : type(t), field(f) {}
-    // Constructor for pattern-specific statistics
-    StatisticConfig(StatisticType t, LogEntryField f, std::string p) : type(t), field(f), pattern(std::move(p)) {}
+
+    // Constructor for field-specific statistics with group by (e.g., SUM, AVG, MIN, MAX with group by)
+    StatisticConfig(StatisticType t, LogEntryField f, LogEntryField groupBy) 
+        : type(t), field(f), groupByField(groupBy) {}
+
+    // Constructor for pattern-specific statistics (e.g., OCCURRENCE_COUNT)
+    StatisticConfig(StatisticType t, LogEntryField f, std::string p) 
+        : type(t), field(f), pattern(std::move(p)) {}
+
     // Constructor for top N occurrences
-    StatisticConfig(StatisticType t, LogEntryField f, int n) : type(t), field(f), topN(n) {}
+    StatisticConfig(StatisticType t, LogEntryField f, int n) 
+        : type(t), field(f), topN(n) {}
+
+    // Constructor for pattern-specific statistics with group by (e.g., OCCURRENCE_COUNT group by)
+    StatisticConfig(StatisticType t, LogEntryField f, std::string p, LogEntryField groupBy) 
+        : type(t), field(f), pattern(std::move(p)), groupByField(groupBy) {}
+
+    // Constructor for top N occurrences with group by
+    StatisticConfig(StatisticType t, LogEntryField f, int n, LogEntryField groupBy) 
+        : type(t), field(f), topN(n), groupByField(groupBy) {}
+
+
+// --- JSON Conversion for StatisticConfig ---
+inline void to_json(nlohmann::json& j, const StatisticConfig& sc) {
+    j = nlohmann::json{
+        {"type", Utils::statisticTypeToString(sc.type)}
+    };
+    if (sc.field) {
+        j["field"] = Utils::logEntryFieldToString(*sc.field);
+    }
+    if (sc.pattern) {
+        j["pattern"] = *sc.pattern;
+    }
+    if (sc.topN) {
+        j["topN"] = *sc.topN;
+    }
+    if (sc.groupByField) {
+        j["groupByField"] = Utils::logEntryFieldToString(*sc.groupByField);
+    }
+}
+
+inline void from_json(const nlohmann::json& j, StatisticConfig& sc) {
+    std::vector<std::string> errors;
+
+    if (j.contains("type") && j.at("type").is_string()) {
+        sc.type = Utils::stringToStatisticType(j.at("type").get<std::string>());
+    } else {
+        errors.push_back("StatisticConfig is missing or has invalid 'type'.");
+    }
+
+    if (j.contains("field") && j.at("field").is_string()) {
+        std::string fieldStr = j.at("field").get<std::string>();
+        // IMPORTANT: stringToLogEntryField only handles standard fields.
+        // If custom fields can be used here, this needs adjustment.
+        sc.field = Utils::stringToLogEntryField(fieldStr); 
+        if (sc.field == LogEntryField::UNKNOWN && fieldStr != "UNKNOWN") {
+             errors.push_back("StatisticConfig has an unrecognized 'field' string: " + fieldStr);
+        }
+    } // field is optional
+
+    if (j.contains("pattern") && j.at("pattern").is_string()) {
+        sc.pattern = j.at("pattern").get<std::string>();
+    } // pattern is optional
+
+    if (j.contains("topN") && j.at("topN").is_number_integer()) {
+        sc.topN = j.at("topN").get<int>();
+    } // topN is optional
+
+    if (j.contains("groupByField") && j.at("groupByField").is_string()) {
+        std::string groupByFieldStr = j.at("groupByField").get<std::string>();
+        sc.groupByField = Utils::stringToLogEntryField(groupByFieldStr);
+        if (sc.groupByField == LogEntryField::UNKNOWN && groupByFieldStr != "UNKNOWN") {
+             errors.push_back("StatisticConfig has an unrecognized 'groupByField' string: " + groupByFieldStr);
+        }
+    } // groupByField is optional
+
+    if (!errors.empty()) {
+        throw nlohmann::json::exception(errors.size(), errors[0].c_str());
+    }
+}
+// New: Enum for how statistics results should be presented
+enum class StatisticOutputFormat {
+    PLAINTEXT_TABLE, // Default
+    JSON,
+    CSV,
+    UNKNOWN
 };
 
 

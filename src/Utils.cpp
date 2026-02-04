@@ -443,4 +443,150 @@ success_parse_date:
     return std::make_pair(startOfDay, endOfDay);
 }
 
+// Helper to convert LogEntryField enum to string
+std::string logEntryFieldToString(LogEntryField field) {
+    switch (field) {
+        case LogEntryField::TIMESTAMP: return "TIMESTAMP";
+        case LogEntryField::LEVEL: return "LEVEL";
+        case LogEntryField::MESSAGE: return "MESSAGE";
+        case LogEntryField::SOURCE_FILE: return "SOURCE_FILE";
+        case LogEntryField::LINE_NUMBER: return "LINE_NUMBER";
+        case LogEntryField::THREAD_ID: return "THREAD_ID";
+        case LogEntryField::MODULE: return "MODULE";
+        case LogEntryField::HOST: return "HOST";
+        case LogEntryField::CUSTOM: return "CUSTOM";
+        case LogEntryField::STRUCTURED_FIELD: return "STRUCTURED_FIELD";
+        default: return "UNKNOWN";
+    }
+}
+
+// Helper to convert string to LogEntryField enum.
+LogEntryField stringToLogEntryField(const std::string& fieldStr) {
+    if (fieldStr == "TIMESTAMP") return LogEntryField::TIMESTAMP;
+    if (fieldStr == "LEVEL") return LogEntryField::LEVEL;
+    if (fieldStr == "MESSAGE") return LogEntryField::MESSAGE;
+    if (fieldStr == "SOURCE_FILE") return LogEntryField::SOURCE_FILE;
+    if (fieldStr == "LINE_NUMBER") return LogEntryField::LINE_NUMBER;
+    if (fieldStr == "THREAD_ID") return LogEntryField::THREAD_ID;
+    if (fieldStr == "MODULE") return LogEntryField::MODULE;
+    if (fieldStr == "HOST") return LogEntryField::HOST;
+    if (fieldStr == "CUSTOM") return LogEntryField::CUSTOM;
+    if (fieldStr == "STRUCTURED_FIELD") return LogEntryField::STRUCTURED_FIELD;
+    return LogEntryField::UNKNOWN;
+}
+
+// Helper to convert FilterOperator enum to string
+std::string filterOperatorToString(FilterOperator op) {
+    switch (op) {
+        case FilterOperator::EQUALS: return "EQUALS";
+        case FilterOperator::NOT_EQUALS: return "NOT_EQUALS";
+        case FilterOperator::CONTAINS: return "CONTAINS";
+        case FilterOperator::NOT_CONTAINS: return "NOT_CONTAINS"; // Corrected from DOES_NOT_CONTAIN
+        case FilterOperator::STARTS_WITH: return "STARTS_WITH";
+        case FilterOperator::ENDS_WITH: return "ENDS_WITH";
+        case FilterOperator::GREATER_THAN: return "GREATER_THAN";
+        case FilterOperator::LESS_THAN: return "LESS_THAN";
+        case FilterOperator::GREATER_THAN_OR_EQUAL: return "GREATER_THAN_OR_EQUAL";
+        case FilterOperator::LESS_THAN_OR_EQUAL: return "LESS_THAN_OR_EQUAL";
+        default: return "UNKNOWN";
+    }
+}
+
+// Helper to convert string to FilterOperator enum
+FilterOperator stringToFilterOperator(const std::string& opStr) {
+    if (opStr == "EQUALS") return FilterOperator::EQUALS;
+    if (opStr == "NOT_EQUALS") return FilterOperator::NOT_EQUALS;
+    if (opStr == "CONTAINS") return FilterOperator::CONTAINS;
+    if (opStr == "NOT_CONTAINS") return FilterOperator::NOT_CONTAINS;
+    if (opStr == "STARTS_WITH") return FilterOperator::STARTS_WITH;
+    if (opStr == "ENDS_WITH") return FilterOperator::ENDS_WITH;
+    if (opStr == "GREATER_THAN") return FilterOperator::GREATER_THAN;
+    if (opStr == "LESS_THAN") return FilterOperator::LESS_THAN;
+    if (opStr == "GREATER_THAN_OR_EQUAL") return FilterOperator::GREATER_THAN_OR_EQUAL;
+    if (opStr == "LESS_THAN_OR_EQUAL") return FilterOperator::LESS_THAN_OR_EQUAL;
+    return FilterOperator::UNKNOWN;
+}
+
+// Helper to convert FilterLogicalOperator to string
+std::string filterLogicalOperatorToString(FilterLogicalOperator op) {
+    switch (op) {
+        case FilterLogicalOperator::AND: return "AND";
+        case FilterLogicalOperator::OR: return "OR";
+        case FilterLogicalOperator::NOT: return "NOT";
+        default: return "UNKNOWN";
+    }
+}
+
+// Helper to convert string to FilterLogicalOperator
+FilterLogicalOperator stringToFilterLogicalOperator(const std::string& opStr) {
+    if (opStr == "AND") return FilterLogicalOperator::AND;
+    if (opStr == "OR") return FilterLogicalOperator::OR;
+    if (opStr == "NOT") return FilterLogicalOperator::NOT;
+    return FilterLogicalOperator::UNKNOWN;
+}
+
+// Helper to convert ExportFormat enum to string
+std::string exportFormatToString(ExportFormat format) {
+    switch (format) {
+        case ExportFormat::PLAINTEXT: return "PLAINTEXT";
+        case ExportFormat::JSON: return "JSON";
+        case ExportFormat::CSV: return "CSV";
+        case ExportFormat::XML: return "XML";
+        default: return "UNKNOWN";
+    }
+}
+
+// Helper to convert string to ExportFormat enum
+ExportFormat stringToExportFormat(const std::string& formatStr) {
+    if (formatStr == "PLAINTEXT") return ExportFormat::PLAINTEXT;
+    if (formatStr == "JSON") return ExportFormat::JSON;
+    if (formatStr == "CSV") return ExportFormat::CSV;
+    if (formatStr == "XML") return ExportFormat::XML;
+    return ExportFormat::UNKNOWN;
+}
+
+// Helper to convert StatisticType enum to string
+std::string statisticTypeToString(StatisticType type) {
+    switch (type) {
+        case StatisticType::COUNT_BY_LEVEL: return "COUNT_BY_LEVEL";
+        case StatisticType::TOP_N_OCCURRENCES: return "TOP_N_OCCURRENCES";
+        case StatisticType::OCCURRENCE_COUNT: return "OCCURRENCE_COUNT";
+        case StatisticType::SUM: return "SUM";
+        case StatisticType::AVERAGE: return "AVERAGE";
+        case StatisticType::MIN: return "MIN";
+        case StatisticType::MAX: return "MAX";
+        default: return "UNKNOWN";
+    }
+}
+
+// Helper to convert string to StatisticType enum
+StatisticType stringToStatisticType(const std::string& typeStr) {
+    if (typeStr == "COUNT_BY_LEVEL") return StatisticType::COUNT_BY_LEVEL;
+    if (typeStr == "TOP_N_OCCURRENCES") return StatisticType::TOP_N_OCCURRENCES;
+    if (typeStr == "OCCURRENCE_COUNT") return StatisticType::OCCURRENCE_COUNT;
+    if (typeStr == "SUM") return StatisticType::SUM;
+    if (typeStr == "AVERAGE") return StatisticType::AVERAGE;
+    if (typeStr == "MIN") return StatisticType::MIN;
+    if (typeStr == "MAX") return StatisticType::MAX;
+    return StatisticType::UNKNOWN;
+}
+
+// Helper to convert StatisticOutputFormat enum to string
+std::string statisticOutputFormatToString(StatisticOutputFormat format) {
+    switch (format) {
+        case StatisticOutputFormat::PLAINTEXT_TABLE: return "PLAINTEXT_TABLE";
+        case StatisticOutputFormat::JSON: return "JSON";
+        case StatisticOutputFormat::CSV: return "CSV";
+        default: return "UNKNOWN";
+    }
+}
+
+// Helper to convert string to StatisticOutputFormat enum
+StatisticOutputFormat stringToStatisticOutputFormat(const std::string& formatStr) {
+    if (formatStr == "PLAINTEXT_TABLE") return StatisticOutputFormat::PLAINTEXT_TABLE;
+    if (formatStr == "JSON") return StatisticOutputFormat::JSON;
+    if (formatStr == "CSV") return StatisticOutputFormat::CSV;
+    return StatisticOutputFormat::UNKNOWN;
+}
+
 } // namespace Utils
