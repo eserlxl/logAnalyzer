@@ -19,20 +19,20 @@
 class ILogParser {
 public:
     virtual ~ILogParser() = default;
-    virtual Result<LogEntry> parseLine(std::string_view line,
+    virtual ErrorCode::Result<LogEntry> parseLine(std::string_view line,
                                   size_t lineNumber,
-                                  const std::string& sourceFile) const = 0; // Added sourceFile and Result<LogEntry>
+                                  const std::string& sourceFile) const = 0; // Added sourceFile and ErrorCode::Result<LogEntry>
     virtual std::unique_ptr<ILogParser> clone() const = 0;
     virtual std::string getLineFilterRegex() const { return ".*"; }
     // virtual std::regex getLineFilterRegexCompiled() const; // Removed as per design
 
     // New API for multi-line log processing
-    // Returns an optional Result<LogEntry> if a full log entry is formed.
+    // Returns an optional ErrorCode::Result<LogEntry> if a full log entry is formed.
     // Otherwise, it accumulates the line internally.
-    virtual std::optional<Result<LogEntry>> processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) = 0; // Added sourceFile and Result<LogEntry>
+    virtual std::optional<ErrorCode::Result<LogEntry>> processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) = 0; // Added sourceFile and ErrorCode::Result<LogEntry>
 
     // Call this at the end of input to get any remaining buffered log entries.
-    virtual std::vector<Result<LogEntry>> flushRemaining() = 0; // Changed from ParseResult to Result<LogEntry>
+    virtual std::vector<ErrorCode::Result<LogEntry>> flushRemaining() = 0; // Changed from ParseResult to ErrorCode::Result<LogEntry>
 
     /**
      * @brief Processes a whole stream of log data.
@@ -42,7 +42,7 @@ public:
      */
     virtual void processStream(
         std::istream& inputStream, 
-        const std::function<void(Result<LogEntry>)>& onEntry,
+        const std::function<void(ErrorCode::Result<LogEntry>)>& onEntry,
         const std::string& sourceFile = "stream") = 0;
 
     // New: Returns the raw pattern string used by the parser.
@@ -70,7 +70,7 @@ public:
     static constexpr size_t DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024; // 10 MiB
 
     // Factory function to handle constructor errors
-    static Result<std::unique_ptr<DefaultLogParser>> create( // Changed to Result
+    static ErrorCode::Result<std::unique_ptr<DefaultLogParser>> create( // Changed to Result
         std::string pattern,
         std::vector<FieldMapping> fieldMappings,
         const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings = {},
@@ -96,12 +96,12 @@ public:
     );
 
     // New API for multi-line log processing
-    std::optional<Result<LogEntry>> processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) override; // Changed to Result<LogEntry>
-    std::vector<Result<LogEntry>> flushRemaining() override; // Changed to Result<LogEntry>
+    std::optional<ErrorCode::Result<LogEntry>> processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) override; // Changed to ErrorCode::Result<LogEntry>
+    std::vector<ErrorCode::Result<LogEntry>> flushRemaining() override; // Changed to ErrorCode::Result<LogEntry>
 
     void processStream(
         std::istream& inputStream, 
-        const std::function<void(Result<LogEntry>)>& onEntry,
+        const std::function<void(ErrorCode::Result<LogEntry>)>& onEntry,
         const std::string& sourceFile) override;
 
     std::unique_ptr<ILogParser> clone() const override;
@@ -134,10 +134,10 @@ private:
 
 public:
     // Public override for ILogParser::parseLine
-    Result<LogEntry> parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const override; // Changed to Result<LogEntry>
+    ErrorCode::Result<LogEntry> parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const override; // Changed to ErrorCode::Result<LogEntry>
 
     // Internal parsing logic helper
-    Result<LogEntry> parseLineInternal(std::string_view line, size_t lineNumber, const std::string& sourceFile) const; // Changed to Result<LogEntry>
+    ErrorCode::Result<LogEntry> parseLineInternal(std::string_view line, size_t lineNumber, const std::string& sourceFile) const; // Changed to ErrorCode::Result<LogEntry>
 
     static const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> DEFAULT_LEVEL_MAPPINGS;
 

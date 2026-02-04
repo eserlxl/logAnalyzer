@@ -39,10 +39,10 @@ public:
     LogAnalyzer();
     ~LogAnalyzer(); // Declare destructor to wait for async tasks
     explicit LogAnalyzer(const LogAnalyzerSettings& settings);
-    Result<void> setSettings(const LogAnalyzerSettings& settings);
+    ErrorCode::Result<void> setSettings(const LogAnalyzerSettings& settings);
     const LogAnalyzerSettings& getSettings() const;
     void clear();
-    Result<AnalysisReport> loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
 
     [[deprecated("Use loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction) instead.")]]
     ErrorCode::Result<AnalysisReport> loadAndReplace(const std::string& filePath, const std::string& pattern);
@@ -50,24 +50,24 @@ public:
     const std::vector<LogEntry>& getEntries() const;
     void setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel);
     
-    Result<AnalysisReport> load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
 
     [[deprecated("Use load(const std::string& filePath, CLIConfig::ParserErrorAction) instead.")]]
     std::expected<void, LogParseError> load(const std::string& filePath, const std::string& pattern);
     
-    std::future<Result<AnalysisReport>> loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
+    std::future<ErrorCode::Result<AnalysisReport>> loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
 
     [[deprecated("Use loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction) instead.")]]
     std::future<ErrorCode::Result<AnalysisReport>> loadAsync(const std::string& filePath, const std::string& pattern);
     
-    Result<AnalysisReport> streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
     
-    Result<void> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<void> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction);
 
     [[deprecated("Use analyzeStream(const std::vector<std::string>&, std::function<bool(const LogEntry&)>, CLIConfig::ParserAction) instead.")]]
     std::expected<void, LogParseError> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern);
     
-    Result<AnalysisReport> append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
 
     [[deprecated("Use append(const std::string&, CLIConfig::ParserErrorAction) instead.")]]
     std::expected<void, LogParseError> append(const std::string& filePath, const std::string& pattern);
@@ -75,7 +75,7 @@ public:
     std::span<const LogEntry> getEntriesView() const;
     void exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
     void exportAsJson(std::ostream& out, const FilterCriteria& filter, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
-    Result<std::vector<LogEntry>> getFilteredEntries(const FilterCriteria& criteria) const;
+    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const FilterCriteria& criteria) const;
     std::vector<LogEntry> getSortedFilteredEntries(const FilterCriteria& criteria, SortBy sortBy, SortOrder sortOrder) const;
 
     // Formatting methods
@@ -112,10 +112,10 @@ private:
     std::vector<std::future<void>> pendingAsyncTasks_;
     std::mutex pendingAsyncTasksMutex_;
 
-    Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const FilterCriteria& criteria) const;
+    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const FilterCriteria& criteria) const;
 
     std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
-    Result<void> parseStreamInternal(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction, bool replaceExisting);
+    ErrorCode::Result<void> parseStreamInternal(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction, bool replaceExisting);
 
     void setDefaultFieldMappings(LogAnalyzerSettings& settings);
 

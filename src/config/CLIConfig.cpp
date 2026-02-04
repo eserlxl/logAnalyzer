@@ -6,34 +6,7 @@
 #include <iostream> // For std::cerr
 #include <string_view>
 
-// Define static maps
-const std::map<std::string, LogLevel> CLIConfig::levelMap = {
-    {"DEBUG", LogLevel::DEBUG}, {"INFO", LogLevel::INFO},
-    {"WARNING", LogLevel::WARNING}, {"ERROR", LogLevel::ERROR},
-    {"UNKNOWN", LogLevel::UNKNOWN}, {"TRACE", LogLevel::TRACE}, {"FATAL", LogLevel::FATAL}
-};
-
-const std::map<std::string, CompositeFilter::Logic> CLIConfig::logicMap = {
-    {"AND", CompositeFilter::Logic::AND}, {"OR", CompositeFilter::Logic::OR}
-};
-
-const std::map<std::string, SortBy> CLIConfig::sortMap = {
-    {"time", SortBy::TIMESTAMP}, {"level", SortBy::LEVEL}, {"msg", SortBy::MESSAGE}
-};
-
-const std::map<std::string, SortOrder> CLIConfig::orderMap = {
-    {"asc", SortOrder::ASCENDING}, {"desc", SortOrder::DESCENDING}
-};
-
-const std::map<std::string, CLIConfig::ColorOption> CLIConfig::colorOptionMap = {
-    {"always", CLIConfig::ColorOption::ALWAYS}, {"auto", CLIConfig::ColorOption::AUTO}, {"never", CLIConfig::ColorOption::NEVER}
-};
-
-const std::map<std::string, CLIConfig::ParserErrorAction> CLIConfig::errorActionMap = {
-    {"ignore", CLIConfig::ParserErrorAction::Ignore},
-    {"warn", CLIConfig::ParserErrorAction::Warn},
-    {"throw", CLIConfig::ParserErrorAction::Throw}
-};
+using namespace ErrorCode;
 
 // CLI Parsing
 Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCLI(int argc, char *argv[]) {
@@ -192,7 +165,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     if (appOptions.duration.has_value()) {
         if (appOptions.startTime.has_value() && !appOptions.endTime.has_value()) {
             appOptions.endTime = *appOptions.startTime + *appOptions.duration;
-        } else if (!appOptions.startTime.has_value() && appOptions.endTime.has_value()) {
+        } else if (!appOptions.startTime.has_value() and appOptions.endTime.has_value()) {
             appOptions.startTime = *appOptions.endTime - *appOptions.duration;
         } else if (!appOptions.startTime.has_value() && !appOptions.endTime.has_value()){
             return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --duration requires either --start or --end to be specified."));

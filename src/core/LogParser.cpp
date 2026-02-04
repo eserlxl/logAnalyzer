@@ -21,7 +21,7 @@ std::vector<FieldMapping> getDefaultFieldMappings() {
     return inferredMappings;
 }
 
-Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
+ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     std::string pattern,
     std::vector<FieldMapping> fieldMappings,
     const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
@@ -125,7 +125,7 @@ DefaultLogParser::DefaultLogParser(
 
 void DefaultLogParser::processStream(
     std::istream& inputStream, 
-    const std::function<void(Result<LogEntry>)>& onEntry,
+    const std::function<void(ErrorCode::Result<LogEntry>)>& onEntry,
     const std::string& sourceFile) {
     
     std::string line;
@@ -142,7 +142,7 @@ void DefaultLogParser::processStream(
     }
 }
 
-Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view line, size_t lineNumber, const std::string& sourceFile) const {
+ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view line, size_t lineNumber, const std::string& sourceFile) const {
   LogEntry entry;
   entry.id = lineNumber;
   entry.sourceLineNumber = lineNumber;
@@ -250,8 +250,8 @@ Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view line, size
   // and deciding on the action.
   return entry;
 }
-Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const {
-    Result<LogEntry> result = parseLineInternal(line, lineNumber, sourceFile);
+ErrorCode::Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const {
+    ErrorCode::Result<LogEntry> result = parseLineInternal(line, lineNumber, sourceFile);
 
     if (result.has_value()) {
         LogEntry entry = std::move(result.value());
@@ -270,7 +270,7 @@ Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, size_t lineN
         return entry; // No parsing errors or handled as per action
     } else {
         // Handle cases where parseLineInternal failed completely (e.g., regex mismatch)
-        const Error& error = result.error();
+        const ErrorCode::Error& error = result.error();
         if (_parserErrorAction == CLIConfig::ParserErrorAction::Warn) {
             std::cerr << "Warning (LogParser): " << error.message << std::endl;
             // Return a default-constructed LogEntry with basic info
@@ -299,13 +299,13 @@ Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, size_t lineN
     throw ErrorCode::Error(::Code::Unexpected, "Unhandled parser error action in parseLine.");
 }
 
-std::optional<Result<LogEntry>> DefaultLogParser::processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) {
+std::optional<ErrorCode::Result<LogEntry>> DefaultLogParser::processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) {
     if (!logEntryStartRegex.has_value()) {
         currentLogEntryBuffer.clear();
         bufferedLineNumbers.clear();
         lastProcessedLineNumber = lineNumber;
         // Delegate to parseLine for single-line handling, which already has _parserErrorAction logic
-        // parseLine returns Result<LogEntry>, processLine expects optional<Result<LogEntry>>
+        // parseLine returns ErrorCode::Result<LogEntry>, processLine expects optional<ErrorCode::Result<LogEntry>>
         return std::make_optional(parseLine(line, lineNumber, sourceFile));
     }
 
@@ -336,7 +336,7 @@ std::optional<Result<LogEntry>> DefaultLogParser::processLine(std::string_view l
     if (startsNewEntry) {
         if (!currentLogEntryBuffer.empty()) {
             // Process the buffered entry first
-            Result<LogEntry> prevResult = parseLine(currentLogEntryBuffer, currentLogEntryStartLineNumber, currentLogEntrySourceFile);
+            ErrorCode::Result<LogEntry> prevResult = parseLine(currentLogEntryBuffer, currentLogEntryStartLineNumber, currentLogEntrySourceFile);
 
             // Start new entry for the current line
             currentLogEntryBuffer = lineStr;
@@ -372,10 +372,10 @@ std::optional<Result<LogEntry>> DefaultLogParser::processLine(std::string_view l
     }
 }
 
-std::vector<Result<LogEntry>> DefaultLogParser::flushRemaining() {
-    std::vector<Result<LogEntry>> results;
+std::vector<ErrorCode::Result<LogEntry>> DefaultLogParser::flushRemaining() {
+    std::vector<ErrorCode::Result<LogEntry>> results;
     if (!currentLogEntryBuffer.empty()) {
-        Result<LogEntry> finalResult = parseLine(currentLogEntryBuffer, currentLogEntryStartLineNumber, currentLogEntrySourceFile);
+        ErrorCode::Result<LogEntry> finalResult = parseLine(currentLogEntryBuffer, currentLogEntryStartLineNumber, currentLogEntrySourceFile);
         results.push_back(finalResult);
 
         currentLogEntryBuffer.clear();

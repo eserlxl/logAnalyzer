@@ -2,10 +2,9 @@
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![C++ Standard](https.img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
+[![License: MIT](https.img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
-[![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](./docs/html/index.html)
+[![Doxygen Documentation](httpshttps://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
 
 ## Overview
 
@@ -26,12 +25,7 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 -   [Command-Line Interface (CLI)](#command-line-interface-cli)
 -   [Configuration](#configuration)
 -   [Project Structure](#project-structure)
--   [Prerequisites](#prerequisites)
--   [Building and Installation](#building-and-installation)
-    -   [Getting the Code](#getting-the-code)
-    -   [Compiling the Project](#compiling-the-project)
-    -   [Build Configuration Options](#build-configuration-options)
-    -   [Installing the Executable](#installing-the-executable)
+-   [Getting Started](#getting-started)
 -   [Usage Examples](#usage-examples)
 -   [Running Tests](#running-tests)
 -   [Developer Tools](#developer-tools)
@@ -163,108 +157,97 @@ An example configuration file (`config.json`) might look like this:
 ## Project Structure
 
 ```
-.
+logAnalyzer/
 ├── cmake/                   # CMake modules and scripts
-├── docs/                    # Documentation resources
+├── docs/                    # Documentation files
 ├── include/                 # Public header files
-│   ├── analyzer/            # Analyzer core logic headers
-│   ├── config/              # Configuration and CLI headers
-│   ├── core/                # Core types and parser headers
-│   ├── export/              # Exporting headers
-│   ├── filter/              # Filter logic headers
-│   ├── stats/               # Statistics headers
-│   └── utils/               # Utility headers
-├── src/                     # Source files
-│   ├── analyzer/            # Analyzer implementation
-│   ├── config/              # Configuration implementation
-│   ├── core/                # Core implementation
-│   ├── export/              # Export implementation
-│   ├── filter/              # Filter implementation
-│   ├── stats/               # Statistics implementation
-│   └── utils/               # Utility implementation
+│   ├── analyzer/
+│   ├── config/
+│   ├── core/
+│   ├── export/
+│   ├── filter/
+│   ├── stats/
+│   └── utils/
+├── src/                     # Source code
+│   ├── analyzer/
+│   ├── config/
+│   ├── core/
+│   ├── export/
+│   ├── filter/
+│   ├── stats/
+│   └── utils/
 ├── tests/                   # Unit and integration tests
-├── .gitignore               # Git ignore file
+├── tools/                   # Helper scripts for development
+├── .gitignore
+├── CMakeLists.txt           # Root CMake file
 └── README.md                # This file
 ```
 
-## Prerequisites
+## Getting Started
 
--   **Compiler**: C++23 compatible compiler (e.g., GCC 13+, Clang 16+)
--   **Build System**: CMake 3.20 or higher
--   **Dependencies**: The following dependencies are automatically handled via CMake `FetchContent`:
-    -   [CLI11](https://github.com/CLIUtils/CLI11)
-    -   [nlohmann/json](https://github.com/nlohmann/json)
-    -   [GoogleTest](https://github.com/google/googletest) (for testing)
+### 1. Prerequisites
 
-## Building and Installation
+-   **Compiler**: A C++23 compatible compiler (e.g., GCC 13+, Clang 16+).
+-   **Build System**: CMake 3.20 or higher.
+-   **Version Control**: Git for cloning the repository.
 
-### 1. Getting the Code
+### 2. Build Instructions
 
-First, clone the repository to your local machine:
+First, clone the repository and navigate into the project directory:
 
 ```bash
 git clone https://github.com/eserlxl/logAnalyzer.git
 cd logAnalyzer
 ```
 
-### 2. Compiling the Project
-
-`logAnalyzer` uses CMake for its build system. Follow these steps to compile the project:
+Next, use CMake to configure and build the project. We recommend an out-of-source build.
 
 ```bash
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . --config Release
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build .
 ```
 
-Upon successful compilation, the `logAnalyzer` executable will be located at `build/bin/logAnalyzer`.
+The compiled `logAnalyzer` executable will be available in the `build/bin` directory.
 
-### 3. Build Configuration Options
+#### Build Options
 
-CMake offers several options to customize the build process. These can be set when running `cmake`:
+You can customize the build with the following CMake options:
 
-*   `-DBUILD_TESTING=ON/OFF`: Toggles the compilation of unit tests (Default: `ON`).
-*   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Determines whether to build `logAnalyzer` as a shared library (Default: `OFF`).
-*   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enables various sanitizers for debugging and identifying runtime errors (Default: `None`).
+-   `-DBUILD_TESTING=ON/OFF`: Enable or disable the compilation of tests (default: `ON`).
+-   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Build `logAnalyzer` as a shared library (default: `OFF`).
+-   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enable sanitizers for debugging (default: `None`).
 
-Example of using build options:
+To use an option, add it to the `cmake` command:
 
 ```bash
-cmake -DBUILD_TESTING=OFF -DLOGANALYZER_USE_SANITIZER=Address ..
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 ```
 
-### 4. Installing the Executable
+### 3. Installation
 
-After building, you can install `logAnalyzer` to make it easily accessible.
-
-**Local Installation (e.g., to `dist/` directory within the project):**
-
-This is useful for local testing or packaging.
+To install the `logAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from the `build` directory:
 
 ```bash
-cd build
-cmake --install . --prefix ../dist
-# The executable will be available at ./dist/bin/logAnalyzer
-```
-
-**System-wide Installation (e.g., to `/usr/local`):**
-
-To install `logAnalyzer` to your system's standard directories, you may need to use `sudo`.
-
-```bash
-cd build
 sudo cmake --install . --prefix /usr/local
 ```
 
+For a local installation, you can specify a different prefix:
 
+```bash
+cmake --install . --prefix ../dist
+```
 
 ## Running Tests
+
+To run the test suite, execute `ctest` from the `build` directory:
 
 ```bash
 cd build
 ctest --verbose
 ```
+
 
 ## Usage Examples
 

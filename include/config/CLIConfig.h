@@ -13,8 +13,6 @@
 #include <optional>
 #include <utility> // For std::pair
 
-using namespace ErrorCode;
-
 class CLIConfig {
 public:
     // Nested enums from original LogAnalyzerConfig
@@ -29,12 +27,28 @@ public:
     };
 
     // Static maps for CLI argument parsing
-    static const std::map<std::string, LogLevel> levelMap;
-    static const std::map<std::string, CompositeFilter::Logic> logicMap;
-    static const std::map<std::string, SortBy> sortMap;
-    static const std::map<std::string, SortOrder> orderMap;
-    static const std::map<std::string, ColorOption> colorOptionMap;
-    static const std::map<std::string, ParserErrorAction> errorActionMap;
+    inline static const std::map<std::string, LogLevel> levelMap = {
+        {"DEBUG", LogLevel::DEBUG}, {"INFO", LogLevel::INFO},
+        {"WARNING", LogLevel::WARNING}, {"ERROR", LogLevel::ERROR},
+        {"UNKNOWN", LogLevel::UNKNOWN}, {"TRACE", LogLevel::TRACE}, {"FATAL", LogLevel::FATAL}
+    };
+    inline static const std::map<std::string, CompositeFilter::Logic> logicMap = {
+        {"AND", CompositeFilter::Logic::AND}, {"OR", CompositeFilter::Logic::OR}
+    };
+    inline static const std::map<std::string, SortBy> sortMap = {
+        {"time", SortBy::TIMESTAMP}, {"level", SortBy::LEVEL}, {"msg", SortBy::MESSAGE}
+    };
+    inline static const std::map<std::string, SortOrder> orderMap = {
+        {"asc", SortOrder::ASCENDING}, {"desc", SortOrder::DESCENDING}
+    };
+    inline static const std::map<std::string, ColorOption> colorOptionMap = {
+        {"always", ColorOption::ALWAYS}, {"auto", ColorOption::AUTO}, {"never", ColorOption::NEVER}
+    };
+    inline static const std::map<std::string, ParserErrorAction> errorActionMap = {
+        {"ignore", ParserErrorAction::Ignore},
+        {"warn", ParserErrorAction::Warn},
+        {"throw", ParserErrorAction::Throw}
+    };
 
     struct CLIOptions { // Renamed from CLIAppOptions
         std::vector<std::string> filePaths;
@@ -75,7 +89,7 @@ public:
     };
 
     // CLI parsing function - now returns a pair of LogAnalyzerSettings and CLIOptions
-    static Result<std::pair<LogAnalyzerSettings, CLIOptions>> parseCLI(int argc, char *argv[]);
+    static ErrorCode::Result<std::pair<LogAnalyzerSettings, CLIOptions>> parseCLI(int argc, char *argv[]);
 };
 
 #endif // CLICONFIG_H

@@ -75,11 +75,11 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std
     return {parsedEntries, report};
 }
 
-Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
     std::unique_lock<std::shared_mutex> lock(stateMutex_);
     std::ifstream file(filePath);
     if (!file.is_open()) {
-        return std::unexpected(Error::fileNotReadable(filePath));
+        return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
     }
 
     entries_.clear();
@@ -99,7 +99,7 @@ Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, 
     return report;
 }
 
-Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, const std::string& pattern) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, const std::string& pattern) {
     LogAnalyzerSettings oldSettings = getSettings();
     LogAnalyzerSettings tempSettings = oldSettings;
     // Existing code before the if block:
@@ -113,7 +113,7 @@ Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, 
     }
     
     // Attempt to set temporary settings. Handle potential errors from setSettings.
-    // H3: Ensure setSettings errors are propagated. Assuming setSettings returns Result<void> or similar.
+    // H3: Ensure setSettings errors are propagated. Assuming setSettings returns ErrorCode::Result<void> or similar.
     if (auto res = setSettings(tempSettings); !res) {
         // Create a report for the error, but return a Result for the function.
         AnalysisReport report_error; // This report_error is local and only used to extract details.
@@ -128,10 +128,10 @@ Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, 
         }
         // Return an unexpected result with an appropriate error.
         // Mapping LogParseError details to a generic Error type.
-        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, report_error.parseErrors[0].message));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, report_error.parseErrors[0].message));
     }
 
-    // Load the file using the temporary settings. This call returns Result<AnalysisReport>.
+    // Load the file using the temporary settings. This call returns ErrorCode::Result<AnalysisReport>.
     auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
 
     // Restore original settings. This must happen regardless of whether loading succeeded or failed.
@@ -142,10 +142,10 @@ Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, 
         if (!reportResult.has_value()) {
              // If load failed, and restore also failed, return the load error.
              // We might want to capture the restore error as well if possible, but for now, focus on propagating the load error.
-             // Assuming the underlying error type for `Result<AnalysisReport>` is `Error`.
+             // Assuming the underlying error type for `ErrorCode::Result<AnalysisReport>` is `Error`.
              // If `reportResult.error()` is not an `Error` object, this would need adjustment.
              // For now, assume it's compatible or implicitly convertible.
-             return std::unexpected(ErrorCode::Error(::Code::SettingsRestoreFailed, "Failed to restore original settings after load: " + res.error().message));
+             return std::unexpected(ErrorCode::Error(Code::SettingsRestoreFailed, "Failed to restore original settings after load: " + res.error().message));
         }
         // If load succeeded but restore failed, we still return the successful load result, but log the restore error.
     }
@@ -166,7 +166,7 @@ const AnalysisReport& LogAnalyzer::getLastReport() const {
     return lastReport;
 }
 
-Result<AnalysisReport> LogAnalyzer::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
     auto reportResult = loadAndReplace(filePath, errorAction);
     if (!reportResult) {
         return std::unexpected(reportResult.error());
@@ -211,14 +211,14 @@ std::expected<void, LogParseError> LogAnalyzer::load(const std::string& filePath
     return {};
 }
 
-std::future<Result<AnalysisReport>> LogAnalyzer::loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
     return std::async(std::launch::async, [this, filePath, errorAction]() {
         return load(filePath, errorAction);
     });
 }
 
 std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std::string& filePath, const std::string& pattern) {
-    return std::async(std::launch::async, [this, filePath, pattern]() -> Result<AnalysisReport> {
+    return std::async(std::launch::async, [this, filePath, pattern]() -> ErrorCode::Result<AnalysisReport> {
         LogAnalyzerSettings oldSettings = getSettings();
         LogAnalyzerSettings tempSettings = oldSettings;
 
@@ -234,7 +234,7 @@ std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std:
             AnalysisReport report_error;
             report_error.status = ParseError::INVALID_REGEX_PATTERN;
             report_error.parseErrors.push_back({ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
-            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, res.error().message));
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, res.error().message));
         }
 
         auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
@@ -247,7 +247,7 @@ std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std:
     });
 }
 
-Result<AnalysisReport> LogAnalyzer::streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
     auto [newEntries, report] = parseAndReport(is, sourceIdentifier, errorAction);
 
     std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
@@ -286,7 +286,7 @@ Result<AnalysisReport> LogAnalyzer::streamIn(std::istream& is, const std::string
     return report;
 }
 
-Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
     for (const auto& filePath : filePaths) {
         std::istream* input;
         std::ifstream file;
@@ -295,7 +295,7 @@ Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePath
         } else {
             file.open(filePath);
             if (!file.is_open()) {
-                 return std::unexpected(Error::fileNotReadable(filePath));
+                 return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
             }
             input = &file;
         }
@@ -386,10 +386,10 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
     return {};
 }
 
-Result<AnalysisReport> LogAnalyzer::append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
-        return std::unexpected(Error::fileNotReadable(filePath));
+        return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
     }
 
     auto [newEntries, report] = parseAndReport(file, filePath, errorAction);
@@ -448,7 +448,7 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
         return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
     }
 
-    // Corrected call to the other append overload which returns Result<AnalysisReport>.
+    // Corrected call to the other append overload which returns ErrorCode::Result<AnalysisReport>.
     auto reportResult = append(filePath, CLIConfig::ParserErrorAction::Warn);
 
     // Restore original settings. Log errors if they occur, but prioritize the outcome of append.
@@ -458,7 +458,7 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
         // If append succeeded but restore failed, we log the restore error and return success for the append operation.
         if (!reportResult) {
              // Propagate the error from append.
-             // Map Result<AnalysisReport> error to LogParseError.
+             // Map ErrorCode::Result<AnalysisReport> error to LogParseError.
              const auto& error = reportResult.error(); // Assuming this is an Error object.
              return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, error.message, 0});
         }

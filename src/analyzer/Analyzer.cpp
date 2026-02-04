@@ -26,7 +26,6 @@
 #include "config/Config.h" // Renamed from LogAnalyzerConfig.h
 #include "config/CLIConfig.h"
 
-using namespace ErrorCode;
 
 LogAnalyzer::LogAnalyzer()
     : currentSettings_(),
@@ -95,7 +94,7 @@ LogAnalyzer::~LogAnalyzer() {
     }
 }
 
-Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
+ErrorCode::Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
     std::unique_lock<std::shared_mutex> lock(stateMutex_); // Use unique_lock for modifying methods
     currentSettings_ = settings; // Assign directly, no move as settings is const&
     customLogLevelMapping_ = settings.customLogLevelMappings; // Update LogAnalyzer's own mapping

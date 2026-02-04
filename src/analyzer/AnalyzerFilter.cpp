@@ -8,14 +8,13 @@
 
 #include "core/Error.h" // Explicitly include Error.h
 
-using namespace ErrorCode; // Add this to bring ErrorCode members into scope
 
-Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
+ErrorCode::Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
     std::shared_lock<std::shared_mutex> lock(stateMutex_); // Lock for thread safety (read-only)
     return getFilteredEntries_NoLock(criteria);
 }
 
-Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
+ErrorCode::Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
     std::vector<LogEntry> filtered;
     
     auto composite = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
@@ -34,7 +33,7 @@ Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(const Filte
         auto regexFilterResult = RegexFilter::create(criteria.regexPattern);
         if (!regexFilterResult.has_value()) {
             // Forward the error from RegexFilter::create, which is std::string
-            return std::unexpected(ErrorCode::Error(::Code::InvalidRegex, regexFilterResult.error().toString()));
+            return std::unexpected(ErrorCode::Error(Code::InvalidRegex, regexFilterResult.error().toString()));
         }
         composite->add(regexFilterResult.value());
     }
