@@ -1,6 +1,6 @@
 # LogAnalyzer
 
-[![Build Status](https://github.com/your-username/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/logAnalyzer/actions/workflows/ci.yml)
+[![Build Status](https://github.com/(organization_name)/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/(organization_name)/logAnalyzer/actions/workflows/ci.yml) <!-- Replace (organization_name) with your actual GitHub organization or username -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 
@@ -46,6 +46,8 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
     -   Map custom log level strings (e.g., `FATAL=ERROR`).
     -   Custom timestamp formats using `strftime` patterns.
     -   Configurable log line patterns via regular expressions.
+    -   **Multi-line Log Entry Recognition**: Define a regular expression (`--log-entry-start-pattern`) to identify the beginning of new log entries, allowing proper parsing of logs that span multiple lines.
+    -   **Case-Sensitive Parsing**: Control whether parsing (e.g., regex patterns, keyword matching) is case-sensitive (`--case-sensitive-parsing`).
 -   **Statistical Analysis**:
     -   Unique message counts and top N frequent messages.
     -   Log frequency distribution over time windows.
@@ -53,6 +55,7 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
     -   Percentile analysis (e.g., p99) and log burst detection.
 -   **Flexible Export**: Save results in Text, JSON, CSV, YAML, or XML formats.
 -   **Contextual Viewing**: Display surrounding lines (N before, M after) for filtered entries.
+-   **Multi-line Log Entry Support**: Define a regex pattern to identify the start of a new log entry, enabling the parsing of logs that span multiple lines.
 
 ## Prerequisites
 
@@ -87,7 +90,7 @@ Follow these steps to quickly build and run `logAnalyzer` on your system.
 
 ## Building the Project
 
-To build the `logAnalyzer` executable and its associated libraries:
+To build the `logAnalyzer` project executable (`LogAnalyzer`) and its associated libraries:
 
 ```bash
 mkdir build
@@ -150,7 +153,7 @@ The `logAnalyzer` tool is primarily operated via command-line arguments. For a c
 # Analyze multiple files
 ./LogAnalyzer log1.log log2.log
 
-# Save summary to file
+# Save summary to file (results are printed to stdout by default; --output redirects them to a file)
 ./LogAnalyzer app.log --output summary.txt
 
 # Monitor new log entries in real-time (tail mode)
@@ -223,13 +226,50 @@ The `logAnalyzer` tool is primarily operated via command-line arguments. For a c
 # Map custom log level strings (e.g., 'FATAL' in log files should be treated as 'ERROR')
 ./LogAnalyzer app.log --map-level FATAL=ERROR --level ERROR
 
+# Process multi-line log entries by defining a start pattern (e.g., lines starting with a timestamp)
+./LogAnalyzer app.log --log-entry-start-pattern "^\\d{4}-\\d{2}-\\d{2}"
+
+# Enable case-sensitive parsing for all regex patterns and keywords
+./LogAnalyzer app.log --case-sensitive-parsing
+
 # Process multiple files with a specific configuration file
 ./LogAnalyzer file1.log file2.log --config my_config.json
+
+### Configuration File Example
+
+You can define complex configurations in a JSON file (e.g., `my_config.json`) and apply them using the `--config` option. This is useful for saving frequently used settings or for managing multiple configurations.
+
+```json
+{
+  "log-pattern": "^\\[(.*?)\\] ([A-Z]+): (.*)$",
+  "pattern-fields": ["timestamp", "level", "message"],
+  "map-level": {
+    "FATAL": "ERROR",
+    "CRITICAL": "ERROR"
+  },
+  "filters": {
+    "level": ["ERROR", "WARNING"],
+    "keyword": "database",
+    "case-insensitive": true,
+    "start": "2023-10-27 00:00:00",
+    "end": "now"
+  },
+  "output": {
+    "format": "json",
+    "pretty": true,
+    "file": "filtered_errors.json"
+  },
+  "tail": false
+}
+```
+
+This configuration file would be equivalent to running:
+`./LogAnalyzer file1.log file2.log --log-pattern "^\\[(.*?)\\] ([A-Z]+): (.*)$" --pattern-fields "timestamp,level,message" --map-level FATAL=ERROR --map-level CRITICAL=ERROR --level ERROR,WARNING --keyword "database" --case-insensitive --start "2023-10-27 00:00:00" --end "now" --format json --pretty --output filtered_errors.json`
 ```
 
 ## Developer Tools
 
-If Doxygen and Clang-Format are installed on your system, you can use these convenient targets:
+If Doxygen and Clang-Format are installed on your system, you can use these convenient targets *after* configuring the project with CMake:
 
 ```bash
 # Generate API documentation (HTML, LaTeX, etc.)
