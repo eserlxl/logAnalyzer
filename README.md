@@ -2,7 +2,6 @@
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
-[![Build Status](https://github.com/your-org-or-username/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org-or-username/logAnalyzer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](./docs/html/index.html)
@@ -36,7 +35,7 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 -   **Multi-File Support**: Parses and analyzes multiple log files at once.
 -   **Structured Field Parsing**: Automatically parses log messages into key-value pairs using custom delimiters.
 -   **Advanced Filtering**: Filter by keywords, regular expressions, log levels, and time ranges.
--   **Flexible Export**: Save results in Text, JSON, or CSV formats.
+-   **Flexible Export**: Save results in Text, JSON, CSV, or YAML formats.
 -   **Statistical Analysis**: Generate statistics on your log data, such as entry rates and top messages.
 
 ## Command-Line Interface (CLI)
@@ -51,11 +50,12 @@ Run `./bin/logAnalyzer --help` for a full list of commands.
 | --- | --- | --- | --- |
 | `--help` | `-h` | Shows the help message. | |
 | `--config FILE` | | Load configuration from a JSON file. | |
+| `--pattern REGEX` | | Custom regex for parsing log lines (overrides config). | |
 | `--output FILE` | | Redirect output to a file. | (stdout) |
 | `--color OPT` | | Controls colorized output (`always`, `auto`, `never`). | `auto` |
 | `--stream` | | Enable stream mode to process entries without loading the entire file into memory. | `false` |
 | `--on-parse-error OPT`| | Action on parse errors (`ignore`, `warn`, `throw`). | `warn` |
-| `--stdin` | | Read log entries from standard input if no file paths are provided. | `false` |
+| `--stdin` | | Read log entries from standard input (use `-` as filename). | `false` |
 
 ### Filtering and Sorting
 
@@ -80,11 +80,9 @@ Run `./bin/logAnalyzer --help` for a full list of commands.
 
 | Option | Description | Default |
 | --- | --- | --- |
-| `--format [text\|json\|csv]` | Sets the output format. | `text` |
-| `--text-format TEXT` | Custom format string for `text` output (e.g., `"{timestamp} [{level}] {message}"`). | |
+| `--format [text\|json\|csv\|yaml]` | Sets the output format. | `text` |
+| `--text-format TEXT` | Custom format string for `text` output. Available: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}` |
 | `--csv-sep CHAR` | Separator character for `csv` output. | `,` |
-| `--csv-fields LIST` | Ordered list of fields for CSV output. | |
-| `--json-fields LIST` | Ordered list of fields for JSON output. | |
 | `--pretty` | Pretty-print `json` output. | `false` |
 | `--include-summary` | Include a summary section in `json` output. | `false` |
 
@@ -97,7 +95,7 @@ Run `./bin/logAnalyzer --help` for a full list of commands.
 
 ## Configuration
 
-`logAnalyzer` can be configured using a JSON configuration file for persistent setups.
+`logAnalyzer` can be configured using a JSON configuration file for persistent setups. Use the `--config` option to load a file. Note that command-line arguments (like `--pattern` or filter options) will override settings found in the configuration file.
 
 An example configuration file (`config.json`) might look like this:
 
@@ -186,11 +184,16 @@ cd logAnalyzer
 ```bash
 mkdir build
 cd build
-cmake ..
-cmake --build .
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release
 ```
 
-After a successful build, the executable will be located at `./bin/logAnalyzer` relative to your build directory.
+After a successful build, the executable will be generated. You can optionally install it to a local `bin` directory for easier access:
+
+```bash
+cmake --install . --prefix dist
+# Executable is now at ./dist/bin/logAnalyzer
+```
 
 ### Build Configuration Options
 
@@ -215,10 +218,7 @@ cd build
 cmake --install . --prefix /usr/local
 ```
 
-For detailed help, run:
-```bash
-./bin/logAnalyzer --help
-```
+
 
 ## Running Tests
 
@@ -254,6 +254,18 @@ ctest --verbose
 ```bash
 # Process a large log file without loading it all into memory
 ./bin/logAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
+```
+
+### Standard Input
+
+`logAnalyzer` supports reading from standard input, making it easy to integrate into pipelines:
+
+```bash
+# Pipe logs from another command
+cat /var/log/syslog | ./bin/logAnalyzer --stdin --level ERROR
+
+# Alternatively, use '-' as the filename
+tail -f /var/log/app.log | ./bin/logAnalyzer - --keyword "error"
 ```
 
 ### Statistical Analysis

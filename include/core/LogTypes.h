@@ -40,6 +40,7 @@ namespace Utils {
 // New enum to specify which LogEntry field a regex capture group maps to
 enum class LogEntryField {
   UNKNOWN,
+  ID, // Added for export purposes
   TIMESTAMP,
   LEVEL,
   MESSAGE,

@@ -70,6 +70,7 @@ std::string getDirectory(const std::string& filePath) {
 // LogEntryField
 std::string logEntryFieldToString(LogEntryField field) {
     switch (field) {
+        case LogEntryField::ID: return "ID";
         case LogEntryField::TIMESTAMP: return "TIMESTAMP";
         case LogEntryField::LEVEL: return "LEVEL";
         case LogEntryField::MESSAGE: return "MESSAGE";
@@ -88,6 +89,7 @@ LogEntryField stringToLogEntryField(const std::string& fieldStr) {
     std::string upperFieldStr = fieldStr;
     std::transform(upperFieldStr.begin(), upperFieldStr.end(), upperFieldStr.begin(), ::toupper);
 
+    if (upperFieldStr == "ID") return LogEntryField::ID;
     if (upperFieldStr == "TIMESTAMP") return LogEntryField::TIMESTAMP;
     if (upperFieldStr == "LEVEL") return LogEntryField::LEVEL;
     if (upperFieldStr == "MESSAGE") return LogEntryField::MESSAGE;
@@ -96,7 +98,7 @@ LogEntryField stringToLogEntryField(const std::string& fieldStr) {
     if (upperFieldStr == "THREAD_ID") return LogEntryField::THREAD_ID;
     if (upperFieldStr == "MODULE") return LogEntryField::MODULE;
     if (upperFieldStr == "HOST") return LogEntryField::HOST;
-    if (upperFieldStr == "CUSTOM") return LogEntryField::CUSTOM;
+    if (upperFieldStr == "CUSTOM") return LogEntryField::CUSTOM; // Added handling for CUSTOM
     if (upperFieldStr == "STRUCTURED_FIELD") return LogEntryField::STRUCTURED_FIELD;
     return LogEntryField::UNKNOWN;
 }

@@ -46,10 +46,10 @@ inline void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
     std::vector<std::string> errors;
 
     if (j.contains("field") && j.at("field").is_string()) {
-        efm.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
-        // Note: stringToLogEntryField assumes standard fields. Custom fields would need special handling here.
-        if (efm.field == LogEntryField::UNKNOWN && j.at("field").get<std::string>() != "UNKNOWN") {
-             errors.push_back("ExportFieldMapping has an unrecognized field: " + j.at("field").get<std::string>());
+        std::string fieldStr = j.at("field").get<std::string>();
+        efm.field = Utils::stringToLogEntryField(fieldStr);
+        if (efm.field == LogEntryField::UNKNOWN && fieldStr != "UNKNOWN") {
+             errors.push_back("ExportFieldMapping has an unrecognized field: " + fieldStr);
         }
     } else {
         errors.push_back("ExportFieldMapping is missing or has invalid 'field'.");
@@ -73,15 +73,14 @@ struct ExportSettings {
     ExportFormat format = ExportFormat::PLAINTEXT;
     std::vector<ExportFieldMapping> fieldsToExport; // If empty, export all available fields
     bool includeHeader = true; // For CSV/table formats
+    std::optional<int> jsonIndent; // For JSON pretty printing (e.g., 4 for 4 spaces)
+    char separator = ','; // For CSV files
+    std::string textFormatString = "{timestamp} [{level}] {message}"; // For PLAINTEXT format
+    bool useAnsiColors = false; // For PLAINTEXT format
     // Add more options as needed, e.g., compression, encoding
 
     // Constructor to provide sane defaults for common use cases.
-    ExportSettings() {
-        // Default fields for plaintext/csv export if none specified
-        fieldsToExport.emplace_back(LogEntryField::TIMESTAMP, "Timestamp");
-        fieldsToExport.emplace_back(LogEntryField::LEVEL, "Level");
-        fieldsToExport.emplace_back(LogEntryField::MESSAGE, "Message");
-    }
+    ExportSettings() = default; // Leave fieldsToExport empty to signal "export all standard fields"
 };
 
 // --- JSON Conversion for ExportSettings ---
@@ -90,11 +89,21 @@ inline void to_json(nlohmann::json& j, const ExportSettings& es) {
         {"outputPath", es.outputPath},
         {"format", Utils::exportFormatToString(es.format)},
         {"fieldsToExport", es.fieldsToExport}, // Uses ExportFieldMapping to_json
-        {"includeHeader", es.includeHeader}
+        {"includeHeader", es.includeHeader},
+        {"separator", std::string(1, es.separator)},
+        {"textFormatString", es.textFormatString},
+        {"useAnsiColors", es.useAnsiColors}
     };
+    if (es.jsonIndent) {
+        j["jsonIndent"] = *es.jsonIndent;
+    }
 }
 
 inline void from_json(const nlohmann::json& j, ExportSettings& es) {
+    // Default construct ensures fieldsToExport is empty by default, indicating "all standard fields"
+    // if no specific fieldsToExport are provided in JSON.
+    es = ExportSettings(); 
+
     if (j.contains("outputPath")) {
         if (j.at("outputPath").is_string()) {
             es.outputPath = j.at("outputPath").get<std::string>();
@@ -130,8 +139,39 @@ inline void from_json(const nlohmann::json& j, ExportSettings& es) {
         if (j.at("includeHeader").is_boolean()) {
             es.includeHeader = j.at("includeHeader").get<bool>();
         } else {
-            // As per existing logic, if present but invalid type, default to true
-            es.includeHeader = true; 
+            throw std::runtime_error("ExportSettings: 'includeHeader' has invalid type. Expected boolean."); 
+        }
+    }
+
+    if (j.contains("jsonIndent")) {
+        if (j.at("jsonIndent").is_number_integer()) {
+            es.jsonIndent = j.at("jsonIndent").get<int>();
+        } else {
+            throw std::runtime_error("ExportSettings: 'jsonIndent' has invalid type. Expected integer.");
+        }
+    }
+
+    if (j.contains("separator")) {
+        if (j.at("separator").is_string() && j.at("separator").get<std::string>().length() == 1) {
+            es.separator = j.at("separator").get<std::string>().at(0);
+        } else {
+            throw std::runtime_error("ExportSettings: 'separator' has invalid type or length. Expected a single character string.");
+        }
+    }
+
+    if (j.contains("textFormatString")) {
+        if (j.at("textFormatString").is_string()) {
+            es.textFormatString = j.at("textFormatString").get<std::string>();
+        } else {
+            throw std::runtime_error("ExportSettings: 'textFormatString' has invalid type. Expected string.");
+        }
+    }
+
+    if (j.contains("useAnsiColors")) {
+        if (j.at("useAnsiColors").is_boolean()) {
+            es.useAnsiColors = j.at("useAnsiColors").get<bool>();
+        } else {
+            throw std::runtime_error("ExportSettings: 'useAnsiColors' has invalid type. Expected boolean.");
         }
     }
 }
@@ -141,26 +181,31 @@ class LogAnalyzer;
 
 class Exporter {
 public:
+    // New unified export method that takes ExportSettings
+    void exportLogEntries(
+        std::ostream& os, 
+        const std::vector<LogEntry>& entries, 
+        const ExportSettings& settings);
+
+private:
     // Exports filtered log entries as JSON
     void exportAsJson(
         std::ostream& os, 
         const std::vector<LogEntry>& entries, 
-        bool prettyPrint);
+        const ExportSettings& settings);
 
     // Exports filtered log entries as CSV
     void exportAsCsv(
         std::ostream& os, 
         const std::vector<LogEntry>& entries, 
-        char separator);
+        const ExportSettings& settings);
 
     // Placeholder for text export (can be enhanced later)
     void exportAsText(
         std::ostream& os, 
         const std::vector<LogEntry>& entries, 
-        const std::string& formatString,
-        bool useColors);
+        const ExportSettings& settings);
 
-private:
     // Helper to format a single log entry for text output
     std::string formatEntryForText(
         const LogEntry& entry, 
