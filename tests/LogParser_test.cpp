@@ -123,10 +123,10 @@ TEST(LogParserTest, StructuredFieldExplicitMappingWithEnhancedKeys) {
     ASSERT_TRUE(result.success);
     ASSERT_TRUE(result.success);
     ASSERT_EQ(result.entry.message, "User logged in.");
-    ASSERT_EQ(result.entry.structuredFields.size(), 3);
-    ASSERT_EQ(result.entry.structuredFields["user.id"], "123");
-    ASSERT_EQ(result.entry.structuredFields["event-name"], "login-success");
-    ASSERT_EQ(result.entry.structuredFields["proc_time"], "1.23s");
+    ASSERT_EQ(result.entry.customFields.size(), 3);
+    ASSERT_EQ(result.entry.customFields["user.id"], "123");
+    ASSERT_EQ(result.entry.customFields["event-name"], "login-success");
+    ASSERT_EQ(result.entry.customFields["proc_time"], "1.23s");
 }
 
 // Test legacy structured field parsing from message with enhanced key regex
@@ -147,8 +147,8 @@ TEST(LogParserTest, LegacyStructuredFieldFromMessageWithEnhancedKeys) {
     ASSERT_TRUE(result.success);
     ASSERT_EQ(result.entry.level, LogLevel::INFO);
     ASSERT_EQ(result.entry.message, "User action, session.id=abc-123, action-type=\"view-page\", request_duration=100ms.");
-    ASSERT_EQ(result.entry.structuredFields.size(), 3);
-    ASSERT_EQ(result.entry.structuredFields["session.id"], "abc-123");
-    ASSERT_EQ(result.entry.structuredFields["action-type"], "view-page");
-    ASSERT_EQ(result.entry.structuredFields["request_duration"], "100ms");
+    ASSERT_EQ(result.entry.customFields.size(), 3);
+    ASSERT_EQ(result.entry.customFields["session.id"], "abc-123");
+    ASSERT_EQ(result.entry.customFields["action-type"], "view-page");
+    ASSERT_EQ(result.entry.customFields["request_duration"], "100ms");
 }

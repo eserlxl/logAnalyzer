@@ -1,5 +1,6 @@
 #include "CLIConfig.h"
 #include "Utils.h"
+#include "Error.h" // Add this include
 #include <CLI/CLI.hpp>
 #include <algorithm> // For std::transform
 #include <iostream> // For std::cerr
@@ -29,13 +30,15 @@ const std::map<std::string, CLIConfig::ColorOption> CLIConfig::colorOptionMap = 
 };
 
 const std::map<std::string, CLIConfig::ParserErrorAction> CLIConfig::errorActionMap = {
-    {"skip", CLIConfig::ParserErrorAction::SKIP_LINE}, {"log", CLIConfig::ParserErrorAction::LOG_AND_SKIP}, {"fail", CLIConfig::ParserErrorAction::FAIL}
+    {"skip", CLIConfig::ParserErrorAction::Skip},    // Updated
+    {"warn", CLIConfig::ParserErrorAction::Warn},    // Updated
+    {"fail", CLIConfig::ParserErrorAction::Fail}
 };
 
 // CLI Parsing
-std::expected<std::pair<LogAnalyzerSettings, CLIConfig::CLIAppOptions>, std::string> CLIConfig::parseCLI(int argc, char *argv[]) {
+Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCLI(int argc, char *argv[]) {
     LogAnalyzerSettings settings;
-    CLIAppOptions appOptions;
+    CLIOptions appOptions;
     CLI::App app{"Log Analyzer Tool"};
 
     app.set_config("--config", "", "Read options from a configuration file", false);
@@ -108,13 +111,15 @@ std::expected<std::pair<LogAnalyzerSettings, CLIConfig::CLIAppOptions>, std::str
 
     app.add_option("--csv-sep", appOptions.csvSeparator, "Custom separator for CSV output (defaults to ',')");
     app.add_option("--csv-fields", appOptions.csvFields, "Ordered list of fields for CSV output (e.g., timestamp,level,message)");
+    app.add_option("--json-fields", appOptions.jsonFields, "Ordered list of fields for JSON output (e.g., timestamp,level,message)");
 
     // Analysis Options
-    app.add_flag("--unique-messages", appOptions.showUniqueMessages, "Show counts of unique messages");
+    app.add_flag("--stdin", appOptions.readFromStdin, "Read log entries from standard input (stdin) if no file paths are provided.");
     
-    auto *topMsgOpt = app.add_flag("--top-messages", appOptions.showTopMessages, "Show top N most frequent messages");
-    app.add_option("top_n", appOptions.topMessagesCount, "Number of top messages to show")
-       ->needs(topMsgOpt);
+    app.add_option("--stats", appOptions.enabledStatistics, "Enable statistics collectors (e.g., unique_messages,top_messages:10)");
+
+    app.add_option("--top-n", appOptions.topMessagesCount, "Number of top messages to show for top_messages statistic")
+       ->check(CLI::PositiveNumber);
 
     app.add_flag("--stream", appOptions.streamMode, "Enable streaming mode for large files");
 
@@ -143,8 +148,6 @@ std::expected<std::pair<LogAnalyzerSettings, CLIConfig::CLIAppOptions>, std::str
     int gapDurationMs = 0;
     app.add_option("--find-gaps", gapDurationMs, "Find time gaps longer than X ms");
 
-    app.add_flag("--rate", appOptions.showEntryRate, "Calculate and show average log entry rate");
-
     // New options from Iteration 7 Design
     app.add_option("--on-parse-error", appOptions.parserErrorAction, "Action on parse error (skip, log, fail)")
        ->transform(CLI::CheckedTransformer(CLIConfig::errorActionMap, CLI::ignore_case));
@@ -161,7 +164,7 @@ std::expected<std::pair<LogAnalyzerSettings, CLIConfig::CLIAppOptions>, std::str
     } catch (const CLI::Error &e) {
         std::stringstream ss;
         app.exit(e, ss, ss);
-        return std::unexpected(ss.str());
+        return std::unexpected(Error(Error::Code::InvalidCLIOption, ss.str()));
     }
 
     // Post-processing options
@@ -170,7 +173,7 @@ std::expected<std::pair<LogAnalyzerSettings, CLIConfig::CLIAppOptions>, std::str
         if (parsedDuration.has_value()) {
             appOptions.duration = parsedDuration.value();
         } else {
-            return std::unexpected("Error parsing --duration: " + parsedDuration.error());
+            return std::unexpected(Error(Error::Code::InvalidArgument, "Error parsing --duration: " + parsedDuration.error()));
         }
     }
 
@@ -180,7 +183,7 @@ std::expected<std::pair<LogAnalyzerSettings, CLIConfig::CLIAppOptions>, std::str
         } else if (!appOptions.startTime.has_value() && appOptions.endTime.has_value()) {
             appOptions.startTime = *appOptions.endTime - *appOptions.duration;
         } else if (!appOptions.startTime.has_value() && !appOptions.endTime.has_value()){
-            return std::unexpected("Error: --duration requires either --start or --end to be specified.");
+            return std::unexpected(Error(Error::Code::InvalidArgument, "Error: --duration requires either --start or --end to be specified."));
         }
     }
 
@@ -188,15 +191,27 @@ std::expected<std::pair<LogAnalyzerSettings, CLIConfig::CLIAppOptions>, std::str
     if(gapDurationMs > 0) appOptions.findGapsDuration = std::chrono::milliseconds(gapDurationMs);
     if(appOptions.tailMode) appOptions.tailInterval = std::chrono::milliseconds(tailIntervalMs);
 
-    // Logic Validation
-    if (appOptions.streamMode && (appOptions.showUniqueMessages || appOptions.showTopMessages)) {
-        return std::unexpected("Error: --stream is incompatible with --unique-messages or --top-messages.");
+    // Logic Validation for input sources and mode compatibility
+    bool stdinExplicitlyRequested = app.get_option("stdin")->count() > 0;
+    bool stdinViaDash = (std::find(appOptions.filePaths.begin(), appOptions.filePaths.end(), "-") != appOptions.filePaths.end());
+
+    if (stdinViaDash) {
+        // If '-' is present in filePaths, set readFromStdin to true and remove '-'
+        appOptions.readFromStdin = true;
+        auto it = std::remove(appOptions.filePaths.begin(), appOptions.filePaths.end(), "-");
+        appOptions.filePaths.erase(it, appOptions.filePaths.end());
     }
-    if (appOptions.filePaths.empty()) {
-        return std::unexpected("Error: No log files provided. Use '-' for stdin or provide file paths.\n" + app.help());
+
+    if (appOptions.readFromStdin && !appOptions.filePaths.empty()) {
+        return std::unexpected(Error(Error::Code::InvalidArgument, "Error: Cannot specify --stdin (or '-') and other file paths simultaneously."));
     }
-    if (appOptions.tailMode && (std::find(appOptions.filePaths.begin(), appOptions.filePaths.end(), "-") != appOptions.filePaths.end())) {
-        return std::unexpected("Error: --tail mode is not compatible with stdin ('-').");
+
+    if (!appOptions.readFromStdin && appOptions.filePaths.empty()) {
+        return std::unexpected(Error(Error::Code::InvalidArgument, "Error: No log files or --stdin provided. Please specify input sources.\n" + app.help()));
+    }
+
+    if (appOptions.tailMode && appOptions.readFromStdin) {
+        return std::unexpected(Error(Error::Code::InvalidArgument, "Error: --tail mode is not compatible with --stdin."));
     }
 
     return std::make_pair(settings, appOptions);

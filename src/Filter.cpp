@@ -8,11 +8,11 @@
 
 namespace Detail {
     std::optional<std::string> getNestedValue(const LogEntry& entry, const std::string& fieldPath) {
-        // Since LogEntry::structuredFields is a map<string, string>,
+        // Since LogEntry::customFields is a map<string, string>,
         // "nested" access means searching for a key that matches the full path.
         // E.g., for "user.id", it looks for a key "user.id".
-        auto it = entry.structuredFields.find(fieldPath);
-        if (it != entry.structuredFields.end()) {
+        auto it = entry.customFields.find(fieldPath);
+        if (it != entry.customFields.end()) {
             return it->second;
         }
         return std::nullopt;
@@ -51,8 +51,8 @@ NumericComparisonFilter::NumericComparisonFilter(std::string fieldKey, double va
     : fieldKey_(std::move(fieldKey)), value_(value), op_(op) {}
 
 bool NumericComparisonFilter::matches(const LogEntry &entry) const {
-    auto it = entry.structuredFields.find(fieldKey_);
-    if (it == entry.structuredFields.end()) {
+    auto it = entry.customFields.find(fieldKey_);
+    if (it == entry.customFields.end()) {
         return false; // Field not found
     }
 
@@ -78,8 +78,8 @@ BoolFilter::BoolFilter(std::string fieldKey, bool value)
     : fieldKey_(std::move(fieldKey)), value_(value) {}
 
 bool BoolFilter::matches(const LogEntry &entry) const {
-    auto it = entry.structuredFields.find(fieldKey_);
-    if (it == entry.structuredFields.end()) {
+    auto it = entry.customFields.find(fieldKey_);
+    if (it == entry.customFields.end()) {
         return false; // Field not found
     }
 
@@ -185,8 +185,8 @@ ValueSetFilter::ValueSetFilter(std::string fieldKey, std::set<std::string> value
 }
 
 bool ValueSetFilter::matches(const LogEntry &entry) const {
-    auto it = entry.structuredFields.find(fieldKey_);
-    if (it == entry.structuredFields.end()) {
+    auto it = entry.customFields.find(fieldKey_);
+    if (it == entry.customFields.end()) {
         return false; // Field not found
     }
 
@@ -262,7 +262,7 @@ bool SourceFileFilter::matches(const LogEntry &entry) const {
     FieldExistsFilter::FieldExistsFilter(std::string fieldKey) : fieldKey_(std::move(fieldKey)) {}
 
 bool FieldExistsFilter::matches(const LogEntry &entry) const {
-    return entry.structuredFields.count(fieldKey_) > 0;
+    return entry.customFields.count(fieldKey_) > 0;
 }
 
 FieldValueFilter::FieldValueFilter(std::string fieldKey, std::string valuePattern, PatternType type, bool caseSensitive)
@@ -280,8 +280,8 @@ FieldValueFilter::FieldValueFilter(std::string fieldKey, std::string valuePatter
 }
 
 bool FieldValueFilter::matches(const LogEntry &entry) const {
-    auto it = entry.structuredFields.find(fieldKey_);
-    if (it == entry.structuredFields.end()) {
+    auto it = entry.customFields.find(fieldKey_);
+    if (it == entry.customFields.end()) {
         return false; // Field not found
     }
 
@@ -353,12 +353,12 @@ bool KeywordFilter::matches(const LogEntry &entry) const {
     }
 }
 
-std::expected<std::shared_ptr<RegexFilter>, std::string> RegexFilter::create(std::string pattern, bool caseSensitive) {
+Result<std::shared_ptr<RegexFilter>> RegexFilter::create(std::string pattern, bool caseSensitive) {
     try {
         // Use 'new' to call the private constructor, then wrap in shared_ptr
         return std::shared_ptr<RegexFilter>(new RegexFilter(std::move(pattern), caseSensitive));
     } catch (const std::regex_error& e) {
-        return std::unexpected<std::string>("Invalid regex pattern: " + std::string(e.what()));
+        return std::unexpected(Error(Error::Code::InvalidRegex, "Invalid regex pattern: " + std::string(e.what())));
     }
 }
 

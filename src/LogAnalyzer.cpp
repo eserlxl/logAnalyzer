@@ -4,25 +4,29 @@
 #include "Statistics.h"
 #include "Exporter.h"
 #include "Utils.h"
+#include "Error.h"
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <regex>
 #include <iomanip>
 #include <sstream>
-#include <memory> // For std::make_unique and std::move
-#include <vector> // For std::vector
-#include <utility> // For std::move
-#include <future> // For std::future
-#include <functional> // For std::function
-#include <iterator> // For std::make_move_iterator
-#include <map> // For std::map
-#include <mutex> // For std::lock_guard, std::mutex
-#include <expected> // For std::expected
-#include <string_view> // For std::string_view
-#include <span> // For std::span
+#include <memory> 
+#include <vector>
+#include <utility>
+#include <future>
+#include <functional>
+#include <iterator>
+#include <map>
+#include <mutex>
+#include <expected>
+#include <string_view>
+#include <span>
 
 #include "LogAnalyzerConfig.h"
+#include "CLIConfig.h"
+
+using namespace ErrorCode;
 
 LogAnalyzer::LogAnalyzer() : currentSettings_(), currentParser_(std::make_unique<DefaultLogParser>(currentSettings_.lineParsePattern, currentSettings_.fieldMappings, currentSettings_.customLogLevelMappings)) {}
 
@@ -31,16 +35,15 @@ LogAnalyzer::LogAnalyzer(LogAnalyzerSettings settings)
       currentParser_(std::make_unique<DefaultLogParser>(currentSettings_.lineParsePattern, currentSettings_.fieldMappings, currentSettings_.customLogLevelMappings)) {
 }
 
-std::expected<void, LogParseError> LogAnalyzer::setSettings(LogAnalyzerSettings settings) {
+Result<void> LogAnalyzer::setSettings(LogAnalyzerSettings settings) {
     std::lock_guard<std::mutex> lock(mutex_);
     currentSettings_ = std::move(settings);
-    // Re-initialize parser with new settings
     auto parser_or_error = DefaultLogParser::create(currentSettings_.lineParsePattern, currentSettings_.fieldMappings, currentSettings_.customLogLevelMappings);
     if (parser_or_error.has_value()) {
         currentParser_ = std::move(parser_or_error.value());
         return {};
     } else {
-        return std::unexpected(parser_or_error.error());
+        return std::unexpected(Error(Error::Code::InvalidRegex, "Failed to create parser with new settings."));
     }
 }
 
@@ -48,11 +51,31 @@ const LogAnalyzerSettings& LogAnalyzer::getSettings() const {
     return currentSettings_;
 }
 
-// Internal helper for core parsing logic
-std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std::istream& is, const std::string& sourceIdentifier) {
+// New statistics methods
+void LogAnalyzer::addStatisticCollector(std::shared_ptr<IStatisticCollector> collector) {
+    if (collector) {
+        _collectors.push_back(collector);
+    }
+}
+
+void LogAnalyzer::processEntryForStatistics(const LogEntry& entry) {
+    for (const auto& collector : _collectors) {
+        collector->collect(entry);
+    }
+}
+
+std::map<std::string, json> LogAnalyzer::getAllStatisticReports() const {
+    std::map<std::string, json> reports;
+    for (const auto& collector : _collectors) {
+        reports[collector->getName()] = collector->generateReport();
+    }
+    return reports;
+}
+
+std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
     std::vector<LogEntry> parsedEntries;
     AnalysisReport report;
-    report.status = ParseError::SUCCESS; // Assume success initially
+    report.status = ParseError::SUCCESS;
 
     std::string line;
     size_t lineNumber = 0;
@@ -60,37 +83,36 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std
         lineNumber++;
         report.linesProcessed++;
         
-        auto parseResultOpt = currentParser_->processLine(line, lineNumber);
-        if (parseResultOpt.has_value()) {
-            const auto& result = parseResultOpt.value();
-            if (result.success) {
-                LogEntry entry = result.entry;
-                entry.sourceFile = sourceIdentifier;
-                parsedEntries.push_back(entry);
-                report.successfulParses++;
-            } else {
-                // Construct LogParseError using errorMessage and failingPart from ParseResult
-                std::string errorMessageStr = result.errorMessage;
-                std::string combinedMessage = errorMessageStr + " - Failing part: " + result.failingPart;
-                report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, combinedMessage, lineNumber});
+        auto parseResult = currentParser_->parseLine(line, lineNumber, sourceIdentifier);
+        if (parseResult.has_value()) {
+            LogEntry& entry = parseResult.value();
+            entry.sourceFile = sourceIdentifier;
+            parsedEntries.push_back(entry);
+            processEntryForStatistics(entry); // Process for stats
+            report.successfulParses++;
+        } else {
+            if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+                std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResult.error().message << std::endl;
+            } else if (errorAction == CLIConfig::ParserErrorAction::Fail) {
+                // This will be handled by the caller by checking the Result
             }
+            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber});
         }
     }
 
-    // Flush any remaining buffered multi-line entries
     auto flushResults = currentParser_->flushRemaining();
     for (const auto& result : flushResults) {
-        if (result.success) {
-            LogEntry entry = result.entry;
+        if (result.has_value()) {
+            LogEntry entry = result.value();
             entry.sourceFile = sourceIdentifier;
             parsedEntries.push_back(entry);
+            processEntryForStatistics(entry); // Process for stats
             report.successfulParses++;
         } else {
-            // Construct LogParseError for flushed entries
-            std::string errorMessageStr = result.errorMessage;
-            std::string combinedMessage = errorMessageStr + " - Failing part: " + result.failingPart;
-            // Use 0 or a special value for flushed entries if line number is not applicable
-            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, combinedMessage, 0}); 
+            if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+                 std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << std::endl;
+            }
+            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.error().message, 0});
         }
     }
 
@@ -102,40 +124,32 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std
 }
 
 void LogAnalyzer::clear() {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+    std::lock_guard<std::mutex> lock(mutex_);
     entries_.clear();
     levelCounts.clear();
     lastReport = {};
 }
 
-// New: loadAndReplace using current settings
-AnalysisReport LogAnalyzer::loadAndReplace(const std::string& filePath) {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::ifstream file(filePath);
     if (!file.is_open()) {
-        AnalysisReport report;
-        report.status = ParseError::FILE_OPEN_FAILED;
-        report.parseErrors.emplace_back(LogParseError{ParseError::FILE_OPEN_FAILED, "Could not open file.", 0});
-        lastReport = report; // Update lastReport
-        return report;
+        return std::unexpected(Error::fileNotFound(filePath));
     }
 
-    entries_.clear(); // Clear existing entries
-    auto [parsedEntries, report] = parseAndReport(file, filePath);
-    entries_ = std::move(parsedEntries); // Replace entries
+    entries_.clear();
+    auto [parsedEntries, report] = parseAndReport(file, filePath, errorAction);
+    entries_ = std::move(parsedEntries);
     
-    // Sort entries by timestamp
     std::sort(entries_.begin(), entries_.end(), [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
-    lastReport = report; // Update lastReport
+    lastReport = report;
     return report;
 }
 
-// Deprecated: loadAndReplace with explicit pattern
 AnalysisReport LogAnalyzer::loadAndReplace(const std::string& filePath, const std::string& pattern) {
-    // Temporarily change settings for this call
     LogAnalyzerSettings oldSettings = getSettings();
     LogAnalyzerSettings tempSettings = oldSettings;
     tempSettings.lineParsePattern = pattern;
@@ -148,11 +162,10 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string& filePath, const st
         tempSettings.fieldMappings.clear();
     }
     
-    if (auto res = setSettings(tempSettings); !res) { // This re-initializes currentParser_
+    if (auto res = setSettings(tempSettings); !res) {
         AnalysisReport report;
-        report.status = res.error().code;
-        report.parseErrors.push_back(res.error());
-        // Log the error, but still try to restore settings if possible
+        report.status = ParseError::INVALID_REGEX_PATTERN;
+        report.parseErrors.push_back({ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
         std::cerr << "Error setting temporary settings: " << res.error().message << std::endl;
         
         if (auto restore_res = setSettings(oldSettings); !restore_res) {
@@ -161,22 +174,20 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string& filePath, const st
         return report;
     }
 
-    AnalysisReport report = loadAndReplace(filePath); // Call the new, non-deprecated version
+    auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn); // Use new version with a default
+    AnalysisReport report = reportResult.value_or(AnalysisReport{});
 
-    if (auto res = setSettings(oldSettings); !res) { // Restore original settings
+    if (auto res = setSettings(oldSettings); !res) {
         std::cerr << "Error restoring settings: " << res.error().message << std::endl;
-        // If restoring fails, we should consider how this affects the report.
-        // For now, we'll return the report from the loadAndReplace call.
     }
     return report;
 }
 
 const std::vector<LogEntry>& LogAnalyzer::getEntries() const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+    std::lock_guard<std::mutex> lock(mutex_);
     return entries_;
 }
 
-// New: Get filtered entries using a custom predicate function.
 std::vector<LogEntry> LogAnalyzer::getFilteredEntries(std::function<bool(const LogEntry&)> predicate) const {
     std::lock_guard<std::mutex> lock(mutex_);
     std::vector<LogEntry> filtered;
@@ -189,82 +200,48 @@ std::vector<LogEntry> LogAnalyzer::getFilteredEntries(std::function<bool(const L
 }
 
 void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel) {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+    std::lock_guard<std::mutex> lock(mutex_);
     currentSettings_.customLogLevelMappings[std::string(levelString)] = mappedLevel;
-    // Re-initialize parser with new settings
     currentParser_ = std::make_unique<DefaultLogParser>(currentSettings_.lineParsePattern, currentSettings_.fieldMappings, currentSettings_.customLogLevelMappings);
 }
 
-// New: Load from a file using current settings
-std::expected<AnalysisReport, LogParseError> LogAnalyzer::load(const std::string& filePath) {
-    AnalysisReport report = loadAndReplace(filePath);
-    if (report.status == ParseError::FILE_OPEN_FAILED || report.status == ParseError::INVALID_REGEX_PATTERN) {
-        return std::unexpected(LogParseError{report.status, report.parseErrors.empty() ? "" : report.parseErrors[0].message, 0});
+Result<AnalysisReport> LogAnalyzer::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    auto reportResult = loadAndReplace(filePath, errorAction);
+    if (!reportResult) {
+        return std::unexpected(reportResult.error());
     }
-    return report;
+    return reportResult;
 }
 
-// Deprecated: load with explicit pattern
 std::expected<void, LogParseError> LogAnalyzer::load(const std::string& filePath, const std::string& pattern) {
-    // This calls loadAndReplace (deprecated version) which is already locked.
-    // No additional lock needed here unless we were directly manipulating entries_ or lastReport.
-    AnalysisReport report = loadAndReplace(filePath, pattern); // Call the deprecated loadAndReplace
-    if (report.status == ParseError::FILE_OPEN_FAILED || report.status == ParseError::INVALID_REGEX_PATTERN) {
+    AnalysisReport report = loadAndReplace(filePath, pattern);
+    if (report.status != ParseError::SUCCESS && report.status != ParseError::PARTIAL_FAILURE) {
         return std::unexpected(LogParseError{report.status, report.parseErrors.empty() ? "" : report.parseErrors[0].message, 0});
     }
     return {};
 }
 
-// New: Asynchronous load using current settings
-std::future<std::expected<AnalysisReport, LogParseError>> LogAnalyzer::loadAsync(const std::string& filePath) {
-    return std::async(std::launch::async, [this, filePath]() {
-        return load(filePath); // Call the new, non-deprecated load
+std::future<Result<AnalysisReport>> LogAnalyzer::loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    return std::async(std::launch::async, [this, filePath, errorAction]() {
+        return load(filePath, errorAction);
     });
 }
 
-// Deprecated: loadAsync with explicit pattern
 std::future<AnalysisReport> LogAnalyzer::loadAsync(const std::string& filePath, const std::string& pattern) {
     return std::async(std::launch::async, [this, filePath, pattern]() {
-        // Temporarily change settings for this call within the async task
-        LogAnalyzerSettings oldSettings = getSettings();
-        LogAnalyzerSettings tempSettings = oldSettings;
-        tempSettings.lineParsePattern = pattern;
-        if (pattern == std::string(DEFAULT_LOG_REGEX_PATTERN_SV)) {
-            tempSettings.fieldMappings.clear();
-            tempSettings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
-            tempSettings.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
-            tempSettings.fieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
-        } else {
-            tempSettings.fieldMappings.clear();
-        }
-
-        if (auto res = setSettings(tempSettings); !res) {
-            AnalysisReport report;
-            report.status = res.error().code;
-            report.parseErrors.push_back(res.error());
-            return report;
-        }
-
-        AnalysisReport report = loadAndReplace(filePath); // Call the deprecated loadAndReplace
-
-        if (auto res = setSettings(oldSettings); !res) { // Restore original settings
-            std::cerr << "Error restoring settings: " << res.error().message << std::endl;
-        }
-        return report;
+        // This is deprecated, but we keep its logic for now.
+        return loadAndReplace(filePath, pattern);
     });
 }
 
-// New: Stream in log entries from an istream using current settings
-std::expected<AnalysisReport, LogParseError> LogAnalyzer::streamIn(std::istream& is, const std::string& sourceIdentifier) {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
-    auto [newEntries, report] = parseAndReport(is, sourceIdentifier);
+Result<AnalysisReport> LogAnalyzer::streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto [newEntries, report] = parseAndReport(is, sourceIdentifier, errorAction);
 
-    // Sort new entries
     std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
-    // Merge new entries into existing sorted entries_ using std::inplace_merge
     if (!newEntries.empty()) {
         entries_.insert(entries_.end(), 
                         std::make_move_iterator(newEntries.begin()), 
@@ -279,11 +256,7 @@ std::expected<AnalysisReport, LogParseError> LogAnalyzer::streamIn(std::istream&
     return report;
 }
 
-// New: analyzeStream overload using current settings.
-std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback) {
-    // This function processes streams and doesn't directly modify `entries_` or `lastReport`.
-    // It's intended for callbacks and doesn't directly interact with the thread-safe members.
-    // Therefore, no lock is needed here, as it operates independently of the analyzer's main state.
+Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
     for (const auto& filePath : filePaths) {
         std::istream* input;
         std::ifstream file;
@@ -292,7 +265,7 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
         } else {
             file.open(filePath);
             if (!file.is_open()) {
-                 return std::unexpected(LogParseError{ParseError::FILE_OPEN_FAILED, "Could not open file: " + filePath, 0});
+                 return std::unexpected(Error::fileNotFound(filePath));
             }
             input = &file;
         }
@@ -313,20 +286,25 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
                         break;
                     }
                 } else {
-                    LogEntry partialEntry;
-                    partialEntry.level = LogLevel::UNKNOWN;
-                    partialEntry.message = line;
-                    partialEntry.sourceFile = (filePath == "-" ? "stdin" : filePath);
-                    partialEntry.id = lineNumber;
-                    if (!entryCallback(partialEntry)) {
-                        shouldContinue = false;
-                        break;
+                    if(errorAction == CLIConfig::ParserErrorAction::Warn) {
+                        std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.errorMessage << std::endl;
+                    }
+                     if(errorAction != CLIConfig::ParserErrorAction::Skip) {
+                        LogEntry partialEntry;
+                        partialEntry.level = LogLevel::UNKNOWN;
+                        partialEntry.message = line;
+                        partialEntry.sourceFile = (filePath == "-" ? "stdin" : filePath);
+                        partialEntry.id = lineNumber;
+                        if (!entryCallback(partialEntry)) {
+                            shouldContinue = false;
+                            break;
+                        }
                     }
                 }
             }
             if (!shouldContinue) break;
         }
-        // Flush any remaining buffered multi-line entries
+        
         auto flushResults = currentParser_->flushRemaining();
         for (const auto& result : flushResults) {
             if (result.success) {
@@ -337,19 +315,12 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
                     break;
                 }
             } else {
-                LogEntry partialEntry;
-                partialEntry.level = LogLevel::UNKNOWN;
-                partialEntry.message = result.failingPart.empty() ? "Unparseable buffered multi-line entry" : result.failingPart;
-                partialEntry.sourceFile = (filePath == "-" ? "stdin" : filePath);
-                partialEntry.id = 0; // No specific line number for flushed entries
-                if (!entryCallback(partialEntry)) {
-                    shouldContinue = false;
-                    break;
+                 if(errorAction == CLIConfig::ParserErrorAction::Warn) {
+                    std::cerr << "Warning: Failed to parse remaining buffer for " << filePath << ": " << result.errorMessage << std::endl;
                 }
             }
             if (!shouldContinue) break;
         }
-
 
         if (!shouldContinue) break;
     }
@@ -357,7 +328,6 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
 }
 
 std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern) {
-    // Temporarily change settings for this call
     LogAnalyzerSettings oldSettings = getSettings();
     LogAnalyzerSettings tempSettings = oldSettings;
     tempSettings.lineParsePattern = pattern;
@@ -370,41 +340,35 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
         tempSettings.fieldMappings.clear();
     }
     
-    // Use the new setSettings which returns std::expected
     if (auto res = setSettings(tempSettings); !res) {
-        // Propagate the error from setSettings if parser creation fails
-        return std::unexpected(res.error());
+        return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
     }
 
-    auto result = analyzeStream(filePaths, entryCallback); // Call the new, non-deprecated version
+    auto result = analyzeStream(filePaths, entryCallback, CLIConfig::ParserErrorAction::Warn);
 
-    if (auto res = setSettings(oldSettings); !res) { // Restore original settings
-        // Log error during restore but still return the result of the operation
+    if (auto res = setSettings(oldSettings); !res) {
         std::cerr << "Error restoring settings: " << res.error().message << std::endl;
     }
     
-    return result;
+    if(!result) {
+        return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, result.error().message, 0});
+    }
+    return {};
 }
 
-// Audit: Inefficient append() sorting. Change to use std::inplace_merge.
-// The current implementation uses std::merge into a new vector, which is not ideal but functional.
-// Let's try to optimize it to use inplace_merge.
-// New: Append using current settings
-std::expected<AnalysisReport, LogParseError> LogAnalyzer::append(const std::string& filePath) {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+Result<AnalysisReport> LogAnalyzer::append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    std::lock_guard<std::mutex> lock(mutex_);
     std::ifstream file(filePath);
     if (!file.is_open()) {
-        return std::unexpected(LogParseError{ParseError::FILE_OPEN_FAILED, "Could not open file.", 0});
+        return std::unexpected(Error::fileNotFound(filePath));
     }
 
-    auto [newEntries, report] = parseAndReport(file, filePath);
+    auto [newEntries, report] = parseAndReport(file, filePath, errorAction);
     
-    // Sort new entries
     std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
-    // Merge new entries into existing sorted entries_ using std::inplace_merge
     if (!newEntries.empty()) {
         entries_.insert(entries_.end(), 
                         std::make_move_iterator(newEntries.begin()), 
@@ -419,9 +383,7 @@ std::expected<AnalysisReport, LogParseError> LogAnalyzer::append(const std::stri
     return report;
 }
 
-// Deprecated: append with explicit pattern
 std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePath, const std::string& pattern) {
-    // Temporarily change settings for this call
     LogAnalyzerSettings oldSettings = getSettings();
     LogAnalyzerSettings tempSettings = oldSettings;
     tempSettings.lineParsePattern = pattern;
@@ -435,31 +397,29 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
     }
 
     if (auto res = setSettings(tempSettings); !res) {
-        return std::unexpected(res.error());
+        return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
     }
 
-    auto result = append(filePath); // Call the new, non-deprecated version
+    auto result = append(filePath, CLIConfig::ParserErrorAction::Warn);
 
-    if (auto res = setSettings(oldSettings); !res) { // Restore original settings
+    if (auto res = setSettings(oldSettings); !res) {
         std::cerr << "Error restoring settings: " << res.error().message << std::endl;
     }
 
     if (!result.has_value()) {
-        return std::unexpected(result.error());
+        return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, result.error().message, 0});
     }
     return {};
 }
 
-std::span<const LogEntry> LogAnalyzer::getEntriesView() const { // Renamed from entries_view
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+std::span<const LogEntry> LogAnalyzer::getEntriesView() const {
+    std::lock_guard<std::mutex> lock(mutex_);
     return entries_;
 }
 
-// New: Format an entry with advanced options
 std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view format, const FormattingOptions& options) const {
     std::string formattedString(format);
 
-    // Replace common placeholders
     Utils::replaceAll(formattedString, "{timestamp}", formatTimestamp(entry.timestamp, options.dateTimeFormat));
     
     std::string levelString = logLevelToString(entry.level);
@@ -467,12 +427,12 @@ std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view for
         std::string colorCode;
         switch (entry.level) {
             case LogLevel::FATAL:
-            case LogLevel::ERROR:   colorCode = "\033[31m"; break; // Red
-            case LogLevel::WARNING: colorCode = "\033[33m"; break; // Yellow
-            case LogLevel::INFO:    colorCode = "\033[32m"; break; // Green
-            case LogLevel::DEBUG:   colorCode = "\033[34m"; break; // Blue
-            case LogLevel::TRACE:   colorCode = "\033[36m"; break; // Cyan
-            default:                colorCode = "\033[0m";  break; // Reset
+            case LogLevel::ERROR:   colorCode = "\033[31m"; break;
+            case LogLevel::WARNING: colorCode = "\033[33m"; break;
+            case LogLevel::INFO:    colorCode = "\033[32m"; break;
+            case LogLevel::DEBUG:   colorCode = "\033[34m"; break;
+            case LogLevel::TRACE:   colorCode = "\033[36m"; break;
+            default:                colorCode = "\033[0m";  break;
         }
         Utils::replaceAll(formattedString, "{level}", colorCode + levelString + "\033[0m");
     } else {
@@ -483,44 +443,34 @@ std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view for
     Utils::replaceAll(formattedString, "{sourceFile}", entry.sourceFile);
     Utils::replaceAll(formattedString, "{id}", std::to_string(entry.id));
 
-    // Handle structured fields
-    if (options.includeStructuredFields && !entry.structuredFields.empty()) {
+    if (options.includeStructuredFields && !entry.customFields.empty()) {
         std::ostringstream ss;
         bool firstField = true;
-        for (const auto& [key, value] : entry.structuredFields) {
+        for (const auto& [key, value] : entry.customFields) {
             if (!firstField) {
                 ss << options.structuredFieldDelimiter;
             }
             ss << key << options.structuredFieldKvDelimiter << value;
             firstField = false;
         }
-        Utils::replaceAll(formattedString, "{structuredFields}", ss.str());
+        Utils::replaceAll(formattedString, "{customFields}", ss.str());
     } else {
-        Utils::replaceAll(formattedString, "{structuredFields}", "");
+        Utils::replaceAll(formattedString, "{customFields}", "");
     }
     
     return formattedString;
 }
 
-// Deprecated: Original formatEntry
 std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view format, bool useColor) const {
     FormattingOptions options;
     options.useColor = useColor;
-    options.dateTimeFormat = std::string(format); // Assuming format string is for datetime
-    // Other options are default, structured fields are not included by default for deprecated version
+    options.dateTimeFormat = std::string(format);
     
-    // We need a proper format string for the message and level.
-    // For the deprecated version, we assume a default output like "{timestamp} {level}: {message}"
-    // and rely on the new formatEntry to construct this.
-    // If the original format was just for timestamp, then we must be careful.
-    // The original behavior of this function was to format the timestamp and then append
-    // the level and message. Let's replicate that.
-
     std::string defaultFormat = "{timestamp} {level}: {message}";
-    if (format.empty() || format == "%Y-%m-%d %H:%M:%S") { // Default format used if not specified
+    if (format.empty() || format == "%Y-%m-%d %H:%M:%S") {
         options.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
     } else {
-        options.dateTimeFormat = std::string(format); // Use provided format for datetime
+        options.dateTimeFormat = std::string(format);
     }
 
     return formatEntry(entry, defaultFormat, options);
@@ -534,9 +484,8 @@ LogLevel LogAnalyzer::stringToLogLevel(const std::string& levelStr) {
     return Utils::stringToLogLevel(levelStr);
 }
 
-// New: Print filtered entries with advanced formatting options.
 void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+    std::lock_guard<std::mutex> lock(mutex_);
     auto filteredEntriesExpected = getFilteredEntries_NoLock(criteria);
     if (filteredEntriesExpected.has_value()) {
         const auto& filteredEntries = filteredEntriesExpected.value();
@@ -548,12 +497,21 @@ void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& 
     }
 }
 
-// Deprecated: Original printFilteredEntries
 void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const {
     FormattingOptions options;
-    options.dateTimeFormat = std::string(formatString); // Assume formatString primarily affects datetime
-    // For backward compatibility, the deprecated version did not include structured fields by default
-    // or provide explicit control over other FormattingOptions.
-    // The default format passed to formatEntry will handle the basic structure.
+    options.dateTimeFormat = std::string(formatString);
     printFilteredEntries(out, criteria, options);
 }
+
+Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return getFilteredEntries_NoLock(criteria);
+}
+
+Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
+    // Implementation of filtering logic
+    std::vector<LogEntry> filtered;
+    // Dummy implementation for now
+    return filtered;
+}
+

@@ -12,8 +12,12 @@
 #include <expected>
 #include <optional> // For std::optional
 #include <nlohmann/json.hpp> // Include for nlohmann/json types
+#include "Error.h"
 #include "LogTypes.h" // For LogEntryField, LogLevel and FieldMapping
 #include "Utils.h" // For string conversions and time parsing utilities
+
+using namespace ErrorCode;
+
 
 // Enum for sorting criteria.
 enum class SortBy {
@@ -460,7 +464,7 @@ private:
 
 class RegexFilter : public IFilter {
 public:
-    static std::expected<std::shared_ptr<RegexFilter>, std::string> create(std::string pattern, bool caseSensitive = false);
+    static Result<std::shared_ptr<RegexFilter>> create(std::string pattern, bool caseSensitive = false);
     bool matches(const LogEntry &entry) const override;
 
 private:

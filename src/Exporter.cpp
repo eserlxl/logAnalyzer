@@ -22,8 +22,8 @@ void Exporter::exportAsJson(
             {"message", entry.message}
         };
         
-        if (!entry.structuredFields.empty()) {
-            entryJson["fields"] = entry.structuredFields;
+        if (!entry.customFields.empty()) {
+            entryJson["fields"] = entry.customFields;
         }
         
         j["entries"].push_back(entryJson);

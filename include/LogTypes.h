@@ -9,11 +9,10 @@
 #include <cctype> // Required for std::tolower
 #include <locale> // Required for std::locale, std::use_facet, std::ctype
 #include <limits> // Required for std::numeric_limits
-#include <variant> // New: Required for std::variant
+#include <variant> // Required for std::variant
 #include <nlohmann/json.hpp> // Required for JSON serialization
 #include "Utils.h" // Required for utility functions like logEntryFieldToString
-#include "Utils.h" // Required for utility functions like logEntryFieldToString
-#include "Utils.h" // Required for utility functions like logEntryFieldToString
+#include "Error.h" // New: For Error struct and Result alias
 
 // Case-insensitive comparator for strings (moved from LogParser.h as it's a generic utility)
 struct ci_less {
@@ -38,18 +37,6 @@ struct ci_less {
 enum class PatternType { Literal, Regex, Wildcard };
 
 enum class LogLevel { TRACE, DEBUG, INFO, WARNING, ERROR, CRITICAL, FATAL, UNKNOWN };
-
-enum class ParseResultStatus {
-    SUCCESS,                // Parsing successful
-    PATTERN_MISMATCH,       // The log line did not match the parser's regex pattern
-    TIMESTAMP_PARSE_ERROR,  // Failed to parse the timestamp field
-    LEVEL_PARSE_ERROR,      // Failed to parse the log level field or level is unknown
-    FIELD_PARSE_ERROR,      // General error parsing a specific field (not timestamp/level)
-    BUFFERED_CONTINUATION,  // Line was buffered as a continuation of a multi-line entry (no full entry returned yet)
-    UNMATCHED_START_PATTERN // (For multi-line parsers) Line did not match the start pattern and was not a continuation.
-                            // If logEntryStartPattern is configured, this could indicate a line that doesn't belong to any entry,
-                            // or it's the start of an entry that just doesn't match the start pattern.
-};
 
 // New enum to specify which LogEntry field a regex capture group maps to
 enum class LogEntryField {
@@ -186,86 +173,59 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
         throw std::runtime_error(errors[0]); // Throw standard exception
     }
 }
-// Enum for Parse Errors
-enum class ParseError {
-  SUCCESS,
-  FILE_OPEN_FAILED,
-  INVALID_REGEX_PATTERN,
-  PARTIAL_FAILURE // Some lines failed to parse but others succeeded
-};
-
-// Type for robust error handling
-struct LogParseError {
-  ParseError code = ParseError::SUCCESS;
-  std::string message;
-  size_t lineNumber = 0;
-
-  bool operator==(const LogParseError &other) const {
-    return code == other.code && message == other.message &&
-           lineNumber == other.lineNumber;
-  }
-};
-
-// Struct for comprehensive analysis results
-struct AnalysisReport {
-  size_t linesProcessed = 0;
-  size_t successfulParses = 0;
-  std::vector<LogParseError> parseErrors;
-  ParseError status = ParseError::SUCCESS;
-  std::string message; // Added message field
-};
-
-// Struct for time-gap analysis
-struct TimeGap {
-  std::chrono::system_clock::time_point start;
-  std::chrono::system_clock::time_point end;
-  std::chrono::system_clock::duration duration;
-};
-
-// Struct for time-windowed statistics
-struct TimeWindowStats {
-  std::chrono::system_clock::time_point windowStart;
-  std::chrono::system_clock::time_point windowEnd; // Added for clarity
-  std::map<LogLevel, int> counts;
-  int totalCount;
-};
 
 // LogEntry structure enhancement
+
+enum class ParseError {
+    SUCCESS,
+    PARTIAL_FAILURE,
+    UNKNOWN_ERROR,
+    INVALID_REGEX_PATTERN
+};
+
+struct LogParseError {
+    ParseError error;
+    std::string message;
+    size_t lineNumber;
+};
+
+struct AnalysisReport {
+    size_t linesProcessed = 0;
+    size_t successfulParses = 0;
+    std::vector<LogParseError> parseErrors;
+    ParseError status = ParseError::SUCCESS;
+};
+
+struct TimeWindowStats {
+    std::chrono::system_clock::time_point windowStart;
+    std::chrono::system_clock::time_point windowEnd;
+    size_t entryCount = 0;
+};
+
+struct TimeGap {
+    std::chrono::system_clock::time_point gapStart;
+    std::chrono::system_clock::time_point gapEnd;
+    std::chrono::milliseconds duration;
+};
+
 struct LogEntry {
   size_t id = std::numeric_limits<size_t>::max(); // Unique identifier for each log entry
   std::string sourceFile; // The file from which this entry was read
+  size_t sourceLineNumber = 0; // New: Line number in the source file
   std::chrono::system_clock::time_point timestamp;
   LogLevel level;
   std::string message;
   std::map<std::string, std::string>
-      structuredFields; // For structured data
+      customFields; // Changed from structuredFields to customFields, to align with design and allow for any custom data
+                    // Previously structuredFields, now intended for advanced text output formatting
+  // The 'structuredFields' was already a map<string, string>, so the change is semantic and name-based.
 
   bool operator==(const LogEntry &other) const {
     return id == other.id && timestamp == other.timestamp &&
            level == other.level && message == other.message &&
-           structuredFields == other.structuredFields;
+           customFields == other.customFields;
   }
 };
 
-// New struct for returning detailed parse results
-struct ParseResult {
-  // Existing field for backward compatibility; will be derived from 'status'
-  // For new code, prefer checking 'status == ParseResultStatus::SUCCESS'.
-  bool success = false;
-
-  // New: Provides granular status of the parsing attempt.
-  ParseResultStatus status = ParseResultStatus::SUCCESS;
-
-  LogEntry entry; // The parsed log entry (valid only if status is SUCCESS)
-
-  // Existing: Human-readable error message.
-  std::string errorMessage;
-
-  // Existing: The part of the log line that caused the failure.
-  std::string failingPart;
-
-  // New: Structured details about the error, e.g., {"field": "timestamp", "value": "invalid_date"}.
-  std::map<std::string, std::string> errorDetails;
-};
 
 #endif // LOG_TYPES_H

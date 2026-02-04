@@ -1,6 +1,6 @@
 # LogAnalyzer
 
-[![Build Status](https://github.com/your-organization/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/your-organization/logAnalyzer/actions/workflows/ci.yml)
+[![Build Status](https://github.com/your-organization/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/your-organization/logAnalyzer/actions/workflows/ci.yml) <!-- TODO: Update with actual CI/CD build status link -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 
@@ -9,6 +9,7 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
 ## Table of Contents
 
 -   [Features](#features)
+-   [Command-Line Interface (CLI)](#command-line-interface-cli)
 -   [Configuration](#configuration)
 -   [Project Structure](#project-structure)
 -   [Prerequisites](#prerequisites)
@@ -25,20 +26,68 @@ A powerful and memory-efficient C++ tool designed to analyze, filter, and extrac
 
 ## Features
 
--   **Memory-Efficient Processing**: Utilizes a lazy, iterator-based approach to handle very large files with minimal memory usage.
--   **Multi-File Support**: Parses multiple log files and can merge sorted sources efficiently.
--   **Pluggable Architecture**:
-    -   **Custom Parsers**: Define your own log parsing logic.
-    -   **Custom Analyzers**: Create custom analysis routines.
--   **Advanced Filtering**: Build complex filter expressions with `AND`/`OR`/`NOT` logic.
--   **Asynchronous Processing**: Load and analyze files asynchronously with cancellation support.
--   **Live Tail Mode**: Monitor new log entries in real-time.
--   **Flexible Export**: Save results in Text, JSON, CSV, YAML, or XML formats.
--   **Contextual Viewing**: Display surrounding lines for filtered entries.
+-   **Memory-Efficient Processing**: Handles very large files with minimal memory usage by processing them as streams.
+-   **Multi-File Support**: Parses and analyzes multiple log files.
+-   **Powerful Command-Line Interface**: A rich set of command-line options to control filtering, formatting, and analysis without needing a configuration file.
+-   **Advanced Filtering**: Build complex filter expressions with `AND`/`OR` logic, time ranges, log levels, keywords, and regular expressions.
+-   **Live Stream Mode**: Monitor new log entries from files in real-time, similar to `tail -f`.
+-   **Flexible Export**: Save results in Text, JSON, or CSV formats.
+-   **Statistical Analysis**: Generate statistics on your log data, such as entry rates and most frequent messages.
+
+## Command-Line Interface (CLI)
+
+`logAnalyzer` provides a rich command-line interface for ad-hoc analysis. While a JSON file is ideal for complex, persistent configurations, the CLI is perfect for quick filtering and exploration.
+
+Run `./bin/logAnalyzer --help` for a full list of commands.
+
+### General Options
+
+| Option | Shorthand | Description | Default |
+| --- | --- | --- | --- |
+| `--help` | `-h` | Shows the help message. | |
+| `--config FILE` | `-c` | Load configuration from a JSON file. | |
+| `--output FILE` | `-o` | Redirect output to a file. | (stdout) |
+| `--color OPT` | | Controls colorized output (`always`, `auto`, `never`). | `auto` |
+| `--stream` | | Enable stream mode to process entries as they arrive, like `tail -f`. | `false` |
+| `--parser-errors OPT`| | Action on parse errors (`skip`, `warn`, `fail`). | `warn` |
+
+### Filtering and Sorting
+
+| Option | Shorthand | Description | Default |
+| --- | --- | --- | --- |
+| `--filter TEXT` | `-f` | Keyword/phrase to filter for. Multiple uses are combined. | |
+| `--exclude TEXT` | `-e` | Keyword/phrase to exclude. | |
+| `--filter-regex TEXT`| | Regex pattern to filter for. | |
+| `--exclude-regex TEXT`| | Regex pattern to exclude. | |
+| `--logic [AND\|OR]`| | Logic for combining `--filter` and `--filter-regex` rules. | `AND` |
+| `--case-sensitive` | `-s` | Makes keyword filtering case-sensitive. | `false` |
+| `--level LEVEL` | `-l` | Log level to include (e.g., `ERROR`). Can be used multiple times. | |
+| `--min-level LEVEL` | | Minimum log level to include (e.g., `WARNING`). | |
+| `--start-time TIME` | | Filter logs after a given timestamp (e.g., "2023-10-27 10:00:00"). | |
+| `--end-time TIME` | | Filter logs before a given timestamp. | |
+| `--sort-by [timestamp\|level\|message]` | | Field to sort results by. | `timestamp` |
+| `--sort-order [asc\|desc]` | | Sort order. | `asc` |
+
+### Output Formatting
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `--format [text\|json\|csv]` | Sets the output format. | `text` |
+| `--output-format TEXT` | Custom format string for `text` output (e.g., `"{timestamp} [{level}] {message}"`). | `"{timestamp} [{level}] {message}"` |
+| `--csv-separator CHAR` | Separator character for `csv` output. | `,` |
+| `--pretty` | Pretty-print `json` output. | `false` |
+| `--summary` | Include a summary section in `json` output. | `false` |
+
+### Statistics
+
+| Option | Description |
+| --- | --- |
+| `--stats NAME` | Enable a statistic collector. Can be used multiple times. Available collectors: `unique_messages`, `top_messages:N`, `entry_rate`. |
+| `--top-messages-count N`| Sets the 'N' for the `top_messages` collector if not specified in `--stats`. | 10 |
 
 ## Configuration
 
-`LogAnalyzer` can be extensively configured using a JSON configuration file. This allows for persistent and complex setups for parsing, filtering, and exporting log data.
+`LogAnalyzer` can be extensively configured using a JSON configuration file. This allows for persistent and complex setups for parsing, filtering, and exporting log data, and is ideal for settings that are used repeatedly. For ad-hoc analysis, the [Command-Line Interface (CLI)](#command-line-interface-cli) is often more convenient.
 
 Key configurable aspects include:
 
@@ -62,7 +111,7 @@ An example configuration file (`config.json`) might look like this:
 
 ```json
 {
-  "lineParsePattern": "^\\\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}" ([A-Z]+): (.*)$",
+  "lineParsePattern": "^(\\\\d{4}-\\\\d{2}-\\\\d{2} \\\\d{2}:\\\\d{2}:\\\\d{2}) ([A-Z]+): (.*)$",
   "fieldMappings": [
     { "field": "timestamp", "groupIndex": 1 },
     { "field": "level", "groupIndex": 2 },
@@ -116,9 +165,9 @@ A high-level overview of the project's directory structure:
 .
 ├── CMake/                   # CMake modules and scripts
 ├── docs/                    # Doxygen configuration (e.g., Doxyfile.in) and documentation resources
-├── include/                 # Public header files for the logAnalyzer library, including CMake-generated configs (e.g., LogAnalyzerConfig.h.in)
-├── src/                     # Source files for the logAnalyzer library and main executable
-├── tests/                   # Unit and integration tests
+├── include/                 # Public header files defining the core interfaces: CLI configuration, error handling, data structures (LogTypes), filter logic, log parsing, statistics, and export mechanisms. Also contains CMake-generated configurations.
+├── src/                     # Source files implementing the core logic for the LogAnalyzer: CLI configuration parsing, exporter, filter, main application logic, log parsing, and statistics calculation. Includes the `main.cpp` entry point.
+├── tests/                   # Unit and integration tests for various components like Filter, LogAnalyzer, LogAnalyzerConfig, LogParser, and Statistics. Contains `CMakeLists.txt` for test setup and sample log files for testing.
 ├── .gitignore               # Files ignored by Git
 ├── CODE_OF_CONDUCT.md       # Project's Code of Conduct
 ├── CONTRIBUTING.md          # Guidelines for contributing to the project
@@ -184,34 +233,45 @@ ctest --verbose
 
 ## Usage Examples
 
-### Basic Analysis
+This section shows a few common use cases. For a full list of flags, see the [Command-Line Interface (CLI)](#command-line-interface-cli) section above or run `--help`.
+
+### Basic Filtering
 
 ```bash
-# Summary of a single log file
-./bin/logAnalyzer sample.log
+# Find all errors containing "database" in a specific log file
+./bin/logAnalyzer /var/log/app.log --level ERROR --filter "database"
 
-# Analyze multiple files
-./bin/logAnalyzer log1.log log2.log
+# Find all entries EXCEPT those containing "DEBUG" from multiple files
+./bin/logAnalyzer app.log kern.log --exclude "DEBUG"
 ```
 
-### Filtering
+### Advanced Filtering and Output
 
 ```bash
-# Filter by level and keyword
-./bin/logAnalyzer sample.log --level ERROR,WARNING --keyword "database"
+# Find entries that are either warnings or errors, and contain "timeout" OR "refused"
+./bin/logAnalyzer access.log --level WARNING --level ERROR --filter "timeout" --filter "refused" --logic OR
 
-# Regular expression filter
-./bin/logAnalyzer sample.log --regex "Connection (timed out|refused)"
+# Export errors between two dates to a pretty-printed JSON file
+./bin/logAnalyzer system.log --level ERROR --start-time "2023-11-01" --end-time "2023-11-02" --format json --pretty -o errors.json
 ```
 
-### Exporting Results
+### Real-time Monitoring
 
 ```bash
-# Export to JSON
-./bin/logAnalyzer sample.log --format json --output results.json
+# Tail a log file in real-time for critical errors
+./bin/logAnalyzer /var/log/live.log --stream --min-level CRITICAL
+```
+
+### Statistical Analysis
+
+```bash
+# Get the top 5 most common error messages from a log
+./bin/logAnalyzer system.log --level ERROR --stats top_messages:5
 ```
 
 ### Using a Configuration File
+
+For complex or repeated tasks, you can use a JSON configuration file.
 
 ```bash
 # Analyze log files using settings from a JSON configuration file

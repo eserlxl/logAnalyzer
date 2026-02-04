@@ -553,45 +553,21 @@ ExportFormat stringToExportFormat(const std::string& formatStr) {
 // Helper to convert StatisticType enum to string
 std::string statisticTypeToString(StatisticType type) {
     switch (type) {
-        case StatisticType::COUNT_BY_LEVEL: return "COUNT_BY_LEVEL";
-        case StatisticType::TOP_N_OCCURRENCES: return "TOP_N_OCCURRENCES";
-        case StatisticType::OCCURRENCE_COUNT: return "OCCURRENCE_COUNT";
-        case StatisticType::SUM: return "SUM";
-        case StatisticType::AVERAGE: return "AVERAGE";
-        case StatisticType::MIN: return "MIN";
-        case StatisticType::MAX: return "MAX";
+        case StatisticType::UNIQUE_MESSAGES: return "UNIQUE_MESSAGES";
+        case StatisticType::TOP_MESSAGES: return "TOP_MESSAGES";
+        case StatisticType::ENTRY_RATE: return "ENTRY_RATE";
         default: return "UNKNOWN";
     }
 }
 
 // Helper to convert string to StatisticType enum
 StatisticType stringToStatisticType(const std::string& typeStr) {
-    if (typeStr == "COUNT_BY_LEVEL") return StatisticType::COUNT_BY_LEVEL;
-    if (typeStr == "TOP_N_OCCURRENCES") return StatisticType::TOP_N_OCCURRENCES;
-    if (typeStr == "OCCURRENCE_COUNT") return StatisticType::OCCURRENCE_COUNT;
-    if (typeStr == "SUM") return StatisticType::SUM;
-    if (typeStr == "AVERAGE") return StatisticType::AVERAGE;
-    if (typeStr == "MIN") return StatisticType::MIN;
-    if (typeStr == "MAX") return StatisticType::MAX;
+    if (typeStr == "UNIQUE_MESSAGES") return StatisticType::UNIQUE_MESSAGES;
+    if (typeStr == "TOP_MESSAGES") return StatisticType::TOP_MESSAGES;
+    if (typeStr == "ENTRY_RATE") return StatisticType::ENTRY_RATE;
     return StatisticType::UNKNOWN;
 }
 
-// Helper to convert StatisticOutputFormat enum to string
-std::string statisticOutputFormatToString(StatisticOutputFormat format) {
-    switch (format) {
-        case StatisticOutputFormat::PLAINTEXT_TABLE: return "PLAINTEXT_TABLE";
-        case StatisticOutputFormat::JSON: return "JSON";
-        case StatisticOutputFormat::CSV: return "CSV";
-        default: return "UNKNOWN";
-    }
-}
 
-// Helper to convert string to StatisticOutputFormat enum
-StatisticOutputFormat stringToStatisticOutputFormat(const std::string& formatStr) {
-    if (formatStr == "PLAINTEXT_TABLE") return StatisticOutputFormat::PLAINTEXT_TABLE;
-    if (formatStr == "JSON") return StatisticOutputFormat::JSON;
-    if (formatStr == "CSV") return StatisticOutputFormat::CSV;
-    return StatisticOutputFormat::UNKNOWN;
-}
 
 } // namespace Utils

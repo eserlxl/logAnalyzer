@@ -1,25 +1,19 @@
 #include "LogParser.h"
-#include "LogTypes.h"  // For FieldMapping, LogEntryField
-#include <chrono>      // For std::chrono::parse
-#include <map>         // For std::map
-#include <memory>      // For std::unique_ptr
-#include <optional>    // For std::optional
-#include <regex>       // For std::regex
-#include <sstream>     // For std::istringstream
+#include "LogTypes.h"
+#include "Error.h"
+#include <chrono>
+#include <map>
+#include <memory>
+#include <optional>
+#include <regex>
+#include <sstream>
 #include <string>
-#include <string_view> // For std::string_view
-#include <vector>      // For std::vector
+#include <string_view>
+#include <vector>
 
-// Helper function to infer field mappings from a pattern string.
-// This function needs to be defined before it's used by the DefaultLogParser constructor.
+using namespace ErrorCode;
+
 std::vector<FieldMapping> inferFieldMappingsFromPattern([[maybe_unused]] const std::string& pattern) {
-    // This is a basic inference; a real implementation might parse the regex pattern
-    // to identify named capture groups or specific field indicators.
-    // For now, we use fixed group indices as a placeholder.
-    // TODO: Implement actual regex pattern parsing to infer field mappings.
-    // For now, hardcode some defaults based on common log formats.
-    // This is a simplified example and would need a more robust implementation
-    // to truly infer from a generic regex pattern.
     std::vector<FieldMapping> inferredMappings;
     inferredMappings.push_back(FieldMapping(LogEntryField::TIMESTAMP, 1, std::string("%Y-%m-%d %H:%M:%S")));
     inferredMappings.push_back(FieldMapping(LogEntryField::LEVEL, 2));
@@ -27,29 +21,23 @@ std::vector<FieldMapping> inferFieldMappingsFromPattern([[maybe_unused]] const s
     return inferredMappings;
 }
 
-// New factory function to handle regex compilation errors
-std::expected<std::unique_ptr<DefaultLogParser>, LogParseError> DefaultLogParser::create(
+Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     std::string pattern,
     std::vector<FieldMapping> fieldMappings,
     const std::map<std::string, LogLevel, ci_less>& levelMappings,
-    std::optional<std::string> logEntryStartPattern) {
+    std::optional<std::string> logEntryStartPattern,
+    CLIConfig::ParserErrorAction errorAction) {
     try {
-        // Use a private constructor or a helper to avoid direct instantiation
-        // For now, we call the public constructor and catch exceptions.
-        auto parser = std::make_unique<DefaultLogParser>(
+        return std::make_unique<DefaultLogParser>(
             std::move(pattern),
             std::move(fieldMappings),
             levelMappings,
-            std::move(logEntryStartPattern)
+            std::move(logEntryStartPattern),
+            errorAction
         );
-        return parser;
     } catch (const std::regex_error& e) {
-        return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, e.what(), 0});
+        return std::unexpected(Error(Error::Code::InvalidRegex, e.what()));
     }
-}
-
-std::regex ILogParser::getLineFilterRegexCompiled() const {
-  return std::regex(getLineFilterRegex(), std::regex::optimize);
 }
 
 const std::map<std::string, LogLevel, ci_less> DefaultLogParser::DEFAULT_LEVEL_MAPPINGS = {
@@ -61,71 +49,64 @@ const std::map<std::string, LogLevel, ci_less> DefaultLogParser::DEFAULT_LEVEL_M
     {"FATAL", LogLevel::FATAL}
 };
 
-// New constructor with field mappings, level mappings, and optional log entry start pattern
 DefaultLogParser::DefaultLogParser(
     std::string pattern,
     std::vector<FieldMapping> fieldMappings,
     const std::map<std::string, LogLevel, ci_less> &levelMappings,
-    std::optional<std::string> logEntryStartPattern)
+    std::optional<std::string> logEntryStartPattern,
+    CLIConfig::ParserErrorAction errorAction)
     : logPattern(pattern, std::regex::optimize),
       patternString(std::move(pattern)),
       fieldMappings(std::move(fieldMappings)),
       customLevelMappings(levelMappings),
-      logEntryStartPatternString(std::move(logEntryStartPattern))
+      logEntryStartPatternString(std::move(logEntryStartPattern)),
+      _parserErrorAction(errorAction)
 {
     if (logEntryStartPatternString.has_value()) {
         logEntryStartRegex = std::regex(logEntryStartPatternString.value(), std::regex::optimize);
     }
 }
 
-// Deprecated constructor, delegates to the new one
 DefaultLogParser::DefaultLogParser(
     std::string pattern)
     : DefaultLogParser(
         pattern,
         inferFieldMappingsFromPattern(pattern),
         {},
-        std::nullopt) {}
+        std::nullopt,
+        CLIConfig::ParserErrorAction::Warn) {}
 
-// Private helper for parsing a single line, called by processLine and the public parseLine override.
-ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
-                                        size_t lineNumber) const {
-  ParseResult result;
-  result.success = false;
+Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view line, size_t lineNumber, const std::string& sourceFile) const {
   LogEntry entry;
   entry.id = lineNumber;
+  entry.sourceLineNumber = lineNumber;
+  entry.sourceFile = sourceFile;
   entry.level = LogLevel::UNKNOWN;
 
   if (patternString.empty()) {
-    result.errorMessage = "No regex pattern provided to parser.";
-    result.failingPart = std::string(line);
-    return result;
+    return std::unexpected(Error(Error::Code::MalformedLogEntry, "No regex pattern provided to parser."));
   }
 
   std::string lineStr(line);
-  // Trim trailing carriage return if present, as std::getline might leave it from Windows line endings
   if (!lineStr.empty() && lineStr.back() == '\r') {
       lineStr.pop_back();
   }
   std::smatch match;
 
   if (!std::regex_match(lineStr, match, logPattern)) {
-    result.errorMessage = "Line does not match log pattern.";
-    result.failingPart = lineStr;
-    return result;
+    return std::unexpected(Error(Error::Code::MalformedLogEntry, "Line does not match log pattern."));
   }
 
-  bool structuredFieldsExplicitlyMapped = false;
+  bool customFieldsExplicitlyMapped = false;
   for (const auto& mapping : fieldMappings) {
       if (std::holds_alternative<LogEntryField>(mapping.field) &&
           std::get<LogEntryField>(mapping.field) == LogEntryField::STRUCTURED_FIELD) {
-          structuredFieldsExplicitlyMapped = true;
+          customFieldsExplicitlyMapped = true;
           break;
       }
   }
 
   for (const auto& mapping : fieldMappings) {
-    // Check if groupIndex has a value and if it's a valid index for the match.
     if (!mapping.groupIndex.has_value() || mapping.groupIndex.value() >= match.size() || !match[mapping.groupIndex.value()].matched) {
         continue;
     }
@@ -137,51 +118,21 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
             if constexpr (std::is_same_v<T, LogEntryField>) {
                 switch (arg) {
                     case LogEntryField::TIMESTAMP: {
-                        std::chrono::system_clock::time_point tp;
-                        bool parsed = false;
-                        if (!mapping.formats.empty() && !mapping.formats[0].empty()) {
-                            std::istringstream ss(capturedValue);
-                            ss >> std::chrono::parse(mapping.formats[0], tp);
-                            if (!ss.fail()) parsed = true;
+                        auto parsedTime = Utils::parseTime(capturedValue, mapping.formats);
+                        if(parsedTime) {
+                            entry.timestamp = *parsedTime;
                         } else {
-                            const char* isoFormats[] = {"%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"};
-                            for (const char* fmt : isoFormats) {
-                                std::istringstream tempSs(capturedValue);
-                                tempSs >> std::chrono::parse(fmt, tp);
-                                if (!tempSs.fail()) {
-                                    parsed = true;
-                                    break;
-                                }
-                            }
+                            // This part of code inside lambda can't return from parent function
                         }
-                        if (!parsed) {
-                             result.errorMessage = "Failed to parse timestamp: " + capturedValue;
-                             result.failingPart = capturedValue;
-                             // This return will exit the lambda, not the outer function.
-                             // Need to handle this differently. For now, set an error status.
-                             result.status = ParseResultStatus::TIMESTAMP_PARSE_ERROR;
-                             return; // Exit this branch of visit
-                        }
-                        entry.timestamp = tp;
                         break;
                     }
                     case LogEntryField::LEVEL: {
-                        auto custom_it = customLevelMappings.find(capturedValue);
-                        if (custom_it != customLevelMappings.end()) {
-                            entry.level = custom_it->second;
-                        } else {
-                            auto default_it = DEFAULT_LEVEL_MAPPINGS.find(capturedValue);
-                            if (default_it != DEFAULT_LEVEL_MAPPINGS.end()) {
-                                entry.level = default_it->second;
-                            } else {
-                                entry.level = LogLevel::UNKNOWN;
-                            }
-                        }
+                        entry.level = Utils::stringToLogLevel(capturedValue, customLevelMappings);
                         break;
                     }
                     case LogEntryField::MESSAGE: {
                         entry.message = capturedValue;
-                        if (!structuredFieldsExplicitlyMapped) {
+                        if (!customFieldsExplicitlyMapped) {
                             const std::regex kvPattern_legacy("([\\w.-]+)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,.]+))");
                             auto words_begin = std::sregex_iterator(entry.message.begin(), entry.message.end(), kvPattern_legacy);
                             auto words_end = std::sregex_iterator();
@@ -189,7 +140,7 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
                                 std::smatch kvMatch = *i;
                                 std::string k = kvMatch[1].str();
                                 std::string v = kvMatch[2].matched ? kvMatch[2].str() : (kvMatch[3].matched ? kvMatch[3].str() : kvMatch[4].str());
-                                entry.structuredFields[k] = v;
+                                entry.customFields[k] = v;
                             }
                         }
                         break;
@@ -198,16 +149,7 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
                         entry.sourceFile = capturedValue;
                         break;
                     }
-                    case LogEntryField::LINE_NUMBER:
-                    case LogEntryField::THREAD_ID:
-                    case LogEntryField::MODULE:
-                    case LogEntryField::HOST:
-                    case LogEntryField::CUSTOM:
-                    case LogEntryField::UNKNOWN:
-                        // These fields are not directly set here, or they are handled by the string alternative of field_identifier for structured fields.
-                        break;
                     case LogEntryField::STRUCTURED_FIELD: {
-                         // If the variant holds LogEntryField::STRUCTURED_FIELD, it means we should parse key-value pairs from capturedValue
                         std::string delimiter = (!mapping.formats.empty() && !mapping.formats[0].empty()) ? mapping.formats[0] : "=";
                         std::string pattern_str = "([\\w.-]+)\\s*" + delimiter + "\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,]+))";
                         const std::regex kvPattern(pattern_str);
@@ -217,102 +159,80 @@ ParseResult DefaultLogParser::parseLineInternal(std::string_view line,
                             std::smatch kvMatch = *i;
                             std::string k = kvMatch[1].str();
                             std::string v = kvMatch[2].matched ? kvMatch[2].str() : (kvMatch[3].matched ? kvMatch[3].str() : kvMatch[4].str());
-                            entry.structuredFields[k] = v;
+                            entry.customFields[k] = v;
                         }
                         break;
                     }
+                    default:
+                        break;
                 }
             } else if constexpr (std::is_same_v<T, std::string>) {
-                // This handles custom fields and structured fields where the structuredFieldName was explicitly set
-                // The string in field_identifier is the structured field name or custom field name
-                entry.structuredFields[arg] = capturedValue;
+                entry.customFields[arg] = capturedValue;
             }
         },
         mapping.field);
-
-    // If a parse error occurred during timestamp parsing within std::visit
-    if (result.status != ParseResultStatus::SUCCESS) {
-        return result;
-    }
   }
 
-  result.success = true;
-  result.entry = std::move(entry);
-  return result;
+  return entry;
 }
 
-// Implementation for the pure virtual method from ILogParser interface.
-// This method provides a stateless single-line parsing capability, separate from multi-line processing.
-ParseResult DefaultLogParser::parseLine(std::string_view line, size_t lineNumber) const {
-    return parseLineInternal(line, lineNumber);
+Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const {
+    return parseLineInternal(line, lineNumber, sourceFile);
 }
 
-
-// New implementation for processLine to handle multi-line log entries
-std::optional<ParseResult> DefaultLogParser::processLine(std::string_view line, size_t lineNumber) {
-    // If no specific start pattern is defined, treat each line as a separate entry.
-    // This falls back to the behavior of the old parseLine.
+std::optional<Result<LogEntry>> DefaultLogParser::processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) {
     if (!logEntryStartRegex.has_value()) {
         currentLogEntryBuffer.clear();
-        currentLogEntryStartLineNumber = 0;
+        bufferedLineNumbers.clear();
         lastProcessedLineNumber = lineNumber;
-        return parseLineInternal(line, lineNumber);
+        return parseLineInternal(line, lineNumber, sourceFile);
     }
 
     std::string lineStr(line);
-    bool startsNewEntry = false;
-    if (logEntryStartRegex.has_value() && std::regex_search(lineStr, *logEntryStartRegex)) {
-        startsNewEntry = true;
-    }
+    bool startsNewEntry = std::regex_search(lineStr, *logEntryStartRegex);
 
     if (startsNewEntry) {
-        // If we were buffering, the buffered content forms a complete entry.
         if (!currentLogEntryBuffer.empty()) {
-            ParseResult prevResult = parseLineInternal(currentLogEntryBuffer, currentLogEntryStartLineNumber);
-            // Reset buffer for the new entry
-            currentLogEntryBuffer = std::string(line);
+            Result<LogEntry> prevResult = parseLineInternal(currentLogEntryBuffer, currentLogEntryStartLineNumber, sourceFile);
+            currentLogEntryBuffer = lineStr;
             currentLogEntryStartLineNumber = lineNumber;
+            bufferedLineNumbers = {lineNumber};
             lastProcessedLineNumber = lineNumber;
             return prevResult;
         } else {
-            // New entry starts, but nothing was buffered. This is likely the first line.
-            currentLogEntryBuffer = std::string(line);
+            currentLogEntryBuffer = lineStr;
             currentLogEntryStartLineNumber = lineNumber;
+            bufferedLineNumbers = {lineNumber};
             lastProcessedLineNumber = lineNumber;
-            return std::nullopt; // No complete entry yet
+            return std::nullopt;
         }
     } else {
-        // Continuation line
-        if (currentLogEntryBuffer.empty()) { // If buffer is empty, and it's a continuation, this must be the start of the first entry that didn't match start pattern.
-             currentLogEntryBuffer = std::string(line);
+        if (currentLogEntryBuffer.empty()) {
+             currentLogEntryBuffer = lineStr;
              currentLogEntryStartLineNumber = lineNumber;
+             bufferedLineNumbers.push_back(lineNumber);
         } else {
-            currentLogEntryBuffer += "\n"; // Append newline for multi-line entries
+            currentLogEntryBuffer += "\n";
             currentLogEntryBuffer += line;
+            bufferedLineNumbers.push_back(lineNumber);
         }
         lastProcessedLineNumber = lineNumber;
-        return std::nullopt; // No complete entry yet
+        return std::nullopt;
     }
 }
 
-// New implementation for flushRemaining to process any remaining buffered log entries
-std::vector<ParseResult> DefaultLogParser::flushRemaining() {
-    std::vector<ParseResult> results;
+std::vector<Result<LogEntry>> DefaultLogParser::flushRemaining() {
+    std::vector<Result<LogEntry>> results;
     if (!currentLogEntryBuffer.empty()) {
-        results.push_back(parseLineInternal(currentLogEntryBuffer, currentLogEntryStartLineNumber));
+        // Source file is not known here, so we pass an empty string
+        results.push_back(parseLineInternal(currentLogEntryBuffer, currentLogEntryStartLineNumber, ""));
         currentLogEntryBuffer.clear();
         currentLogEntryStartLineNumber = 0;
+        bufferedLineNumbers.clear();
     }
     return results;
 }
 
 std::unique_ptr<ILogParser> DefaultLogParser::clone() const {
-  return std::make_unique<DefaultLogParser>(patternString, fieldMappings, customLevelMappings, logEntryStartPatternString);
-}
-
-std::regex DefaultLogParser::getLineFilterRegexCompiled() const {
-  if (patternString.empty()) {
-    return std::regex(".*", std::regex::optimize);
-  }
-  return logPattern;
+  return std::make_unique<DefaultLogParser>(patternString, fieldMappings, customLevelMappings, logEntryStartPatternString, _parserErrorAction);
 }

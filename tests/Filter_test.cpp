@@ -14,7 +14,7 @@ protected:
         std::chrono::system_clock::time_point timestamp,
         LogLevel level,
         const std::string& message,
-        const std::map<std::string, std::string>& structuredFields = {}
+        const std::map<std::string, std::string>& customFields = {}
     ) {
         LogEntry entry;
         entry.id = id;
@@ -22,7 +22,7 @@ protected:
         entry.timestamp = timestamp;
         entry.level = level;
         entry.message = message;
-        entry.structuredFields = structuredFields;
+        entry.customFields = customFields;
         return entry;
     }
 

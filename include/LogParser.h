@@ -2,7 +2,8 @@
 #define LOG_PARSER_H
 
 #include "LogTypes.h" // Includes LogEntryField, FieldMapping, etc.
-#include <expected>
+#include "CLIConfig.h" // For CLIConfig::ParserErrorAction
+#include "Error.h" // For Error struct and Result alias
 #include <map>
 #include <memory>
 #include <optional>
@@ -15,19 +16,20 @@
 class ILogParser {
 public:
     virtual ~ILogParser() = default;
-    virtual ParseResult parseLine(std::string_view line,
-                                  size_t lineNumber) const = 0;
+    virtual Result<LogEntry> parseLine(std::string_view line,
+                                  size_t lineNumber,
+                                  const std::string& sourceFile) const = 0; // Added sourceFile and Result<LogEntry>
     virtual std::unique_ptr<ILogParser> clone() const = 0;
     virtual std::string getLineFilterRegex() const { return ".*"; }
-    virtual std::regex getLineFilterRegexCompiled() const;
+    // virtual std::regex getLineFilterRegexCompiled() const; // Removed as per design
 
     // New API for multi-line log processing
-    // Returns an optional ParseResult if a full log entry is formed.
+    // Returns an optional Result<LogEntry> if a full log entry is formed.
     // Otherwise, it accumulates the line internally.
-    virtual std::optional<ParseResult> processLine(std::string_view line, size_t lineNumber) = 0;
+    virtual std::optional<Result<LogEntry>> processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) = 0; // Added sourceFile and Result<LogEntry>
 
     // Call this at the end of input to get any remaining buffered log entries.
-    virtual std::vector<ParseResult> flushRemaining() = 0;
+    virtual std::vector<Result<LogEntry>> flushRemaining() = 0; // Changed from ParseResult to Result<LogEntry>
 
     // New: Returns the raw pattern string used by the parser.
     virtual std::string getPatternString() const = 0;
@@ -52,18 +54,20 @@ public:
 class DefaultLogParser : public ILogParser {
 public:
     // Factory function to handle constructor errors
-    static std::expected<std::unique_ptr<DefaultLogParser>, LogParseError> create(
+    static Result<std::unique_ptr<DefaultLogParser>> create( // Changed to Result
         std::string pattern,
         std::vector<FieldMapping> fieldMappings,
         const std::map<std::string, LogLevel, ci_less> &levelMappings = {},
-        std::optional<std::string> logEntryStartPattern = std::nullopt);
+        std::optional<std::string> logEntryStartPattern = std::nullopt,
+        CLIConfig::ParserErrorAction errorAction = CLIConfig::ParserErrorAction::Warn); // Added errorAction
 
     // New constructor with field mappings and level mappings, and optional log entry start pattern
     DefaultLogParser(
         std::string pattern,
         std::vector<FieldMapping> fieldMappings,
         const std::map<std::string, LogLevel, ci_less> &levelMappings = {},
-        std::optional<std::string> logEntryStartPattern = std::nullopt);
+        std::optional<std::string> logEntryStartPattern = std::nullopt,
+        CLIConfig::ParserErrorAction errorAction = CLIConfig::ParserErrorAction::Warn); // Added errorAction
 
     // Deprecated constructor, now delegates to the new one
     [[deprecated("Use constructor with fieldMappings for explicit control.")]]
@@ -72,12 +76,12 @@ public:
     );
 
     // New API for multi-line log processing
-    std::optional<ParseResult> processLine(std::string_view line, size_t lineNumber) override;
-    std::vector<ParseResult> flushRemaining() override;
+    std::optional<Result<LogEntry>> processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) override; // Changed to Result<LogEntry>
+    std::vector<Result<LogEntry>> flushRemaining() override; // Changed to Result<LogEntry>
 
     std::unique_ptr<ILogParser> clone() const override;
     std::string getLineFilterRegex() const override { return patternString; }
-    std::regex getLineFilterRegexCompiled() const override;
+    // std::regex getLineFilterRegexCompiled() const override; // Removed
 
     // New ILogParser overrides for introspection
     std::string getPatternString() const override { return patternString; }
@@ -97,18 +101,18 @@ private:
 
     std::string currentLogEntryBuffer;
     size_t currentLogEntryStartLineNumber = 0;
-    size_t lastProcessedLineNumber = 0; // ADDED: To keep track of the last line processed for multi-line context
+    size_t lastProcessedLineNumber = 0;
 
-    // New: To track original line numbers of buffered content for better error reporting/context
     std::vector<size_t> bufferedLineNumbers;
 
     // Public override for ILogParser::parseLine
-    ParseResult parseLine(std::string_view line, size_t lineNumber) const override;
+    Result<LogEntry> parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const override; // Changed to Result<LogEntry>
 
     // Internal parsing logic helper
-    ParseResult parseLineInternal(std::string_view line, size_t lineNumber) const;
+    Result<LogEntry> parseLineInternal(std::string_view line, size_t lineNumber, const std::string& sourceFile) const; // Changed to Result<LogEntry>
 
     static const std::map<std::string, LogLevel, ci_less> DEFAULT_LEVEL_MAPPINGS;
-};
 
+    CLIConfig::ParserErrorAction _parserErrorAction; // New: To store the error action
+};
 #endif // LOG_PARSER_H

@@ -4,6 +4,7 @@
 #include "LogTypes.h" // For LogLevel, SortBy, SortOrder
 #include "Filter.h"   // For CompositeFilter::Logic
 #include "LogAnalyzerSettings.h" // To return a populated LogAnalyzerSettings object
+#include "Error.h"    // For Error struct and Result alias
 #include <string>
 #include <vector>
 #include <map>
@@ -11,6 +12,8 @@
 #include <chrono>
 #include <optional>
 #include <utility> // For std::pair
+
+using namespace ErrorCode;
 
 class CLIConfig {
 public:
@@ -20,7 +23,9 @@ public:
     };
 
     enum class ParserErrorAction {
-        SKIP_LINE, LOG_AND_SKIP, FAIL
+        Skip, // Changed from SKIP_LINE
+        Warn, // Changed from LOG_AND_SKIP
+        Fail
     };
 
     // Static maps for CLI argument parsing
@@ -31,7 +36,7 @@ public:
     static const std::map<std::string, ColorOption> colorOptionMap;
     static const std::map<std::string, ParserErrorAction> errorActionMap;
 
-    struct CLIAppOptions {
+    struct CLIOptions { // Renamed from CLIAppOptions
         std::vector<std::string> filePaths;
         std::vector<LogLevel> filterLevels;
         std::optional<LogLevel> minLogLevel;
@@ -54,23 +59,23 @@ public:
         CLIConfig::ColorOption colorOption = CLIConfig::ColorOption::AUTO;
         char csvSeparator = ',';
         std::vector<std::string> csvFields;
-        bool showUniqueMessages = false;
-        bool showTopMessages = false;
         int topMessagesCount = 10;
         bool streamMode = false;
-        CLIConfig::ParserErrorAction parserErrorAction = CLIConfig::ParserErrorAction::LOG_AND_SKIP;
+        CLIConfig::ParserErrorAction parserErrorAction = CLIConfig::ParserErrorAction::Warn; // Default to Warn
         bool tailMode = false;
         std::chrono::milliseconds tailInterval = std::chrono::milliseconds(1000);
-        std::string complexFilterExpression;
+        std::string complexFilterExpression; // New: --expression filter
+        std::vector<std::string> jsonFields; // New: Configurable JSON fields
 
-        // Stats options
-        std::optional<std::chrono::seconds> statsWindow;
-        std::optional<std::chrono::milliseconds> findGapsDuration;
-        bool showEntryRate = false;
+        // Stats options (part of IStatisticCollector refactor)
+        std::vector<std::string> enabledStatistics; // New: for IStatisticCollector
+        std::optional<std::chrono::seconds> statsWindow; // To be integrated into collectors
+        std::optional<std::chrono::milliseconds> findGapsDuration; // To be integrated into collectors
+        bool readFromStdin = false; // New: Input from stdin
     };
 
-    // CLI parsing function - now returns a pair of LogAnalyzerSettings and CLIAppOptions
-    static std::expected<std::pair<LogAnalyzerSettings, CLIAppOptions>, std::string> parseCLI(int argc, char *argv[]);
+    // CLI parsing function - now returns a pair of LogAnalyzerSettings and CLIOptions
+    static Result<std::pair<LogAnalyzerSettings, CLIOptions>> parseCLI(int argc, char *argv[]);
 };
 
 #endif // CLICONFIG_H

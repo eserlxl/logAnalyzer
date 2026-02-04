@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include "LogAnalyzerSettings.h"
 #include "CLIConfig.h" // Added for CLIConfig
+#include "Error.h" // New: For Error struct and Result alias
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <chrono>
@@ -18,8 +19,8 @@ using json = nlohmann::json;
 int main(int argc, char *argv[]) {
     auto expectedConfig = CLIConfig::parseCLI(argc, argv);
     if (!expectedConfig) {
-        // Print the error message (which could be help text) and exit.
-        std::cerr << expectedConfig.error();
+        // Print the error message and exit.
+        std::cerr << expectedConfig.error().message << std::endl;
         return 1;
     }
     const auto& [analyzerSettings, cliOptions] = expectedConfig.value();
@@ -63,7 +64,7 @@ int main(int argc, char *argv[]) {
         for (const auto& regex : cliOptions.regexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
             if (!regexFilterResult.has_value()) {
-                std::cerr << "Error: Invalid regex pattern for inclusion filter: " << regexFilterResult.error() << std::endl;
+                std::cerr << "Error: Invalid regex pattern for inclusion filter: " << regexFilterResult.error().toString() << std::endl;
                 return 1;
             }
             regexSet->add(regexFilterResult.value());
@@ -83,7 +84,7 @@ int main(int argc, char *argv[]) {
         for (const auto& regex : cliOptions.excludeRegexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
             if (!regexFilterResult.has_value()) {
-                std::cerr << "Error: Invalid regex pattern for exclusion filter: " << regexFilterResult.error() << std::endl;
+                std::cerr << "Error: Invalid regex pattern for exclusion filter: " << regexFilterResult.error().toString() << std::endl;
                 return 1;
             }
             exclusionSet->add(regexFilterResult.value());
@@ -121,13 +122,16 @@ int main(int argc, char *argv[]) {
             }
             return true;
         };
-        // NOTE: The new cliOptions.parserErrorAction is not yet plumbed into analyzeStream.
-        analyzer.analyzeStream(cliOptions.filePaths, streamEntryCallback);
+        
+        if(auto res = analyzer.analyzeStream(cliOptions.filePaths, streamEntryCallback, cliOptions.parserErrorAction); !res) {
+            std::cerr << "Error during stream analysis: " << res.error().toString() << std::endl;
+            return 1;
+        }
+
     } else {
         for (const auto& path : cliOptions.filePaths) {
-            // NOTE: The new cliOptions.parserErrorAction is not yet plumbed into append.
-            if(auto res = analyzer.append(path); !res) {
-                 std::cerr << "Error analyzing file " << path << ": " << res.error().message << std::endl;
+            if(auto res = analyzer.append(path, cliOptions.parserErrorAction); !res) {
+                 std::cerr << "Error analyzing file " << path << ": " << res.error().toString() << std::endl;
                  return 1;
             }
         }
@@ -196,33 +200,44 @@ int main(int argc, char *argv[]) {
              }
         }
 
-        // NOTE: The statistics part will be refactored into IStatisticCollector system next.
-        if (cliOptions.showUniqueMessages) {
-            std::map<std::string, int> counts;
-            for (const auto& entry : filteredEntries) counts[entry.message]++;
-            *outputStream << "\nUnique Messages: " << counts.size() << "\n";
-        }
-
-        if (cliOptions.showTopMessages) {
-            std::map<std::string, int> counts;
-            for (const auto& entry : filteredEntries) counts[entry.message]++;
-            std::vector<std::pair<std::string, int>> sorted(counts.begin(), counts.end());
-            std::sort(sorted.begin(), sorted.end(), [](const auto& a, const auto& b){ return a.second > b.second; });
-            *outputStream << "\nTop " << cliOptions.topMessagesCount << " Messages:\n";
-            for (int i=0; i < std::min((int)sorted.size(), cliOptions.topMessagesCount); ++i) {
-                *outputStream << sorted[i].second << ": " << sorted[i].first << "\n";
+        // IStatisticCollector logic
+    for (const auto& statName : cliOptions.enabledStatistics) {
+        if (statName == "unique_messages") {
+            analyzer.addStatisticCollector(std::make_shared<UniqueMessagesCollector>());
+        } else if (statName.rfind("top_messages", 0) == 0) {
+            int n = cliOptions.topMessagesCount;
+            // Allow override from option like top_messages:5
+            auto colonPos = statName.find(':');
+            if (colonPos != std::string::npos) {
+                try {
+                    n = std::stoi(statName.substr(colonPos + 1));
+                } catch (const std::exception& e) {
+                    std::cerr << "Warning: Invalid number for top_messages. Using default " << n << std::endl;
+                }
             }
-        }
-
-        if (cliOptions.showEntryRate) {
-             if (filteredEntries.size() > 1) {
-                 auto dur = filteredEntries.back().timestamp - filteredEntries.front().timestamp;
-                 auto secs = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
-                 double rate = secs > 0 ? (double)filteredEntries.size() / secs : filteredEntries.size();
-                 *outputStream << "\nAverage Entry Rate: " << rate << " entries/sec\n";
-             }
+            analyzer.addStatisticCollector(std::make_shared<TopMessagesCollector>(n));
+        } else if (statName == "entry_rate") {
+            analyzer.addStatisticCollector(std::make_shared<EntryRateCollector>());
+        } else {
+            std::cerr << "Warning: Unknown statistic '" << statName << "' requested." << std::endl;
         }
     }
+    
+    // ... processing logs ...
+
+    // After processing all entries, run stats over the *filtered* entries
+    for(const auto& entry : filteredEntries) {
+        analyzer.processEntryForStatistics(entry);
+    }
+
+    if (!cliOptions.enabledStatistics.empty()) {
+        *outputStream << "\n--- Statistics ---\n";
+        auto reports = analyzer.getAllStatisticReports();
+        for (const auto& reportPair : reports) {
+            *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << std::endl;
+        }
+    }
+}
 
     return 0;
 }
