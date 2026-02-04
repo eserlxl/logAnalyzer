@@ -99,8 +99,7 @@ int main(int argc, char *argv[]) {
         ));
     }
 
-    // NOTE: The new --tail mode is not yet implemented. This will be part of the next stage.
-    if (cliOptions.streamMode) {
+        if (cliOptions.streamMode) {
         if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv") {
             std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << std::endl;
             return 1;
@@ -114,15 +113,33 @@ int main(int argc, char *argv[]) {
                     *outputStream << analyzer.formatEntry(entry, cliOptions.textOutputFormat, fmtOptions) << std::endl;
                  } else { // CSV
                     // TODO: Implement configurable CSV fields from cliOptions.csvFields
-                     *outputStream << "\"" << (entry.timestamp.has_value() ? Utils::formatTimestamp(*entry.timestamp) : "") << "\"" << cliOptions.csvSeparator
-                                   << "\"" << Utils::logLevelToString(entry.level) << "\"" << cliOptions.csvSeparator
-                                   << "\"" << entry.message << "\""
-                                   << cliOptions.csvSeparator << "\"" << entry.sourceFile << "\"" << std::endl;
+                    *outputStream << (entry.timestamp.has_value() ? Utils::formatTimestamp(*entry.timestamp) : "") << cliOptions.csvSeparator
+                                  << Utils::logLevelToString(entry.level) << cliOptions.csvSeparator;
+
+                    std::string msg = entry.message;
+                    bool needsQuotes = msg.find(cliOptions.csvSeparator) != std::string::npos || msg.find('"') != std::string::npos;
+                    if (needsQuotes) {
+                        Utils::replaceAll(msg, "\"", "\"\"");
+                        *outputStream << "\"" << msg << "\"";
+                    } else {
+                        *outputStream << msg;
+                    }
+                    *outputStream << cliOptions.csvSeparator;
+
+                    std::string sourceFile = entry.sourceFile;
+                    needsQuotes = sourceFile.find(cliOptions.csvSeparator) != std::string::npos || sourceFile.find('"') != std::string::npos;
+                    if (needsQuotes) {
+                        Utils::replaceAll(sourceFile, "\"", "\"\"");
+                        *outputStream << "\"" << sourceFile << "\"";
+                    } else {
+                        *outputStream << sourceFile;
+                    }
+                    *outputStream << std::endl;
                  }
             }
             return true;
         };
-        
+
         if(auto res = analyzer.analyzeStream(cliOptions.filePaths, streamEntryCallback, cliOptions.parserErrorAction); !res) {
             std::cerr << "Error during stream analysis: " << res.error().toString() << std::endl;
             return 1;
@@ -176,7 +193,16 @@ int main(int argc, char *argv[]) {
                 } else {
                     *outputStream << msg;
                 }
-                *outputStream << cliOptions.csvSeparator << entry.sourceFile << "\n";
+                *outputStream << cliOptions.csvSeparator;
+                std::string sourceFile = entry.sourceFile;
+                needsQuotes = sourceFile.find(cliOptions.csvSeparator) != std::string::npos || sourceFile.find('"') != std::string::npos;
+                if (needsQuotes) {
+                    Utils::replaceAll(sourceFile, "\"", "\"\"");
+                    *outputStream << "\"" << sourceFile << "\"";
+                } else {
+                    *outputStream << sourceFile;
+                }
+                *outputStream << "\n";
             }
         } else if (cliOptions.outputFormat == "json") {
              json j;
