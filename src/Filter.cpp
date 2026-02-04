@@ -1,12 +1,22 @@
 #include "../include/Filter.h"
 #include "../include/Utils.h"
-#include <algorithm>
-#include <cctype>
 #include <regex> // Added for std::regex, std::regex_match, std::regex_search, std::regex_constants
 #include <set>   // Added for std::set
 
 
-namespace Detail {
+namespace { // Unnamed namespace for internal helper functions
+    /**
+     * @brief Retrieves a "nested" value from a LogEntry's custom fields.
+     *
+     * This function interprets "nested" access as looking up keys directly in
+     * `LogEntry::customFields` that contain dots (e.g., "user.id"), rather than
+     * traversing a hierarchical structure (like JSON). For example, if a fieldPath
+     * is "user.id", it will look for a key "user.id" in customFields.
+     *
+     * @param entry The LogEntry to extract the value from.
+     * @param fieldPath The dot-separated field path (e.g., "user.name", "request.id").
+     * @return An optional string containing the value if found, std::nullopt otherwise.
+     */
     std::optional<std::string> getNestedValue(const LogEntry& entry, const std::string& fieldPath) {
         // Since LogEntry::customFields is a map<string, string>,
         // "nested" access means searching for a key that matches the full path.
@@ -45,7 +55,7 @@ namespace Detail {
         }
         return std::nullopt;
     }
-} // namespace Detail
+} // Unnamed namespace
 
 NumericComparisonFilter::NumericComparisonFilter(std::string fieldKey, double value, Operator op)
     : fieldKey_(std::move(fieldKey)), value_(value), op_(op) {}
@@ -59,8 +69,8 @@ bool NumericComparisonFilter::matches(const LogEntry &entry) const {
     try {
         double actualValue = std::stod(it->second);
         switch (op_) {
-            case Operator::EQ:  return actualValue == value_;
-            case Operator::NEQ: return actualValue != value_;
+            case Operator::EQ:  return std::abs(actualValue - value_) < NumericComparisonFilter::EPSILON;
+            case Operator::NEQ: return std::abs(actualValue - value_) >= NumericComparisonFilter::EPSILON;
             case Operator::GT:  return actualValue > value_;
             case Operator::LT:  return actualValue < value_;
             case Operator::GTE: return actualValue >= value_;
@@ -113,7 +123,7 @@ NestedFieldValueFilter::NestedFieldValueFilter(std::string fieldPath,
 }
 
 bool NestedFieldValueFilter::matches(const LogEntry &entry) const {
-    auto actualValueOpt = Detail::getNestedValue(entry, fieldPath_);
+    auto actualValueOpt = getNestedValue(entry, fieldPath_);
     if (!actualValueOpt) {
         return false; // Nested field not found
     }
@@ -123,12 +133,10 @@ bool NestedFieldValueFilter::matches(const LogEntry &entry) const {
     if (type_ == PatternType::Literal) {
         if (caseSensitive_) {
             return actualValue == valuePattern_;
-        } else {
-            return Utils::caseInsensitiveEquals(actualValue, valuePattern_);
         }
     } else if (type_ == PatternType::Wildcard) {
         if (regexPattern_.has_value()) {
-            return std::regex_match(actualValue, *regexPattern_);
+            return std::regex_search(actualValue, *regexPattern_);
         }
         return false; // Should not happen
     } else { // PatternType::Regex
@@ -145,15 +153,15 @@ NestedNumericComparisonFilter::NestedNumericComparisonFilter(std::string fieldPa
     : fieldPath_(std::move(fieldPath)), value_(value), op_(op) {}
 
 bool NestedNumericComparisonFilter::matches(const LogEntry &entry) const {
-    auto actualValueOpt = Detail::getNestedNumericValue(entry, fieldPath_);
+    auto actualValueOpt = getNestedNumericValue(entry, fieldPath_);
     if (!actualValueOpt) {
         return false; // Nested field not found or not a valid number
     }
 
     double actualValue = *actualValueOpt;
     switch (op_) {
-        case NumericComparisonFilter::Operator::EQ:  return actualValue == value_;
-        case NumericComparisonFilter::Operator::NEQ: return actualValue != value_;
+        case NumericComparisonFilter::Operator::EQ:  return std::abs(actualValue - value_) < NumericComparisonFilter::EPSILON;
+        case NumericComparisonFilter::Operator::NEQ: return std::abs(actualValue - value_) >= NumericComparisonFilter::EPSILON;
         case NumericComparisonFilter::Operator::GT:  return actualValue > value_;
         case NumericComparisonFilter::Operator::LT:  return actualValue < value_;
         case NumericComparisonFilter::Operator::GTE: return actualValue >= value_;
@@ -166,7 +174,7 @@ NestedBoolFilter::NestedBoolFilter(std::string fieldPath, bool value)
     : fieldPath_(std::move(fieldPath)), value_(value) {}
 
 bool NestedBoolFilter::matches(const LogEntry &entry) const {
-    auto actualValueOpt = Detail::getNestedBoolValue(entry, fieldPath_);
+    auto actualValueOpt = getNestedBoolValue(entry, fieldPath_);
     if (!actualValueOpt) {
         return false; // Nested field not found or not a valid boolean string
     }
@@ -210,7 +218,7 @@ NestedValueSetFilter::NestedValueSetFilter(std::string fieldPath, std::set<std::
 }
 
 bool NestedValueSetFilter::matches(const LogEntry &entry) const {
-    auto actualValueOpt = Detail::getNestedValue(entry, fieldPath_);
+    auto actualValueOpt = getNestedValue(entry, fieldPath_);
     if (!actualValueOpt) {
         return false; // Nested field not found
     }
@@ -249,7 +257,7 @@ bool SourceFileFilter::matches(const LogEntry &entry) const {
         }
     } else if (type_ == PatternType::Wildcard) {
         if (regexPattern_.has_value()) {
-            return std::regex_match(entry.sourceFile, *regexPattern_);
+            return std::regex_search(entry.sourceFile, *regexPattern_);
         }
         return false; // Should not happen if constructed correctly
     } else { // PatternType::Regex
@@ -293,17 +301,16 @@ bool FieldValueFilter::matches(const LogEntry &entry) const {
         } else {
             return Utils::caseInsensitiveEquals(actualValue, valuePattern_);
         }
-    } else if (type_ == PatternType::Wildcard) {
-        if (regexPattern_.has_value()) {
-            return std::regex_match(actualValue, *regexPattern_);
-        }
-        return false; // Should not happen
-    } else { // PatternType::Regex
+    } else if (type_ == PatternType::Wildcard || type_ == PatternType::Regex) {
         if (regexPattern_.has_value()) {
             return std::regex_search(actualValue, *regexPattern_);
         }
-        return false; // Should not happen
+        // This case should ideally not be reached if the filter was constructed correctly,
+        // but acts as a safeguard.
+        return false;
     }
+    // Fallback for any unhandled PatternType, though all expected types are covered above.
+    return false;
 }
 
 PredicateFilter::PredicateFilter(PredicateFilter::Predicate predicate) : predicate_(std::move(predicate)) {}
@@ -358,7 +365,7 @@ ErrorCode::Result<std::shared_ptr<RegexFilter>> RegexFilter::create(std::string 
         // Use 'new' to call the private constructor, then wrap in shared_ptr
         return std::shared_ptr<RegexFilter>(new RegexFilter(std::move(pattern), caseSensitive));
     } catch (const std::regex_error& e) {
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidRegex, "Invalid regex pattern: " + std::string(e.what())));
+        return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid regex pattern: " + std::string(e.what())));
     }
 }
 
@@ -381,12 +388,12 @@ bool TimeRangeFilter::matches(const LogEntry &entry) const {
 std::expected<TimeRangeFilter, std::string> TimeRangeFilter::fromStrings(const std::string& start, const std::string& end) {
     auto startTime = Utils::parseAbsoluteTime(start);
     if (!startTime) {
-        return std::unexpected(startTime.error());
+        return std::unexpected(startTime.error().toString());
     }
 
     auto endTime = Utils::parseAbsoluteTime(end);
     if (!endTime) {
-        return std::unexpected(endTime.error());
+        return std::unexpected(endTime.error().toString());
     }
 
     return TimeRangeFilter(*startTime, *endTime);
@@ -395,7 +402,7 @@ std::expected<TimeRangeFilter, std::string> TimeRangeFilter::fromStrings(const s
 std::expected<TimeRangeFilter, std::string> TimeRangeFilter::since(const std::string& relativeTime) {
     auto startTime = Utils::parseRelativeTime(relativeTime);
     if (!startTime) {
-        return std::unexpected(startTime.error());
+        return std::unexpected(startTime.error().toString());
     }
     // 'since' creates a range from the relative time up to now.
     return TimeRangeFilter(*startTime, std::chrono::system_clock::now());
@@ -404,12 +411,22 @@ std::expected<TimeRangeFilter, std::string> TimeRangeFilter::since(const std::st
 std::expected<TimeRangeFilter, std::string> TimeRangeFilter::forDay(const std::string& dateString) {
     auto dayRange = Utils::parseDayRange(dateString);
     if (!dayRange) {
-        return std::unexpected(dayRange.error());
+        return std::unexpected(dayRange.error().toString());
     }
     return TimeRangeFilter(dayRange->first, dayRange->second);
 }
 
 bool CompositeFilter::matches(const LogEntry &entry) const {
+    /**
+     * @brief Checks if a log entry matches the composite filter's conditions.
+     *
+     * If the filter list is empty:
+     * - For Logic::AND, it returns true (no conditions means no constraints).
+     * - For Logic::OR, it returns false (no condition can be met).
+     *
+     * @param entry The log entry to check.
+     * @return True if the entry matches the composite filter, false otherwise.
+     */
     if (filters_.empty()) {
         return logic_ == Logic::AND;
     }

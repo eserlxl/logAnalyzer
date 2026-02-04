@@ -6,6 +6,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <regex> // Required for std::regex
 #include <cctype> // Required for std::tolower
 #include <locale> // Required for std::locale, std::use_facet, std::ctype
 #include <limits> // Required for std::numeric_limits
@@ -72,6 +73,7 @@ struct FieldMapping {
   std::optional<size_t> groupIndex; // Use std::optional to represent unset index
   std::vector<std::string> formats; // Replaces 'format' for TIMESTAMP, used for kv delimiter for STRUCTURED_FIELD
   std::optional<std::string> customFieldType; // New: for custom fields, explicitly state the type if known (e.g., "int", "string", "datetime")
+  std::optional<std::regex> compiledKvPattern; // New: for structured fields, pre-compiled regex for key-value parsing
 
   // Default constructor
   FieldMapping() : field(LogEntryField::UNKNOWN) {}
@@ -225,7 +227,7 @@ struct LogEntry {
   size_t id = std::numeric_limits<size_t>::max(); // Unique identifier for each log entry
   std::string sourceFile; // The file from which this entry was read
   size_t sourceLineNumber = 0; // New: Line number in the source file
-  std::chrono::system_clock::time_point timestamp;
+  std::optional<std::chrono::system_clock::time_point> timestamp;
   LogLevel level;
   std::string message;
   std::map<std::string, std::string>

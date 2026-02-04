@@ -1,5 +1,5 @@
 #include "Exporter.h"
-#include "LogAnalyzer.h"
+#include "Analyzer.h"
 #include "Utils.h"
 #include <nlohmann/json.hpp>
 #include <iomanip>
@@ -17,7 +17,7 @@ void Exporter::exportAsJson(
     for (const auto& entry : entries) {
         json entryJson = {
             {"id", entry.id},
-            {"timestamp", Utils::formatTimestamp(entry.timestamp)},
+            {"timestamp", entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : ""},
             {"level", Utils::logLevelToString(entry.level)},
             {"message", entry.message}
         };
@@ -52,7 +52,7 @@ void Exporter::exportAsCsv(
     
     for (const auto& entry : entries) {
         os << entry.id << separator
-           << "\"" << Utils::formatTimestamp(entry.timestamp) << "\"" << separator
+           << "\"" << (entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : "") << "\"" << separator
            << "\"" << Utils::logLevelToString(entry.level) << "\"" << separator
            << "\"" << entry.message << "\"" << std::endl;
     }
@@ -90,7 +90,7 @@ std::string Exporter::formatEntryForText(
     }
     
     Utils::replaceAll(result, "{id}", std::to_string(entry.id));
-    Utils::replaceAll(result, "{timestamp}", Utils::formatTimestamp(entry.timestamp));
+    Utils::replaceAll(result, "{timestamp}", entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : "");
     Utils::replaceAll(result, "{level}", levelStr);
     Utils::replaceAll(result, "{message}", entry.message);
     

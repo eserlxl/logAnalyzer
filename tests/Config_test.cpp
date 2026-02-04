@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
-#include "LogAnalyzerConfig.h"
+#include "Config.h"
 #include "LogTypes.h"
 #include "Filter.h"
 #include "Exporter.h"

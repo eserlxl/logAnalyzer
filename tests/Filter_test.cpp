@@ -81,6 +81,26 @@ TEST_F(FilterTest, SourceFileFilterGlob) {
     EXPECT_FALSE(filter2.matches(entry5));
 }
 
+TEST_F(FilterTest, SourceFileFilterGlobSubstringMatch) {
+    SourceFileFilter filter("server*", PatternType::Wildcard); // Glob pattern matching "server" as a substring
+    auto entry1 = createLogEntry(1, "my-server-instance.log", now, LogLevel::INFO, "Server started");
+    auto entry2 = createLogEntry(2, "server.log", now, LogLevel::INFO, "Server log");
+    auto entry3 = createLogEntry(3, "another_log.txt", now, LogLevel::INFO, "No match");
+    auto entry4 = createLogEntry(4, "log-from-server.log", now, LogLevel::INFO, "Log from server");
+
+    EXPECT_TRUE(filter.matches(entry1)); // Should match "server" as substring
+    EXPECT_TRUE(filter.matches(entry2)); // Should match "server" as prefix
+    EXPECT_FALSE(filter.matches(entry3));
+    EXPECT_TRUE(filter.matches(entry4)); // Should match "server" as substring
+
+    // Test a more specific substring glob
+    SourceFileFilter filter2("*server*", PatternType::Wildcard);
+    EXPECT_TRUE(filter2.matches(entry1));
+    EXPECT_TRUE(filter2.matches(entry2));
+    EXPECT_FALSE(filter2.matches(entry3));
+    EXPECT_TRUE(filter2.matches(entry4));
+}
+
 TEST_F(FilterTest, SourceFileFilterRegex) {
     SourceFileFilter filter("server.*\\.log", PatternType::Regex); // Matches server anything .log
     auto entry1 = createLogEntry(1, "server-alpha.log", now, LogLevel::INFO, "Server started");
@@ -115,6 +135,19 @@ TEST_F(FilterTest, FieldValueFilter) {
     EXPECT_TRUE(filter_icase.matches(entry3));
 }
 
+
+TEST_F(FilterTest, FieldValueFilterWildcardSubstringMatch) {
+    FieldValueFilter filter("user_id", "admin*", PatternType::Wildcard);
+    auto entry1 = createLogEntry(1, "app.log", now, LogLevel::INFO, "msg", {{"user_id", "admin123"}});
+    auto entry2 = createLogEntry(2, "app.log", now, LogLevel::INFO, "msg", {{"user_id", "superuser"}});
+    auto entry3 = createLogEntry(3, "app.log", now, LogLevel::INFO, "msg", {{"user_id", "guest"}});
+    auto entry4 = createLogEntry(4, "app.log", now, LogLevel::INFO, "msg", {{"user_id", "system-admin"}}); // Should match "admin" as substring
+
+    EXPECT_TRUE(filter.matches(entry1));
+    EXPECT_FALSE(filter.matches(entry2));
+    EXPECT_FALSE(filter.matches(entry3));
+    EXPECT_TRUE(filter.matches(entry4));
+}
 
 TEST_F(FilterTest, FieldValueFilterRegex) {
     // Default caseSensitive is false, so it should be case-insensitive
@@ -233,6 +266,18 @@ TEST_F(FilterTest, KeywordFilterMultiAny) {
     EXPECT_FALSE(filter.matches(entry3));
 }
 
+TEST_F(FilterTest, KeywordFilterEmptyListAny) {
+    KeywordFilter filter({}, KeywordFilter::Logic::ANY); // Empty list for ANY
+    auto entry = createLogEntry(1, "app.log", now, LogLevel::INFO, "Any message");
+    EXPECT_FALSE(filter.matches(entry)); // Empty ANY list should never match
+}
+
+TEST_F(FilterTest, KeywordFilterEmptyListAll) {
+    KeywordFilter filter({}, KeywordFilter::Logic::ALL); // Empty list for ALL
+    auto entry = createLogEntry(1, "app.log", now, LogLevel::INFO, "Any message");
+    EXPECT_TRUE(filter.matches(entry)); // Empty ALL list should always match (vacuously true)
+}
+
 TEST_F(FilterTest, KeywordFilterMultiAll) {
     KeywordFilter filter({"database", "connection", "failed"}, KeywordFilter::Logic::ALL);
     auto entry1 = createLogEntry(1, "db.log", now, LogLevel::ERROR, "Database connection failed");
@@ -273,7 +318,7 @@ TEST_F(FilterTest, RegexFilterCaseSensitive) {
 TEST_F(FilterTest, RegexFilterInvalidPattern) {
     auto filter_res = RegexFilter::create("["); // Invalid regex pattern
     EXPECT_FALSE(filter_res.has_value());
-    EXPECT_EQ(filter_res.error().code, ErrorCode::Error::Code::InvalidRegex);
+    EXPECT_EQ(filter_res.error().code, Code::InvalidRegex);
     EXPECT_NE(filter_res.error().message.find("The expression contained an invalid character class name"), std::string::npos);
 }
 
@@ -352,6 +397,34 @@ TEST_F(FilterTest, NestedNumericComparisonFilter) {
     EXPECT_FALSE(eq_filter.matches(entry_non_numeric));
 }
 
+TEST_F(FilterTest, NumericComparisonFilterFloatingPointPrecision) {
+    // Test EQ with values very close
+    NumericComparisonFilter eq_filter("value", 100.0, NumericComparisonFilter::Operator::EQ);
+    EXPECT_TRUE(eq_filter.matches(createLogEntry(1, "log", now, LogLevel::INFO, "msg", {{"value", "100.0000000001"}}))); // Within epsilon
+    EXPECT_TRUE(eq_filter.matches(createLogEntry(2, "log", now, LogLevel::INFO, "msg", {{"value", "99.9999999999"}})));  // Within epsilon
+    EXPECT_FALSE(eq_filter.matches(createLogEntry(3, "log", now, LogLevel::INFO, "msg", {{"value", "100.000001"}}))); // Outside epsilon (e.g., 1e-6 difference)
+
+    // Test NEQ with values very close
+    NumericComparisonFilter neq_filter("value", 100.0, NumericComparisonFilter::Operator::NEQ);
+    EXPECT_FALSE(neq_filter.matches(createLogEntry(4, "log", now, LogLevel::INFO, "msg", {{"value", "100.0000000001"}}))); // Within epsilon, so considered equal
+    EXPECT_FALSE(neq_filter.matches(createLogEntry(5, "log", now, LogLevel::INFO, "msg", {{"value", "99.9999999999"}})));  // Within epsilon, so considered equal
+    EXPECT_TRUE(neq_filter.matches(createLogEntry(6, "log", now, LogLevel::INFO, "msg", {{"value", "100.000001"}})));  // Outside epsilon, so considered not equal
+}
+
+TEST_F(FilterTest, NestedNumericComparisonFilterFloatingPointPrecision) {
+    // Test EQ with values very close
+    NestedNumericComparisonFilter eq_filter("metric.value", 100.0, NumericComparisonFilter::Operator::EQ);
+    EXPECT_TRUE(eq_filter.matches(createLogEntry(1, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.0000000001"}})));
+    EXPECT_TRUE(eq_filter.matches(createLogEntry(2, "log", now, LogLevel::INFO, "msg", {{"metric.value", "99.9999999999"}})));
+    EXPECT_FALSE(eq_filter.matches(createLogEntry(3, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.000001"}})));
+
+    // Test NEQ with values very close
+    NestedNumericComparisonFilter neq_filter("metric.value", 100.0, NumericComparisonFilter::Operator::NEQ);
+    EXPECT_FALSE(neq_filter.matches(createLogEntry(4, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.0000000001"}})));
+    EXPECT_FALSE(neq_filter.matches(createLogEntry(5, "log", now, LogLevel::INFO, "msg", {{"metric.value", "99.9999999999"}})));
+    EXPECT_TRUE(neq_filter.matches(createLogEntry(6, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.000001"}})));
+}
+
 TEST_F(FilterTest, NestedBoolFilter) {
     NestedBoolFilter filter_true("user.is_admin", true);
     auto entry_true_match = createLogEntry(1, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "true"}});
@@ -402,6 +475,31 @@ TEST_F(FilterTest, NestedFieldValueFilter) {
     // Field not found
     NestedFieldValueFilter missing_field_filter("user.non_existent", "any", PatternType::Literal);
     EXPECT_FALSE(missing_field_filter.matches(entry_match));
+}
+
+TEST_F(FilterTest, CompositeFilterEmptyListAND) {
+    CompositeFilter filter(CompositeFilter::Logic::AND);
+    auto entry = createLogEntry(1, "web.log", now, LogLevel::INFO, "Any message");
+    EXPECT_TRUE(filter.matches(entry)); // Empty AND should always return true
+}
+
+TEST_F(FilterTest, CompositeFilterEmptyListOR) {
+    CompositeFilter filter(CompositeFilter::Logic::OR);
+    auto entry = createLogEntry(1, "web.log", now, LogLevel::INFO, "Any message");
+    EXPECT_FALSE(filter.matches(entry)); // Empty OR should always return false
+}
+
+TEST_F(FilterTest, NestedFieldValueFilterWildcardSubstringMatch) {
+    NestedFieldValueFilter filter("request.path", "/api/*/users", PatternType::Wildcard);
+    auto entry1 = createLogEntry(1, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v1/users"}});
+    auto entry2 = createLogEntry(2, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v2/admin/users"}});
+    auto entry3 = createLogEntry(3, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v1/data"}});
+    auto entry4 = createLogEntry(4, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/internal/api/v1/users"}}); // Should match "/api/v1/users" as substring
+
+    EXPECT_TRUE(filter.matches(entry1));
+    EXPECT_TRUE(filter.matches(entry2));
+    EXPECT_FALSE(filter.matches(entry3));
+    EXPECT_TRUE(filter.matches(entry4));
 }
 
 TEST_F(FilterTest, CompositeFilterAND) {
@@ -472,12 +570,12 @@ TEST_F(FilterTest, TimeRangeFilterFromStrings) {
     // Invalid start time
     auto invalid_start_res = TimeRangeFilter::fromStrings("invalid-date", "2023-01-15 11:00:00");
     EXPECT_FALSE(invalid_start_res.has_value());
-    EXPECT_NE(invalid_start_res.error().message.find("Invalid"), std::string::npos);
+    EXPECT_NE(invalid_start_res.error().find("Invalid"), std::string::npos);
 
     // Invalid end time
     auto invalid_end_res = TimeRangeFilter::fromStrings("2023-01-15 10:00:00", "invalid-date");
     EXPECT_FALSE(invalid_end_res.has_value());
-    EXPECT_NE(invalid_end_res.error().message.find("Invalid"), std::string::npos);
+    EXPECT_NE(invalid_end_res.error().find("Invalid"), std::string::npos);
 }
 
 TEST_F(FilterTest, TimeRangeFilterForDay) {
@@ -516,7 +614,7 @@ TEST_F(FilterTest, TimeRangeFilterForDay) {
     // Invalid date format
     auto invalid_date_res = TimeRangeFilter::forDay("not-a-date");
     EXPECT_FALSE(invalid_date_res.has_value());
-    EXPECT_NE(invalid_date_res.error().message.find("Invalid date format"), std::string::npos);
+    EXPECT_NE(invalid_date_res.error().find("Invalid date format"), std::string::npos);
 }
 
 TEST_F(FilterTest, TimeRangeFilterSince) {
@@ -536,12 +634,12 @@ TEST_F(FilterTest, TimeRangeFilterSince) {
     // Invalid relative time
     auto invalid_rel_time_res = TimeRangeFilter::since("foo bar");
     EXPECT_FALSE(invalid_rel_time_res.has_value());
-    EXPECT_NE(invalid_rel_time_res.error().message.find("Invalid relative time format"), std::string::npos);
+    EXPECT_NE(invalid_rel_time_res.error().find("Invalid relative time format"), std::string::npos);
     
     // Another invalid relative time
     auto invalid_rel_time_res2 = TimeRangeFilter::since("1 year from now");
     EXPECT_FALSE(invalid_rel_time_res2.has_value());
-    EXPECT_NE(invalid_rel_time_res2.error().message.find("Invalid relative time format"), std::string::npos);
+    EXPECT_NE(invalid_rel_time_res2.error().find("Invalid relative time format"), std::string::npos);
 }
 
 TEST_F(FilterTest, ValueSetFilter) {
@@ -624,7 +722,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidField) {
     FilterRule fr;
     auto result = from_json(j, fr);
     EXPECT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("unrecognized field"), std::string::npos);
 }
 
@@ -637,7 +735,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonMissingField) {
     FilterRule fr;
     auto result = from_json(j, fr);
     EXPECT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("missing or has invalid 'field'"), std::string::npos);
 }
 
@@ -713,7 +811,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidField) {
     FilterCondition fc;
     auto result = from_json(j, fc);
     EXPECT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("unrecognized 'field' string"), std::string::npos);
 }
 
@@ -727,7 +825,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingOp) {
     FilterCondition fc;
     auto result = from_json(j, fc);
     EXPECT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
 }
 
@@ -879,12 +977,12 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonNested) {
     nlohmann::json j = {
         {"operator", "AND"},
         {"operands", nlohmann::json::array({
-            {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}},
-            {{"operator", "OR"},
+            nlohmann::json {{"condition", {{"field", "level"}, {"op", "EQUALS"}, {"value", "ERROR"}, {"value_type", 0}}}},
+            nlohmann::json {{"operator", "OR"},
              {"operands", nlohmann::json::array({
-                {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "database"}, {"value_type", 0}}}},
-                {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "network"}, {"value_type", 0}}}}
-             })}
+                nlohmann::json {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "database"}, {"value_type", 0}}}},
+                nlohmann::json {{"condition", {{"field", "message"}, {"op", "CONTAINS"}, {"value", "network"}, {"value_type", 0}}}}
+             })}}
         })}
     };
 
@@ -927,7 +1025,7 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonInvalidOperand) {
     FilterExpression fe;
     auto result = from_json(j, fe);
     EXPECT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
 }
 
@@ -939,7 +1037,7 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonMissingOperands) {
     FilterExpression fe;
     auto result = from_json(j, fe);
     EXPECT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("must contain 'operands' array"), std::string::npos);
 }
 
@@ -954,7 +1052,7 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonUnknownOperator) {
     FilterExpression fe;
     auto result = from_json(j, fe);
     EXPECT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("Unknown filter logical operator"), std::string::npos);
 }
 
@@ -966,7 +1064,7 @@ TEST_F(FilterJsonTest, FilterExpressionFromJsonMissingConditionOrOperator) {
     FilterExpression fe;
     auto result = from_json(j, fe);
     EXPECT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, ErrorCode::Error::Code::InvalidArgument);
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("must contain either 'condition' or 'operator'"), std::string::npos);
 }
 

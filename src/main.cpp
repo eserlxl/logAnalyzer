@@ -1,6 +1,6 @@
-#include "LogAnalyzer.h"
+#include "Analyzer.h"
 #include "Utils.h"
-#include "LogAnalyzerSettings.h"
+#include "Settings.h"
 #include "CLIConfig.h" // Added for CLIConfig
 #include "Error.h" // New: For Error struct and Result alias
 #include <nlohmann/json.hpp>
@@ -108,14 +108,14 @@ int main(int argc, char *argv[]) {
         auto streamEntryCallback = [&](const LogEntry &entry) {
             if (rootFilter->matches(entry)) {
                  if (cliOptions.outputFormat == "text") {
-                    LogAnalyzer::FormattingOptions fmtOptions;
+                    FormattingOptions fmtOptions;
                     fmtOptions.useColor = useColors;
                     fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
                     *outputStream << analyzer.formatEntry(entry, cliOptions.textOutputFormat, fmtOptions) << std::endl;
                  } else { // CSV
                     // TODO: Implement configurable CSV fields from cliOptions.csvFields
-                     *outputStream << "\"" << analyzer.formatTimestamp(entry.timestamp) << "\"" << cliOptions.csvSeparator
-                                   << "\"" << analyzer.logLevelToString(entry.level) << "\"" << cliOptions.csvSeparator
+                     *outputStream << "\"" << (entry.timestamp.has_value() ? Utils::formatTimestamp(*entry.timestamp) : "") << "\"" << cliOptions.csvSeparator
+                                   << "\"" << Utils::logLevelToString(entry.level) << "\"" << cliOptions.csvSeparator
                                    << "\"" << entry.message << "\""
                                    << cliOptions.csvSeparator << "\"" << entry.sourceFile << "\"" << std::endl;
                  }
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
 
         if (cliOptions.outputFormat == "text") {
             for(const auto& entry : filteredEntries) {
-                LogAnalyzer::FormattingOptions fmtOptions;
+                FormattingOptions fmtOptions;
                 fmtOptions.useColor = useColors;
                 fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
                 *outputStream << analyzer.formatEntry(entry, cliOptions.textOutputFormat, fmtOptions) << std::endl;
@@ -166,8 +166,8 @@ int main(int argc, char *argv[]) {
             // TODO: Implement configurable CSV fields from cliOptions.csvFields
             *outputStream << "Timestamp" << cliOptions.csvSeparator << "Level" << cliOptions.csvSeparator << "Message" << cliOptions.csvSeparator << "File\n";
             for (const auto& entry : filteredEntries) {
-                *outputStream << analyzer.formatTimestamp(entry.timestamp) << cliOptions.csvSeparator
-                              << analyzer.logLevelToString(entry.level) << cliOptions.csvSeparator;
+                *outputStream << (entry.timestamp.has_value() ? Utils::formatTimestamp(*entry.timestamp) : "") << cliOptions.csvSeparator
+                              << Utils::logLevelToString(entry.level) << cliOptions.csvSeparator;
                 std::string msg = entry.message;
                 bool needsQuotes = msg.find(cliOptions.csvSeparator) != std::string::npos || msg.find('"') != std::string::npos;
                 if (needsQuotes) {
@@ -187,8 +187,8 @@ int main(int argc, char *argv[]) {
              for (const auto& entry : filteredEntries) {
                  // TODO: Implement configurable JSON fields (less critical, but good for consistency)
                  j["entries"].push_back(json{
-                     {"timestamp", analyzer.formatTimestamp(entry.timestamp)},
-                     {"level", analyzer.logLevelToString(entry.level)},
+                     {"timestamp", entry.timestamp.has_value() ? json(Utils::formatTimestamp(*entry.timestamp)) : json(json::value_t::null)},
+                     {"level", Utils::logLevelToString(entry.level)},
                      {"message", entry.message},
                      {"file", entry.sourceFile}
                  });

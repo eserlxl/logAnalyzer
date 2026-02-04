@@ -3,22 +3,24 @@
 #include <string>
 #include <expected> // For std::expected
 
+// Moved outside namespace to be globally accessible
+enum class Code {
+    Unknown,
+    InvalidArgument,
+    FileNotFound,
+    FileNotReadable,
+    InvalidRegex,
+    MalformedLogEntry,
+    InvalidCLIOption,
+    StatisticNotFound,
+    TimestampParsingFailed, // New error code
+    // Add more error codes as needed
+};
+
 namespace ErrorCode {
 
 // Define a common error structure for the application
 struct Error {
-    enum class Code {
-        Unknown,
-        InvalidArgument,
-        FileNotFound,
-        FileNotReadable,
-        InvalidRegex,
-        MalformedLogEntry,
-        InvalidCLIOption,
-        StatisticNotFound, // For new stats feature
-        // Add more error codes as needed
-    };
-
     Code code;
     std::string message;
 
@@ -44,6 +46,9 @@ struct Error {
     static Error statisticNotFound(const std::string& statName) {
         return Error(Code::StatisticNotFound, "Statistic collector not found: " + statName);
     }
+    static Error timestampParsingFailed(const std::string& details) {
+        return Error(Code::TimestampParsingFailed, "Timestamp parsing failed: " + details);
+    }
 
 
     // Convert to string for logging or display
@@ -59,6 +64,7 @@ struct Error {
             case Code::MalformedLogEntry: codeStr = "MalformedLogEntry"; break;
             case Code::InvalidCLIOption: codeStr = "InvalidCLIOption"; break;
             case Code::StatisticNotFound: codeStr = "StatisticNotFound"; break;
+            case Code::TimestampParsingFailed: codeStr = "TimestampParsingFailed"; break;
             default: codeStr = "UnknownCode"; break;
         }
         if (!message.empty()) {
@@ -67,6 +73,12 @@ struct Error {
         return codeStr;
     }
 };
+
+// Overload operator<< for ErrorCode::Error to enable streaming to ostream
+inline std::ostream& operator<<(std::ostream& os, const ErrorCode::Error& error) {
+    os << error.toString();
+    return os;
+}
 
 // Type alias for std::expected to simplify function signatures
 template<typename T>

@@ -1,4 +1,4 @@
-#include "LogAnalyzer.h"
+#include "Analyzer.h"
 #include "LogParser.h"
 #include "Filter.h"
 #include "Statistics.h"
@@ -18,96 +18,6 @@
 #include <functional>
 #include <iterator>
 #include <map>
-#include <mutex>
-#include <expected>
-#include <string_view>
-#include <span>
-
-#include "LogAnalyzerConfig.h"
-#include "CLIConfig.h"
-
-using namespace ErrorCode;
-
-LogAnalyzer::LogAnalyzer() 
-    : currentSettings_(), 
-      customLogLevelMapping_(currentSettings_.customLogLevelMappings), // Initialize with settings' mappings
-      currentParser_(std::make_unique<DefaultLogParser>(
-          currentSettings_.lineParsePattern, 
-          currentSettings_.fieldMappings, 
-          customLogLevelMapping_ // Use LogAnalyzer's own mapping
-      )) {
-    for (const auto& config : currentSettings_.statisticConfigs) {
-        if (auto collector = createStatisticCollector(config)) {
-            collectors_.push_back(collector);
-        }
-    }
-}
-
-LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
-    : currentSettings_(settings), // Initialize currentSettings_ with provided settings
-      customLogLevelMapping_(settings.customLogLevelMappings), // Initialize customLogLevelMapping_ from settings
-      currentParser_(std::make_unique<DefaultLogParser>(
-          currentSettings_.lineParsePattern,
-          currentSettings_.fieldMappings,
-          customLogLevelMapping_ // Use LogAnalyzer's own mapping
-      )) {
-    for (const auto& config : settings.statisticConfigs) {
-        if (auto collector = createStatisticCollector(config)) {
-            collectors_.push_back(collector);
-        }
-    }
-}
-
-Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
-    std::unique_lock<std::shared_mutex> lock(stateMutex_); // Use unique_lock for modifying methods
-    currentSettings_ = settings; // Assign directly, no move as settings is const&
-    customLogLevelMapping_ = settings.customLogLevelMappings; // Update LogAnalyzer's own mapping
-    
-    // Clear existing collectors and create new ones based on the updated settings
-    collectors_.clear();
-    for (const auto& config : currentSettings_.statisticConfigs) {
-        if (auto collector = createStatisticCollector(config)) {
-            collectors_.push_back(collector);
-        }
-    }
-
-    auto parser_or_error = DefaultLogParser::create(
-        currentSettings_.lineParsePattern, 
-        currentSettings_.fieldMappings, 
-        customLogLevelMapping_ // Use LogAnalyzer's own mapping
-    );
-    if (parser_or_error.has_value()) {
-        currentParser_ = std::move(parser_or_error.value());
-        return {};
-    } else {
-        return std::unexpected(Error(Error::Code::InvalidRegex, "Failed to create parser with new settings."));
-    }
-}
-
-const LogAnalyzerSettings& LogAnalyzer::getSettings() const {
-    return currentSettings_;
-}
-
-// New statistics methods
-void LogAnalyzer::addStatisticCollector(std::shared_ptr<IStatisticCollector> collector) {
-    if (collector) {
-        collectors_.push_back(collector);
-    }
-}
-
-void LogAnalyzer::processEntryForStatistics(const LogEntry& entry) {
-    for (const auto& collector : collectors_) {
-        collector->collect(entry);
-    }
-}
-
-std::map<std::string, json> LogAnalyzer::getAllStatisticReports() const {
-    std::map<std::string, json> reports;
-    for (const auto& collector : collectors_) {
-        reports[collector->getName()] = collector->generateReport();
-    }
-    return reports;
-}
 
 std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
     std::vector<LogEntry> parsedEntries;
@@ -130,7 +40,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std
         } else {
             if (errorAction == CLIConfig::ParserErrorAction::Warn) {
                 std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResult.error().message << std::endl;
-            } else if (errorAction == CLIConfig::ParserErrorAction::Fail) {
+            } else if (errorAction == CLIConfig::ParserErrorAction::Throw) {
                 // This will be handled by the caller by checking the Result
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber});
@@ -158,13 +68,6 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std
     }
     
     return {parsedEntries, report};
-}
-
-void LogAnalyzer::clear() {
-    std::unique_lock<std::shared_mutex> lock(stateMutex_);
-    entries_.clear();
-    levelCounts.clear();
-    lastReport = {};
 }
 
 Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
@@ -223,21 +126,6 @@ AnalysisReport LogAnalyzer::loadAndReplace(const std::string& filePath, const st
 const std::vector<LogEntry>& LogAnalyzer::getEntries() const {
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     return entries_;
-}
-
-
-
-void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel) {
-    std::unique_lock<std::shared_mutex> lock(customLogLevelMappingMutex_); // Use specific mutex for this map
-    customLogLevelMapping_[std::string(levelString)] = mappedLevel;
-    // Recreate the parser with the updated customLogLevelMapping_
-    // This assumes that other settings (pattern, fieldMappings) are not changing,
-    // and customLogLevelMapping_ is independent from currentSettings_.
-    currentParser_ = std::make_unique<DefaultLogParser>(
-        currentSettings_.lineParsePattern,
-        currentSettings_.fieldMappings,
-        customLogLevelMapping_
-    );
 }
 
 Result<AnalysisReport> LogAnalyzer::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
@@ -324,7 +212,7 @@ Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePath
                     if(errorAction == CLIConfig::ParserErrorAction::Warn) {
                         std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.error().message << std::endl;
                     }
-                     if(errorAction != CLIConfig::ParserErrorAction::Skip) {
+                     if(errorAction != CLIConfig::ParserErrorAction::Ignore) {
                         LogEntry partialEntry;
                         partialEntry.level = LogLevel::UNKNOWN;
                         partialEntry.message = line;
@@ -455,7 +343,13 @@ std::span<const LogEntry> LogAnalyzer::getEntriesView() const {
 std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view format, const FormattingOptions& options) const {
     std::string formattedString(format);
 
-    Utils::replaceAll(formattedString, "{timestamp}", Utils::formatTimestamp(entry.timestamp, options.dateTimeFormat));
+    std::string timestampStr;
+    if (entry.timestamp.has_value()) {
+        timestampStr = Utils::formatTimestamp(entry.timestamp.value(), options.dateTimeFormat);
+    } else {
+        timestampStr = "N/A";
+    }
+    Utils::replaceAll(formattedString, "{timestamp}", timestampStr);
     
     std::string levelString = Utils::logLevelToString(entry.level);
     if (options.useColor) {
@@ -511,9 +405,6 @@ std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view for
     return formatEntry(entry, defaultFormat, options);
 }
 
-// Removed obsolete functions:
-//
-
 void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     auto filteredEntriesExpected = getFilteredEntries_NoLock(criteria);
@@ -532,80 +423,3 @@ void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& 
     options.dateTimeFormat = std::string(formatString);
     printFilteredEntries(out, criteria, options);
 }
-
-Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
-    std::shared_lock<std::shared_mutex> lock(stateMutex_);
-    return getFilteredEntries_NoLock(criteria);
-}
-
-// Factory method for creating statistic collectors
-std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const StatisticConfig& config) {
-    std::string targetField;
-    std::string customFieldKey;
-    int topN = 0; // Default or parsed
-
-    // Extract common parameters first
-    auto itTargetField = config.params.find("target_field");
-    if (itTargetField != config.params.end()) {
-        targetField = itTargetField->second;
-    }
-
-    auto itCustomFieldKey = config.params.find("custom_field_key");
-    if (itCustomFieldKey != config.params.end()) {
-        customFieldKey = itCustomFieldKey->second;
-    }
-    
-    auto itTopN = config.params.find("top_n");
-    if (itTopN != config.params.end()) {
-        try {
-            topN = std::stoi(itTopN->second);
-        } catch (const std::exception& e) {
-            std::cerr << "Warning: Invalid 'top_n' parameter for statistic. Defaulting to 10. Error: " << e.what() << std::endl;
-            topN = 10; // Default value if parsing fails
-        }
-    } else {
-        topN = 10; // Default if not provided
-    }
-
-    switch (config.type) {
-        case StatisticType::UNIQUE_MESSAGES:
-            return std::make_shared<UniqueMessagesCollector>();
-        case StatisticType::TOP_MESSAGES:
-            return std::make_shared<TopMessagesCollector>(topN); // Reusing topN for backward compatibility
-        case StatisticType::ENTRY_RATE:
-            return std::make_shared<EntryRateCollector>();
-        case StatisticType::LOG_LEVEL_COUNT:
-            return std::make_shared<LogLevelCountCollector>();
-        case StatisticType::FIELD_VALUE_COUNT: {
-            if (targetField.empty()) {
-                throw std::runtime_error("FieldValueCountCollector requires 'target_field' parameter.");
-            }
-            if (targetField == "customFields") {
-                if (customFieldKey.empty()) {
-                    throw std::runtime_error("FieldValueCountCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
-                }
-                return std::make_shared<FieldValueCountCollector>(targetField, customFieldKey);
-            }
-            return std::make_shared<FieldValueCountCollector>(targetField);
-        }
-        case StatisticType::TOP_N_FIELD_VALUES: {
-            if (targetField.empty()) {
-                throw std::runtime_error("TopNFieldValuesCollector requires 'target_field' parameter.");
-            }
-            if (targetField == "customFields") {
-                if (customFieldKey.empty()) {
-                    throw std::runtime_error("TopNFieldValuesCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
-                }
-                return std::make_shared<TopNFieldValuesCollector>(topN, targetField, customFieldKey);
-            }
-            return std::make_shared<TopNFieldValuesCollector>(topN, targetField);
-        }
-        case StatisticType::UNKNOWN:
-        default:
-            std::cerr << "Warning: Attempted to create unknown statistic type." << std::endl;
-            return nullptr;
-    }
-}
-
-
-

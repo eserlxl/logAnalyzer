@@ -30,9 +30,9 @@ const std::map<std::string, CLIConfig::ColorOption> CLIConfig::colorOptionMap = 
 };
 
 const std::map<std::string, CLIConfig::ParserErrorAction> CLIConfig::errorActionMap = {
-    {"skip", CLIConfig::ParserErrorAction::Skip},    // Updated
-    {"warn", CLIConfig::ParserErrorAction::Warn},    // Updated
-    {"fail", CLIConfig::ParserErrorAction::Fail}
+    {"ignore", CLIConfig::ParserErrorAction::Ignore},
+    {"warn", CLIConfig::ParserErrorAction::Warn},
+    {"throw", CLIConfig::ParserErrorAction::Throw}
 };
 
 // CLI Parsing
@@ -66,7 +66,13 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
        ->transform(CLI::CheckedTransformer(CLIConfig::logicMap, CLI::ignore_case));
 
     app.add_option("--start", "Start time filter (YYYY-MM-DD HH:MM:SS, ISO 8601, Unix timestamp, or relative like '1h ago')")
-       ->check(Utils::validateTimestampCliOption)
+       ->check([](const std::string &str) -> std::string {
+            auto result = Utils::validateTimestampCliOption(str);
+            if (!result) {
+                return result.error().toString();
+            }
+            return "";
+        })
        ->transform([&](const std::string& tsStr){
           auto parsedTime = Utils::parseTime(tsStr);
           if (parsedTime.has_value()) {
@@ -76,7 +82,13 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
           throw CLI::ValidationError("Internal Error: Timestamp validation passed but parsing failed for --start. This should not happen.");
        });
     app.add_option("--end", "End time filter (YYYY-MM-DD HH:MM:SS, ISO 8601, Unix timestamp, or relative like '1h ago')")
-       ->check(Utils::validateTimestampCliOption)
+       ->check([](const std::string &str) -> std::string {
+            auto result = Utils::validateTimestampCliOption(str);
+            if (!result) {
+                return result.error().toString();
+            }
+            return "";
+        })
        ->transform([&](const std::string& tsStr){
           auto parsedTime = Utils::parseTime(tsStr);
           if (parsedTime.has_value()) {
@@ -173,7 +185,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         if (parsedDuration.has_value()) {
             appOptions.duration = parsedDuration.value();
         } else {
-            return std::unexpected(Error(Error::Code::InvalidArgument, "Error parsing --duration: " + parsedDuration.error()));
+            return std::unexpected(Error(Error::Code::InvalidArgument, "Error parsing --duration: " + parsedDuration.error().toString()));
         }
     }
 

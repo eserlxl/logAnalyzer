@@ -1,4 +1,4 @@
-#include "LogAnalyzer.h"
+#include "Analyzer.h"
 #include "Filter.h"
 #include <algorithm>
 #include <memory>
@@ -6,13 +6,16 @@
 #include <expected>
 #include <regex>
 
-std::expected<std::vector<LogEntry>, LogParseError> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
-    std::lock_guard<std::mutex> lock(mutex_); // Lock for thread safety
+#include "Error.h" // Explicitly include Error.h
+
+using namespace ErrorCode; // Add this to bring ErrorCode members into scope
+
+Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const FilterCriteria& criteria) const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_); // Lock for thread safety (read-only)
     return getFilteredEntries_NoLock(criteria);
 }
 
-// Non-locking version for internal use
-std::expected<std::vector<LogEntry>, LogParseError> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
+Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(const FilterCriteria& criteria) const {
     std::vector<LogEntry> filtered;
     
     auto composite = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
@@ -30,7 +33,8 @@ std::expected<std::vector<LogEntry>, LogParseError> LogAnalyzer::getFilteredEntr
     if (!criteria.regexPattern.empty()) {
         auto regexFilterResult = RegexFilter::create(criteria.regexPattern);
         if (!regexFilterResult.has_value()) {
-            return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, regexFilterResult.error(), 0});
+            // Forward the error from RegexFilter::create, which is std::string
+            return std::unexpected(Error(Code::InvalidRegex, regexFilterResult.error()));
         }
         composite->add(regexFilterResult.value());
     }

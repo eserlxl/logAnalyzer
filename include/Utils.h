@@ -1,4 +1,5 @@
 #include "LogTypes.h" // Ensure ci_less is declared before use
+#include "Error.h"
 
 #ifndef UTILS_H
 #define UTILS_H
@@ -87,29 +88,30 @@ std::string getFileExtension(const std::string& filePath);
 std::string getDirectory(const std::string& filePath);
 
 // Parses a duration string (e.g., "10s", "5m", "2h", "1d") into std::chrono::seconds.
-std::expected<std::chrono::seconds, std::string> parseDuration(const std::string& durationStr, bool allowExtendedUnits = false);
+std::expected<std::chrono::seconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits = false);
 
 // Calculates a time point relative to the current time (e.g., "1h ago").
-std::expected<std::chrono::system_clock::time_point, std::string> parseRelativeTime(const std::string& timeStr);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr);
 
 // Parses an absolute time string (e.g., "2023-01-01 12:30:00") into std::chrono::system_clock::time_point.
-std::expected<std::chrono::system_clock::time_point, std::string> parseAbsoluteTime(const std::string& timeStr);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbsoluteTime(const std::string& timeStr);
 
 // Parses a time string, supporting multiple absolute formats (YYYY-MM-DD HH:MM:SS, ISO 8601, Unix timestamp)
 // and also falling back to relative time parsing.
-std::expected<std::chrono::system_clock::time_point, std::string> parseTime(const std::string& timeStr);
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime(const std::string& timeStr);
 
 // Parses a time string using a list of provided formats.
-std::expected<std::chrono::system_clock::time_point, std::string>
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error>
 parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>& formats);
 
 // Parses a date string (e.g., "YYYY-MM-DD", "YYYY/MM/DD") into a time range for that entire day.
 // Returns a pair: first is 00:00:00 of the day, second is 23:59:59.999... of the day.
-std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, std::string>
+std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error>
 parseDayRange(const std::string& dateString);
 
 // Validates a timestamp string for CLI options. Throws CLI::ValidationError on failure.
-std::string validateTimestampCliOption(const std::string &tsStr);
+// Changed return type to ErrorCode::Result<std::string> to align with other parsing functions.
+std::expected<std::string, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr);
 
 // Escapes a string for JSON output, handling special characters like quotes, backslashes, and control characters.
 std::string escapeJsonString(const std::string& input);

@@ -5,7 +5,7 @@
 #include "Filter.h"
 #include "Exporter.h"
 #include "Statistics.h"
-#include "LogAnalyzerSettings.h"
+#include "Settings.h"
 #include "Utils.h"
 
 #include <string>

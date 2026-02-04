@@ -1,6 +1,6 @@
 # LogAnalyzer
 
-[![Build Status](https://github.com/YOUR_ORGANIZATION/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_ORGANIZATION/logAnalyzer/actions/workflows/ci.yml) <!-- IMPORTANT: Update 'YOUR_ORGANIZATION' and the workflow path to your actual GitHub Actions CI/CD build status link. -->
+[![Build Status](https://github.com/logAnalyzer/logAnalyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/logAnalyzer/logAnalyzer/actions/workflows/ci.yml) <!-- IMPORTANT: Please update 'logAnalyzer/logAnalyzer' to your actual GitHub repository path (e.g., 'your-username/logAnalyzer' or 'your-organization/logAnalyzer') for the CI/CD build status link. -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 
@@ -33,7 +33,7 @@
 -   **Memory-Efficient Processing**: Handles very large files with minimal memory usage by processing them as streams.
 -   **Multi-File Support**: Parses and analyzes multiple log files.
 -   **Powerful Command-Line Interface**: A rich set of command-line options to control filtering, formatting, and analysis without needing a configuration file.
--   **Advanced Filtering**: Build complex filter expressions with `AND`/`OR`/`NOT` logic, time ranges, log levels, keywords, and regular expressions.
+-   **Advanced Filtering**: Build complex filter expressions with `AND`/`OR`/`NOT` logic, time ranges, log levels, keywords, regular expressions, and custom fields.
 -   **Live Stream Mode**: Monitor new log entries from files in real-time, similar to `tail -f`.
 -   **Flexible Export**: Save results in Text, JSON, or CSV formats.
 -   **Statistical Analysis**: Generate statistics on your log data, such as entry rates and most frequent messages.
@@ -71,6 +71,13 @@ Run `./bin/logAnalyzer --help` for a full list of commands.
 | `--end-time TIME` | | Filter logs before a given timestamp. | |
 | `--sort-by [timestamp\|level\|message]` | | Field to sort results by. | `timestamp` |
 | `--sort-order [asc\|desc]` | | Sort order. | `asc` |
+| `--field-match KEY=VALUE` | | Filter custom fields for exact string match. Supports dot-notation for nested fields. | |
+| `--field-regex KEY=PATTERN` | | Filter custom fields using a regex pattern. Supports dot-notation for nested fields. | |
+| `--field-numeric KEY OPERATOR VALUE` | | Filter custom fields by numeric comparison (e.g., `status GT 200`). Operators: `EQ`, `NEQ`, `GT`, `LT`, `GTE`, `LTE`. Supports dot-notation. | |
+| `--field-bool KEY IS_TRUE/IS_FALSE` | | Filter custom fields by boolean value. `IS_TRUE` for true, `IS_FALSE` for false. Supports dot-notation. | |
+| `--field-in KEY=VAL1,VAL2,...` | | Filter custom fields if value is in a comma-separated list. Supports dot-notation. | |
+| `--field-exists KEY` | | Filter log entries where the specified custom field `KEY` exists. Supports dot-notation. | |
+| `--source-file-pattern PATTERN` | | Filter log entries by their source file path (supports literal, wildcard, regex). | |
 
 ### Output Formatting
 
@@ -195,7 +202,7 @@ To get a local copy up and running, follow these simple steps.
 
 2.  **Clone the repository:**
     ```bash
-    git clone https://github.com/YOUR_ORGANIZATION/logAnalyzer.git
+    git clone https://github.com/your-org-or-username/logAnalyzer.git # IMPORTANT: Replace 'your-org-or-username' with the actual GitHub organization or user name.
     cd logAnalyzer
     ```
 

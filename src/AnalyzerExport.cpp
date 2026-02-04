@@ -1,4 +1,4 @@
-#include "LogAnalyzer.h"
+#include "Analyzer.h"
 #include "Utils.h"
 #include <iostream>
 #include <vector>
@@ -18,7 +18,13 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, c
     const auto& filtered = filtered_expected.value();
     
     for (const auto& entry : filtered) {
-        out << Utils::formatTimestamp(entry.timestamp, timestampFormat) << delimiter;
+        std::string timestampStr;
+        if (entry.timestamp.has_value()) {
+            timestampStr = Utils::formatTimestamp(entry.timestamp.value(), timestampFormat);
+        } else {
+            timestampStr = "";
+        }
+        out << timestampStr << delimiter;
         out << Utils::logLevelToString(entry.level) << delimiter;
         
         // Audit: Handle newlines and quotes in messages for CSV
@@ -67,9 +73,14 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
 
     for (size_t i = 0; i < filtered.size(); ++i) {
         const auto& entry = filtered[i];
+        std::string timestampStr;
+        if (entry.timestamp.has_value()) {
+            timestampStr = Utils::formatTimestamp(entry.timestamp.value(), timestampFormat);
+        } // else: timestampStr remains empty
+
         out << entryIndent; // Always use entryIndent for log entries
         out << "{";
-        out << "\"timestamp\":\"" << Utils::formatTimestamp(entry.timestamp, timestampFormat) << "\",";
+        out << "\"timestamp\":\"" << timestampStr << "\",";
         out << "\"level\":\"" << Utils::logLevelToString(entry.level) << "\",";
         out << "\"message\":\"" << Utils::escapeJsonString(entry.message) << "\",";
         out << "\"file\":\"" << Utils::escapeJsonString(entry.sourceFile) << "\"";

@@ -7,7 +7,6 @@
 #include <functional>
 #include <memory>
 #include <regex> // Required for std::regex
-#include <algorithm>
 #include <chrono>
 #include <expected>
 #include <optional> // For std::optional
@@ -137,22 +136,22 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr
     if (j.contains("field") && j.at("field").is_string()) {
         fr.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
         if (fr.field == LogEntryField::UNKNOWN) { // Simplified check
-             return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterRule has an unrecognized field: " + j.at("field").get<std::string>()));
+             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule has an unrecognized field: " + j.at("field").get<std::string>()));
         }
     } else {
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterRule is missing or has invalid 'field'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'field'."));
     }
 
     if (j.contains("op") && j.at("op").is_string()) {
         fr.op = Utils::stringToFilterOperator(j.at("op").get<std::string>());
     } else {
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterRule is missing or has invalid 'op'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'op'."));
     }
 
     if (j.contains("value") && j.at("value").is_string()) {
         fr.value = j.at("value").get<std::string>();
     } else {
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterRule is missing or has invalid 'value'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'value'."));
     }
 
     if (j.contains("caseSensitive") && j.at("caseSensitive").is_boolean()) {
@@ -190,13 +189,13 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
 
                 if (fc.field == LogEntryField::UNKNOWN) { // Simplified check
 
-                     return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition has an unrecognized 'field' string: " + j.at("field").get<std::string>()));
+                     return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'field' string: " + j.at("field").get<std::string>()));
 
                 }
 
     } else {
 
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition is missing or has invalid 'field'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'field'."));
 
     }
 
@@ -208,7 +207,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
 
     } else {
 
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition is missing or has invalid 'op'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'op'."));
 
     }
 
@@ -220,7 +219,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
 
     } else {
 
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition is missing or has invalid 'value'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'value'."));
 
     }
 
@@ -232,7 +231,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
 
     } else {
 
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition is missing or has invalid 'value_type'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'value_type'."));
 
     }
 
@@ -294,7 +293,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
 
 
 
-                return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterCondition with DATETIME valueType requires a datetimeFormat."));
+                return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition with DATETIME valueType requires a datetimeFormat."));
 
 
 
@@ -411,7 +410,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpressi
     } else if (j.contains("operator") && j.at("operator").is_string()) {
         FilterLogicalOperator op = Utils::stringToFilterLogicalOperator(j.at("operator").get<std::string>());
         if (op == FilterLogicalOperator::UNKNOWN) {
-            return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "Unknown filter logical operator: " + j.at("operator").get<std::string>()));
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unknown filter logical operator: " + j.at("operator").get<std::string>()));
         } else {
             std::vector<FilterExpression> operands;
             if (j.contains("operands") && j.at("operands").is_array()) {
@@ -424,12 +423,12 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpressi
                     operands.push_back(std::move(operand_fe));
                 }
             } else {
-                return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterExpression with operator must contain 'operands' array."));
+                return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression with operator must contain 'operands' array."));
             }
             fe = FilterExpression(op, std::move(operands));
         }
     } else {
-        return std::unexpected(ErrorCode::Error(ErrorCode::Error::Code::InvalidArgument, "FilterExpression must contain either 'condition' or 'operator' with 'operands'."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression must contain either 'condition' or 'operator' with 'operands'."));
     }
     
     return {}; // Success
@@ -450,11 +449,27 @@ public:
 // struct FilterRule { ... }; // Removed as per design
 
 // Existing concrete IFilter implementations (will be refactored/replaced by FilterExpression evaluation)
+// Note on pattern matching consistency:
+// For PatternType::Wildcard (after glob-to-regex conversion) and PatternType::Regex,
+// std::regex_search is used, meaning patterns can match any substring of the input.
+// This provides consistent substring matching behavior across these pattern types.
 class SourceFileFilter : public IFilter {
 public:
+    /**
+     * @brief Constructs a SourceFileFilter.
+     * @param pattern The pattern to match against the LogEntry's source file.
+     * @param type The type of pattern (Literal, Wildcard, Regex).
+     *             For Wildcard and Regex, uses std::regex_search for substring matching.
+     * @param caseSensitive Whether the comparison should be case-sensitive.
+     */
     explicit SourceFileFilter(std::string pattern,
                               PatternType type = PatternType::Literal,
                               bool caseSensitive = false);
+    /**
+     * @brief Checks if the log entry's source file matches the configured pattern.
+     * @param entry The log entry to check.
+     * @return True if the source file matches, false otherwise.
+     */
     bool matches(const LogEntry &entry) const override;
 private:
     std::string pattern_;
@@ -473,10 +488,23 @@ private:
 
 class FieldValueFilter : public IFilter {
 public:
+    /**
+     * @brief Constructs a FieldValueFilter.
+     * @param fieldKey The key of the custom field to filter on.
+     * @param valuePattern The pattern to match against the field's value.
+     * @param type The type of pattern (Literal, Wildcard, Regex).
+     *             For Wildcard and Regex, uses std::regex_search for substring matching.
+     * @param caseSensitive Whether the comparison should be case-sensitive.
+     */
     explicit FieldValueFilter(std::string fieldKey,
                               std::string valuePattern,
                               PatternType type = PatternType::Literal,
                               bool caseSensitive = false);
+    /**
+     * @brief Checks if the custom field's value in the log entry matches the configured pattern.
+     * @param entry The log entry to check.
+     * @return True if the field exists and its value matches, false otherwise.
+     */
     bool matches(const LogEntry &entry) const override;
 private:
     std::string fieldKey_;
@@ -581,6 +609,16 @@ public:
     void add(std::shared_ptr<IFilter> filter) {
         filters_.push_back(std::move(filter));
     }
+    /**
+     * @brief Checks if a log entry matches the composite filter's conditions.
+     *
+     * If the filter list is empty:
+     * - For Logic::AND, it returns true (no conditions means no constraints).
+     * - For Logic::OR, it returns false (no condition can be met).
+     *
+     * @param entry The log entry to check.
+     * @return True if the entry matches the composite filter, false otherwise.
+     */
     bool matches(const LogEntry &entry) const override;
 private:
     Logic logic_;
@@ -589,6 +627,9 @@ private:
 
 class NumericComparisonFilter : public IFilter {
 public:
+    // Epsilon for floating-point comparisons. A common choice for relative comparisons.
+    static constexpr double EPSILON = 1e-9; 
+
     enum class Operator {
         EQ,  // Equal to
         NEQ, // Not equal to
@@ -615,19 +656,27 @@ private:
     bool value_;
 };
 
-// Internal helper for nested field access (declaration only)
-namespace Detail {
-    std::optional<std::string> getNestedValue(const LogEntry& entry, const std::string& fieldPath);
-    std::optional<double> getNestedNumericValue(const LogEntry& entry, const std::string& fieldPath);
-    std::optional<bool> getNestedBoolValue(const LogEntry& entry, const std::string& fieldPath);
-}
+
 
 class NestedFieldValueFilter : public IFilter {
 public:
+    /**
+     * @brief Constructs a NestedFieldValueFilter.
+     * @param fieldPath The dot-separated path to the nested field (e.g., "user.id").
+     * @param valuePattern The pattern to match against the nested field's value.
+     * @param type The type of pattern (Literal, Wildcard, Regex).
+     *             For Wildcard and Regex, uses std::regex_search for substring matching.
+     * @param caseSensitive Whether the comparison should be case-sensitive.
+     */
     NestedFieldValueFilter(std::string fieldPath,
                            std::string valuePattern,
                            PatternType type = PatternType::Literal,
                            bool caseSensitive = false);
+    /**
+     * @brief Checks if the nested field's value in the log entry matches the configured pattern.
+     * @param entry The log entry to check.
+     * @return True if the nested field exists and its value matches, false otherwise.
+     */
     bool matches(const LogEntry &entry) const override;
 private:
     std::string fieldPath_;

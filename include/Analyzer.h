@@ -32,7 +32,7 @@ struct FormattingOptions {
 // using namespace ErrorCode; // Removed due to namespace pollution
 
 #include "LogParser.h"
-#include "LogAnalyzerConfig.h"
+#include "Config.h"
 
 class LogAnalyzer {
 public:

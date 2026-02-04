@@ -3,7 +3,7 @@
 
 #include "LogTypes.h" // For LogLevel, SortBy, SortOrder
 #include "Filter.h"   // For CompositeFilter::Logic
-#include "LogAnalyzerSettings.h" // To return a populated LogAnalyzerSettings object
+#include "Settings.h" // To return a populated LogAnalyzerSettings object
 #include "Error.h"    // For Error struct and Result alias
 #include <string>
 #include <vector>
@@ -23,9 +23,9 @@ public:
     };
 
     enum class ParserErrorAction {
-        Skip, // Changed from SKIP_LINE
-        Warn, // Changed from LOG_AND_SKIP
-        Fail
+        Ignore,
+        Warn,
+        Throw
     };
 
     // Static maps for CLI argument parsing

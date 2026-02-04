@@ -48,7 +48,9 @@ json TopMessagesCollector::generateReport() const {
 
 // EntryRateCollector implementation
 void EntryRateCollector::collect(const LogEntry& entry) {
-    _timestamps.push_back(entry.timestamp);
+    if (entry.timestamp.has_value()) {
+        _timestamps.push_back(entry.timestamp.value());
+    }
 }
 
 json EntryRateCollector::generateReport() const {

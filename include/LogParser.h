@@ -59,16 +59,18 @@ public:
         std::string pattern,
         std::vector<FieldMapping> fieldMappings,
         const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings = {},
-        std::optional<std::string> logEntryStartPattern = std::nullopt,
+        std::optional<std::string> logEntryStartPattern = std::nullopt, // Reverted to string
         CLIConfig::ParserErrorAction errorAction = CLIConfig::ParserErrorAction::Warn); // Added errorAction
 
     // New constructor with field mappings and level mappings, and optional log entry start pattern
     DefaultLogParser(
-        std::string pattern,
+        std::string patternString, // The original pattern string
+        std::regex compiledLogPattern, // The compiled pattern
         std::vector<FieldMapping> fieldMappings,
-        const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings = {},
-        std::optional<std::string> logEntryStartPattern = std::nullopt,
-        CLIConfig::ParserErrorAction errorAction = CLIConfig::ParserErrorAction::Warn); // Added errorAction
+        const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
+        std::optional<std::regex> compiledLogEntryStartRegex, // The compiled start regex
+        std::optional<std::string> logEntryStartPatternString, // The original start regex string
+        CLIConfig::ParserErrorAction errorAction);
 
     // Deprecated constructor, now delegates to the new one
     [[deprecated("Use constructor with fieldMappings for explicit control.")]]
@@ -101,6 +103,7 @@ private:
     std::optional<std::string> logEntryStartPatternString; // For cloning
 
     std::string currentLogEntryBuffer;
+    std::string currentLogEntrySourceFile; // New: To store the source file of the first line of a multi-line entry
     size_t currentLogEntryStartLineNumber = 0;
     size_t lastProcessedLineNumber = 0;
 
