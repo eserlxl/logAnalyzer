@@ -121,6 +121,7 @@ set(TEST_SOURCES
     "stats/Statistics.cpp"
     "utils/Time.cpp"
     "utils/Enum.cpp"
+    "utils/String.cpp"
 )
 
 # Loop through each test source file

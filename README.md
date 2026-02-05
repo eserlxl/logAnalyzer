@@ -78,8 +78,8 @@ For detailed build instructions, installation options, and more usage examples, 
 | **Memory-Efficient Processing** | Handles very large files with minimal memory usage using the `--stream` mode.        |
 | **Multi-File Support**       | Parses and analyzes multiple log files at once.                                      |
 | **Structured Field Parsing** | Automatically parses log messages into key-value pairs using custom delimiters.      |
-| **Advanced Filtering**       | Filter by log level, time range (absolute, relative, and ISO 8601), keywords, regular expressions, and field values.  |
-| **Field-Value Matching**     | Match against structured fields with literal, wildcard, or regex patterns.           |
+| **Advanced Filtering**       | Filter by log level, time range (absolute, relative, and ISO 8601), keywords, glob patterns, regular expressions, and field values.  |
+| **Field-Value Matching**     | Match against structured fields with literal, glob, or regex patterns.           |
 | **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on fields.  |
 | **Set-Based Filtering**      | Check if a field's value belongs to a specific set of values.                        |
 | **Complex Filtering Expressions** | Build sophisticated filter logic using parenthesized, nested AND/OR conditions.      |
@@ -93,9 +93,34 @@ This section guides you through setting up `logAnalyzer` from its source code.
 
 ### Prerequisites
 
--   **Compiler**: A C++23 compatible compiler (e.g., GCC 13+, Clang 16+).
--   **Build System**: CMake 3.20 or higher.
+-   **C++ Compiler**: A compiler with C++23 support (e.g., GCC 13+, Clang 16+).
+-   **Build System**: CMake (version 3.20 or higher).
 -   **Version Control**: Git for cloning the repository.
+
+#### Installing Dependencies
+
+**On Debian/Ubuntu:**
+
+```bash
+sudo apt-get update
+sudo apt-get install -y g++-13 cmake git
+```
+
+**On macOS (using Homebrew):**
+
+```bash
+brew install gcc cmake git
+```
+
+**On Arch Linux:**
+
+```bash
+sudo pacman -Syu gcc cmake git
+```
+
+**On Windows:**
+
+Ensure you have [Visual Studio 2022](https://visualstudio.microsoft.com/) with the "Desktop development with C++" workload installed, along with [CMake](https://cmake.org/download/) and [Git](https://git-scm.com/download/win). You can use the Developer PowerShell for VS to run the build commands.
 
 ### Dependencies
 
@@ -161,6 +186,19 @@ For a local installation, you can specify a different prefix. This is useful if 
 ```bash
 # Install to a 'dist' directory inside the project folder
 cmake --install . --prefix ../dist
+```
+
+Alternatively, you can manually add the `build/bin` directory (from your build directory) to your system's `PATH` environment variable or copy the `logAnalyzer` executable from `build/bin` to any directory already in your `PATH`. For example, after building from the `logAnalyzer` root directory:
+
+```bash
+# Navigate into the build directory
+cd build
+
+# Add to PATH temporarily (for the current session)
+export PATH=$(pwd)/bin:$PATH
+
+# Or copy the executable to a user-local bin directory (make sure ~/.local/bin is in your PATH)
+cp ./bin/logAnalyzer ~/.local/bin/
 ```
 
 ## Usage

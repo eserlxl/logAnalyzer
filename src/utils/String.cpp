@@ -19,13 +19,18 @@ void replaceAll(std::string &str, const std::string &from, const std::string &to
 
 void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to) {
     if (from.empty()) return;
-    std::string lowerStr = toLower(str);
-    std::string lowerFrom = toLower(from);
 
+    std::string lowerFrom = toLower(from);
     size_t start_pos = 0;
-    while ((start_pos = lowerStr.find(lowerFrom, start_pos)) != std::string::npos) {
+    while (true) {
+        std::string lowerStr = toLower(str); // Recalculate lowerStr in each iteration
+        start_pos = lowerStr.find(lowerFrom, start_pos);
+        if (start_pos == std::string::npos) {
+            break;
+        }
         str.replace(start_pos, from.length(), to);
-        lowerStr.replace(start_pos, from.length(), to); // Update lowerStr as well
+        // Important: Do NOT modify lowerStr directly with 'to' as it might not be lowercase
+        // The next iteration will recalculate lowerStr from the updated 'str'
         start_pos += to.length();
     }
 }
@@ -42,11 +47,19 @@ std::string trim(const std::string& str, std::string_view whitespace) {
 
 std::vector<std::string> split(const std::string& str, char delimiter) {
     std::vector<std::string> tokens;
-    std::string token;
-    std::istringstream tokenStream(str);
-    while (std::getline(tokenStream, token, delimiter)) {
-        tokens.push_back(token);
+    if (str.empty()) {
+        return tokens;
     }
+    std::string::size_type lastPos = 0;
+    std::string::size_type findPos = str.find(delimiter, lastPos);
+
+    while (findPos != std::string::npos) {
+        tokens.push_back(str.substr(lastPos, findPos - lastPos));
+        lastPos = findPos + 1;
+        findPos = str.find(delimiter, lastPos);
+    }
+
+    tokens.push_back(str.substr(lastPos));
     return tokens;
 }
 
@@ -65,26 +78,29 @@ std::string toUpper(const std::string& str) {
 }
 
 std::string escapeJsonString(const std::string& input) {
-    std::ostringstream ss;
+    std::string output;
+    output.reserve(input.length()); // Reserve at least the original length
     for (char c : input) {
         switch (c) {
-            case '"': ss << "\\\""; break;
-            case '\\': ss << "\\\\"; break;
-            case '\b': ss << "\\b"; break;
-            case '\f': ss << "\\f"; break;
-            case '\n': ss << "\\n"; break;
-            case '\r': ss << "\\r"; break;
-            case '\t': ss << "\\t"; break;
+            case '"':  output += "\\\""; break;
+            case '\\': output += "\\\\"; break;
+            case '\b': output += "\\b"; break;
+            case '\f': output += "\\f"; break;
+            case '\n': output += "\\n"; break;
+            case '\r': output += "\\r"; break;
+            case '\t': output += "\\t"; break;
             default:
                 if (static_cast<unsigned char>(c) < 0x20 || static_cast<unsigned char>(c) > 0x7e) {
+                    std::ostringstream ss;
                     ss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(c));
+                    output += ss.str();
                 } else {
-                    ss << c;
+                    output += c;
                 }
                 break;
         }
     }
-    return ss.str();
+    return output;
 }
 
 std::string globToRegex(const std::string& globPattern) {
@@ -109,6 +125,7 @@ std::string globToRegex(const std::string& globPattern) {
             case '}':
             case '|':
             case '\\':
+            case '-': // Added to escape
                 regexPattern.push_back('\\'); // Escape regex special characters
                 regexPattern += c;
                 break;
