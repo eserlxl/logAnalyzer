@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// Copyright (c) 2026 eserlxl
+// Copyright (c) 2026 Eser KUBALI
 
 #include "utils/String.h"
 #include "utils/UtilsCore.h"
