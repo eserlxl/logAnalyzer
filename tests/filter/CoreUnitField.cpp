@@ -85,9 +85,9 @@ TEST_F(FilterTest, ValueSetFilter) {
     EXPECT_FALSE(filter_icase.matches(createLogEntry(8, "log", now, LogLevel::INFO, "msg", {{"status", "pending"}})));
 }
 
-TEST_F(FilterTest, NestedValueSetFilter) {
+TEST_F(FilterTest, DottedKeyValueSetFilter) {
     std::set<std::string> allowed_roles = {"superadmin", "moderator"};
-    NestedValueSetFilter filter("user.role", allowed_roles, true); // Case-sensitive
+    DottedKeyValueSetFilter filter("user.role", allowed_roles, true); // Case-sensitive
 
     EXPECT_TRUE(filter.matches(createLogEntry(1, "log", now, LogLevel::INFO, "msg", {{"user.role", "superadmin"}})));
     EXPECT_FALSE(filter.matches(createLogEntry(2, "log", now, LogLevel::INFO, "msg", {{"user.role", "SuperAdmin"}}))); // Case-sensitive mismatch
@@ -95,7 +95,7 @@ TEST_F(FilterTest, NestedValueSetFilter) {
     EXPECT_FALSE(filter.matches(createLogEntry(4, "log", now, LogLevel::INFO, "msg", {{"account.role", "superadmin"}}))); // Wrong field path
 
     std::set<std::string> allowed_events = {"LOGIN", "LOGOUT"};
-    NestedValueSetFilter filter_icase("event.type", allowed_events, false); // Case-insensitive
+    DottedKeyValueSetFilter filter_icase("event.type", allowed_events, false); // Case-insensitive
 
     EXPECT_TRUE(filter_icase.matches(createLogEntry(5, "log", now, LogLevel::INFO, "msg", {{"event.type", "login"}})));
     EXPECT_TRUE(filter_icase.matches(createLogEntry(6, "log", now, LogLevel::INFO, "msg", {{"event.type", "LOGOUT"}})));

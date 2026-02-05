@@ -140,22 +140,22 @@ bool FieldValueFilter::matches(const LogEntry &entry) const {
     }
 }
 
-// --- Nested Filters: Implemented as aliases for non-nested counterparts ---
+// --- Dotted-Key Filters: Implemented by passing the dotted path to the base filter ---
 
-NestedFieldValueFilter::NestedFieldValueFilter(std::string fieldPath,
+DottedKeyFieldValueFilter::DottedKeyFieldValueFilter(std::string fieldPath,
                                                std::string valuePattern,
                                                PatternType type,
                                                bool caseSensitive)
     : FieldValueFilter(std::move(fieldPath), std::move(valuePattern), type, caseSensitive) {}
 
 
-NestedNumericComparisonFilter::NestedNumericComparisonFilter(std::string fieldPath,
+DottedKeyNumericComparisonFilter::DottedKeyNumericComparisonFilter(std::string fieldPath,
                                                            double value,
                                                            NumericComparisonFilter::Operator op)
     : NumericComparisonFilter(std::move(fieldPath), value, op) {}
 
 
-NestedBoolFilter::NestedBoolFilter(std::string fieldPath, bool value)
+DottedKeyBoolFilter::DottedKeyBoolFilter(std::string fieldPath, bool value)
     : BoolFilter(std::move(fieldPath), value, false) {} // Keep original behavior: case-insensitive
 
 
@@ -184,7 +184,7 @@ bool ValueSetFilter::matches(const LogEntry &entry) const {
     }
 }
 
-NestedValueSetFilter::NestedValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive)
+DottedKeyValueSetFilter::DottedKeyValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive)
     : ValueSetFilter(std::move(fieldPath), std::move(values), caseSensitive) {}
 
 

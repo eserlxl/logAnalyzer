@@ -200,7 +200,7 @@ TEST_F(FilterExpressionJsonTest, FromJsonInvalidOperator) {
     auto result = from_json(j, expr);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("Unknown filter logical operator"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Unknown logical operator"), std::string::npos);
     EXPECT_EQ(result.error().jsonPath, "/operator");
 }
 
@@ -213,7 +213,7 @@ TEST_F(FilterExpressionJsonTest, FromJsonMissingOperands) {
     auto result = from_json(j, expr);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("must contain 'operands' array"), std::string::npos);
+    EXPECT_NE(result.error().message.find("requires 'operands' array"), std::string::npos);
     EXPECT_EQ(result.error().jsonPath, "/operands");
 }
 

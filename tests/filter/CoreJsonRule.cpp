@@ -75,7 +75,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidField) {
     auto result = from_json(j, fr);
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("unrecognized field"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Unrecognized field"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterRuleFromJsonMissingField) {
@@ -88,7 +88,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonMissingField) {
     auto result = from_json(j, fr);
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("missing or has invalid 'field'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterRuleFromJsonMissingOp) {
@@ -101,7 +101,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonMissingOp) {
     auto result = from_json(j, fr);
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterRuleFromJsonMissingValue) {
@@ -114,7 +114,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonMissingValue) {
     auto result = from_json(j, fr);
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("missing or has invalid 'value'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidOp) {
@@ -128,5 +128,5 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidOp) {
     auto result = from_json(j, fr);
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("unrecognized 'op' string"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Unrecognized operator"), std::string::npos);
 }

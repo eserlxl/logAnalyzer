@@ -65,7 +65,9 @@ protected:
         LogEntry entry = createLogEntry(LogLevel::INFO, "Version test", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"version_field", v1}});
         FilterCondition cond = createCondition(LogEntryField::CUSTOM, op, v2, FilterValueType::VERSION, true, "version_field");
         FilterExpression expr = FilterExpression::create(cond);
-        EXPECT_EQ(expr.evaluate(entry), expected) << "Comparison: '" << v1 << "' " << toString(op) << " '" << v2 << "'";
+        auto res = expr.evaluate(entry);
+        ASSERT_TRUE(res.has_value()) << "Comparison: '" << v1 << "' " << toString(op) << " '" << v2 << "' failed with error: " << res.error().toString();
+        EXPECT_EQ(*res, expected) << "Comparison: '" << v1 << "' " << toString(op) << " '" << v2 << "'";
     }
 
     // Helper for testing IP address comparisons
@@ -73,7 +75,9 @@ protected:
         LogEntry entry = createLogEntry(LogLevel::INFO, "IP test", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"ip_field", ip1}});
         FilterCondition cond = createCondition(LogEntryField::CUSTOM, op, ip2, FilterValueType::IP_ADDRESS, true, "ip_field");
         FilterExpression expr = FilterExpression::create(cond);
-        EXPECT_EQ(expr.evaluate(entry), expected) << "Comparison: '" << ip1 << "' " << toString(op) << " '" << ip2 << "'";
+        auto res = expr.evaluate(entry);
+        ASSERT_TRUE(res.has_value()) << "Comparison: '" << ip1 << "' " << toString(op) << " '" << ip2 << "' failed with error: " << res.error().toString();
+        EXPECT_EQ(*res, expected) << "Comparison: '" << ip1 << "' " << toString(op) << " '" << ip2 << "'";
     }
 };
 
@@ -130,9 +134,15 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateVersionPrereleasePrecedence) {
 
 }
 TEST_F(FilterExpressionAdvancedTest, EvaluateVersionInvalidInput) {
-    testVersionComparison("not-a-version", "1.0.0", FilterOperator::EQUALS, false);
-    testVersionComparison("1.0.0", "not-a-version", FilterOperator::EQUALS, false);
-    testVersionComparison("invalid.version.string", "1.0.0", FilterOperator::GREATER_THAN, false);
+    LogEntry entry = createLogEntry(LogLevel::INFO, "Version test", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"version_field", "not-a-version"}});
+    FilterCondition cond = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.0.0", FilterValueType::VERSION, true, "version_field");
+    FilterExpression expr = FilterExpression::create(cond);
+    EXPECT_FALSE(expr.evaluate(entry).has_value());
+
+    LogEntry entry2 = createLogEntry(LogLevel::INFO, "Version test", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"version_field", "1.0.0"}});
+    cond = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "not-a-version", FilterValueType::VERSION, true, "version_field");
+    expr = FilterExpression::create(cond);
+    EXPECT_FALSE(expr.evaluate(entry2).has_value());
 }
 
 // --- IP Address Tests ---
@@ -165,17 +175,27 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateIpAddressLessThan) {
     // The implementation considers IPv4 to be less than IPv6.
     LogEntry entry_ipv6 = createLogEntry(LogLevel::INFO, "msg", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"client_ip", "::1"}});
     FilterExpression expr_v6_lt_v4 = FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "192.168.1.1", FilterValueType::IP_ADDRESS, true, "client_ip"));
-    EXPECT_FALSE(expr_v6_lt_v4.evaluate(entry_ipv6)); // ::1 (IPv6) is NOT less than 192.168.1.1 (IPv4)
+    auto res1 = expr_v6_lt_v4.evaluate(entry_ipv6);
+    ASSERT_TRUE(res1.has_value());
+    EXPECT_FALSE(*res1); // ::1 (IPv6) is NOT less than 192.168.1.1 (IPv4)
 
     LogEntry entry_ipv4 = createLogEntry(LogLevel::INFO, "msg", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"client_ip", "192.168.1.1"}});
     FilterExpression expr_v4_lt_v6 = FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "::1", FilterValueType::IP_ADDRESS, true, "client_ip"));
-    EXPECT_TRUE(expr_v4_lt_v6.evaluate(entry_ipv4)); // 192.168.1.1 (IPv4) IS less than ::1 (IPv6)
+    auto res2 = expr_v4_lt_v6.evaluate(entry_ipv4);
+    ASSERT_TRUE(res2.has_value());
+    EXPECT_TRUE(*res2); // 192.168.1.1 (IPv4) IS less than ::1 (IPv6)
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateIpAddressInvalidInput) {
-    testIpComparison("invalid-ip", "192.168.1.1", FilterOperator::EQUALS, false);
-    testIpComparison("192.168.1.1", "invalid-ip", FilterOperator::EQUALS, false);
-    testIpComparison("256.0.0.1", "1.0.0.0", FilterOperator::GREATER_THAN, false); // Invalid IPv4
+    LogEntry entry = createLogEntry(LogLevel::INFO, "IP test", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"ip_field", "invalid-ip"}});
+    FilterCondition cond = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "192.168.1.1", FilterValueType::IP_ADDRESS, true, "ip_field");
+    FilterExpression expr = FilterExpression::create(cond);
+    EXPECT_FALSE(expr.evaluate(entry).has_value());
+
+    LogEntry entry2 = createLogEntry(LogLevel::INFO, "IP test", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"ip_field", "192.168.1.1"}});
+    cond = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "invalid-ip", FilterValueType::IP_ADDRESS, true, "ip_field");
+    expr = FilterExpression::create(cond);
+    EXPECT_FALSE(expr.evaluate(entry2).has_value());
 }
 
 // --- FilterOperator::IN and FilterOperator::NOT_IN Edge Cases ---
@@ -183,18 +203,18 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateInOperatorInvalidJson) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Message");
     FilterCondition cond = createCondition(LogEntryField::MESSAGE, FilterOperator::IN, "not-json", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).has_value());
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateInOperatorNonArrayJson) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Message");
     FilterCondition cond = createCondition(LogEntryField::MESSAGE, FilterOperator::IN, "\"single_string\"", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).has_value());
     
     cond = createCondition(LogEntryField::MESSAGE, FilterOperator::IN, "{\"key\": \"value\"}", FilterValueType::STRING);
     expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).has_value());
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateInOperatorNonStringItems) {
@@ -202,29 +222,29 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateInOperatorNonStringItems) {
     // "test" is not in ["abc", 123, true]
     FilterCondition cond = createCondition(LogEntryField::MESSAGE, FilterOperator::IN, "[\"abc\", 123, true]", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).value_or(true));
 
     // "abc" is in ["abc", 123, true]
     LogEntry entry2 = createLogEntry(LogLevel::INFO, "abc");
-    EXPECT_TRUE(expr.evaluate(entry2));
+    EXPECT_TRUE(expr.evaluate(entry2).value_or(false));
 
     // "123" (as string) is not in ["abc", 123, true] because it only compares string items
     LogEntry entry3 = createLogEntry(LogLevel::INFO, "123");
-    EXPECT_FALSE(expr.evaluate(entry3));
+    EXPECT_FALSE(expr.evaluate(entry3).value_or(true));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateInOperatorEmptyArray) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "test");
     FilterCondition cond = createCondition(LogEntryField::MESSAGE, FilterOperator::IN, "[]", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).value_or(true));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateNotInOperatorEmptyArray) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "test");
     FilterCondition cond = createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_IN, "[]", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry)); // Not in an empty set is always true
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false)); // Not in an empty set is always true
 }
 
 // --- Error Handling for Numeric and Regex Conversions ---
@@ -232,25 +252,25 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateNumericInvalidInput) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Test", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"value", "abc"}});
     FilterCondition cond = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123", FilterValueType::INT, true, "value");
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry)); // "abc" cannot be converted to INT
+    EXPECT_FALSE(expr.evaluate(entry).has_value()); // "abc" cannot be converted to INT
 
     cond = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "not-a-num", FilterValueType::INT, true, "value");
     expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry)); // "not-a-num" cannot be converted to INT
+    EXPECT_FALSE(expr.evaluate(entry).has_value()); // "not-a-num" cannot be converted to INT
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateDoubleInvalidInput) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Test", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"value", "abc"}});
     FilterCondition cond = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "3.14", FilterValueType::DOUBLE, true, "value");
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry)); // "abc" cannot be converted to DOUBLE
+    EXPECT_FALSE(expr.evaluate(entry).has_value()); // "abc" cannot be converted to DOUBLE
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateRegexInvalidPattern) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Some message");
     FilterCondition cond = createCondition(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, "[invalid regex", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry)); // Invalid regex should not crash and return false
+    EXPECT_FALSE(expr.evaluate(entry).has_value()); // Invalid regex should return error
 }
 
 // --- LogEntryField::ID and LINE_NUMBER with Optional Values ---
@@ -258,36 +278,36 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateIdOptionalPresent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", 100);
     FilterCondition cond = createCondition(LogEntryField::ID, FilterOperator::EQUALS, "100", FilterValueType::INT);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateIdOptionalAbsent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", std::nullopt);
     FilterCondition cond = createCondition(LogEntryField::ID, FilterOperator::IS_ABSENT, "", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
     
     cond = createCondition(LogEntryField::ID, FilterOperator::IS_PRESENT, "", FilterValueType::STRING);
     expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).value_or(true));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateLineNumberOptionalPresent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", std::nullopt, 50);
     FilterCondition cond = createCondition(LogEntryField::LINE_NUMBER, FilterOperator::EQUALS, "50", FilterValueType::INT);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateLineNumberOptionalAbsent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", std::nullopt, std::nullopt);
     FilterCondition cond = createCondition(LogEntryField::LINE_NUMBER, FilterOperator::IS_ABSENT, "", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
     
     cond = createCondition(LogEntryField::LINE_NUMBER, FilterOperator::IS_PRESENT, "", FilterValueType::STRING);
     expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).value_or(true));
 }
 
 // --- LogEntryField::THREAD_ID, MODULE, HOST (now direct members) ---
@@ -295,42 +315,42 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateThreadIdOptionalPresent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", std::nullopt, std::nullopt, "thread-123");
     FilterCondition cond = createCondition(LogEntryField::THREAD_ID, FilterOperator::EQUALS, "thread-123");
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateThreadIdOptionalAbsent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg");
     FilterCondition cond = createCondition(LogEntryField::THREAD_ID, FilterOperator::IS_ABSENT, "");
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateModuleOptionalPresent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", std::nullopt, std::nullopt, std::nullopt, "Analytics");
     FilterCondition cond = createCondition(LogEntryField::MODULE, FilterOperator::EQUALS, "Analytics");
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateModuleOptionalAbsent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg");
     FilterCondition cond = createCondition(LogEntryField::MODULE, FilterOperator::IS_ABSENT, "");
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateHostOptionalPresent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", std::nullopt, std::nullopt, std::nullopt, std::nullopt, "server-prod-01");
     FilterCondition cond = createCondition(LogEntryField::HOST, FilterOperator::EQUALS, "server-prod-01");
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateHostOptionalAbsent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg");
     FilterCondition cond = createCondition(LogEntryField::HOST, FilterOperator::IS_ABSENT, "");
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_TRUE(expr.evaluate(entry));
+    EXPECT_TRUE(expr.evaluate(entry).value_or(false));
 }
 
 // --- FilterValueType::DATETIME Edge Cases ---
@@ -338,11 +358,11 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateDateTimeInvalidInput) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, Utils::parseTime("2023-01-01 10:00:00").value());
     FilterCondition cond = createCondition(LogEntryField::TIMESTAMP, FilterOperator::EQUALS, "not-a-date", FilterValueType::DATETIME);
     FilterExpression expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).has_value());
 
     cond = createCondition(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-invalid-date", FilterValueType::DATETIME);
     expr = FilterExpression::create(cond);
-    EXPECT_FALSE(expr.evaluate(entry));
+    EXPECT_FALSE(expr.evaluate(entry).has_value());
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateDateTimeDifferentFormats) {
@@ -360,7 +380,7 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateDateTimeDifferentFormats) {
     FilterExpression expr = FilterExpression::create(cond);
     
     // This will pass if both formats parse to the same time_point
-    EXPECT_TRUE(expr.evaluate(entry1)); 
+    EXPECT_TRUE(expr.evaluate(entry1).value_or(false)); 
 }
 
 // --- stringToBool Helper Function ---
@@ -374,24 +394,24 @@ TEST_F(FilterExpressionAdvancedTest, StringToBoolValidCases) {
 
     FilterCondition cond_true = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "true", FilterValueType::BOOL, true, "bool_val");
     FilterExpression expr_true = FilterExpression::create(cond_true);
-    EXPECT_TRUE(expr_true.evaluate(entry_true));
-    EXPECT_TRUE(expr_true.evaluate(entry_TRUE));
-    EXPECT_TRUE(expr_true.evaluate(entry_1));
-    EXPECT_FALSE(expr_true.evaluate(entry_false));
+    EXPECT_TRUE(expr_true.evaluate(entry_true).value_or(false));
+    EXPECT_TRUE(expr_true.evaluate(entry_TRUE).value_or(false));
+    EXPECT_TRUE(expr_true.evaluate(entry_1).value_or(false));
+    EXPECT_FALSE(expr_true.evaluate(entry_false).value_or(true));
 
     FilterCondition cond_false = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "false", FilterValueType::BOOL, true, "bool_val");
     FilterExpression expr_false = FilterExpression::create(cond_false);
-    EXPECT_TRUE(expr_false.evaluate(entry_false));
-    EXPECT_TRUE(expr_false.evaluate(entry_FALSE));
-    EXPECT_TRUE(expr_false.evaluate(entry_0));
-    EXPECT_FALSE(expr_false.evaluate(entry_true));
+    EXPECT_TRUE(expr_false.evaluate(entry_false).value_or(false));
+    EXPECT_TRUE(expr_false.evaluate(entry_FALSE).value_or(false));
+    EXPECT_TRUE(expr_false.evaluate(entry_0).value_or(false));
+    EXPECT_FALSE(expr_false.evaluate(entry_true).value_or(true));
 }
 
 TEST_F(FilterExpressionAdvancedTest, StringToBoolInvalidCases) {
     LogEntry entry_invalid = createLogEntry(LogLevel::INFO, "maybe", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"bool_val", "maybe"}});
     FilterCondition cond_true = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "true", FilterValueType::BOOL, true, "bool_val");
     FilterExpression expr_true = FilterExpression::create(cond_true);
-    EXPECT_FALSE(expr_true.evaluate(entry_invalid)); // Invalid bool string should not match
+    EXPECT_FALSE(expr_true.evaluate(entry_invalid).has_value()); // Invalid bool string should return error
 }
 
 // --- Fluent API - Complex Combinations and Negation ---
@@ -410,10 +430,10 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateComplexLogicalCombination) {
     FilterExpression expr = (FilterExpression::create(cond_info).And(FilterExpression::create(cond_user_msg)))
                             .Or(FilterExpression::create(cond_host_backend).And(FilterExpression::create(cond_module_auth).Not()));
 
-    EXPECT_TRUE(expr.evaluate(entry1));
-    EXPECT_TRUE(expr.evaluate(entry2));
-    EXPECT_FALSE(expr.evaluate(entry3));
-    EXPECT_FALSE(expr.evaluate(entry4));
+    EXPECT_TRUE(expr.evaluate(entry1).value_or(false));
+    EXPECT_TRUE(expr.evaluate(entry2).value_or(false));
+    EXPECT_FALSE(expr.evaluate(entry3).value_or(true));
+    EXPECT_FALSE(expr.evaluate(entry4).value_or(true));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateNegationOfLogicalExpression) {
@@ -427,9 +447,9 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateNegationOfLogicalExpression) {
 
     FilterExpression expr = (FilterExpression::create(cond_info).Or(FilterExpression::create(cond_debug))).Not();
 
-    EXPECT_FALSE(expr.evaluate(entry_info));
-    EXPECT_FALSE(expr.evaluate(entry_debug));
-    EXPECT_TRUE(expr.evaluate(entry_warn));
+    EXPECT_FALSE(expr.evaluate(entry_info).value_or(true));
+    EXPECT_FALSE(expr.evaluate(entry_debug).value_or(true));
+    EXPECT_TRUE(expr.evaluate(entry_warn).value_or(false));
 }
 
 // --- FilterExpression::EMPTY Type ---
@@ -444,47 +464,47 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateStringStartsEndsWithEdgeCases) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "HelloWorld");
 
     // STARTS_WITH
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "Hello")).evaluate(entry));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "hello", FilterValueType::STRING, true)).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "hello", FilterValueType::STRING, false)).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH_I, "hello")).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "HelloWorld")).evaluate(entry));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "HellWorld")).evaluate(entry)); // Longer prefix
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "")).evaluate(entry)); // Empty prefix
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH_I, "")).evaluate(entry)); // Empty prefix
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "LongerThanMessage")).evaluate(entry));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "Hello")).evaluate(entry).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "hello", FilterValueType::STRING, true)).evaluate(entry).value_or(true));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "hello", FilterValueType::STRING, false)).evaluate(entry).value_or(false));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH_I, "hello")).evaluate(entry).value_or(false));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "HelloWorld")).evaluate(entry).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "HellWorld")).evaluate(entry).value_or(true)); // Longer prefix
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "")).evaluate(entry).value_or(false)); // Empty prefix
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH_I, "")).evaluate(entry).value_or(false)); // Empty prefix
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "LongerThanMessage")).evaluate(entry).value_or(true));
 
     // ENDS_WITH
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "World")).evaluate(entry));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "world", FilterValueType::STRING, true)).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "world", FilterValueType::STRING, false)).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH_I, "world")).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "HelloWorld")).evaluate(entry));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "HelloWord")).evaluate(entry)); // Longer suffix
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "")).evaluate(entry)); // Empty suffix
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH_I, "")).evaluate(entry)); // Empty suffix
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "LongerThanMessage")).evaluate(entry));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "World")).evaluate(entry).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "world", FilterValueType::STRING, true)).evaluate(entry).value_or(true));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "world", FilterValueType::STRING, false)).evaluate(entry).value_or(false));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH_I, "world")).evaluate(entry).value_or(false));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "HelloWorld")).evaluate(entry).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "HelloWord")).evaluate(entry).value_or(true)); // Longer suffix
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "")).evaluate(entry).value_or(false)); // Empty suffix
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH_I, "")).evaluate(entry).value_or(false)); // Empty suffix
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "LongerThanMessage")).evaluate(entry).value_or(true));
 }
 
 TEST_F(FilterExpressionAdvancedTest, EvaluateStringContainsNotContainsEdgeCases) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Hello World Hello");
 
     // CONTAINS
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "World")).evaluate(entry));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "world", FilterValueType::STRING, true)).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "world", FilterValueType::STRING, false)).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS_I, "world")).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "Hello")).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "")).evaluate(entry)); // Empty pattern matches
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS_I, "")).evaluate(entry)); // Empty pattern matches
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "World")).evaluate(entry).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "world", FilterValueType::STRING, true)).evaluate(entry).value_or(true));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "world", FilterValueType::STRING, false)).evaluate(entry).value_or(false));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS_I, "world")).evaluate(entry).value_or(false));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "Hello")).evaluate(entry).value_or(false));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "")).evaluate(entry).value_or(false)); // Empty pattern matches
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS_I, "")).evaluate(entry).value_or(false)); // Empty pattern matches
 
     // NOT_CONTAINS
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS, "World")).evaluate(entry));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS, "world", FilterValueType::STRING, true)).evaluate(entry));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS, "world", FilterValueType::STRING, false)).evaluate(entry));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS_I, "world")).evaluate(entry));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS, "")).evaluate(entry)); // Empty pattern does not match (is contained)
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS_I, "")).evaluate(entry)); // Empty pattern does not match (is contained)
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS, "World")).evaluate(entry).value_or(true));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS, "world", FilterValueType::STRING, true)).evaluate(entry).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS, "world", FilterValueType::STRING, false)).evaluate(entry).value_or(true));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS_I, "world")).evaluate(entry).value_or(true));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS, "")).evaluate(entry).value_or(true)); // Empty pattern does not match (is contained)
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::NOT_CONTAINS_I, "")).evaluate(entry).value_or(true)); // Empty pattern does not match (is contained)
 }
 
 // --- Numeric Operator Boundary Tests ---
@@ -492,19 +512,19 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateNumericEqualityBoundary) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt, {{"num_val", "10"}});
 
     FilterCondition cond_eq = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "10", FilterValueType::INT, true, "num_val");
-    EXPECT_TRUE(FilterExpression::create(cond_eq).evaluate(entry));
+    EXPECT_TRUE(FilterExpression::create(cond_eq).evaluate(entry).value_or(false));
 
     FilterCondition cond_ge = createCondition(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN_OR_EQUAL, "10", FilterValueType::INT, true, "num_val");
-    EXPECT_TRUE(FilterExpression::create(cond_ge).evaluate(entry));
+    EXPECT_TRUE(FilterExpression::create(cond_ge).evaluate(entry).value_or(false));
 
     FilterCondition cond_le = createCondition(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "10", FilterValueType::INT, true, "num_val");
-    EXPECT_TRUE(FilterExpression::create(cond_le).evaluate(entry));
+    EXPECT_TRUE(FilterExpression::create(cond_le).evaluate(entry).value_or(false));
 
     FilterCondition cond_gt = createCondition(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "10", FilterValueType::INT, true, "num_val");
-    EXPECT_FALSE(FilterExpression::create(cond_gt).evaluate(entry));
+    EXPECT_FALSE(FilterExpression::create(cond_gt).evaluate(entry).value_or(true));
 
     FilterCondition cond_lt = createCondition(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "10", FilterValueType::INT, true, "num_val");
-    EXPECT_FALSE(FilterExpression::create(cond_lt).evaluate(entry));
+    EXPECT_FALSE(FilterExpression::create(cond_lt).evaluate(entry).value_or(true));
 }
 
 // --- IS_PRESENT and IS_ABSENT ---
@@ -522,46 +542,46 @@ TEST_F(FilterExpressionAdvancedTest, EvaluateIsPresentAbsentAllFieldTypes) {
     );
 
     // ID
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::ID, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::ID, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::ID, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::ID, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial).value_or(true));
 
     // LINE_NUMBER
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::LINE_NUMBER, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::LINE_NUMBER, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::LINE_NUMBER, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial).value_or(true));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::LINE_NUMBER, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial).value_or(false));
 
     // THREAD_ID
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::THREAD_ID, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::THREAD_ID, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::THREAD_ID, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::THREAD_ID, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial).value_or(true));
 
     // MODULE
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MODULE, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MODULE, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MODULE, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial).value_or(true));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MODULE, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial).value_or(false));
 
     // HOST
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::HOST, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::HOST, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::HOST, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::HOST, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial).value_or(true));
 
     // TIMESTAMP
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::TIMESTAMP, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::TIMESTAMP, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::TIMESTAMP, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::TIMESTAMP, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial).value_or(true));
     
     // LEVEL (always present)
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::LEVEL, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::LEVEL, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::LEVEL, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::LEVEL, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial).value_or(true));
 
     // MESSAGE (always present)
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::IS_PRESENT, "")).evaluate(entry_partial).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::IS_ABSENT, "")).evaluate(entry_partial).value_or(true));
 
     // CUSTOM field (present with value)
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_PRESENT, "", FilterValueType::STRING, true, "custom_field_present")).evaluate(entry_partial));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_ABSENT, "", FilterValueType::STRING, true, "custom_field_present")).evaluate(entry_partial));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_PRESENT, "", FilterValueType::STRING, true, "custom_field_present")).evaluate(entry_partial).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_ABSENT, "", FilterValueType::STRING, true, "custom_field_present")).evaluate(entry_partial).value_or(true));
 
     // CUSTOM field (present with empty string value, but still considered 'present')
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_PRESENT, "", FilterValueType::STRING, true, "custom_field_empty")).evaluate(entry_partial));
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_ABSENT, "", FilterValueType::STRING, true, "custom_field_empty")).evaluate(entry_partial));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_PRESENT, "", FilterValueType::STRING, true, "custom_field_empty")).evaluate(entry_partial).value_or(false));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_ABSENT, "", FilterValueType::STRING, true, "custom_field_empty")).evaluate(entry_partial).value_or(true));
 
     // CUSTOM field (not present at all)
-    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_PRESENT, "", FilterValueType::STRING, true, "custom_field_absent")).evaluate(entry_partial));
-    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_ABSENT, "", FilterValueType::STRING, true, "custom_field_absent")).evaluate(entry_partial));
+    EXPECT_FALSE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_PRESENT, "", FilterValueType::STRING, true, "custom_field_absent")).evaluate(entry_partial).value_or(true));
+    EXPECT_TRUE(FilterExpression::create(createCondition(LogEntryField::CUSTOM, FilterOperator::IS_ABSENT, "", FilterValueType::STRING, true, "custom_field_absent")).evaluate(entry_partial).value_or(false));
 }

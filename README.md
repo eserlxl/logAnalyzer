@@ -8,7 +8,7 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 ![CMake](https://img.shields.io/badge/cmake-3.20%2B-blue.svg)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
 [![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://Eser KUBALI.github.io/logAnalyzer/)
-[![codecov](https://codecov.io/gh/Eser KUBALI/logAnalyzer/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/Eser KUBALI/logAnalyzer)
+[![codecov](https://codecov.io/gh/Eser KUBALI/logAnalyzer/branch/main/graph/badge.svg)](https://codecov.io/gh/Eser KUBALI/logAnalyzer)
 
 ## Project Status
 
@@ -59,13 +59,14 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    cmake --build . -- -j<number_of_cores> # e.g., -j4
+    # Use -j to specify the number of parallel jobs, e.g., -j4
+    cmake --build . -- -j$(nproc) 
     ```
 
 3.  **Run a Basic Analysis**:
     After building, the executable will be in the `build/bin` directory.
     ```bash
-    ./build/bin/LogAnalyzer /var/log/syslog --level ERROR
+    ./bin/LogAnalyzer /var/log/syslog --level ERROR
     ```
     *(Replace `/var/log/syslog` with a path to one of your log files.)*
 
@@ -73,42 +74,23 @@ For detailed build instructions, installation options, and more usage examples, 
 
 ## Features
 
-
-
 | Feature                      | Description                                                                                             |
-
 | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
-
 | **Memory-Efficient Processing** | Handles massive files with minimal memory usage using the `--stream` mode.                              |
-
 | **Multi-File Support**       | Parses and analyzes multiple log files in a single run.                                                 |
-
 | **Sorting**                  | Sort results by timestamp, log level, message, or other fields in ascending or descending order.        |
-
 | **Structured Field Parsing** | Automatically parses log messages into fields, including structured data, using custom patterns and intelligent detection.                         |
-
 | **Keyword & Regex Filtering**| Filter by log level, keywords, glob patterns (anchored), and case-sensitive/insensitive regular expressions. |
-
 | **Field-Value Matching**     | Match field values with case-sensitive/insensitive text, regex, and glob patterns.                      |
-
 | **Nested Field Filtering**   | Target nested fields within structured data (e.g., `user.id` in a JSON log).                            |
-
 | **Advanced Data Types**      | Compare fields as `version` numbers (semantic versioning) or `IP addresses`.                            |
-
 | **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on flat and nested fields.     |
-
 | **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                   |
-
 | **Time-based Filtering**     | Filter by absolute time range, relative time (`5m ago`), or for a specific day (`yesterday`, `2023-10-20`). |
-
 | **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
-
 | **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
-
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).                               |
-
 | **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable and aliasable output fields.               |
-
 | **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, log level counts, and unique value counts for any field. |
 
 ## Building from Source
@@ -167,122 +149,61 @@ cd logAnalyzer
 
 Next, use CMake to configure and build the project. We recommend an out-of-source build.
 
-
-
 ```bash
-
-mkdir build
-
-cd build
-
+mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-
-cmake --build . -- -j<number_of_cores> # Use a specific number, e.g., -j4, to speed up compilation
-
+cmake --build . -- -j$(nproc)
 ```
 
-
-The compiled `LogAnalyzer` executable will be available in the `build` directory.
-
+The compiled `LogAnalyzer` executable will be available in the `build/bin` directory.
 
 #### Build Options
 
-
 You can customize the build with the following CMake options:
 
-
 | Option                       | Description                                                     | Default    |
-
 | :--------------------------- | :-------------------------------------------------------------- | :--------- |
-
 | `-DBUILD_TESTING=ON/OFF`     | Enable or disable the compilation of tests.                     | `ON`       |
-
 | `-DLOGANALYZER_BUILD_SHARED=ON/OFF` | Build `LogAnalyzer` as a shared library.                        | `OFF`      |
-
 | `-DLOGANALYZER_USE_SANITIZER=...` | Enable sanitizers for debugging (`Address`, `Undefined`).       | `None`     |
-
 | `-DENABLE_COVERAGE=ON/OFF`   | Enable code coverage instrumentation for tests.                 | `OFF`      |
-
 | `-DENABLE_ASAN=ON/OFF`       | Enable AddressSanitizer for tests.                              | `OFF`      |
-
 | `-DENABLE_UBSAN=ON/OFF`      | Enable UndefinedBehaviorSanitizer for tests.                    | `OFF`      |
-
 | `-DENABLE_GMOCK=ON/OFF`      | Enable Google Mock for tests.                                   | `OFF`      |
-
-
 
 To use an option, add it to the `cmake` command:
 
-
 ```bash
-
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
-
 ```
-
 
 **Note:** To build the documentation, use `cmake --build . --target doc` from the `build` directory.
 
 
 ## Installation
 
-
-
-To install the `LogAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from the `build` directory. This allows you to run `LogAnalyzer` from any directory.
-
-
+To install the `LogAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from your `build` directory. This allows you to run `LogAnalyzer` from any terminal.
 
 ```bash
-
 # Use sudo for system-wide installation
-
-
 sudo cmake --install . --prefix /usr/local
-
 ```
 
-
-
-For a local installation, you can specify a different prefix. This is useful if you don't have administrative privileges.
-
-
+For a local installation (if you don't have admin privileges), you can specify a different prefix:
 
 ```bash
-
 # Install to a 'dist' directory inside the project folder
-
-
 cmake --install . --prefix ../dist
-
 ```
 
-
-
-Alternatively, you can manually add the `build/bin` directory to your system's `PATH` environment variable or copy the `LogAnalyzer` executable from `build/bin` to a directory already in your `PATH`. For example, after building from the `logAnalyzer` root directory:
-
-
+Alternatively, you can add the `build/bin` directory to your system's `PATH` or copy the `LogAnalyzer` executable to a directory already in your `PATH`.
 
 ```bash
-
-# Navigate into the build directory
-
-
-cd build
-
-
-
-# Add to PATH temporarily (for the current session)
-
-
+# Add to PATH for the current session (from within the build directory)
 export PATH=$(pwd)/bin:$PATH
 
-
-
-# Or copy the executable to a user-local bin directory (make sure ~/.local/bin is in your PATH)
-
-
+# Or copy the executable to a user-local bin directory (ensure ~/.local/bin is in your PATH)
 cp ./bin/LogAnalyzer ~/.local/bin/
-
 ```
 
 ## Usage
@@ -293,136 +214,79 @@ After building, you can run `LogAnalyzer` in two ways:
     ```bash
     ./build/bin/LogAnalyzer [options] <log_file(s)>
     ```
-
-2.  **As an installed command** (if you completed the installation step):
+2.  **As an installed command**:
     ```bash
     LogAnalyzer [options] <log_file(s)>
     ```
 
-**Note**: The following examples assume `LogAnalyzer` is in your `PATH` (i.e., installed). If not, replace `LogAnalyzer` with the path to the executable (e.g., `./build/bin/LogAnalyzer`).
+**Note**: The following examples assume `LogAnalyzer` is in your `PATH`.
 
 ### Example 1: Basic Filtering
 
 ```bash
-
 # Find all errors containing the word "database" in a specific log file
-
 LogAnalyzer /var/log/app.log --level ERROR --keyword "database"
 
-
-
 # Find all entries in two different log files, excluding those containing "DEBUG"
-
-
 LogAnalyzer app.log kern.log --exclude-keyword "DEBUG"
-
 ```
-
 
 ### Example 2: Advanced Filtering and Output
 
 ```bash
-
 # Find entries that are either warnings or errors, and contain "timeout" OR "refused"
-
-
 LogAnalyzer access.log --level WARNING --level ERROR --keyword "timeout" --keyword "refused" --logic OR
 
-
-
 # Export errors between two dates to a pretty-printed JSON file
-
-
 LogAnalyzer system.log --level ERROR --start "2023-11-01 00:00:00" --end "2023-11-02 00:00:00" --format json --pretty --output errors.json
-
 ```
-
 
 ### Example 3: Complex Expression
 
 ```bash
-
 # Use a complex expression to find database errors or any message containing "timeout"
-
-
 LogAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
-
 ```
-
 
 ### Example 4: Stream a Large File
 
 ```bash
-
 # Process a large log file without loading it all into memory, saving errors to a file
-
-
 LogAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
-
 ```
-
 
 ### Example 5: Process Logs from Standard Input
 
-`LogAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines. Use `-` or `--stdin` as the filename to signify `stdin`.
-
 ```bash
-
 # Pipe logs from another command and filter for errors
-
-
 cat /var/log/syslog | LogAnalyzer - --level ERROR
 
-
-
 # Tail a file and filter for a keyword
-
-
 tail -f /var/log/app.log | LogAnalyzer --stdin --keyword "error"
-
 ```
-
 
 ### Example 6: Statistical Analysis
 
 ```bash
-
 # Get the top 5 most common error messages from a log file (using legacy syntax)
-
-
 LogAnalyzer system.log --level ERROR --stats top_messages:5
 
-
-
 # Get the top 10 messages using the new, more flexible syntax
-
-
 LogAnalyzer system.log --stats "type=TOP_MESSAGES,top_n=10"
-
 ```
-
 
 ### Example 7: Tailing a File
 
 ```bash
-
 # Monitor a log file in real-time for new entries containing "critical"
-
-
 LogAnalyzer /var/log/app.log --tail --keyword "critical"
-
 ```
-
 
 ### Example 8: Custom CSV Export
 
 ```bash
-
 # Export specific fields to a CSV, with a custom header for the timestamp field
-
-
 LogAnalyzer application.log --format csv --csv-fields "timestamp as Time, level, message" --output report.csv
-
 ```
 
 
@@ -431,50 +295,29 @@ LogAnalyzer application.log --format csv --csv-fields "timestamp as Time, level,
 `LogAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.
 
 You can specify timestamps in several formats:
-
-*   **Absolute Time**: A specific date and time.
-    *   `"YYYY-MM-DD HH:MM:SS"` (e.g., `"2023-11-20 14:30:00"`)
-*   **Relative Time**: A time relative to now.
-    *   Simple keywords: `yesterday`, `today`, `tomorrow`.
-    *   Offset from now: `"1h ago"`, `"30m ago"`, `"2d ago"`.
-*   **ISO 8601 Format**:
-    *   `YYYY-MM-DDTHH:MM:SSZ` (UTC)
-    *   `YYYY-MM-DDTHH:MM:SS+HH:MM` (with offset)
-*   **Unix Timestamp**: An integer representing seconds since the Unix epoch.
+*   **Absolute Time**: `"YYYY-MM-DD HH:MM:SS"` (e.g., `"2023-11-20 14:30:00"`)
+*   **Relative Time**: Keywords like `yesterday`, `today`, or offsets like `"1h ago"`, `"30m ago"`, `"2d ago"`.
+*   **ISO 8601 Format**: `YYYY-MM-DDTHH:MM:SSZ` or `YYYY-MM-DDTHH:MM:SS+HH:MM`.
+*   **Unix Timestamp**: Seconds since the Unix epoch.
 
 #### Using `--duration`
 
-The `--duration` flag can be combined with either `--start` or `--end` to specify a time window. It accepts durations with units: `s` (seconds), `m` (minutes), `h` (hours), `d` (days).
+The `--duration` flag can be combined with `--start` or `--end` to specify a time window. It accepts durations like `10s` (seconds), `5m` (minutes), `2h` (hours), or `3d` (days).
 
 #### Examples
 
 ```bash
-
 # Get logs from the last 2 hours
-
 LogAnalyzer app.log --start "2h ago"
 
-
-
 # Get logs from yesterday
-
-
 LogAnalyzer app.log --start "yesterday" --end "today"
 
-
-
 # Get logs for a 30-minute window starting at a specific time
-
-
 LogAnalyzer app.log --start "2023-11-20 10:00:00" --duration "30m"
 
-
-
 # Get logs from a specific day (using ISO 8601 date)
-
-
 LogAnalyzer app.log --start "2023-11-20T00:00:00Z" --end "2023-11-21T00:00:00Z"
-
 ```
 
 ## Command-Line Interface (CLI)
@@ -485,39 +328,24 @@ Run `LogAnalyzer --help` for a full list of commands.
 
 ### General Options
 
-
 | Option                 | Shorthand | Description                                                                                                                                                                             | Default    |
-
 | :--------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
-
 | `--help`               | `-h`      | Displays the help message and exits.                                                                                                                                                    |            |
-
 | `--config FILE`        |           | Specifies a JSON configuration file to load. Command-line arguments will override settings defined in the file.                                                                           |            |
-
 | `--output FILE`        |           | Redirects all output (filtered logs, statistics) to the specified file instead of standard output.                                                                                      | `(stdout)` |
-
 | `--color OPT`          |           | Controls colorized output. Options are `always`, `auto` (default, colors if stdout is a TTY and not redirected), or `never`.                                                              | `auto`     |
-
 | `--stream`             |           | Enables memory-efficient stream processing mode for very large files. Not all features are available in stream mode (e.g., sorting).                                                    | `false`    |
-
 | `--stdin`              | `-`       | Reads log entries from standard input (e.g., from a pipe). Automatically enabled if `-` is used as a log file path. See Example 5 for details.                                           | `false`    |
 
 
 ### Parsing
 
-
 | Option                          | Description                                                                                                          | Default   |
-
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------- | :-------- |
-
 | `--pattern REGEX`               | Overrides the log line parsing regular expression defined in the configuration.                                      | (builtin) |
-
 | `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry.                                                               |           |
-
 | `--max-multiline-buffer SIZE`   | Max buffer size for multi-line entries (e.g. 10MB, 50KB, 1048576).                                                    | `10MB`    |
-
 | `--field-map MAPPING`           | Map regex capture group to a field (e.g., '1=timestamp:%Y-%m-%d %H:%M:%S'). Can be used multiple times.               |           |
-
 | `--on-parse-error OPT`          | Action on parse error. Options are `skip` (ignore the line), `log` (print a warning to stderr), or `fail` (exit).     | `log`     |
 
 

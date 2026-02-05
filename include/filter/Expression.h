@@ -11,6 +11,7 @@
 #include "filter/Condition.h" // For FilterCondition
 #include "filter/Types.h"     // For FilterLogicalOperator
 #include "filter/EnumStringConversions.h" // New: For enum to string conversions
+#include "filter/JsonUtils.h"
 
 // New: Represents a composite filter expression (tree-like structure)
 class FilterExpression {
@@ -71,7 +72,7 @@ public:
     bool isCondition() const { return type_ == ExpressionType::CONDITION; }
     bool isLogical() const { return type_ == ExpressionType::LOGICAL; }
 
-    bool evaluate(const LogEntry& entry) const;
+    ErrorCode::Result<bool> evaluate(const LogEntry& entry) const;
 
 private:
     ExpressionType type_;
@@ -105,65 +106,42 @@ inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
 
 // Helper function for recursive from_json calls to manage JSON path
 inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, FilterExpression& fe, const std::string& current_path) {
-    bool current_negated = false;
-    if (j.contains("negated") && j.at("negated").is_boolean()) {
-        current_negated = j.at("negated").get<bool>();
-    }
+    using namespace FilterJsonUtils;
+
+    bool current_negated = getOptional<bool>(j, "negated").value_or(false);
 
     if (j.contains("condition") && j.at("condition").is_object()) {
         FilterCondition fc;
-        // Assume FilterCondition::from_json exists, returns ErrorCode::Result<void>, and handles jsonPath internally
-        // If it returns Result<FilterCondition>, error handling below needs adjustment
-        ErrorCode::Result<void> result = from_json(j.at("condition"), fc);
-        if (!result.has_value()) {
-            std::string prefix = (current_path == "/" ? "" : current_path);
-            // Augment error with path if it doesn't already have one (or if it's a generic error)
-            if (result.error().jsonPath.empty() || result.error().jsonPath == "/") {
-                result.error().jsonPath = prefix + "/condition";
-            } else {
-                // If the error already has a path (e.g., from Condition::from_json), prepend the current path correctly.
-                // Condition::from_json already prepends leading slash if needed.
-                std::string sub_path = result.error().jsonPath;
-                if (!sub_path.empty() && sub_path[0] == '/') {
-                    result.error().jsonPath = prefix + "/condition" + sub_path;
-                } else {
-                    result.error().jsonPath = prefix + "/condition/" + sub_path;
-                }
-            }
-            return std::unexpected(result.error());
-        }
+        std::string next_path = (current_path == "/" ? "" : current_path) + "/condition";
+        auto result = from_json(j.at("condition"), fc, next_path);
+        if (!result) return std::unexpected(result.error());
+        
         fe = FilterExpression(std::move(fc), current_negated);
     } else if (j.contains("operator") && j.at("operator").is_string()) {
         auto opStr = j.at("operator").get<std::string>();
-        auto opOpt = fromStringToFilterLogicalOperator(opStr); // Assumes this function exists and works
+        auto opOpt = fromStringToFilterLogicalOperator(opStr);
         if (!opOpt) {
-            std::string prefix = (current_path == "/" ? "" : current_path);
-            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unknown filter logical operator: " + opStr, prefix + "/operator"));
+            return std::unexpected(makeError(Code::InvalidArgument, "Unknown logical operator: " + opStr, current_path, "operator"));
         }
         
         FilterLogicalOperator op = *opOpt;
 
+        if (!j.contains("operands") || !j.at("operands").is_array()) {
+             return std::unexpected(makeError(Code::InvalidArgument, "Operator " + opStr + " requires 'operands' array.", current_path, "operands"));
+        }
+
+        const auto& operands_array = j.at("operands");
         std::vector<FilterExpression> operands;
-        if (j.contains("operands") && j.at("operands").is_array()) {
-            const auto& operands_array = j.at("operands");
-            for (size_t i = 0; i < operands_array.size(); ++i) {
-                FilterExpression operand_fe;
-                // Recursive call with updated path for each operand
-                std::string next_path = (current_path == "/" ? "" : current_path) + "/operands[" + std::to_string(i) + "]";
-                ErrorCode::Result<void> result = from_json_recursive(operands_array[i], operand_fe, next_path);
-                if (!result.has_value()) {
-                    // Error already contains the correct path from recursive call
-                    return std::unexpected(result.error());
-                }
-                operands.push_back(std::move(operand_fe));
-            }
-        } else {
-             std::string next_path = (current_path == "/" ? "" : current_path) + "/operands";
-             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression with operator " + opStr + " must contain 'operands' array.", next_path));
+        for (size_t i = 0; i < operands_array.size(); ++i) {
+            FilterExpression operand_fe;
+            std::string next_path = (current_path == "/" ? "" : current_path) + "/operands[" + std::to_string(i) + "]";
+            auto result = from_json_recursive(operands_array[i], operand_fe, next_path);
+            if (!result) return std::unexpected(result.error());
+            operands.push_back(std::move(operand_fe));
         }
         fe = FilterExpression(op, std::move(operands), current_negated);
     } else {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterExpression must contain either 'condition' or 'operator' with 'operands'.", current_path));
+        return std::unexpected(makeError(Code::InvalidArgument, "Expression must contain 'condition' or 'operator' with 'operands'.", current_path, ""));
     }
     
     return {}; // Success

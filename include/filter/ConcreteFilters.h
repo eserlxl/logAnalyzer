@@ -25,12 +25,11 @@
  * Supports literal, wildcard (glob-like), and regex patterns.
  *
  * For PatternType::Wildcard, glob patterns (e.g., "*.log", "server*") are converted
- * into regular expressions. The matching is then performed using `std::regex_search`,
- * which inherently looks for a substring match. For example, a wildcard pattern
- * "server*" will be converted to `server.*` regex, and `std::regex_search` will
- * match this regex if it appears anywhere in the source file string.
- * This effectively makes "server*" match "my-server.log", "server.log",
- * and "log-from-server.log" if the `server.*` regex is found as a substring.
+ * into regular expressions. The conversion adds start (^) and end ($) anchors, meaning
+ * the pattern must match the *entire* source file name.
+ * For example, "server*" becomes `^server.*$`, which matches "server.log" but NOT
+ * "log-from-server.log". To match substrings with wildcards, use "*server*".
+ * The matching is performed using `std::regex_search` on the anchored regex.
  *
  * For PatternType::Regex, the provided pattern is used directly with `std::regex_search`.
  *
@@ -213,29 +212,51 @@ protected:
     bool caseSensitive_;
 };
 
-// --- Nested Filters: Support dot-notation (currently flat map lookup) ---
+// --- Dotted-Key Filters: Support dot-notation for flat map key lookup ---
 
-class NestedFieldValueFilter : public FieldValueFilter {
+/**
+ * @brief A filter that matches a field value from the `customFields` map using a dotted key.
+ *
+ * This filter does not perform a true nested lookup into a JSON object. Instead, it treats the
+ * `fieldPath` as a single key to be looked up in the `customFields` map. For example, a `fieldPath`
+ * of `"a.b.c"` will match the key `"a.b.c"` in the map, not a nested field `c` inside `b` inside `a`.
+ */
+class DottedKeyFieldValueFilter : public FieldValueFilter {
 public:
-    NestedFieldValueFilter(std::string fieldPath,
-                           std::string valuePattern,
-                           PatternType type = PatternType::Literal,
-                           bool caseSensitive = false);
+    DottedKeyFieldValueFilter(std::string fieldPath,
+                              std::string valuePattern,
+                              PatternType type = PatternType::Literal,
+                              bool caseSensitive = false);
 };
 
-class NestedNumericComparisonFilter : public NumericComparisonFilter {
+/**
+ * @brief A filter that performs a numeric comparison on a field from the `customFields` map using a dotted key.
+ *
+ * This filter does not perform a true nested lookup. It treats `fieldPath` as a single key.
+ */
+class DottedKeyNumericComparisonFilter : public NumericComparisonFilter {
 public:
-    explicit NestedNumericComparisonFilter(std::string fieldPath, double value, NumericComparisonFilter::Operator op);
+    DottedKeyNumericComparisonFilter(std::string fieldPath, double value, NumericComparisonFilter::Operator op);
 };
 
-class NestedBoolFilter : public BoolFilter {
+/**
+ * @brief A filter that performs a boolean check on a field from the `customFields` map using a dotted key.
+ *
+ * This filter does not perform a true nested lookup. It treats `fieldPath` as a single key.
+ */
+class DottedKeyBoolFilter : public BoolFilter {
 public:
-    explicit NestedBoolFilter(std::string fieldPath, bool value);
+    explicit DottedKeyBoolFilter(std::string fieldPath, bool value);
 };
 
-class NestedValueSetFilter : public ValueSetFilter {
+/**
+ * @brief A filter that checks if a field's value is in a set, using a dotted key from the `customFields` map.
+ *
+ * This filter does not perform a true nested lookup. It treats `fieldPath` as a single key.
+ */
+class DottedKeyValueSetFilter : public ValueSetFilter {
 public:
-    NestedValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive = false);
+    DottedKeyValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive = false);
 };
 
 #endif // CONCRETE_FILTERS_H

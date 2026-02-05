@@ -56,8 +56,6 @@ enum class FilterOperator : uint8_t {
 enum class FilterLogicalOperator : uint8_t {
     AND, // Combines two expressions; both must be true for the combined expression to be true.
     OR,  // Combines two expressions; at least one must be true for the combined expression to be true.
-    // TODO: FilterLogicalOperator::NOT was removed as it represents a unary operator and should be handled differently (e.g., as a property of FilterCondition/FilterExpression).
-    // TODO: Removed UNKNOWN. Implement explicit error handling or std::optional for parsing invalid logical operator strings.
 };
 
 // Enum to indicate how a filter value should be interpreted.

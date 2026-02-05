@@ -17,6 +17,9 @@ enum class Code {
     TimestampParsingFailed, // New error code
     SettingsRestoreFailed, // New error code
     BufferLimitExceeded, // New error code for multi-line buffer overflow
+    ConversionError, // New error code for type conversion failures
+    JsonParseError, // New error code for JSON parsing failures
+    NotImplemented, // New error code for unimplemented features
     Unexpected, // Added Unexpected error code
     // Add more error codes as needed
 };
@@ -85,6 +88,9 @@ struct Error : public std::runtime_error {
             case Code::TimestampParsingFailed: codeStr = "TimestampParsingFailed"; break;
             case Code::SettingsRestoreFailed: codeStr = "SettingsRestoreFailed"; break;
             case Code::BufferLimitExceeded: codeStr = "BufferLimitExceeded"; break;
+            case Code::ConversionError: codeStr = "ConversionError"; break;
+            case Code::JsonParseError: codeStr = "JsonParseError"; break;
+            case Code::NotImplemented: codeStr = "NotImplemented"; break;
             case Code::Unexpected: codeStr = "Unexpected"; break;
             default: codeStr = "UnknownCode"; break;
         }

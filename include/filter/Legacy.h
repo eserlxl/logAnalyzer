@@ -11,6 +11,7 @@
 #include "core/Error.h" // For ErrorCode::Result
 #include "filter/Types.h" // For FilterOperator, LogEntryField
 #include "filter/EnumStringConversions.h" // For enum to string conversions
+#include "filter/JsonUtils.h"
 
 // Transitional: Represents a simplified filter rule for legacy JSON formats.
 // This is part of a transitional phase and should not be used for new development.
@@ -53,41 +54,30 @@ inline void to_json(nlohmann::json& j, const FilterRule& fr) {
 }
 
 inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr, const std::string& current_path = "/") {
-    auto make_error = [&](Code c, const std::string& msg, const std::string& field_name) {
-        std::string path = current_path.empty() || current_path == "/" ? "/" + field_name : current_path + "/" + field_name;
-        return ErrorCode::Error(c, msg, path);
-    };
+    using namespace FilterJsonUtils;
 
-    if (!j.contains("field") || !j.at("field").is_string()) {
-        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule is missing or has invalid 'field'.", "field"));
-    }
-    fr.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
+    auto fieldRes = getRequired<std::string>(j, "field", current_path);
+    if (!fieldRes) return std::unexpected(fieldRes.error());
+    
+    fr.field = Utils::stringToLogEntryField(*fieldRes);
     if (fr.field == LogEntryField::UNKNOWN) {
-        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule has an unrecognized field: " + j.at("field").get<std::string>(), "field"));
+        return std::unexpected(makeError(Code::InvalidArgument, "Unrecognized field: " + *fieldRes, current_path, "field"));
     }
 
-    if (!j.contains("op") || !j.at("op").is_string()) {
-        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule is missing or has invalid 'op'.", "op"));
-    }
-    auto opOpt = fromStringToFilterOperator(j.at("op").get<std::string>());
+    auto opRes = getRequired<std::string>(j, "op", current_path);
+    if (!opRes) return std::unexpected(opRes.error());
+    
+    auto opOpt = fromStringToFilterOperator(*opRes);
     if (!opOpt) {
-        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule has an unrecognized 'op' string: " + j.at("op").get<std::string>(), "op"));
+        return std::unexpected(makeError(Code::InvalidArgument, "Unrecognized operator: " + *opRes, current_path, "op"));
     }
     fr.op = *opOpt;
 
-    if (!j.contains("value") || !j.at("value").is_string()) {
-        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule is missing or has invalid 'value'.", "value"));
-    }
-    fr.value = j.at("value").get<std::string>();
+    auto valRes = getRequired<std::string>(j, "value", current_path);
+    if (!valRes) return std::unexpected(valRes.error());
+    fr.value = *valRes;
 
-    if (j.contains("caseSensitive")) {
-        if (!j.at("caseSensitive").is_boolean()) {
-            return std::unexpected(make_error(Code::InvalidArgument, "'caseSensitive' must be a boolean.", "caseSensitive"));
-        }
-        fr.caseSensitive = j.at("caseSensitive").get<bool>();
-    } else {
-        fr.caseSensitive = false; // Default to false
-    }
+    fr.caseSensitive = getOptional<bool>(j, "caseSensitive").value_or(false);
 
     return {}; // Success
 }

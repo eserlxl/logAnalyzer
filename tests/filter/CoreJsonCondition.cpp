@@ -125,15 +125,9 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonWithNullCustomField) {
 
     FilterCondition fc;
     auto result = from_json(j, fc);
-    ASSERT_TRUE(result.has_value()) << result.error().message;
-
-    EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
-    EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    EXPECT_EQ(fc.value, "specific_value");
-    EXPECT_EQ(fc.valueType, FilterValueType::STRING);
-    EXPECT_EQ(fc.caseSensitive, false);
-    EXPECT_FALSE(fc.customField.has_value()); // Should be nullopt
-    EXPECT_FALSE(fc.datetimeFormat.has_value());
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("requires a non-empty 'customField' key"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonWithoutCustomField) {
@@ -208,7 +202,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingOp) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidValueTypeString) {
@@ -224,7 +218,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidValueTypeString) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("unrecognized 'value_type' string"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Unrecognized value_type"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonNumericSuccess) {
@@ -261,26 +255,26 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeMissingFormat) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("with DATETIME 'value_type' requires a 'datetimeFormat'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("DATETIME value_type requires 'datetimeFormat'"), std::string::npos);
 }
 
 // FilterCondition datetime constructor validation
 TEST_F(FilterJsonTest, FilterConditionDatetimeConstructorValidation) {
-    // Should throw if DATETIME type is used without format
-    EXPECT_THROW(
-        FilterCondition(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01", FilterValueType::DATETIME),
-        std::invalid_argument
-    );
+    // Should return an error if DATETIME type is used without format via factory
+    auto result = FilterCondition::createTyped(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01", FilterValueType::DATETIME);
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
 
-    // Should not throw if DATETIME type is used with format
-    EXPECT_NO_THROW(
-        FilterCondition(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01", "%Y-%m-%d")
-    );
+    // Should not return an error if DATETIME type is used with format
+    EXPECT_NO_THROW({
+        auto fc = FilterCondition::createDatetime(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01", "%Y-%m-%d");
+    });
 
-    // Should not throw for other value types
-    EXPECT_NO_THROW(
-        FilterCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error", FilterValueType::STRING)
-    );
+    // Should not return an error for other value types
+    EXPECT_NO_THROW({
+        auto result_ok = FilterCondition::createTyped(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error", FilterValueType::STRING);
+        EXPECT_TRUE(result_ok.has_value());
+    });
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValue) {
@@ -293,7 +287,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValue) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("missing or has invalid 'value'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValueType) {
@@ -306,7 +300,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValueType) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("missing 'value_type'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonMalformedDatetimeFormat) {
@@ -321,7 +315,8 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMalformedDatetimeFormat) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("'datetimeFormat' must be a string or null"), std::string::npos);
+    // getOptional returns nullopt on type mismatch, triggering the missing format check
+    EXPECT_NE(result.error().message.find("DATETIME value_type requires 'datetimeFormat'"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidValueTypeInt) {
@@ -335,7 +330,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidValueTypeInt) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("invalid integer for 'value_type'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("Invalid integer for 'value_type'"), std::string::npos);
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonLegacyValueTypeInt) {

@@ -143,9 +143,9 @@ TEST_F(FilterTest, NumericComparisonFilter) {
     EXPECT_FALSE(non_numeric_filter.matches(entry_non_numeric));
 }
 
-TEST_F(FilterTest, NestedNumericComparisonFilter) {
+TEST_F(FilterTest, DottedKeyNumericComparisonFilter) {
     // EQ
-    NestedNumericComparisonFilter eq_filter("request.duration_ms", 50.5, NumericComparisonFilter::Operator::EQ);
+    DottedKeyNumericComparisonFilter eq_filter("request.duration_ms", 50.5, NumericComparisonFilter::Operator::EQ);
     auto entry_match = createLogEntry(1, "api.log", now, LogLevel::INFO, "Request processed", {{"request.duration_ms", "50.5"}});
     auto entry_mismatch = createLogEntry(2, "api.log", now, LogLevel::INFO, "Request processed", {{"request.duration_ms", "100.0"}});
     auto entry_nested_mismatch = createLogEntry(3, "api.log", now, LogLevel::INFO, "Request processed", {{"response.duration_ms", "50.5"}});
@@ -154,17 +154,17 @@ TEST_F(FilterTest, NestedNumericComparisonFilter) {
     EXPECT_FALSE(eq_filter.matches(entry_nested_mismatch));
 
     // GT
-    NestedNumericComparisonFilter gt_filter("request.duration_ms", 40.0, NumericComparisonFilter::Operator::GT);
+    DottedKeyNumericComparisonFilter gt_filter("request.duration_ms", 40.0, NumericComparisonFilter::Operator::GT);
     EXPECT_TRUE(gt_filter.matches(entry_match)); // 50.5 > 40.0
     EXPECT_TRUE(gt_filter.matches(entry_mismatch)); // 100.0 is > 40.0, so this should be true
 
     // LTE
-    NestedNumericComparisonFilter lte_filter("request.duration_ms", 50.5, NumericComparisonFilter::Operator::LTE);
+    DottedKeyNumericComparisonFilter lte_filter("request.duration_ms", 50.5, NumericComparisonFilter::Operator::LTE);
     EXPECT_TRUE(lte_filter.matches(entry_match)); // 50.5 <= 50.5
     EXPECT_FALSE(lte_filter.matches(entry_mismatch)); // 100.0 is not <= 50.5
 
     // Field not found
-    NestedNumericComparisonFilter missing_field_filter("request.non_existent", 10.0, NumericComparisonFilter::Operator::EQ);
+    DottedKeyNumericComparisonFilter missing_field_filter("request.non_existent", 10.0, NumericComparisonFilter::Operator::EQ);
     EXPECT_FALSE(missing_field_filter.matches(entry_match));
 
     // Non-numeric field
@@ -186,22 +186,22 @@ TEST_F(FilterTest, NumericComparisonFilterFloatingPointPrecision) {
     EXPECT_TRUE(neq_filter.matches(createLogEntry(6, "log", now, LogLevel::INFO, "msg", {{"value", "100.000001"}})));  // Outside epsilon, so considered not equal
 }
 
-TEST_F(FilterTest, NestedNumericComparisonFilterFloatingPointPrecision) {
+TEST_F(FilterTest, DottedKeyNumericComparisonFilterFloatingPointPrecision) {
     // Test EQ with values very close
-    NestedNumericComparisonFilter eq_filter("metric.value", 100.0, NumericComparisonFilter::Operator::EQ);
+    DottedKeyNumericComparisonFilter eq_filter("metric.value", 100.0, NumericComparisonFilter::Operator::EQ);
     EXPECT_TRUE(eq_filter.matches(createLogEntry(1, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.0000000001"}})));
     EXPECT_TRUE(eq_filter.matches(createLogEntry(2, "log", now, LogLevel::INFO, "msg", {{"metric.value", "99.9999999999"}})));
     EXPECT_FALSE(eq_filter.matches(createLogEntry(3, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.000001"}})));
 
     // Test NEQ with values very close
-    NestedNumericComparisonFilter neq_filter("metric.value", 100.0, NumericComparisonFilter::Operator::NEQ);
+    DottedKeyNumericComparisonFilter neq_filter("metric.value", 100.0, NumericComparisonFilter::Operator::NEQ);
     EXPECT_FALSE(neq_filter.matches(createLogEntry(4, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.0000000001"}})));
     EXPECT_FALSE(neq_filter.matches(createLogEntry(5, "log", now, LogLevel::INFO, "msg", {{"metric.value", "99.9999999999"}})));
     EXPECT_TRUE(neq_filter.matches(createLogEntry(6, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.000001"}})));
 }
 
-TEST_F(FilterTest, NestedBoolFilter) {
-    NestedBoolFilter filter_true("user.is_admin", true);
+TEST_F(FilterTest, DottedKeyBoolFilter) {
+    DottedKeyBoolFilter filter_true("user.is_admin", true);
     auto entry_true_match = createLogEntry(1, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "true"}});
     auto entry_true_mismatch = createLogEntry(2, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "false"}});
     auto entry_true_numeric = createLogEntry(3, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "1"}});
@@ -212,20 +212,20 @@ TEST_F(FilterTest, NestedBoolFilter) {
     EXPECT_TRUE(filter_true.matches(entry_true_numeric)); // Should handle "1" as true
     EXPECT_FALSE(filter_true.matches(entry_true_nested_mismatch));
 
-    NestedBoolFilter filter_false("user.is_admin", false);
+    DottedKeyBoolFilter filter_false("user.is_admin", false);
     EXPECT_TRUE(filter_false.matches(createLogEntry(5, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "0"}}))); // Handle "0" as false
     EXPECT_TRUE(filter_false.matches(createLogEntry(6, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "false"}})));
     EXPECT_FALSE(filter_false.matches(entry_true_match));
     EXPECT_FALSE(filter_false.matches(entry_true_numeric));
 
     // Field not found
-    NestedBoolFilter missing_field_filter("user.non_existent", true);
+    DottedKeyBoolFilter missing_field_filter("user.non_existent", true);
     EXPECT_FALSE(missing_field_filter.matches(entry_true_match));
 }
 
-TEST_F(FilterTest, NestedFieldValueFilter) {
+TEST_F(FilterTest, DottedKeyFieldValueFilter) {
     // Literal, case-insensitive
-    NestedFieldValueFilter filter_literal("user.role", "admin", PatternType::Literal, false);
+    DottedKeyFieldValueFilter filter_literal("user.role", "admin", PatternType::Literal, false);
     auto entry_match = createLogEntry(1, "user.log", now, LogLevel::INFO, "User role", {{"user.role", "Admin"}});
     auto entry_mismatch = createLogEntry(2, "user.log", now, LogLevel::INFO, "User role", {{"user.role", "user"}});
     auto entry_nested_mismatch = createLogEntry(3, "user.log", now, LogLevel::INFO, "User role", {{"account.role", "Admin"}});
@@ -234,26 +234,26 @@ TEST_F(FilterTest, NestedFieldValueFilter) {
     EXPECT_FALSE(filter_literal.matches(entry_nested_mismatch));
 
     // Regex
-    NestedFieldValueFilter filter_regex("user.id", R"(U\d{3})", PatternType::Regex);
+    DottedKeyFieldValueFilter filter_regex("user.id", R"(U\d{3})", PatternType::Regex);
     auto entry_regex_match = createLogEntry(4, "user.log", now, LogLevel::INFO, "User ID", {{"user.id", "U123"}});
     auto entry_regex_mismatch = createLogEntry(5, "user.log", now, LogLevel::INFO, "User ID", {{"user.id", "123"}});
     EXPECT_TRUE(filter_regex.matches(entry_regex_match));
     EXPECT_FALSE(filter_regex.matches(entry_regex_mismatch));
 
     // Wildcard
-    NestedFieldValueFilter filter_wildcard("request.path", "/api/v1/*", PatternType::Wildcard);
+    DottedKeyFieldValueFilter filter_wildcard("request.path", "/api/v1/*", PatternType::Wildcard);
     auto entry_wildcard_match = createLogEntry(6, "api.log", now, LogLevel::INFO, "API call", {{"request.path", "/api/v1/users"}});
     auto entry_wildcard_mismatch = createLogEntry(7, "api.log", now, LogLevel::INFO, "API call", {{"request.path", "/api/v2/users"}});
     EXPECT_TRUE(filter_wildcard.matches(entry_wildcard_match));
     EXPECT_FALSE(filter_wildcard.matches(entry_wildcard_mismatch));
 
     // Field not found
-    NestedFieldValueFilter missing_field_filter("user.non_existent", "any", PatternType::Literal);
+    DottedKeyFieldValueFilter missing_field_filter("user.non_existent", "any", PatternType::Literal);
     EXPECT_FALSE(missing_field_filter.matches(entry_match));
 }
 
-TEST_F(FilterTest, NestedFieldValueFilterWildcardSubstringMatch) {
-    NestedFieldValueFilter filter("request.path", "/api/*/users", PatternType::Wildcard);
+TEST_F(FilterTest, DottedKeyFieldValueFilterWildcardSubstringMatch) {
+    DottedKeyFieldValueFilter filter("request.path", "/api/*/users", PatternType::Wildcard);
     auto entry1 = createLogEntry(1, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v1/users"}});
     auto entry2 = createLogEntry(2, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v2/admin/users"}});
     auto entry3 = createLogEntry(3, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v1/data"}});
