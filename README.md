@@ -84,7 +84,7 @@ For detailed build instructions, installation options, and more usage examples, 
 | **Set-Based Filtering**      | Check if a field's value belongs to a specific set of values.                        |
 | **Complex Filtering Expressions** | Build sophisticated filter logic using parenthesized, nested AND/OR conditions.      |
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).            |
-| **Flexible Export**          | Save results in Text, JSON, CSV, or YAML formats.                                    |
+| **Flexible Export**          | Save results in Text, JSON, or CSV formats.                                          |
 | **Statistical Analysis**     | Generate statistics on your log data, such as entry rates and top messages.          |
 
 ## Building from Source
@@ -349,12 +349,12 @@ Run `logAnalyzer --help` for a full list of commands.
 
 | Option                  | Description                                                                                                                             | Default                         |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `--format [text\|json\|csv\|yaml]` | Sets the output format.                                                                                                       | `text`                          |
+| `--format [text\|json\|csv]` | Sets the output format.                                                                                                       | `text`                          |
 | `--text-format TEXT`    | Custom format string for `text` output. Available: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
 | `--csv-sep CHAR`        | Separator character for `csv` output.                                                                                                   | `,`                             |
 | `--csv-fields "FIELDS"` | Comma-separated fields for `csv` output (e.g., `timestamp,level,message`).                                                              |                                 |
 | `--json-fields "FIELDS"`| Comma-separated fields for `json` output (e.g., `timestamp,level,message`).                                                             |                                 |
-| `--pretty`              | Pretty-print `json` or `yaml` output.                                                                                                   | `false`                         |
+| `--pretty`              | Pretty-print `json` output.                                                                                                   | `false`                         |
 | `--include-summary`     | Include a summary section in `json` output.                                                                                             | `false`                         |
 
 ### Statistics
@@ -446,22 +446,32 @@ You can split your configuration into multiple files using the `includes` key. T
 
 ## Project Structure
 
+Understanding the project's layout can help you navigate the codebase, contribute, or find specific functionalities.
+
 ```
 logAnalyzer/
-├── _deps/                   # External dependencies (fetched by CMake)
-├── bin/                     # Compiled binaries (in build directory)
-├── build/                   # Build directory
-├── cmake/                   # CMake modules and scripts
-├── docs/                    # Doxygen documentation files
-├── examples/                # Example usage and configurations
-├── include/                 # Public header files
-├── lib/                     # Compiled libraries (in build directory)
-├── src/                     # Source code
-├── tests/                   # Unit and integration tests
-├── tools/                   # Helper scripts for development
-├── .gitignore
-├── CMakeLists.txt           # Root CMake file
-└── README.md                # This file
+├── _deps/                   # External dependencies managed by CMake (e.g., CLI11, nlohmann/json, GoogleTest).
+├── bin/                     # Location of the compiled `logAnalyzer` executable and other binaries after building.
+├── build/                   # Directory created by CMake for out-of-source builds; contains build artifacts.
+├── cmake/                   # Custom CMake modules and scripts used for configuring the project.
+├── docs/                    # Doxygen configuration files and potentially generated documentation.
+├── examples/                # Provides example configuration files and usage scenarios.
+├── include/                 # Public header files defining the core API, data structures, filters, and configuration.
+│   ├── analyzer/            # Components for log analysis, I/O, and export.
+│   ├── config/              # Configuration structures and CLI parsing.
+│   ├── core/                # Core log parsing, error handling, and type definitions.
+│   ├── export/              # Interfaces for different output formats.
+│   ├── filter/              # Advanced filtering logic and condition expressions.
+│   └── stats/               # Statistical analysis components.
+├── lib/                     # Location of compiled libraries (e.g., static/shared libraries) after building.
+├── src/                     # Source code (.cpp files) implementing the functionalities defined in `include/`.
+│   ├── main.cpp             # The entry point of the `logAnalyzer` application.
+│   └── ...                  # Other implementation files corresponding to `include/` modules.
+├── tests/                   # Unit and integration tests for various modules.
+├── tools/                   # Utility scripts and development aids.
+├── .gitignore               # Specifies intentionally untracked files to ignore.
+├── CMakeLists.txt           # The primary CMake build script for the project.
+└── README.md                # This comprehensive project overview.
 ```
 
 ## Running Tests
@@ -475,9 +485,10 @@ ctest --verbose
 
 ## Developer Tools
 
-The following commands can be run from the `build` directory.
+The following commands can be run from the `build` directory to assist with development and maintenance:
 
 -   **Generate Documentation**:
+    Generates HTML documentation using Doxygen. The output will be in `build/docs/html/`.
     ```bash
     cmake --build . --target doc
     # or
@@ -485,6 +496,7 @@ The following commands can be run from the `build` directory.
     ```
 
 -   **Format Code**:
+    Automatically formats the C++ source code using `clang-format` according to the project's style guidelines.
     ```bash
     cmake --build . --target format
     # or

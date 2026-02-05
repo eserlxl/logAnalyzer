@@ -75,9 +75,49 @@ struct LogAnalyzerSettings {
     // Fluent API helpers for tests
     LogAnalyzerSettings& setLineParsePattern(std::string p) { lineParsePattern = std::move(p); return *this; }
     LogAnalyzerSettings& setCaseSensitiveParsing(bool b) { caseSensitiveParsing = b; return *this; }
-    LogAnalyzerSettings& setLogEntryStartPattern(std::optional<std::string> p) { logEntryStartPattern = std::move(p); return *this; }
+    LogAnalyzerSettings& setLogEntryStartPattern(std::optional<std::string> p) {
+        if (p.has_value() && p.value().empty()) {
+            logEntryStartPattern = std::nullopt;
+        } else {
+            logEntryStartPattern = std::move(p);
+        }
+        return *this;
+    }
     LogAnalyzerSettings& addFieldMapping(LogEntryField f, int gi, const std::string& fmt = "") { 
-        fieldMappings.emplace_back(f, gi, fmt); return *this; 
+        // Overwrite if exists
+        auto it = std::find_if(fieldMappings.begin(), fieldMappings.end(),
+                               [&](const FieldMapping& m) {
+                                   return std::holds_alternative<LogEntryField>(m.field) &&
+                                          std::get<LogEntryField>(m.field) == f;
+                               });
+        if (it != fieldMappings.end()) {
+            it->groupIndex = (gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi)));
+            it->formats.clear();
+            if (!fmt.empty()) {
+                it->formats.push_back(fmt);
+            }
+        } else {
+            fieldMappings.emplace_back(f, gi, fmt);
+        }
+        return *this;
+    }
+    LogAnalyzerSettings& addFieldMapping(const std::string& customFieldName, int gi, const std::string& fmt = "") {
+        // Overwrite if exists
+        auto it = std::find_if(fieldMappings.begin(), fieldMappings.end(),
+                               [&](const FieldMapping& m) {
+                                   return std::holds_alternative<std::string>(m.field) &&
+                                          std::get<std::string>(m.field) == customFieldName;
+                               });
+        if (it != fieldMappings.end()) {
+            it->groupIndex = (gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi)));
+            it->formats.clear();
+            if (!fmt.empty()) {
+                it->formats.push_back(fmt);
+            }
+        } else {
+            fieldMappings.emplace_back(customFieldName, (gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), std::vector<std::string>{fmt});
+        }
+        return *this;
     }
     LogAnalyzerSettings& clearFieldMappings() { fieldMappings.clear(); return *this; }
     LogAnalyzerSettings& addCustomLogLevelMapping(std::string s, LogLevel l) { 
@@ -87,6 +127,9 @@ struct LogAnalyzerSettings {
     LogAnalyzerSettings& addFilterRule(FilterRule r) { filterRules.push_back(std::move(r)); return *this; }
     LogAnalyzerSettings& clearFilterRules() { filterRules.clear(); return *this; }
     LogAnalyzerSettings& setExportSettings(ExportSettings es) { exportSettings = std::move(es); return *this; }
+    LogAnalyzerSettings& setExportPath(std::string p) { exportSettings.outputPath = std::move(p); return *this; }
+    LogAnalyzerSettings& setExportFormat(ExportFormat f) { exportSettings.format = f; return *this; }
+    LogAnalyzerSettings& setExportFieldsToExport(std::vector<ExportFieldMapping> fields) { exportSettings.fieldsToExport = std::move(fields); return *this; }
     LogAnalyzerSettings& addStatisticConfig(StatisticConfig sc) { statisticConfigs.push_back(std::move(sc)); return *this; }
     LogAnalyzerSettings& clearStatisticConfigs() { statisticConfigs.clear(); return *this; }
 

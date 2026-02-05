@@ -111,25 +111,39 @@ void Exporter::exportAsJson(
                         entryJson[key] = Utils::logLevelToString(entry.level);
                         break;
                     case LogEntryField::MESSAGE:
-                        entryJson[key] = entry.message;
+                        entryJson[key] = entry.message; // Always assign, even if empty
                         break;
                     case LogEntryField::SOURCE_FILE:
-                        entryJson[key] = entry.sourceFile;
+                        entryJson[key] = entry.sourceFile; // Always assign, even if empty
                         break;
                     case LogEntryField::LINE_NUMBER:
-                        entryJson[key] = entry.sourceLineNumber; // Assign as integer
+                        entryJson[key] = entry.sourceLineNumber; // Always assign, even if zero
                         break;
-                    // Add other standard fields here if they exist and should be exported
-                    case LogEntryField::UNKNOWN:
+                    // For other standard fields that might be explicitly requested, ensure they are added
                     case LogEntryField::THREAD_ID:
+                        // Assign default/empty value if not present in LogEntry, else actual value.
+                        // For now, LogEntry doesn't have a direct thread_id field, so assume empty.
+                        entryJson[key] = ""; 
+                        break;
                     case LogEntryField::MODULE:
+                        // LogEntry doesn't have a direct module field, assume empty.
+                        entryJson[key] = "";
+                        break;
                     case LogEntryField::HOST:
+                        // LogEntry doesn't have a direct host field, assume empty.
+                        entryJson[key] = "";
+                        break;
                     case LogEntryField::STRUCTURED_FIELD:
+                        // Structured fields need special handling for parsing.
+                        // For export, if explicitly requested and LogEntry has no structured data, export null or empty object.
+                        entryJson[key] = json::value_t::null; // Or json::object()
+                        break;
+                    case LogEntryField::UNKNOWN:
                     default:
-                        // For UNKNOWN or unhandled standard fields, if value is empty, don't add.
-                        // If it's a field that could have an empty string value, it will be added as empty.
-                        // For simplicity, we assume other fields like LEVEL, MESSAGE will always have a non-empty string representation.
-                        // For SOURCE_FILE, if empty, we explicitly don't add it.
+                        // If UNKNOWN field type is somehow requested, or an unhandled enum,
+                        // it's an error in fieldMapping definition or program logic.
+                        // We will add a null entry to ensure the key exists but with no value.
+                        entryJson[key] = json::value_t::null;
                         break;
                 }
             }
