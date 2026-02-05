@@ -2,13 +2,13 @@
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
-[![Build Status](https://github.com/Eser KUBALI/logAnalyzer/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/Eser KUBALI/logAnalyzer/actions)
+[![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/eserlxl/logAnalyzer/actions)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 ![CMake](https://img.shields.io/badge/cmake-3.20%2B-blue.svg)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
-[![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://Eser KUBALI.github.io/logAnalyzer/)
-[![codecov](https://codecov.io/gh/Eser KUBALI/logAnalyzer/branch/main/graph/badge.svg)](https://codecov.io/gh/Eser KUBALI/logAnalyzer)
+[![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
+[![codecov](https://codecov.io/gh/eserlxl/logAnalyzer/branch/main/graph/badge.svg)](https://codecov.io/gh/eserlxl/logAnalyzer)
 
 ## Project Status
 
@@ -50,7 +50,7 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/Eser KUBALI/logAnalyzer.git
+    git clone https://github.com/eserlxl/logAnalyzer.git
     cd logAnalyzer
     ```
 
@@ -141,7 +141,7 @@ Ensure you have [Visual Studio 2022](https://visualstudio.microsoft.com/) with t
 First, clone the repository and navigate into the project directory:
 
 ```bash
-git clone https://github.com/Eser KUBALI/logAnalyzer.git
+git clone https://github.com/eserlxl/logAnalyzer.git
 cd logAnalyzer
 ```
 
