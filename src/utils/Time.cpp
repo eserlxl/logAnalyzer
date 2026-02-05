@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// Copyright (c) 2026 eserlxl
+// Copyright (c) 2026 Eser KUBALI
 
 #include "utils/Time.h" // Include the new header
 #include <chrono> // Added for std::chrono

@@ -518,7 +518,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonComplexDatetime) {
     nlohmann::json j = {
         {"field", "timestamp"},
         {"op", "GREATER_THAN"},
-        {"value", "2024-01-01 00:00:00"},
+        {"value", "2026-01-01 00:00:00"},
         {"value_type", "DATETIME"},
         {"datetimeFormat", "%Y-%m-%d %H:%M:%S"},
         {"caseSensitive", false}
@@ -530,7 +530,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonComplexDatetime) {
 
     EXPECT_EQ(fc.field, LogEntryField::TIMESTAMP);
     EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
-    EXPECT_EQ(fc.value, "2024-01-01 00:00:00");
+    EXPECT_EQ(fc.value, "2026-01-01 00:00:00");
     EXPECT_EQ(fc.valueType, FilterValueType::DATETIME);
     EXPECT_TRUE(fc.datetimeFormat.has_value());
     EXPECT_EQ(*fc.datetimeFormat, "%Y-%m-%d %H:%M:%S");

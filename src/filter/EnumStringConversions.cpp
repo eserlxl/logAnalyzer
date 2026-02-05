@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// Copyright (c) 2026 eserlxl
+// Copyright (c) 2026 Eser KUBALI
 
 #include "filter/EnumStringConversions.h"
 #include <algorithm> // For std::transform
