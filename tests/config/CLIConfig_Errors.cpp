@@ -34,11 +34,11 @@ TEST_F(CLIConfigTest, HelpOption) {
 }
 
 TEST_F(CLIConfigTest, VersionOption) {
-    // Assuming --version exists and behaves like --help for now, might need adjustment
-    // if CLIConfig handles --version differently (e.g., custom callback)
+    // CLI11\'s standard behavior for --version is to print the version and exit gracefully.
+    // This test is updated to reflect that CLIConfig should not flag it as an error.
     auto result = parse({"log_analyzer", "--version"});
-    ASSERT_FALSE(result.has_value());
-    ASSERT_EQ(result.error().code, Code::InvalidCLIOption); // CLI11 throws CallForHelp if version is not explicitly handled
+    ASSERT_TRUE(result.has_value()); // Expecting a successful parse or non-error outcome
+    // No specific error code check, as it should not be an InvalidCLIOption.
 }
 
 TEST_F(CLIConfigTest, DurationWithoutTimeBoundariesError) {
@@ -66,6 +66,33 @@ TEST_F(CLIConfigTest, OnParseErrorWarn) {
 TEST_F(CLIConfigTest, ParserErrorActionCaseInsensitivity) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--on-parse-error", "IGNORE"});
     ASSERT_TRUE(result.has_value());
-    auto& options = result.value().second;
+    auto& [settings, options] = result.value(); // Use structured binding
     ASSERT_EQ(options.parserErrorAction, CLIConfig::ParserErrorAction::Ignore);
+}
+
+// Test for invalid enum value for --on-parse-error
+TEST_F(CLIConfigTest, OnParseErrorInvalidEnum) {
+    // Test with an unrecognized enum value to ensure robust error handling.
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--on-parse-error", "fail_silently"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption); // Expecting an option parsing error
+}
+
+// Test for invalid value for --level
+TEST_F(CLIConfigTest, LevelOptionInvalidValue) {
+    // Test with an invalid string value for the --level option.
+    // Assumes --level expects specific keywords like "info", "debug", etc.
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--level", "debugg"}); // "debugg" is likely invalid
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption); // Expecting an option parsing error
+}
+
+// Test for invalid duration format
+TEST_F(CLIConfigTest, DurationInvalidFormat) {
+    // Test with an invalid format for the --duration option.
+    // The existing DurationWithoutTimeBoundariesError test covers duration alone being an error.
+    // This test covers an invalid string format for duration.
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--duration", "invalid-time-format"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidArgument); // Following the pattern of DurationWithoutTimeBoundariesError
 }

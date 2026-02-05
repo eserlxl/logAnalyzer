@@ -89,7 +89,7 @@ For detailed build instructions, installation options, and more usage examples, 
 | **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                   |
 | **Time-based Filtering**     | Filter by absolute time range, relative time (`5m ago`), or for a specific day (`yesterday`, `2023-10-20`). |
 | **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
-| **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
+| **Complex Filter Expressions** | (Coming Soon) Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
 | **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable and aliasable output fields.                 |
 | **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, log level counts, and unique value counts for any field. |
 
@@ -342,6 +342,14 @@ Run `LogAnalyzer --help` for a full list of commands.
 | `--on-parse-error OPT`          | Action on parse error. Options are `skip` (ignore the line), `log` (print a warning to stderr), or `fail` (exit).     | `log`     |
 
 
+### Monitoring
+
+| Option             | Description                                                   | Default |
+| :----------------- | :------------------------------------------------------------ | :------ |
+| `--tail`           | Enable tail mode to monitor files for new lines.              | `false` |
+| `--tail-interval MS`| Polling interval for tail mode in milliseconds.               | `1000`  |
+
+
 ### Filtering
 
 | Option                   | Shorthand | Description                                                                                                                                                                                                                                                                                                                                                         | Default   |
@@ -403,7 +411,7 @@ Here is an example demonstrating a more advanced configuration:
 
 ```json
 {
-  "lineParsePattern": "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z) \\s*\[(\\w+)\] \\(tid:(\\d+)\\) (.*) \\{\"session\": \"([a-f0-9-]+)\" \\}"",
+  "lineParsePattern": "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z) \\s*\\\\[(\\w+)\\\\] \\(tid:(\\d+)\\) (.*) \\\\{\\\"session\\\": \\\"([a-f0-9-]+)\\\" \\\\}",
   "fieldMappings": [
     { "field": "timestamp", "groupIndex": 1 },
     { "field": "level", "groupIndex": 2 },
