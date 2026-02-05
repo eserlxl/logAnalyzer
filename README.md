@@ -90,7 +90,7 @@ For detailed build instructions, installation options, and more usage examples, 
 | **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
 | **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).                               |
-| **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable and aliasable output fields.               |
+| **Flexible Export**          | Save results in Text, JSON, CSV, or XML formats with customizable and aliasable output fields.            |
 | **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, log level counts, and unique value counts for any field. |
 
 ## Building from Source
@@ -282,11 +282,14 @@ LogAnalyzer system.log --stats "type=TOP_MESSAGES,top_n=10"
 LogAnalyzer /var/log/app.log --tail --keyword "critical"
 ```
 
-### Example 8: Custom CSV Export
+### Example 8: Custom Export
 
 ```bash
 # Export specific fields to a CSV, with a custom header for the timestamp field
 LogAnalyzer application.log --format csv --csv-fields "timestamp as Time, level, message" --output report.csv
+
+# Export error logs to an XML file
+LogAnalyzer application.log --level ERROR --format xml --output errors.xml
 ```
 
 
@@ -402,7 +405,8 @@ Run `LogAnalyzer --help` for a full list of commands.
 
 | :---------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------ |
 
-| `--format [text|json|csv]` | `-f`      | Sets the output format for filtered log entries.                                                                                        | `text`                          |
+| `--format [text|json|csv|xml]` | `-f`      | Sets the output format for filtered log entries.                                                                                        | `text`                          |
+| `--xml-structured-json` |           | When exporting to `xml`, attempts to convert `structured_field` content (if it's valid JSON) into nested XML elements. Otherwise, wraps it in CDATA.                                                                            | `true`                          |
 
 | `--text-format FORMAT_STRING` |           | Custom format string for `text` output. Placeholders: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
 

@@ -1,1011 +1,738 @@
-Test project /opt/lxl/c++/logAnalyzer/build
-        Start   1: LogAnalyzerTest.SetCustomLogLevelMapping
-  1/326 Test   #1: LogAnalyzerTest.SetCustomLogLevelMapping .............................................   Passed    0.00 sec
-        Start   2: LogAnalyzerTest.DefaultLogLevelMapping
-  2/326 Test   #2: LogAnalyzerTest.DefaultLogLevelMapping ...............................................   Passed    0.00 sec
-        Start   3: LogAnalyzerTest.AnalyzeStreamFileOpenError
-  3/326 Test   #3: LogAnalyzerTest.AnalyzeStreamFileOpenError ...........................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = LogAnalyzerTest.AnalyzeStreamFileOpenError
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from LogAnalyzerTest
-[ RUN      ] LogAnalyzerTest.AnalyzeStreamFileOpenError
-/opt/lxl/c++/logAnalyzer/tests/analyzer/Core.cpp:24: Failure
-Expected equality of these values:
-  result.error().code
-    Which is: 4-byte object <03-00 00-00>
-  Code::FileNotFound
-    Which is: 4-byte object <02-00 00-00>
-[  FAILED  ] LogAnalyzerTest.AnalyzeStreamFileOpenError (0 ms)
-[----------] 1 test from LogAnalyzerTest (0 ms total)
+UpdateCTestConfiguration  from :/opt/lxl/c++/logAnalyzer/DartConfiguration.tcl
+Parse Config file:/opt/lxl/c++/logAnalyzer/DartConfiguration.tcl
+Test project /opt/lxl/c++/logAnalyzer
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+      Start  1: CLIConfig_InputOutput_NOT_BUILT
+Could not find executable CLIConfig_InputOutput_NOT_BUILT
+Looked in the following places:
+CLIConfig_InputOutput_NOT_BUILT
+CLIConfig_InputOutput_NOT_BUILT
+Release/CLIConfig_InputOutput_NOT_BUILT
+Release/CLIConfig_InputOutput_NOT_BUILT
+Debug/CLIConfig_InputOutput_NOT_BUILT
+Debug/CLIConfig_InputOutput_NOT_BUILT
+MinSizeRel/CLIConfig_InputOutput_NOT_BUILT
+MinSizeRel/CLIConfig_InputOutput_NOT_BUILT
+RelWithDebInfo/CLIConfig_InputOutput_NOT_BUILT
+RelWithDebInfo/CLIConfig_InputOutput_NOT_BUILT
+Deployment/CLIConfig_InputOutput_NOT_BUILT
+Deployment/CLIConfig_InputOutput_NOT_BUILT
+Development/CLIConfig_InputOutput_NOT_BUILT
+Development/CLIConfig_InputOutput_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] LogAnalyzerTest.AnalyzeStreamFileOpenError
+1: Test command: 
+1: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CLIConfig_InputOutput_NOT_BUILT
+ 1/30 Test  #1: CLIConfig_InputOutput_NOT_BUILT ....***Not Run   0.00 sec
+test 2
+      Start  2: CLIConfig_Filtering_NOT_BUILT
+Could not find executable CLIConfig_Filtering_NOT_BUILT
+Looked in the following places:
+CLIConfig_Filtering_NOT_BUILT
+CLIConfig_Filtering_NOT_BUILT
+Release/CLIConfig_Filtering_NOT_BUILT
+Release/CLIConfig_Filtering_NOT_BUILT
+Debug/CLIConfig_Filtering_NOT_BUILT
+Debug/CLIConfig_Filtering_NOT_BUILT
+MinSizeRel/CLIConfig_Filtering_NOT_BUILT
+MinSizeRel/CLIConfig_Filtering_NOT_BUILT
+RelWithDebInfo/CLIConfig_Filtering_NOT_BUILT
+RelWithDebInfo/CLIConfig_Filtering_NOT_BUILT
+Deployment/CLIConfig_Filtering_NOT_BUILT
+Deployment/CLIConfig_Filtering_NOT_BUILT
+Development/CLIConfig_Filtering_NOT_BUILT
+Development/CLIConfig_Filtering_NOT_BUILT
 
- 1 FAILED TEST
+2: Test command: 
+2: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CLIConfig_Filtering_NOT_BUILT
+ 2/30 Test  #2: CLIConfig_Filtering_NOT_BUILT ......***Not Run   0.00 sec
+test 3
+      Start  3: CLIConfig_Formatting_NOT_BUILT
+Could not find executable CLIConfig_Formatting_NOT_BUILT
+Looked in the following places:
+CLIConfig_Formatting_NOT_BUILT
+CLIConfig_Formatting_NOT_BUILT
+Release/CLIConfig_Formatting_NOT_BUILT
+Release/CLIConfig_Formatting_NOT_BUILT
+Debug/CLIConfig_Formatting_NOT_BUILT
+Debug/CLIConfig_Formatting_NOT_BUILT
+MinSizeRel/CLIConfig_Formatting_NOT_BUILT
+MinSizeRel/CLIConfig_Formatting_NOT_BUILT
+RelWithDebInfo/CLIConfig_Formatting_NOT_BUILT
+RelWithDebInfo/CLIConfig_Formatting_NOT_BUILT
+Deployment/CLIConfig_Formatting_NOT_BUILT
+Deployment/CLIConfig_Formatting_NOT_BUILT
+Development/CLIConfig_Formatting_NOT_BUILT
+Development/CLIConfig_Formatting_NOT_BUILT
 
-        Start   4: LogAnalyzerTest.AnalyzeStreamInvalidRegexError
-  4/326 Test   #4: LogAnalyzerTest.AnalyzeStreamInvalidRegexError .......................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = LogAnalyzerTest.AnalyzeStreamInvalidRegexError
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from LogAnalyzerTest
-[ RUN      ] LogAnalyzerTest.AnalyzeStreamInvalidRegexError
-Warning (LogParser): Line does not match log pattern.
-/opt/lxl/c++/logAnalyzer/tests/analyzer/Core.cpp:38: Failure
-Value of: result.has_value()
-  Actual: true
-Expected: false
-[  FAILED  ] LogAnalyzerTest.AnalyzeStreamInvalidRegexError (0 ms)
-[----------] 1 test from LogAnalyzerTest (0 ms total)
+3: Test command: 
+3: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CLIConfig_Formatting_NOT_BUILT
+ 3/30 Test  #3: CLIConfig_Formatting_NOT_BUILT .....***Not Run   0.00 sec
+test 4
+      Start  4: CLIConfig_Analysis_NOT_BUILT
+Could not find executable CLIConfig_Analysis_NOT_BUILT
+Looked in the following places:
+CLIConfig_Analysis_NOT_BUILT
+CLIConfig_Analysis_NOT_BUILT
+Release/CLIConfig_Analysis_NOT_BUILT
+Release/CLIConfig_Analysis_NOT_BUILT
+Debug/CLIConfig_Analysis_NOT_BUILT
+Debug/CLIConfig_Analysis_NOT_BUILT
+MinSizeRel/CLIConfig_Analysis_NOT_BUILT
+MinSizeRel/CLIConfig_Analysis_NOT_BUILT
+RelWithDebInfo/CLIConfig_Analysis_NOT_BUILT
+RelWithDebInfo/CLIConfig_Analysis_NOT_BUILT
+Deployment/CLIConfig_Analysis_NOT_BUILT
+Deployment/CLIConfig_Analysis_NOT_BUILT
+Development/CLIConfig_Analysis_NOT_BUILT
+Development/CLIConfig_Analysis_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] LogAnalyzerTest.AnalyzeStreamInvalidRegexError
+4: Test command: 
+4: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CLIConfig_Analysis_NOT_BUILT
+ 4/30 Test  #4: CLIConfig_Analysis_NOT_BUILT .......***Not Run   0.00 sec
+test 5
+      Start  5: CLIConfig_Errors_NOT_BUILT
+Could not find executable CLIConfig_Errors_NOT_BUILT
+Looked in the following places:
+CLIConfig_Errors_NOT_BUILT
+CLIConfig_Errors_NOT_BUILT
+Release/CLIConfig_Errors_NOT_BUILT
+Release/CLIConfig_Errors_NOT_BUILT
+Debug/CLIConfig_Errors_NOT_BUILT
+Debug/CLIConfig_Errors_NOT_BUILT
+MinSizeRel/CLIConfig_Errors_NOT_BUILT
+MinSizeRel/CLIConfig_Errors_NOT_BUILT
+RelWithDebInfo/CLIConfig_Errors_NOT_BUILT
+RelWithDebInfo/CLIConfig_Errors_NOT_BUILT
+Deployment/CLIConfig_Errors_NOT_BUILT
+Deployment/CLIConfig_Errors_NOT_BUILT
+Development/CLIConfig_Errors_NOT_BUILT
+Development/CLIConfig_Errors_NOT_BUILT
 
- 1 FAILED TEST
+5: Test command: 
+5: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CLIConfig_Errors_NOT_BUILT
+ 5/30 Test  #5: CLIConfig_Errors_NOT_BUILT .........***Not Run   0.00 sec
+test 6
+      Start  6: CLIConfig_Defaults_NOT_BUILT
+Could not find executable CLIConfig_Defaults_NOT_BUILT
+Looked in the following places:
+CLIConfig_Defaults_NOT_BUILT
+CLIConfig_Defaults_NOT_BUILT
+Release/CLIConfig_Defaults_NOT_BUILT
+Release/CLIConfig_Defaults_NOT_BUILT
+Debug/CLIConfig_Defaults_NOT_BUILT
+Debug/CLIConfig_Defaults_NOT_BUILT
+MinSizeRel/CLIConfig_Defaults_NOT_BUILT
+MinSizeRel/CLIConfig_Defaults_NOT_BUILT
+RelWithDebInfo/CLIConfig_Defaults_NOT_BUILT
+RelWithDebInfo/CLIConfig_Defaults_NOT_BUILT
+Deployment/CLIConfig_Defaults_NOT_BUILT
+Deployment/CLIConfig_Defaults_NOT_BUILT
+Development/CLIConfig_Defaults_NOT_BUILT
+Development/CLIConfig_Defaults_NOT_BUILT
 
-        Start   5: LogAnalyzerTest.GetFilteredEntriesInvalidRegex
-  5/326 Test   #5: LogAnalyzerTest.GetFilteredEntriesInvalidRegex .......................................   Passed    0.00 sec
-        Start   6: LogAnalyzerTest.ExportAsCsvEdgeCases
-  6/326 Test   #6: LogAnalyzerTest.ExportAsCsvEdgeCases .................................................   Passed    0.00 sec
-        Start   7: LogAnalyzerTest.ExportAsJsonEdgeCases
-  7/326 Test   #7: LogAnalyzerTest.ExportAsJsonEdgeCases ................................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = LogAnalyzerTest.ExportAsJsonEdgeCases
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from LogAnalyzerTest
-[ RUN      ] LogAnalyzerTest.ExportAsJsonEdgeCases
-/opt/lxl/c++/logAnalyzer/tests/analyzer/Core.cpp:64: Failure
-Expected equality of these values:
-  jEmpty["summary"]["count"]
-    Which is: null
-  0
-[  FAILED  ] LogAnalyzerTest.ExportAsJsonEdgeCases (0 ms)
-[----------] 1 test from LogAnalyzerTest (0 ms total)
+6: Test command: 
+6: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CLIConfig_Defaults_NOT_BUILT
+ 6/30 Test  #6: CLIConfig_Defaults_NOT_BUILT .......***Not Run   0.00 sec
+test 7
+      Start  7: CoreBasic_NOT_BUILT
+Could not find executable CoreBasic_NOT_BUILT
+Looked in the following places:
+CoreBasic_NOT_BUILT
+CoreBasic_NOT_BUILT
+Release/CoreBasic_NOT_BUILT
+Release/CoreBasic_NOT_BUILT
+Debug/CoreBasic_NOT_BUILT
+Debug/CoreBasic_NOT_BUILT
+MinSizeRel/CoreBasic_NOT_BUILT
+MinSizeRel/CoreBasic_NOT_BUILT
+RelWithDebInfo/CoreBasic_NOT_BUILT
+RelWithDebInfo/CoreBasic_NOT_BUILT
+Deployment/CoreBasic_NOT_BUILT
+Deployment/CoreBasic_NOT_BUILT
+Development/CoreBasic_NOT_BUILT
+Development/CoreBasic_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] LogAnalyzerTest.ExportAsJsonEdgeCases
+7: Test command: 
+7: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreBasic_NOT_BUILT
+ 7/30 Test  #7: CoreBasic_NOT_BUILT ................***Not Run   0.00 sec
+test 8
+      Start  8: CoreJson_NOT_BUILT
+Could not find executable CoreJson_NOT_BUILT
+Looked in the following places:
+CoreJson_NOT_BUILT
+CoreJson_NOT_BUILT
+Release/CoreJson_NOT_BUILT
+Release/CoreJson_NOT_BUILT
+Debug/CoreJson_NOT_BUILT
+Debug/CoreJson_NOT_BUILT
+MinSizeRel/CoreJson_NOT_BUILT
+MinSizeRel/CoreJson_NOT_BUILT
+RelWithDebInfo/CoreJson_NOT_BUILT
+RelWithDebInfo/CoreJson_NOT_BUILT
+Deployment/CoreJson_NOT_BUILT
+Deployment/CoreJson_NOT_BUILT
+Development/CoreJson_NOT_BUILT
+Development/CoreJson_NOT_BUILT
 
- 1 FAILED TEST
+8: Test command: 
+8: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreJson_NOT_BUILT
+ 8/30 Test  #8: CoreJson_NOT_BUILT .................***Not Run   0.00 sec
+test 9
+      Start  9: CoreValidation_NOT_BUILT
+Could not find executable CoreValidation_NOT_BUILT
+Looked in the following places:
+CoreValidation_NOT_BUILT
+CoreValidation_NOT_BUILT
+Release/CoreValidation_NOT_BUILT
+Release/CoreValidation_NOT_BUILT
+Debug/CoreValidation_NOT_BUILT
+Debug/CoreValidation_NOT_BUILT
+MinSizeRel/CoreValidation_NOT_BUILT
+MinSizeRel/CoreValidation_NOT_BUILT
+RelWithDebInfo/CoreValidation_NOT_BUILT
+RelWithDebInfo/CoreValidation_NOT_BUILT
+Deployment/CoreValidation_NOT_BUILT
+Deployment/CoreValidation_NOT_BUILT
+Development/CoreValidation_NOT_BUILT
+Development/CoreValidation_NOT_BUILT
 
-        Start   8: LogAnalyzerTest.AppendCorrectness
-  8/326 Test   #8: LogAnalyzerTest.AppendCorrectness ....................................................   Passed    0.00 sec
-        Start   9: LogAnalyzerTest.Concurrency_Placeholder
-  9/326 Test   #9: LogAnalyzerTest.Concurrency_Placeholder ..............................................   Passed    0.00 sec
-        Start  10: CLIConfigTest.ParseLogLevel
- 10/326 Test  #10: CLIConfigTest.ParseLogLevel ..........................................................   Passed    0.00 sec
-        Start  11: CLIConfigTest.ParseSingleFilePathAndVerifyOptions
- 11/326 Test  #11: CLIConfigTest.ParseSingleFilePathAndVerifyOptions ....................................   Passed    0.00 sec
-        Start  12: CLIConfigTest.NoArgsReturnsError
- 12/326 Test  #12: CLIConfigTest.NoArgsReturnsError .....................................................   Passed    0.00 sec
-        Start  13: CLIConfigTest.ParseMultipleLogLevels
- 13/326 Test  #13: CLIConfigTest.ParseMultipleLogLevels .................................................   Passed    0.00 sec
-        Start  14: CLIConfigTest.InvalidLogLevel
- 14/326 Test  #14: CLIConfigTest.InvalidLogLevel ........................................................   Passed    0.00 sec
-        Start  15: CLIConfigTest.SortByTimestampAsc
- 15/326 Test  #15: CLIConfigTest.SortByTimestampAsc .....................................................   Passed    0.00 sec
-        Start  16: CLIConfigTest.ReadFromStdin
- 16/326 Test  #16: CLIConfigTest.ReadFromStdin ..........................................................   Passed    0.00 sec
-        Start  17: CLIConfigTest.ReadFromStdinWithDash
- 17/326 Test  #17: CLIConfigTest.ReadFromStdinWithDash ..................................................   Passed    0.00 sec
-        Start  18: CLIConfigTest.StdinAndFileError
- 18/326 Test  #18: CLIConfigTest.StdinAndFileError ......................................................   Passed    0.00 sec
-        Start  19: CLIConfigTest.ParseMultipleFilePaths
- 19/326 Test  #19: CLIConfigTest.ParseMultipleFilePaths .................................................   Passed    0.00 sec
-        Start  20: CLIConfigTest.OutputJsonOption
- 20/326 Test  #20: CLIConfigTest.OutputJsonOption .......................................................   Passed    0.00 sec
-        Start  21: CLIConfigTest.OutputTextOption
- 21/326 Test  #21: CLIConfigTest.OutputTextOption .......................................................   Passed    0.00 sec
-        Start  22: CLIConfigTest.NoColorOption
- 22/326 Test  #22: CLIConfigTest.NoColorOption ..........................................................   Passed    0.00 sec
-        Start  23: CLIConfigTest.FilterKeyword
- 23/326 Test  #23: CLIConfigTest.FilterKeyword ..........................................................   Passed    0.00 sec
-        Start  24: CLIConfigTest.FilterMultipleKeywords
- 24/326 Test  #24: CLIConfigTest.FilterMultipleKeywords .................................................   Passed    0.00 sec
-        Start  25: CLIConfigTest.ExcludeKeyword
- 25/326 Test  #25: CLIConfigTest.ExcludeKeyword .........................................................   Passed    0.00 sec
-        Start  26: CLIConfigTest.KeywordCaseSensitive
- 26/326 Test  #26: CLIConfigTest.KeywordCaseSensitive ...................................................   Passed    0.00 sec
-        Start  27: CLIConfigTest.FilterRegex
- 27/326 Test  #27: CLIConfigTest.FilterRegex ............................................................   Passed    0.00 sec
-        Start  28: CLIConfigTest.ExcludeRegex
- 28/326 Test  #28: CLIConfigTest.ExcludeRegex ...........................................................   Passed    0.00 sec
-        Start  29: CLIConfigTest.FilterLogic
- 29/326 Test  #29: CLIConfigTest.FilterLogic ............................................................   Passed    0.00 sec
-        Start  30: CLIConfigTest.ComplexFilterExpression
- 30/326 Test  #30: CLIConfigTest.ComplexFilterExpression ................................................   Passed    0.00 sec
-        Start  31: CLIConfigTest.FilterStartTimeISO
- 31/326 Test  #31: CLIConfigTest.FilterStartTimeISO .....................................................   Passed    0.01 sec
-        Start  32: CLIConfigTest.FilterEndTimeRelative
- 32/326 Test  #32: CLIConfigTest.FilterEndTimeRelative ..................................................   Passed    0.00 sec
-        Start  33: CLIConfigTest.FilterDurationWithStartTime
- 33/326 Test  #33: CLIConfigTest.FilterDurationWithStartTime ............................................   Passed    0.01 sec
-        Start  34: CLIConfigTest.OptionValueMissing
- 34/326 Test  #34: CLIConfigTest.OptionValueMissing .....................................................   Passed    0.00 sec
-        Start  35: CLIConfigTest.UnknownOptionError
- 35/326 Test  #35: CLIConfigTest.UnknownOptionError .....................................................   Passed    0.00 sec
-        Start  36: CLIConfigTest.HelpOption
- 36/326 Test  #36: CLIConfigTest.HelpOption .............................................................   Passed    0.00 sec
-        Start  37: CLIConfigTest.VersionOption
- 37/326 Test  #37: CLIConfigTest.VersionOption ..........................................................   Passed    0.00 sec
-        Start  38: CLIConfigTest.DurationWithoutTimeBoundariesError
- 38/326 Test  #38: CLIConfigTest.DurationWithoutTimeBoundariesError .....................................   Passed    0.00 sec
-        Start  39: CLIConfigTest.LogLevelCaseInsensitivity
- 39/326 Test  #39: CLIConfigTest.LogLevelCaseInsensitivity ..............................................   Passed    0.00 sec
-        Start  40: CLIConfigTest.SortByCaseInsensitivity
- 40/326 Test  #40: CLIConfigTest.SortByCaseInsensitivity ................................................   Passed    0.00 sec
-        Start  41: CLIConfigTest.SortOrderCaseInsensitivity
- 41/326 Test  #41: CLIConfigTest.SortOrderCaseInsensitivity .............................................   Passed    0.00 sec
-        Start  42: CLIConfigTest.OutputFormatCaseInsensitivity
- 42/326 Test  #42: CLIConfigTest.OutputFormatCaseInsensitivity ..........................................   Passed    0.00 sec
-        Start  43: CLIConfigTest.ColorOptionCaseInsensitivity
- 43/326 Test  #43: CLIConfigTest.ColorOptionCaseInsensitivity ...........................................   Passed    0.01 sec
-        Start  44: CLIConfigTest.ParserErrorActionCaseInsensitivity
- 44/326 Test  #44: CLIConfigTest.ParserErrorActionCaseInsensitivity .....................................   Passed    0.00 sec
-        Start  45: CLIConfigTest.DefaultValues
- 45/326 Test  #45: CLIConfigTest.DefaultValues ..........................................................   Passed    0.01 sec
-        Start  46: CLIConfigTest.CustomParsePattern
- 46/326 Test  #46: CLIConfigTest.CustomParsePattern .....................................................   Passed    0.01 sec
-        Start  47: CLIConfigTest.OutputPath
- 47/326 Test  #47: CLIConfigTest.OutputPath .............................................................   Passed    0.01 sec
-        Start  48: CLIConfigTest.CustomTextOutputFormat
- 48/326 Test  #48: CLIConfigTest.CustomTextOutputFormat .................................................   Passed    0.00 sec
-        Start  49: CLIConfigTest.IncludeSummary
- 49/326 Test  #49: CLIConfigTest.IncludeSummary .........................................................   Passed    0.01 sec
-        Start  50: CLIConfigTest.PrettyPrint
- 50/326 Test  #50: CLIConfigTest.PrettyPrint ............................................................   Passed    0.01 sec
-        Start  51: CLIConfigTest.ColorOptionAuto
- 51/326 Test  #51: CLIConfigTest.ColorOptionAuto ........................................................   Passed    0.01 sec
-        Start  52: CLIConfigTest.CsvSeparatorAndFields
- 52/326 Test  #52: CLIConfigTest.CsvSeparatorAndFields ..................................................   Passed    0.01 sec
-        Start  53: CLIConfigTest.JsonFields
- 53/326 Test  #53: CLIConfigTest.JsonFields .............................................................   Passed    0.00 sec
-        Start  54: CLIConfigTest.EnabledStatistics
- 54/326 Test  #54: CLIConfigTest.EnabledStatistics ......................................................   Passed    0.01 sec
-        Start  55: CLIConfigTest.TopMessagesCount
- 55/326 Test  #55: CLIConfigTest.TopMessagesCount .......................................................   Passed    0.00 sec
-        Start  56: CLIConfigTest.StreamMode
- 56/326 Test  #56: CLIConfigTest.StreamMode .............................................................   Passed    0.00 sec
-        Start  57: CLIConfigTest.CustomLogLevelMapping
- 57/326 Test  #57: CLIConfigTest.CustomLogLevelMapping ..................................................   Passed    0.01 sec
-        Start  58: CLIConfigTest.StatsWindow
- 58/326 Test  #58: CLIConfigTest.StatsWindow ............................................................   Passed    0.01 sec
-        Start  59: CLIConfigTest.FindGapsDuration
- 59/326 Test  #59: CLIConfigTest.FindGapsDuration .......................................................   Passed    0.01 sec
-        Start  60: CLIConfigTest.OnParseErrorThrow
- 60/326 Test  #60: CLIConfigTest.OnParseErrorThrow ......................................................   Passed    0.00 sec
-        Start  61: CLIConfigTest.OnParseErrorWarn
- 61/326 Test  #61: CLIConfigTest.OnParseErrorWarn .......................................................   Passed    0.00 sec
-        Start  62: CLIConfigTest.TailMode
- 62/326 Test  #62: CLIConfigTest.TailMode ...............................................................   Passed    0.00 sec
-        Start  63: CLIConfigTest.TailInterval
- 63/326 Test  #63: CLIConfigTest.TailInterval ...........................................................   Passed    0.00 sec
-        Start  64: CLIConfigTest.NonExistentFilePath
- 64/326 Test  #64: CLIConfigTest.NonExistentFilePath ....................................................   Passed    0.00 sec
-        Start  65: LogAnalyzerConfigTest.DefaultConstructorInitializesCorrectly
- 65/326 Test  #65: LogAnalyzerConfigTest.DefaultConstructorInitializesCorrectly .........................   Passed    0.00 sec
-        Start  66: LogAnalyzerConfigTest.CustomPatternConstructorInitializesCorrectly
- 66/326 Test  #66: LogAnalyzerConfigTest.CustomPatternConstructorInitializesCorrectly ...................   Passed    0.00 sec
-        Start  67: LogAnalyzerConfigTest.FluentApiForCoreParsingSettings
- 67/326 Test  #67: LogAnalyzerConfigTest.FluentApiForCoreParsingSettings ................................   Passed    0.00 sec
-        Start  68: LogAnalyzerConfigTest.SetEmptyLogEntryStartPattern
- 68/326 Test  #68: LogAnalyzerConfigTest.SetEmptyLogEntryStartPattern ...................................   Passed    0.00 sec
-        Start  69: LogAnalyzerConfigTest.FieldMappingFluentApi
- 69/326 Test  #69: LogAnalyzerConfigTest.FieldMappingFluentApi ..........................................   Passed    0.00 sec
-        Start  70: LogAnalyzerConfigTest.ClearFieldMappings
- 70/326 Test  #70: LogAnalyzerConfigTest.ClearFieldMappings .............................................   Passed    0.00 sec
-        Start  71: LogAnalyzerConfigTest.AddDuplicateFieldMapping
- 71/326 Test  #71: LogAnalyzerConfigTest.AddDuplicateFieldMapping .......................................   Passed    0.00 sec
-        Start  72: LogAnalyzerConfigTest.CustomLogLevelMappingApi
- 72/326 Test  #72: LogAnalyzerConfigTest.CustomLogLevelMappingApi .......................................   Passed    0.00 sec
-        Start  73: LogAnalyzerConfigTest.FluentApiForFiltering
- 73/326 Test  #73: LogAnalyzerConfigTest.FluentApiForFiltering ..........................................   Passed    0.00 sec
-        Start  74: LogAnalyzerConfigTest.ClearFilterRules
- 74/326 Test  #74: LogAnalyzerConfigTest.ClearFilterRules ...............................................   Passed    0.00 sec
-        Start  75: LogAnalyzerConfigTest.ExportSettingsFluentApi
- 75/326 Test  #75: LogAnalyzerConfigTest.ExportSettingsFluentApi ........................................   Passed    0.00 sec
-        Start  76: LogAnalyzerConfigTest.FromJsonValid
- 76/326 Test  #76: LogAnalyzerConfigTest.FromJsonValid ..................................................   Passed    0.00 sec
-        Start  77: LogAnalyzerConfigTest.FromJsonRootFilterExpression
- 77/326 Test  #77: LogAnalyzerConfigTest.FromJsonRootFilterExpression ...................................   Passed    0.00 sec
-        Start  78: LogAnalyzerConfigTest.FromJsonOptionalFields
- 78/326 Test  #78: LogAnalyzerConfigTest.FromJsonOptionalFields .........................................   Passed    0.00 sec
-        Start  79: LogAnalyzerConfigTest.FromJsonMalformedInternalStructures
- 79/326 Test  #79: LogAnalyzerConfigTest.FromJsonMalformedInternalStructures ............................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = LogAnalyzerConfigTest.FromJsonMalformedInternalStructures
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from LogAnalyzerConfigTest
-[ RUN      ] LogAnalyzerConfigTest.FromJsonMalformedInternalStructures
-/opt/lxl/c++/logAnalyzer/tests/config/CoreJson.cpp:161: Failure
-Value of: result3.has_value()
-  Actual: true
-Expected: false
-[  FAILED  ] LogAnalyzerConfigTest.FromJsonMalformedInternalStructures (0 ms)
-[----------] 1 test from LogAnalyzerConfigTest (0 ms total)
+9: Test command: 
+9: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreValidation_NOT_BUILT
+ 9/30 Test  #9: CoreValidation_NOT_BUILT ...........***Not Run   0.00 sec
+test 10
+      Start 10: CoreFeatures_NOT_BUILT
+Could not find executable CoreFeatures_NOT_BUILT
+Looked in the following places:
+CoreFeatures_NOT_BUILT
+CoreFeatures_NOT_BUILT
+Release/CoreFeatures_NOT_BUILT
+Release/CoreFeatures_NOT_BUILT
+Debug/CoreFeatures_NOT_BUILT
+Debug/CoreFeatures_NOT_BUILT
+MinSizeRel/CoreFeatures_NOT_BUILT
+MinSizeRel/CoreFeatures_NOT_BUILT
+RelWithDebInfo/CoreFeatures_NOT_BUILT
+RelWithDebInfo/CoreFeatures_NOT_BUILT
+Deployment/CoreFeatures_NOT_BUILT
+Deployment/CoreFeatures_NOT_BUILT
+Development/CoreFeatures_NOT_BUILT
+Development/CoreFeatures_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] LogAnalyzerConfigTest.FromJsonMalformedInternalStructures
+10: Test command: 
+10: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreFeatures_NOT_BUILT
+10/30 Test #10: CoreFeatures_NOT_BUILT .............***Not Run   0.00 sec
+test 11
+      Start 11: LogParser_NOT_BUILT
+Could not find executable LogParser_NOT_BUILT
+Looked in the following places:
+LogParser_NOT_BUILT
+LogParser_NOT_BUILT
+Release/LogParser_NOT_BUILT
+Release/LogParser_NOT_BUILT
+Debug/LogParser_NOT_BUILT
+Debug/LogParser_NOT_BUILT
+MinSizeRel/LogParser_NOT_BUILT
+MinSizeRel/LogParser_NOT_BUILT
+RelWithDebInfo/LogParser_NOT_BUILT
+RelWithDebInfo/LogParser_NOT_BUILT
+Deployment/LogParser_NOT_BUILT
+Deployment/LogParser_NOT_BUILT
+Development/LogParser_NOT_BUILT
+Development/LogParser_NOT_BUILT
 
- 1 FAILED TEST
+11: Test command: 
+11: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: LogParser_NOT_BUILT
+11/30 Test #11: LogParser_NOT_BUILT ................***Not Run   0.00 sec
+test 12
+      Start 12: Exporter_NOT_BUILT
+Could not find executable Exporter_NOT_BUILT
+Looked in the following places:
+Exporter_NOT_BUILT
+Exporter_NOT_BUILT
+Release/Exporter_NOT_BUILT
+Release/Exporter_NOT_BUILT
+Debug/Exporter_NOT_BUILT
+Debug/Exporter_NOT_BUILT
+MinSizeRel/Exporter_NOT_BUILT
+MinSizeRel/Exporter_NOT_BUILT
+RelWithDebInfo/Exporter_NOT_BUILT
+RelWithDebInfo/Exporter_NOT_BUILT
+Deployment/Exporter_NOT_BUILT
+Deployment/Exporter_NOT_BUILT
+Development/Exporter_NOT_BUILT
+Development/Exporter_NOT_BUILT
 
-        Start  80: LogAnalyzerConfigTest.FromJsonIncorrectFieldType
- 80/326 Test  #80: LogAnalyzerConfigTest.FromJsonIncorrectFieldType .....................................   Passed    0.00 sec
-        Start  81: LogAnalyzerConfigTest.FromJsonMalformedJson
- 81/326 Test  #81: LogAnalyzerConfigTest.FromJsonMalformedJson ..........................................   Passed    0.00 sec
-        Start  82: LogAnalyzerConfigTest.FromJsonInvalidCustomLogLevelMapping
- 82/326 Test  #82: LogAnalyzerConfigTest.FromJsonInvalidCustomLogLevelMapping ...........................   Passed    0.00 sec
-        Start  83: LogAnalyzerConfigTest.FromFileErrorHandling
- 83/326 Test  #83: LogAnalyzerConfigTest.FromFileErrorHandling ..........................................   Passed    0.00 sec
-        Start  84: LogAnalyzerConfigTest.FromFileValid
- 84/326 Test  #84: LogAnalyzerConfigTest.FromFileValid ..................................................   Passed    0.00 sec
-        Start  85: LogAnalyzerConfigTest.ToJsonComprehensive
- 85/326 Test  #85: LogAnalyzerConfigTest.ToJsonComprehensive ............................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = LogAnalyzerConfigTest.ToJsonComprehensive
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from LogAnalyzerConfigTest
-[ RUN      ] LogAnalyzerConfigTest.ToJsonComprehensive
-/opt/lxl/c++/logAnalyzer/tests/config/CoreJson.cpp:393: Failure
-Expected equality of these values:
-  j["exportSettings"]["fieldsToExport"][0]["customHeader"]
-    Which is: null
-  "My Message"
-    Which is: 0x55a05e631d21
-[  FAILED  ] LogAnalyzerConfigTest.ToJsonComprehensive (0 ms)
-[----------] 1 test from LogAnalyzerConfigTest (0 ms total)
+12: Test command: 
+12: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: Exporter_NOT_BUILT
+12/30 Test #12: Exporter_NOT_BUILT .................***Not Run   0.00 sec
+test 13
+      Start 13: ExportFieldMappingTest_NOT_BUILT
+Could not find executable ExportFieldMappingTest_NOT_BUILT
+Looked in the following places:
+ExportFieldMappingTest_NOT_BUILT
+ExportFieldMappingTest_NOT_BUILT
+Release/ExportFieldMappingTest_NOT_BUILT
+Release/ExportFieldMappingTest_NOT_BUILT
+Debug/ExportFieldMappingTest_NOT_BUILT
+Debug/ExportFieldMappingTest_NOT_BUILT
+MinSizeRel/ExportFieldMappingTest_NOT_BUILT
+MinSizeRel/ExportFieldMappingTest_NOT_BUILT
+RelWithDebInfo/ExportFieldMappingTest_NOT_BUILT
+RelWithDebInfo/ExportFieldMappingTest_NOT_BUILT
+Deployment/ExportFieldMappingTest_NOT_BUILT
+Deployment/ExportFieldMappingTest_NOT_BUILT
+Development/ExportFieldMappingTest_NOT_BUILT
+Development/ExportFieldMappingTest_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] LogAnalyzerConfigTest.ToJsonComprehensive
+13: Test command: 
+13: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: ExportFieldMappingTest_NOT_BUILT
+13/30 Test #13: ExportFieldMappingTest_NOT_BUILT ...***Not Run   0.00 sec
+test 14
+      Start 14: ExportSettingsTest_NOT_BUILT
+Could not find executable ExportSettingsTest_NOT_BUILT
+Looked in the following places:
+ExportSettingsTest_NOT_BUILT
+ExportSettingsTest_NOT_BUILT
+Release/ExportSettingsTest_NOT_BUILT
+Release/ExportSettingsTest_NOT_BUILT
+Debug/ExportSettingsTest_NOT_BUILT
+Debug/ExportSettingsTest_NOT_BUILT
+MinSizeRel/ExportSettingsTest_NOT_BUILT
+MinSizeRel/ExportSettingsTest_NOT_BUILT
+RelWithDebInfo/ExportSettingsTest_NOT_BUILT
+RelWithDebInfo/ExportSettingsTest_NOT_BUILT
+Deployment/ExportSettingsTest_NOT_BUILT
+Deployment/ExportSettingsTest_NOT_BUILT
+Development/ExportSettingsTest_NOT_BUILT
+Development/ExportSettingsTest_NOT_BUILT
 
- 1 FAILED TEST
+14: Test command: 
+14: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: ExportSettingsTest_NOT_BUILT
+14/30 Test #14: ExportSettingsTest_NOT_BUILT .......***Not Run   0.00 sec
+test 15
+      Start 15: ExportTestUtils_test_NOT_BUILT
+Could not find executable ExportTestUtils_test_NOT_BUILT
+Looked in the following places:
+ExportTestUtils_test_NOT_BUILT
+ExportTestUtils_test_NOT_BUILT
+Release/ExportTestUtils_test_NOT_BUILT
+Release/ExportTestUtils_test_NOT_BUILT
+Debug/ExportTestUtils_test_NOT_BUILT
+Debug/ExportTestUtils_test_NOT_BUILT
+MinSizeRel/ExportTestUtils_test_NOT_BUILT
+MinSizeRel/ExportTestUtils_test_NOT_BUILT
+RelWithDebInfo/ExportTestUtils_test_NOT_BUILT
+RelWithDebInfo/ExportTestUtils_test_NOT_BUILT
+Deployment/ExportTestUtils_test_NOT_BUILT
+Deployment/ExportTestUtils_test_NOT_BUILT
+Development/ExportTestUtils_test_NOT_BUILT
+Development/ExportTestUtils_test_NOT_BUILT
 
-        Start  86: LogAnalyzerConfigTest.ToJsonSerialization
- 86/326 Test  #86: LogAnalyzerConfigTest.ToJsonSerialization ............................................   Passed    0.00 sec
-        Start  87: LogAnalyzerConfigTest.DefaultRegexPatternCompiles
- 87/326 Test  #87: LogAnalyzerConfigTest.DefaultRegexPatternCompiles ....................................   Passed    0.00 sec
-        Start  88: LogAnalyzerConfigTest.ValidateErrorHandling
- 88/326 Test  #88: LogAnalyzerConfigTest.ValidateErrorHandling ..........................................   Passed    0.00 sec
-        Start  89: LogAnalyzerConfigTest.ValidateValidSettings
- 89/326 Test  #89: LogAnalyzerConfigTest.ValidateValidSettings ..........................................   Passed    0.00 sec
-        Start  90: ConfigValidationTest.ValidateStatisticConfig_TopMessages_MissingTopN
- 90/326 Test  #90: ConfigValidationTest.ValidateStatisticConfig_TopMessages_MissingTopN .................   Passed    0.00 sec
-        Start  91: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingTopN
- 91/326 Test  #91: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingTopN .............   Passed    0.00 sec
-        Start  92: ConfigValidationTest.ValidateStatisticConfig_InvalidTopN
- 92/326 Test  #92: ConfigValidationTest.ValidateStatisticConfig_InvalidTopN .............................   Passed    0.00 sec
-        Start  93: ConfigValidationTest.ValidateStatisticConfig_ZeroTopN
- 93/326 Test  #93: ConfigValidationTest.ValidateStatisticConfig_ZeroTopN ................................   Passed    0.00 sec
-        Start  94: ConfigValidationTest.ValidateStatisticConfig_NegativeTopN
- 94/326 Test  #94: ConfigValidationTest.ValidateStatisticConfig_NegativeTopN ............................   Passed    0.00 sec
-        Start  95: ConfigValidationTest.ValidateStatisticConfig_FieldValueCount_MissingTargetField
- 95/326 Test  #95: ConfigValidationTest.ValidateStatisticConfig_FieldValueCount_MissingTargetField ......   Passed    0.00 sec
-        Start  96: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingTargetField
- 96/326 Test  #96: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingTargetField ......   Passed    0.00 sec
-        Start  97: ConfigValidationTest.ValidateStatisticConfig_FieldValueCount_MissingCustomFieldKey
- 97/326 Test  #97: ConfigValidationTest.ValidateStatisticConfig_FieldValueCount_MissingCustomFieldKey ...   Passed    0.00 sec
-        Start  98: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingCustomFieldKey
- 98/326 Test  #98: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingCustomFieldKey ...   Passed    0.00 sec
-        Start  99: ConfigValidationTest.ValidateFilterRule_InvalidRegex
- 99/326 Test  #99: ConfigValidationTest.ValidateFilterRule_InvalidRegex .................................   Passed    0.00 sec
-        Start 100: ConfigCoreTest.CreateDefault
-100/326 Test #100: ConfigCoreTest.CreateDefault .........................................................   Passed    0.00 sec
-        Start 101: ConfigCoreTest.Merge
-101/326 Test #101: ConfigCoreTest.Merge .................................................................   Passed    0.00 sec
-        Start 102: ConfigCoreTest.EnvVarExpansion
-102/326 Test #102: ConfigCoreTest.EnvVarExpansion .......................................................   Passed    0.00 sec
-        Start 103: ConfigCoreTest.FileIncludes
-103/326 Test #103: ConfigCoreTest.FileIncludes ..........................................................   Passed    0.00 sec
-        Start 104: ConfigCoreTest.IncludeOverridesRoot
-104/326 Test #104: ConfigCoreTest.IncludeOverridesRoot ..................................................   Passed    0.00 sec
-        Start 105: ConfigCoreTest.CircularIncludeDetection
-105/326 Test #105: ConfigCoreTest.CircularIncludeDetection ..............................................   Passed    0.00 sec
-        Start 106: LogParserErrorHandling.VariousActions
-106/326 Test #106: LogParserErrorHandling.VariousActions ................................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = LogParserErrorHandling.VariousActions
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from LogParserErrorHandling
-[ RUN      ] LogParserErrorHandling.VariousActions
-/opt/lxl/c++/logAnalyzer/tests/core/LogParser.cpp:35: Failure
-Value of: warnEntryResult.value().timestamp.has_value()
-  Actual: true
-Expected: false
-[  FAILED  ] LogParserErrorHandling.VariousActions (0 ms)
-[----------] 1 test from LogParserErrorHandling (0 ms total)
+15: Test command: 
+15: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: ExportTestUtils_test_NOT_BUILT
+15/30 Test #15: ExportTestUtils_test_NOT_BUILT .....***Not Run   0.00 sec
+test 16
+      Start 16: Core_NOT_BUILT
+Could not find executable Core_NOT_BUILT
+Looked in the following places:
+Core_NOT_BUILT
+Core_NOT_BUILT
+Release/Core_NOT_BUILT
+Release/Core_NOT_BUILT
+Debug/Core_NOT_BUILT
+Debug/Core_NOT_BUILT
+MinSizeRel/Core_NOT_BUILT
+MinSizeRel/Core_NOT_BUILT
+RelWithDebInfo/Core_NOT_BUILT
+RelWithDebInfo/Core_NOT_BUILT
+Deployment/Core_NOT_BUILT
+Deployment/Core_NOT_BUILT
+Development/Core_NOT_BUILT
+Development/Core_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] LogParserErrorHandling.VariousActions
+16: Test command: 
+16: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: Core_NOT_BUILT
+16/30 Test #16: Core_NOT_BUILT .....................***Not Run   0.00 sec
+test 17
+      Start 17: Expression_NOT_BUILT
+Could not find executable Expression_NOT_BUILT
+Looked in the following places:
+Expression_NOT_BUILT
+Expression_NOT_BUILT
+Release/Expression_NOT_BUILT
+Release/Expression_NOT_BUILT
+Debug/Expression_NOT_BUILT
+Debug/Expression_NOT_BUILT
+MinSizeRel/Expression_NOT_BUILT
+MinSizeRel/Expression_NOT_BUILT
+RelWithDebInfo/Expression_NOT_BUILT
+RelWithDebInfo/Expression_NOT_BUILT
+Deployment/Expression_NOT_BUILT
+Deployment/Expression_NOT_BUILT
+Development/Expression_NOT_BUILT
+Development/Expression_NOT_BUILT
 
- 1 FAILED TEST
+17: Test command: 
+17: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: Expression_NOT_BUILT
+17/30 Test #17: Expression_NOT_BUILT ...............***Not Run   0.00 sec
+test 18
+      Start 18: CoreJsonBasic_NOT_BUILT
+Could not find executable CoreJsonBasic_NOT_BUILT
+Looked in the following places:
+CoreJsonBasic_NOT_BUILT
+CoreJsonBasic_NOT_BUILT
+Release/CoreJsonBasic_NOT_BUILT
+Release/CoreJsonBasic_NOT_BUILT
+Debug/CoreJsonBasic_NOT_BUILT
+Debug/CoreJsonBasic_NOT_BUILT
+MinSizeRel/CoreJsonBasic_NOT_BUILT
+MinSizeRel/CoreJsonBasic_NOT_BUILT
+RelWithDebInfo/CoreJsonBasic_NOT_BUILT
+RelWithDebInfo/CoreJsonBasic_NOT_BUILT
+Deployment/CoreJsonBasic_NOT_BUILT
+Deployment/CoreJsonBasic_NOT_BUILT
+Development/CoreJsonBasic_NOT_BUILT
+Development/CoreJsonBasic_NOT_BUILT
 
-        Start 107: LogParserTest.InvalidMainRegexPattern
-107/326 Test #107: LogParserTest.InvalidMainRegexPattern ................................................   Passed    0.00 sec
-        Start 108: LogParserTest.InvalidLogEntryStartRegexPattern
-108/326 Test #108: LogParserTest.InvalidLogEntryStartRegexPattern .......................................   Passed    0.00 sec
-        Start 109: LogParserTest.StructuredFieldCustomDelimiters
-109/326 Test #109: LogParserTest.StructuredFieldCustomDelimiters ........................................   Passed    0.00 sec
-        Start 110: LogParserTest.StructuredFieldQuotedValuesAndSpecialChars
-110/326 Test #110: LogParserTest.StructuredFieldQuotedValuesAndSpecialChars .............................   Passed    0.00 sec
-        Start 111: LogParserTest.MultiLineSingleEntryFile
-111/326 Test #111: LogParserTest.MultiLineSingleEntryFile ...............................................   Passed    0.00 sec
-        Start 112: LogParserTest.MultiLineWithBlankAndAmbiguousLines
-112/326 Test #112: LogParserTest.MultiLineWithBlankAndAmbiguousLines ....................................   Passed    0.01 sec
-        Start 113: LogParserTest.MultiLineInterleaving
-113/326 Test #113: LogParserTest.MultiLineInterleaving ..................................................   Passed    0.00 sec
-        Start 114: LogParserTest.BufferLimitExceeded
-114/326 Test #114: LogParserTest.BufferLimitExceeded ....................................................   Passed    0.00 sec
-        Start 115: LogParserTest.StreamProcessing
-115/326 Test #115: LogParserTest.StreamProcessing .......................................................   Passed    0.00 sec
-        Start 116: LogParserTest.StateIntrospectionDuringMultiLine
-116/326 Test #116: LogParserTest.StateIntrospectionDuringMultiLine ......................................   Passed    0.00 sec
-        Start 117: ExportFieldMappingTest.ToJson
-117/326 Test #117: ExportFieldMappingTest.ToJson ........................................................   Passed    0.00 sec
-        Start 118: ExportFieldMappingTest.FromJsonValid
-118/326 Test #118: ExportFieldMappingTest.FromJsonValid .................................................   Passed    0.00 sec
-        Start 119: ExportFieldMappingTest.FromJsonInvalidField
-119/326 Test #119: ExportFieldMappingTest.FromJsonInvalidField ..........................................   Passed    0.00 sec
-        Start 120: ExportFieldMappingTest.FromJsonMissingField
-120/326 Test #120: ExportFieldMappingTest.FromJsonMissingField ..........................................   Passed    0.00 sec
-        Start 121: ExportFieldMappingTest.FromJsonInvalidFieldType
-121/326 Test #121: ExportFieldMappingTest.FromJsonInvalidFieldType ......................................   Passed    0.00 sec
-        Start 122: ExportSettingsTest.DefaultConstructor
-122/326 Test #122: ExportSettingsTest.DefaultConstructor ................................................   Passed    0.00 sec
-        Start 123: ExportSettingsTest.ToJson
-123/326 Test #123: ExportSettingsTest.ToJson ............................................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = ExportSettingsTest.ToJson
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ExportSettingsTest
-[ RUN      ] ExportSettingsTest.ToJson
-/opt/lxl/c++/logAnalyzer/tests/export/Exporter.cpp:105: Failure
-Expected equality of these values:
-  j["fieldsToExport"].size()
-    Which is: 0
-  1
-[  FAILED  ] ExportSettingsTest.ToJson (0 ms)
-[----------] 1 test from ExportSettingsTest (0 ms total)
+18: Test command: 
+18: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreJsonBasic_NOT_BUILT
+18/30 Test #18: CoreJsonBasic_NOT_BUILT ............***Not Run   0.00 sec
+test 19
+      Start 19: CoreJsonCondition_NOT_BUILT
+Could not find executable CoreJsonCondition_NOT_BUILT
+Looked in the following places:
+CoreJsonCondition_NOT_BUILT
+CoreJsonCondition_NOT_BUILT
+Release/CoreJsonCondition_NOT_BUILT
+Release/CoreJsonCondition_NOT_BUILT
+Debug/CoreJsonCondition_NOT_BUILT
+Debug/CoreJsonCondition_NOT_BUILT
+MinSizeRel/CoreJsonCondition_NOT_BUILT
+MinSizeRel/CoreJsonCondition_NOT_BUILT
+RelWithDebInfo/CoreJsonCondition_NOT_BUILT
+RelWithDebInfo/CoreJsonCondition_NOT_BUILT
+Deployment/CoreJsonCondition_NOT_BUILT
+Deployment/CoreJsonCondition_NOT_BUILT
+Development/CoreJsonCondition_NOT_BUILT
+Development/CoreJsonCondition_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] ExportSettingsTest.ToJson
+19: Test command: 
+19: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreJsonCondition_NOT_BUILT
+19/30 Test #19: CoreJsonCondition_NOT_BUILT ........***Not Run   0.00 sec
+test 20
+      Start 20: CoreJsonExpression_NOT_BUILT
+Could not find executable CoreJsonExpression_NOT_BUILT
+Looked in the following places:
+CoreJsonExpression_NOT_BUILT
+CoreJsonExpression_NOT_BUILT
+Release/CoreJsonExpression_NOT_BUILT
+Release/CoreJsonExpression_NOT_BUILT
+Debug/CoreJsonExpression_NOT_BUILT
+Debug/CoreJsonExpression_NOT_BUILT
+MinSizeRel/CoreJsonExpression_NOT_BUILT
+MinSizeRel/CoreJsonExpression_NOT_BUILT
+RelWithDebInfo/CoreJsonExpression_NOT_BUILT
+RelWithDebInfo/CoreJsonExpression_NOT_BUILT
+Deployment/CoreJsonExpression_NOT_BUILT
+Deployment/CoreJsonExpression_NOT_BUILT
+Development/CoreJsonExpression_NOT_BUILT
+Development/CoreJsonExpression_NOT_BUILT
 
- 1 FAILED TEST
+20: Test command: 
+20: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreJsonExpression_NOT_BUILT
+20/30 Test #20: CoreJsonExpression_NOT_BUILT .......***Not Run   0.00 sec
+test 21
+      Start 21: CoreJsonRule_NOT_BUILT
+Could not find executable CoreJsonRule_NOT_BUILT
+Looked in the following places:
+CoreJsonRule_NOT_BUILT
+CoreJsonRule_NOT_BUILT
+Release/CoreJsonRule_NOT_BUILT
+Release/CoreJsonRule_NOT_BUILT
+Debug/CoreJsonRule_NOT_BUILT
+Debug/CoreJsonRule_NOT_BUILT
+MinSizeRel/CoreJsonRule_NOT_BUILT
+MinSizeRel/CoreJsonRule_NOT_BUILT
+RelWithDebInfo/CoreJsonRule_NOT_BUILT
+RelWithDebInfo/CoreJsonRule_NOT_BUILT
+Deployment/CoreJsonRule_NOT_BUILT
+Deployment/CoreJsonRule_NOT_BUILT
+Development/CoreJsonRule_NOT_BUILT
+Development/CoreJsonRule_NOT_BUILT
 
-        Start 124: ExportSettingsTest.FromJsonValid
-124/326 Test #124: ExportSettingsTest.FromJsonValid .....................................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = ExportSettingsTest.FromJsonValid
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ExportSettingsTest
-[ RUN      ] ExportSettingsTest.FromJsonValid
-/opt/lxl/c++/logAnalyzer/tests/export/Exporter.cpp:132: Failure
-Expected equality of these values:
-  es.fieldsToExport.size()
-    Which is: 0
-  2
-[  FAILED  ] ExportSettingsTest.FromJsonValid (0 ms)
-[----------] 1 test from ExportSettingsTest (0 ms total)
+21: Test command: 
+21: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreJsonRule_NOT_BUILT
+21/30 Test #21: CoreJsonRule_NOT_BUILT .............***Not Run   0.00 sec
+test 22
+      Start 22: CoreUnitAdvanced_NOT_BUILT
+Could not find executable CoreUnitAdvanced_NOT_BUILT
+Looked in the following places:
+CoreUnitAdvanced_NOT_BUILT
+CoreUnitAdvanced_NOT_BUILT
+Release/CoreUnitAdvanced_NOT_BUILT
+Release/CoreUnitAdvanced_NOT_BUILT
+Debug/CoreUnitAdvanced_NOT_BUILT
+Debug/CoreUnitAdvanced_NOT_BUILT
+MinSizeRel/CoreUnitAdvanced_NOT_BUILT
+MinSizeRel/CoreUnitAdvanced_NOT_BUILT
+RelWithDebInfo/CoreUnitAdvanced_NOT_BUILT
+RelWithDebInfo/CoreUnitAdvanced_NOT_BUILT
+Deployment/CoreUnitAdvanced_NOT_BUILT
+Deployment/CoreUnitAdvanced_NOT_BUILT
+Development/CoreUnitAdvanced_NOT_BUILT
+Development/CoreUnitAdvanced_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] ExportSettingsTest.FromJsonValid
+22: Test command: 
+22: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreUnitAdvanced_NOT_BUILT
+22/30 Test #22: CoreUnitAdvanced_NOT_BUILT .........***Not Run   0.00 sec
+test 23
+      Start 23: CoreUnitBasic_NOT_BUILT
+Could not find executable CoreUnitBasic_NOT_BUILT
+Looked in the following places:
+CoreUnitBasic_NOT_BUILT
+CoreUnitBasic_NOT_BUILT
+Release/CoreUnitBasic_NOT_BUILT
+Release/CoreUnitBasic_NOT_BUILT
+Debug/CoreUnitBasic_NOT_BUILT
+Debug/CoreUnitBasic_NOT_BUILT
+MinSizeRel/CoreUnitBasic_NOT_BUILT
+MinSizeRel/CoreUnitBasic_NOT_BUILT
+RelWithDebInfo/CoreUnitBasic_NOT_BUILT
+RelWithDebInfo/CoreUnitBasic_NOT_BUILT
+Deployment/CoreUnitBasic_NOT_BUILT
+Deployment/CoreUnitBasic_NOT_BUILT
+Development/CoreUnitBasic_NOT_BUILT
+Development/CoreUnitBasic_NOT_BUILT
 
- 1 FAILED TEST
+23: Test command: 
+23: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreUnitBasic_NOT_BUILT
+23/30 Test #23: CoreUnitBasic_NOT_BUILT ............***Not Run   0.00 sec
+test 24
+      Start 24: CoreUnitField_NOT_BUILT
+Could not find executable CoreUnitField_NOT_BUILT
+Looked in the following places:
+CoreUnitField_NOT_BUILT
+CoreUnitField_NOT_BUILT
+Release/CoreUnitField_NOT_BUILT
+Release/CoreUnitField_NOT_BUILT
+Debug/CoreUnitField_NOT_BUILT
+Debug/CoreUnitField_NOT_BUILT
+MinSizeRel/CoreUnitField_NOT_BUILT
+MinSizeRel/CoreUnitField_NOT_BUILT
+RelWithDebInfo/CoreUnitField_NOT_BUILT
+RelWithDebInfo/CoreUnitField_NOT_BUILT
+Deployment/CoreUnitField_NOT_BUILT
+Deployment/CoreUnitField_NOT_BUILT
+Development/CoreUnitField_NOT_BUILT
+Development/CoreUnitField_NOT_BUILT
 
-        Start 125: ExportSettingsTest.FromJsonInvalidOutputPathType
-125/326 Test #125: ExportSettingsTest.FromJsonInvalidOutputPathType .....................................   Passed    0.00 sec
-        Start 126: ExportSettingsTest.FromJsonInvalidFormatType
-126/326 Test #126: ExportSettingsTest.FromJsonInvalidFormatType .........................................   Passed    0.00 sec
-        Start 127: ExportSettingsTest.FromJsonInvalidFormatValue
-127/326 Test #127: ExportSettingsTest.FromJsonInvalidFormatValue ........................................   Passed    0.00 sec
-        Start 128: ExportSettingsTest.FromJsonInvalidFieldsToExportType
-128/326 Test #128: ExportSettingsTest.FromJsonInvalidFieldsToExportType .................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = ExportSettingsTest.FromJsonInvalidFieldsToExportType
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ExportSettingsTest
-[ RUN      ] ExportSettingsTest.FromJsonInvalidFieldsToExportType
-/opt/lxl/c++/logAnalyzer/tests/export/Exporter.cpp:155: Failure
-Expected: j.get<ExportSettings>() throws an exception of type std::runtime_error.
-  Actual: it throws nothing.
-[  FAILED  ] ExportSettingsTest.FromJsonInvalidFieldsToExportType (0 ms)
-[----------] 1 test from ExportSettingsTest (0 ms total)
+24: Test command: 
+24: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: CoreUnitField_NOT_BUILT
+24/30 Test #24: CoreUnitField_NOT_BUILT ............***Not Run   0.00 sec
+test 25
+      Start 25: Expression_Advanced_NOT_BUILT
+Could not find executable Expression_Advanced_NOT_BUILT
+Looked in the following places:
+Expression_Advanced_NOT_BUILT
+Expression_Advanced_NOT_BUILT
+Release/Expression_Advanced_NOT_BUILT
+Release/Expression_Advanced_NOT_BUILT
+Debug/Expression_Advanced_NOT_BUILT
+Debug/Expression_Advanced_NOT_BUILT
+MinSizeRel/Expression_Advanced_NOT_BUILT
+MinSizeRel/Expression_Advanced_NOT_BUILT
+RelWithDebInfo/Expression_Advanced_NOT_BUILT
+RelWithDebInfo/Expression_Advanced_NOT_BUILT
+Deployment/Expression_Advanced_NOT_BUILT
+Deployment/Expression_Advanced_NOT_BUILT
+Development/Expression_Advanced_NOT_BUILT
+Development/Expression_Advanced_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] ExportSettingsTest.FromJsonInvalidFieldsToExportType
+25: Test command: 
+25: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: Expression_Advanced_NOT_BUILT
+25/30 Test #25: Expression_Advanced_NOT_BUILT ......***Not Run   0.00 sec
+test 26
+      Start 26: Iteration2Tests_NOT_BUILT
+Could not find executable Iteration2Tests_NOT_BUILT
+Looked in the following places:
+Iteration2Tests_NOT_BUILT
+Iteration2Tests_NOT_BUILT
+Release/Iteration2Tests_NOT_BUILT
+Release/Iteration2Tests_NOT_BUILT
+Debug/Iteration2Tests_NOT_BUILT
+Debug/Iteration2Tests_NOT_BUILT
+MinSizeRel/Iteration2Tests_NOT_BUILT
+MinSizeRel/Iteration2Tests_NOT_BUILT
+RelWithDebInfo/Iteration2Tests_NOT_BUILT
+RelWithDebInfo/Iteration2Tests_NOT_BUILT
+Deployment/Iteration2Tests_NOT_BUILT
+Deployment/Iteration2Tests_NOT_BUILT
+Development/Iteration2Tests_NOT_BUILT
+Development/Iteration2Tests_NOT_BUILT
 
- 1 FAILED TEST
+26: Test command: 
+26: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: Iteration2Tests_NOT_BUILT
+26/30 Test #26: Iteration2Tests_NOT_BUILT ..........***Not Run   0.00 sec
+test 27
+      Start 27: Statistics_NOT_BUILT
+Could not find executable Statistics_NOT_BUILT
+Looked in the following places:
+Statistics_NOT_BUILT
+Statistics_NOT_BUILT
+Release/Statistics_NOT_BUILT
+Release/Statistics_NOT_BUILT
+Debug/Statistics_NOT_BUILT
+Debug/Statistics_NOT_BUILT
+MinSizeRel/Statistics_NOT_BUILT
+MinSizeRel/Statistics_NOT_BUILT
+RelWithDebInfo/Statistics_NOT_BUILT
+RelWithDebInfo/Statistics_NOT_BUILT
+Deployment/Statistics_NOT_BUILT
+Deployment/Statistics_NOT_BUILT
+Development/Statistics_NOT_BUILT
+Development/Statistics_NOT_BUILT
 
-        Start 129: ExportSettingsTest.FromJsonInvalidIncludeHeaderType
-129/326 Test #129: ExportSettingsTest.FromJsonInvalidIncludeHeaderType ..................................   Passed    0.00 sec
-        Start 130: ExportSettingsTest.FromJsonInvalidJsonIndentType
-130/326 Test #130: ExportSettingsTest.FromJsonInvalidJsonIndentType .....................................   Passed    0.00 sec
-        Start 131: ExportSettingsTest.FromJsonInvalidSeparatorType
-131/326 Test #131: ExportSettingsTest.FromJsonInvalidSeparatorType ......................................   Passed    0.00 sec
-        Start 132: ExportSettingsTest.FromJsonInvalidSeparatorLength
-132/326 Test #132: ExportSettingsTest.FromJsonInvalidSeparatorLength ....................................   Passed    0.00 sec
-        Start 133: ExportSettingsTest.FromJsonInvalidTextFormatStringType
-133/326 Test #133: ExportSettingsTest.FromJsonInvalidTextFormatStringType ...............................   Passed    0.00 sec
-        Start 134: ExportSettingsTest.FromJsonInvalidUseAnsiColorsType
-134/326 Test #134: ExportSettingsTest.FromJsonInvalidUseAnsiColorsType ..................................   Passed    0.00 sec
-        Start 135: ExporterTest.ExportEmptyEntries
-135/326 Test #135: ExporterTest.ExportEmptyEntries ......................................................   Passed    0.00 sec
-        Start 136: ExporterJsonTest.FieldsToExportConfig
-136/326 Test #136: ExporterJsonTest.FieldsToExportConfig ................................................   Passed    0.00 sec
-        Start 137: ExporterJsonTest.JsonIndentBehavior
-137/326 Test #137: ExporterJsonTest.JsonIndentBehavior ..................................................   Passed    0.00 sec
-        Start 138: ExporterJsonTest.DefaultFieldDiscoveryLogic
-138/326 Test #138: ExporterJsonTest.DefaultFieldDiscoveryLogic ..........................................   Passed    0.00 sec
-        Start 139: ExporterJsonTest.EmptySourceFileAndMessage
-139/326 Test #139: ExporterJsonTest.EmptySourceFileAndMessage ...........................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = ExporterJsonTest.EmptySourceFileAndMessage
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ExporterJsonTest
-[ RUN      ] ExporterJsonTest.EmptySourceFileAndMessage
-/opt/lxl/c++/logAnalyzer/tests/export/Exporter.cpp:408: Failure
-Expected: j["entries"][0].at("Message") doesn't throw an exception.
-  Actual: it throws nlohmann::json_abi_v3_12_0::detail::out_of_range with description "[json.exception.out_of_range.403] key 'Message' not found".
-[  FAILED  ] ExporterJsonTest.EmptySourceFileAndMessage (0 ms)
-[----------] 1 test from ExporterJsonTest (0 ms total)
+27: Test command: 
+27: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: Statistics_NOT_BUILT
+27/30 Test #27: Statistics_NOT_BUILT ...............***Not Run   0.00 sec
+test 28
+      Start 28: Time_NOT_BUILT
+Could not find executable Time_NOT_BUILT
+Looked in the following places:
+Time_NOT_BUILT
+Time_NOT_BUILT
+Release/Time_NOT_BUILT
+Release/Time_NOT_BUILT
+Debug/Time_NOT_BUILT
+Debug/Time_NOT_BUILT
+MinSizeRel/Time_NOT_BUILT
+MinSizeRel/Time_NOT_BUILT
+RelWithDebInfo/Time_NOT_BUILT
+RelWithDebInfo/Time_NOT_BUILT
+Deployment/Time_NOT_BUILT
+Deployment/Time_NOT_BUILT
+Development/Time_NOT_BUILT
+Development/Time_NOT_BUILT
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] ExporterJsonTest.EmptySourceFileAndMessage
+28: Test command: 
+28: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: Time_NOT_BUILT
+28/30 Test #28: Time_NOT_BUILT .....................***Not Run   0.00 sec
+test 29
+      Start 29: Enum_NOT_BUILT
+Could not find executable Enum_NOT_BUILT
+Looked in the following places:
+Enum_NOT_BUILT
+Enum_NOT_BUILT
+Release/Enum_NOT_BUILT
+Release/Enum_NOT_BUILT
+Debug/Enum_NOT_BUILT
+Debug/Enum_NOT_BUILT
+MinSizeRel/Enum_NOT_BUILT
+MinSizeRel/Enum_NOT_BUILT
+RelWithDebInfo/Enum_NOT_BUILT
+RelWithDebInfo/Enum_NOT_BUILT
+Deployment/Enum_NOT_BUILT
+Deployment/Enum_NOT_BUILT
+Development/Enum_NOT_BUILT
+Development/Enum_NOT_BUILT
 
- 1 FAILED TEST
+29: Test command: 
+29: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: Enum_NOT_BUILT
+29/30 Test #29: Enum_NOT_BUILT .....................***Not Run   0.00 sec
+test 30
+      Start 30: String_NOT_BUILT
+Could not find executable String_NOT_BUILT
+Looked in the following places:
+String_NOT_BUILT
+String_NOT_BUILT
+Release/String_NOT_BUILT
+Release/String_NOT_BUILT
+Debug/String_NOT_BUILT
+Debug/String_NOT_BUILT
+MinSizeRel/String_NOT_BUILT
+MinSizeRel/String_NOT_BUILT
+RelWithDebInfo/String_NOT_BUILT
+RelWithDebInfo/String_NOT_BUILT
+Deployment/String_NOT_BUILT
+Deployment/String_NOT_BUILT
+Development/String_NOT_BUILT
+Development/String_NOT_BUILT
 
-        Start 140: ExporterJsonTest.BoundaryValuesForIdAndLineNumber
-140/326 Test #140: ExporterJsonTest.BoundaryValuesForIdAndLineNumber ....................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = ExporterJsonTest.BoundaryValuesForIdAndLineNumber
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from ExporterJsonTest
-[ RUN      ] ExporterJsonTest.BoundaryValuesForIdAndLineNumber
-/opt/lxl/c++/logAnalyzer/tests/export/Exporter.cpp:442: Failure
-Expected: j["entries"][0].at("LineNumber") doesn't throw an exception.
-  Actual: it throws nlohmann::json_abi_v3_12_0::detail::out_of_range with description "[json.exception.out_of_range.403] key 'LineNumber' not found".
-[  FAILED  ] ExporterJsonTest.BoundaryValuesForIdAndLineNumber (0 ms)
-[----------] 1 test from ExporterJsonTest (0 ms total)
+30: Test command: 
+30: Working Directory: /opt/lxl/c++/logAnalyzer/tests
+Unable to find executable: String_NOT_BUILT
+30/30 Test #30: String_NOT_BUILT ...................***Not Run   0.00 sec
 
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] ExporterJsonTest.BoundaryValuesForIdAndLineNumber
+0% tests passed, 30 tests failed out of 30
 
- 1 FAILED TEST
-
-        Start 141: ExporterCsvTest.BasicExport
-141/326 Test #141: ExporterCsvTest.BasicExport ..........................................................   Passed    0.00 sec
-        Start 142: ExporterCsvTest.CustomSeparator
-142/326 Test #142: ExporterCsvTest.CustomSeparator ......................................................   Passed    0.00 sec
-        Start 143: ExporterCsvTest.NoHeader
-143/326 Test #143: ExporterCsvTest.NoHeader .............................................................   Passed    0.00 sec
-        Start 144: ExporterCsvTest.FieldsWithSpecialCharsAndQuoting
-144/326 Test #144: ExporterCsvTest.FieldsWithSpecialCharsAndQuoting .....................................   Passed    0.00 sec
-        Start 145: ExporterCsvTest.ExportSpecificFields
-145/326 Test #145: ExporterCsvTest.ExportSpecificFields .................................................   Passed    0.00 sec
-        Start 146: ExporterCsvTest.ExportCustomFieldsDynamically
-146/326 Test #146: ExporterCsvTest.ExportCustomFieldsDynamically ........................................   Passed    0.00 sec
-        Start 147: ExporterCsvTest.ExportCustomFieldsExplicitly
-147/326 Test #147: ExporterCsvTest.ExportCustomFieldsExplicitly .........................................   Passed    0.00 sec
-        Start 148: ExporterCsvTest.DateTimeFormat
-148/326 Test #148: ExporterCsvTest.DateTimeFormat .......................................................   Passed    0.00 sec
-        Start 149: ExporterCsvTest.QuotingAndEscaping_OnlySeparator
-149/326 Test #149: ExporterCsvTest.QuotingAndEscaping_OnlySeparator .....................................   Passed    0.00 sec
-        Start 150: ExporterCsvTest.QuotingAndEscaping_OnlyDoubleQuote
-150/326 Test #150: ExporterCsvTest.QuotingAndEscaping_OnlyDoubleQuote ...................................   Passed    0.00 sec
-        Start 151: ExporterCsvTest.QuotingAndEscaping_NewlineAndCR
-151/326 Test #151: ExporterCsvTest.QuotingAndEscaping_NewlineAndCR ......................................   Passed    0.00 sec
-        Start 152: ExporterCsvTest.QuotingAndEscaping_EmptyField
-152/326 Test #152: ExporterCsvTest.QuotingAndEscaping_EmptyField ........................................   Passed    0.00 sec
-        Start 153: ExporterCsvTest.QuotingAndEscaping_AllSpecialChars
-153/326 Test #153: ExporterCsvTest.QuotingAndEscaping_AllSpecialChars ...................................   Passed    0.00 sec
-        Start 154: ExporterTextTest.BasicExport
-154/326 Test #154: ExporterTextTest.BasicExport .........................................................   Passed    0.00 sec
-        Start 155: ExporterTextTest.ColorFormatting
-155/326 Test #155: ExporterTextTest.ColorFormatting .....................................................   Passed    0.00 sec
-        Start 156: ExporterDispatchTest.JsonDispatch
-156/326 Test #156: ExporterDispatchTest.JsonDispatch ....................................................   Passed    0.00 sec
-        Start 157: ExporterDispatchTest.CsvDispatch
-157/326 Test #157: ExporterDispatchTest.CsvDispatch .....................................................   Passed    0.00 sec
-        Start 158: ExporterDispatchTest.PlaintextDispatch
-158/326 Test #158: ExporterDispatchTest.PlaintextDispatch ...............................................   Passed    0.00 sec
-        Start 159: ExporterErrorHandlingTest.UnknownFormatThrowsException
-159/326 Test #159: ExporterErrorHandlingTest.UnknownFormatThrowsException ...............................   Passed    0.00 sec
-        Start 160: ExporterErrorHandlingTest.XmlFormatThrowsException
-160/326 Test #160: ExporterErrorHandlingTest.XmlFormatThrowsException ...................................   Passed    0.00 sec
-        Start 161: LegacyFilterTest.CompositeFilterEmptyListAND
-161/326 Test #161: LegacyFilterTest.CompositeFilterEmptyListAND .........................................   Passed    0.00 sec
-        Start 162: LegacyFilterTest.CompositeFilterEmptyListOR
-162/326 Test #162: LegacyFilterTest.CompositeFilterEmptyListOR ..........................................   Passed    0.00 sec
-        Start 163: LegacyFilterTest.ExclusionFilter
-163/326 Test #163: LegacyFilterTest.ExclusionFilter .....................................................   Passed    0.00 sec
-        Start 164: FilterExpressionTest.FluentApiAndOptimization
-164/326 Test #164: FilterExpressionTest.FluentApiAndOptimization ........................................   Passed    0.00 sec
-        Start 165: FilterExpressionTest.FluentApiOrOptimization
-165/326 Test #165: FilterExpressionTest.FluentApiOrOptimization .........................................   Passed    0.00 sec
-        Start 166: FilterExpressionTest.FluentApiNot
-166/326 Test #166: FilterExpressionTest.FluentApiNot ....................................................   Passed    0.00 sec
-        Start 167: FilterExpressionTest.EvaluateStringEquals
-167/326 Test #167: FilterExpressionTest.EvaluateStringEquals ............................................   Passed    0.00 sec
-        Start 168: FilterExpressionTest.EvaluateStringContains
-168/326 Test #168: FilterExpressionTest.EvaluateStringContains ..........................................   Passed    0.00 sec
-        Start 169: FilterExpressionTest.EvaluateNumericComparison
-169/326 Test #169: FilterExpressionTest.EvaluateNumericComparison .......................................   Passed    0.00 sec
-        Start 170: FilterExpressionTest.EvaluateLogicalAnd
-170/326 Test #170: FilterExpressionTest.EvaluateLogicalAnd ..............................................   Passed    0.00 sec
-        Start 171: FilterExpressionTest.EvaluateLogicalOr
-171/326 Test #171: FilterExpressionTest.EvaluateLogicalOr ...............................................   Passed    0.01 sec
-        Start 172: FilterExpressionTest.EvaluateLogicalNot
-172/326 Test #172: FilterExpressionTest.EvaluateLogicalNot ..............................................   Passed    0.00 sec
-        Start 173: FilterExpressionTest.EvaluateComplexExpression
-173/326 Test #173: FilterExpressionTest.EvaluateComplexExpression .......................................   Passed    0.00 sec
-        Start 174: FilterJsonTest.FilterRuleToJson
-174/326 Test #174: FilterJsonTest.FilterRuleToJson ......................................................   Passed    0.00 sec
-        Start 175: FilterJsonTest.FilterRuleFromJsonSuccess
-175/326 Test #175: FilterJsonTest.FilterRuleFromJsonSuccess .............................................   Passed    0.00 sec
-        Start 176: FilterJsonTest.FilterRuleFromJsonInvalidField
-176/326 Test #176: FilterJsonTest.FilterRuleFromJsonInvalidField ........................................   Passed    0.00 sec
-        Start 177: FilterJsonTest.FilterRuleFromJsonMissingField
-177/326 Test #177: FilterJsonTest.FilterRuleFromJsonMissingField ........................................   Passed    0.00 sec
-        Start 178: FilterJsonTest.FilterConditionToJson
-178/326 Test #178: FilterJsonTest.FilterConditionToJson .................................................   Passed    0.00 sec
-        Start 179: FilterJsonTest.FilterConditionFromJsonSuccess
-179/326 Test #179: FilterJsonTest.FilterConditionFromJsonSuccess ........................................   Passed    0.00 sec
-        Start 180: FilterJsonTest.FilterConditionFromJsonDatetimeSuccess
-180/326 Test #180: FilterJsonTest.FilterConditionFromJsonDatetimeSuccess ................................   Passed    0.00 sec
-        Start 181: FilterJsonTest.FilterConditionFromJsonInvalidField
-181/326 Test #181: FilterJsonTest.FilterConditionFromJsonInvalidField ...................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = FilterJsonTest.FilterConditionFromJsonInvalidField
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from FilterJsonTest
-[ RUN      ] FilterJsonTest.FilterConditionFromJsonInvalidField
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonBasic.cpp:162: Failure
-Value of: result.has_value()
-  Actual: true
-Expected: false
-[  FAILED  ] FilterJsonTest.FilterConditionFromJsonInvalidField (0 ms)
-[----------] 1 test from FilterJsonTest (0 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] FilterJsonTest.FilterConditionFromJsonInvalidField
-
- 1 FAILED TEST
-
-        Start 182: FilterJsonTest.FilterConditionFromJsonMissingOp
-182/326 Test #182: FilterJsonTest.FilterConditionFromJsonMissingOp ......................................   Passed    0.00 sec
-        Start 183: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeString
-183/326 Test #183: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeString .........................   Passed    0.00 sec
-        Start 184: FilterJsonTest.FilterConditionFromJsonNumericSuccess
-184/326 Test #184: FilterJsonTest.FilterConditionFromJsonNumericSuccess .................................   Passed    0.00 sec
-        Start 185: FilterJsonTest.FilterConditionFromJsonDatetimeMissingFormat
-185/326 Test #185: FilterJsonTest.FilterConditionFromJsonDatetimeMissingFormat ..........................   Passed    0.00 sec
-        Start 186: FilterJsonTest.FilterConditionDatetimeConstructorValidation
-186/326 Test #186: FilterJsonTest.FilterConditionDatetimeConstructorValidation ..........................   Passed    0.00 sec
-        Start 187: FilterJsonTest.FilterRuleFromJsonMissingOp
-187/326 Test #187: FilterJsonTest.FilterRuleFromJsonMissingOp ...........................................   Passed    0.00 sec
-        Start 188: FilterJsonTest.FilterRuleFromJsonMissingValue
-188/326 Test #188: FilterJsonTest.FilterRuleFromJsonMissingValue ........................................   Passed    0.00 sec
-        Start 189: FilterJsonTest.FilterRuleFromJsonInvalidOp
-189/326 Test #189: FilterJsonTest.FilterRuleFromJsonInvalidOp ...........................................   Passed    0.00 sec
-        Start 190: FilterJsonTest.FilterConditionFromJsonMissingValue
-190/326 Test #190: FilterJsonTest.FilterConditionFromJsonMissingValue ...................................   Passed    0.00 sec
-        Start 191: FilterJsonTest.FilterConditionFromJsonMissingValueType
-191/326 Test #191: FilterJsonTest.FilterConditionFromJsonMissingValueType ...............................   Passed    0.00 sec
-        Start 192: FilterJsonTest.FilterConditionFromJsonMalformedDatetimeFormat
-192/326 Test #192: FilterJsonTest.FilterConditionFromJsonMalformedDatetimeFormat ........................   Passed    0.00 sec
-        Start 193: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeInt
-193/326 Test #193: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeInt ............................   Passed    0.00 sec
-        Start 194: FilterJsonTest.FilterConditionFromJsonLegacyValueTypeInt
-194/326 Test #194: FilterJsonTest.FilterConditionFromJsonLegacyValueTypeInt .............................   Passed    0.00 sec
-        Start 195: FilterJsonTest.FilterConditionToJson
-195/326 Test #195: FilterJsonTest.FilterConditionToJson .................................................   Passed    0.00 sec
-        Start 196: FilterJsonTest.FilterConditionToJsonWithCustomField
-196/326 Test #196: FilterJsonTest.FilterConditionToJsonWithCustomField ..................................   Passed    0.00 sec
-        Start 197: FilterJsonTest.FilterConditionFromJsonSuccess
-197/326 Test #197: FilterJsonTest.FilterConditionFromJsonSuccess ........................................   Passed    0.00 sec
-        Start 198: FilterJsonTest.FilterConditionFromJsonWithCustomField
-198/326 Test #198: FilterJsonTest.FilterConditionFromJsonWithCustomField ................................   Passed    0.00 sec
-        Start 199: FilterJsonTest.FilterConditionFromJsonWithNullCustomField
-199/326 Test #199: FilterJsonTest.FilterConditionFromJsonWithNullCustomField ............................   Passed    0.00 sec
-        Start 200: FilterJsonTest.FilterConditionFromJsonWithoutCustomField
-200/326 Test #200: FilterJsonTest.FilterConditionFromJsonWithoutCustomField .............................   Passed    0.00 sec
-        Start 201: FilterJsonTest.FilterConditionFromJsonDatetimeSuccess
-201/326 Test #201: FilterJsonTest.FilterConditionFromJsonDatetimeSuccess ................................   Passed    0.00 sec
-        Start 202: FilterJsonTest.FilterConditionFromJsonInvalidField
-202/326 Test #202: FilterJsonTest.FilterConditionFromJsonInvalidField ...................................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = FilterJsonTest.FilterConditionFromJsonInvalidField
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from FilterJsonTest
-[ RUN      ] FilterJsonTest.FilterConditionFromJsonInvalidField
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonCondition.cpp:191: Failure
-Value of: result.has_value()
-  Actual: true
-Expected: false
-[  FAILED  ] FilterJsonTest.FilterConditionFromJsonInvalidField (0 ms)
-[----------] 1 test from FilterJsonTest (0 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] FilterJsonTest.FilterConditionFromJsonInvalidField
-
- 1 FAILED TEST
-
-        Start 203: FilterJsonTest.FilterConditionFromJsonMissingOp
-203/326 Test #203: FilterJsonTest.FilterConditionFromJsonMissingOp ......................................   Passed    0.00 sec
-        Start 204: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeString
-204/326 Test #204: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeString .........................   Passed    0.00 sec
-        Start 205: FilterJsonTest.FilterConditionFromJsonNumericSuccess
-205/326 Test #205: FilterJsonTest.FilterConditionFromJsonNumericSuccess .................................   Passed    0.00 sec
-        Start 206: FilterJsonTest.FilterConditionFromJsonDatetimeMissingFormat
-206/326 Test #206: FilterJsonTest.FilterConditionFromJsonDatetimeMissingFormat ..........................   Passed    0.00 sec
-        Start 207: FilterJsonTest.FilterConditionDatetimeConstructorValidation
-207/326 Test #207: FilterJsonTest.FilterConditionDatetimeConstructorValidation ..........................   Passed    0.00 sec
-        Start 208: FilterJsonTest.FilterConditionFromJsonMissingValue
-208/326 Test #208: FilterJsonTest.FilterConditionFromJsonMissingValue ...................................   Passed    0.00 sec
-        Start 209: FilterJsonTest.FilterConditionFromJsonMissingValueType
-209/326 Test #209: FilterJsonTest.FilterConditionFromJsonMissingValueType ...............................   Passed    0.00 sec
-        Start 210: FilterJsonTest.FilterConditionFromJsonMalformedDatetimeFormat
-210/326 Test #210: FilterJsonTest.FilterConditionFromJsonMalformedDatetimeFormat ........................   Passed    0.00 sec
-        Start 211: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeInt
-211/326 Test #211: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeInt ............................   Passed    0.00 sec
-        Start 212: FilterJsonTest.FilterConditionFromJsonLegacyValueTypeInt
-212/326 Test #212: FilterJsonTest.FilterConditionFromJsonLegacyValueTypeInt .............................   Passed    0.00 sec
-        Start 213: FilterJsonTest.FilterExpressionToJsonCondition
-213/326 Test #213: FilterJsonTest.FilterExpressionToJsonCondition .......................................   Passed    0.00 sec
-        Start 214: FilterJsonTest.FilterExpressionFromJsonCondition
-214/326 Test #214: FilterJsonTest.FilterExpressionFromJsonCondition .....................................   Passed    0.00 sec
-        Start 215: FilterJsonTest.FilterExpressionToJsonLogicalAND
-215/326 Test #215: FilterJsonTest.FilterExpressionToJsonLogicalAND ......................................   Passed    0.00 sec
-        Start 216: FilterJsonTest.FilterExpressionFromJsonLogicalOR
-216/326 Test #216: FilterJsonTest.FilterExpressionFromJsonLogicalOR .....................................   Passed    0.00 sec
-        Start 217: FilterJsonTest.FilterExpressionToJsonLogicalNOT
-217/326 Test #217: FilterJsonTest.FilterExpressionToJsonLogicalNOT ......................................   Passed    0.00 sec
-        Start 218: FilterJsonTest.FilterExpressionFromJsonLogicalNOT_Deprecated
-218/326 Test #218: FilterJsonTest.FilterExpressionFromJsonLogicalNOT_Deprecated .........................   Passed    0.00 sec
-        Start 219: FilterJsonTest.FilterExpressionFromJsonWithNegatedFlag
-219/326 Test #219: FilterJsonTest.FilterExpressionFromJsonWithNegatedFlag ...............................   Passed    0.00 sec
-        Start 220: FilterJsonTest.FilterExpressionFromJsonNested
-220/326 Test #220: FilterJsonTest.FilterExpressionFromJsonNested ........................................   Passed    0.00 sec
-        Start 221: FilterJsonTest.FilterExpressionFromJsonInvalidOperand
-221/326 Test #221: FilterJsonTest.FilterExpressionFromJsonInvalidOperand ................................   Passed    0.00 sec
-        Start 222: FilterJsonTest.FilterExpressionFromJsonMissingOperands
-222/326 Test #222: FilterJsonTest.FilterExpressionFromJsonMissingOperands ...............................   Passed    0.00 sec
-        Start 223: FilterJsonTest.FilterExpressionFromJsonUnknownOperator
-223/326 Test #223: FilterJsonTest.FilterExpressionFromJsonUnknownOperator ...............................   Passed    0.00 sec
-        Start 224: FilterJsonTest.FilterExpressionFromJsonMissingConditionOrOperator
-224/326 Test #224: FilterJsonTest.FilterExpressionFromJsonMissingConditionOrOperator ....................   Passed    0.00 sec
-        Start 225: FilterJsonTest.FilterExpressionDefaultConstructor
-225/326 Test #225: FilterJsonTest.FilterExpressionDefaultConstructor ....................................   Passed    0.00 sec
-        Start 226: FilterJsonTest.FilterExpressionToJson_GreaterThan
-226/326 Test #226: FilterJsonTest.FilterExpressionToJson_GreaterThan ....................................   Passed    0.00 sec
-        Start 227: FilterJsonTest.FilterExpressionFromJson_GreaterThan
-227/326 Test #227: FilterJsonTest.FilterExpressionFromJson_GreaterThan ..................................   Passed    0.00 sec
-        Start 228: FilterJsonTest.FilterExpressionToJson_LessThan
-228/326 Test #228: FilterJsonTest.FilterExpressionToJson_LessThan .......................................   Passed    0.00 sec
-        Start 229: FilterJsonTest.FilterExpressionFromJson_LessThan
-229/326 Test #229: FilterJsonTest.FilterExpressionFromJson_LessThan .....................................   Passed    0.00 sec
-        Start 230: FilterJsonTest.FilterExpressionToJson_LessThanOrEqual
-230/326 Test #230: FilterJsonTest.FilterExpressionToJson_LessThanOrEqual ................................   Passed    0.00 sec
-        Start 231: FilterJsonTest.FilterExpressionFromJson_LessThanOrEqual
-231/326 Test #231: FilterJsonTest.FilterExpressionFromJson_LessThanOrEqual ..............................   Passed    0.00 sec
-        Start 232: FilterJsonTest.FilterExpressionToJson_GreaterThanOrEqual
-232/326 Test #232: FilterJsonTest.FilterExpressionToJson_GreaterThanOrEqual .............................   Passed    0.00 sec
-        Start 233: FilterJsonTest.FilterExpressionFromJson_GreaterThanOrEqual
-233/326 Test #233: FilterJsonTest.FilterExpressionFromJson_GreaterThanOrEqual ...........................   Passed    0.00 sec
-        Start 234: FilterJsonTest.FilterExpressionToJson_RegexMatch
-234/326 Test #234: FilterJsonTest.FilterExpressionToJson_RegexMatch .....................................   Passed    0.00 sec
-        Start 235: FilterJsonTest.FilterExpressionFromJson_RegexMatch
-235/326 Test #235: FilterJsonTest.FilterExpressionFromJson_RegexMatch ...................................   Passed    0.00 sec
-        Start 236: FilterJsonTest.FilterExpressionToJson_IsPresent
-236/326 Test #236: FilterJsonTest.FilterExpressionToJson_IsPresent ......................................   Passed    0.00 sec
-        Start 237: FilterJsonTest.FilterExpressionFromJson_IsPresent
-237/326 Test #237: FilterJsonTest.FilterExpressionFromJson_IsPresent ....................................   Passed    0.00 sec
-        Start 238: FilterJsonTest.FilterExpressionToJson_IsAbsent
-238/326 Test #238: FilterJsonTest.FilterExpressionToJson_IsAbsent .......................................   Passed    0.00 sec
-        Start 239: FilterJsonTest.FilterExpressionFromJson_IsAbsent
-239/326 Test #239: FilterJsonTest.FilterExpressionFromJson_IsAbsent .....................................   Passed    0.00 sec
-        Start 240: FilterJsonTest.FilterExpressionToJson_BooleanTrue
-240/326 Test #240: FilterJsonTest.FilterExpressionToJson_BooleanTrue ....................................   Passed    0.00 sec
-        Start 241: FilterJsonTest.FilterExpressionFromJson_BooleanTrue
-241/326 Test #241: FilterJsonTest.FilterExpressionFromJson_BooleanTrue ..................................   Passed    0.00 sec
-        Start 242: FilterJsonTest.FilterExpressionToJson_BooleanFalse
-242/326 Test #242: FilterJsonTest.FilterExpressionToJson_BooleanFalse ...................................   Passed    0.00 sec
-        Start 243: FilterJsonTest.FilterExpressionFromJson_BooleanFalse
-243/326 Test #243: FilterJsonTest.FilterExpressionFromJson_BooleanFalse .................................   Passed    0.00 sec
-        Start 244: FilterJsonTest.FilterExpressionToJson_MixedOperatorsAndTypes
-244/326 Test #244: FilterJsonTest.FilterExpressionToJson_MixedOperatorsAndTypes .........................***Failed    0.00 sec
-Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
-Note: Google Test filter = FilterJsonTest.FilterExpressionToJson_MixedOperatorsAndTypes
-[==========] Running 1 test from 1 test suite.
-[----------] Global test environment set-up.
-[----------] 1 test from FilterJsonTest
-[ RUN      ] FilterJsonTest.FilterExpressionToJson_MixedOperatorsAndTypes
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonExpression.cpp:639: Failure
-Expected equality of these values:
-  j["operands"][0]["condition"]["value"]
-    Which is: null
-  "INFO"
-    Which is: 0x55819fc33f20
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonExpression.cpp:640: Failure
-Expected equality of these values:
-  j["operands"][0]["condition"]["value_type"]
-    Which is: null
-  "STRING"
-    Which is: 0x55819fc33e53
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonExpression.cpp:643: Failure
-Expected equality of these values:
-  j["operands"][1]["condition"]["op"]
-    Which is: "REGEX_MATCH"
-  "GREATER_THAN"
-    Which is: 0x55819fc34713
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonExpression.cpp:644: Failure
-Expected equality of these values:
-  j["operands"][1]["condition"]["value"]
-    Which is: ".*\\b(test|debug)\\b.*"
-  "1678886400"
-    Which is: 0x55819fc34ace
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonExpression.cpp:645: Failure
-Expected equality of these values:
-  j["operands"][1]["condition"]["value_type"]
-    Which is: "STRING"
-  "INT"
-    Which is: 0x55819fc34735
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonExpression.cpp:648: Failure
-Expected equality of these values:
-  j["operands"][2]["condition"]["value"]
-    Which is: null
-  "true"
-    Which is: 0x55819fc33d5e
-/opt/lxl/c++/logAnalyzer/tests/filter/CoreJsonExpression.cpp:649: Failure
-Expected equality of these values:
-  j["operands"][2]["condition"]["value_type"]
-    Which is: null
-  "BOOL"
-    Which is: 0x55819fc34a55
-[  FAILED  ] FilterJsonTest.FilterExpressionToJson_MixedOperatorsAndTypes (0 ms)
-[----------] 1 test from FilterJsonTest (0 ms total)
-
-[----------] Global test environment tear-down
-[==========] 1 test from 1 test suite ran. (0 ms total)
-[  PASSED  ] 0 tests.
-[  FAILED  ] 1 test, listed below:
-[  FAILED  ] FilterJsonTest.FilterExpressionToJson_MixedOperatorsAndTypes
-
- 1 FAILED TEST
-
-        Start 245: FilterJsonTest.FilterExpressionFromJson_MixedOperatorsAndTypes
-245/326 Test #245: FilterJsonTest.FilterExpressionFromJson_MixedOperatorsAndTypes .......................   Passed    0.00 sec
-        Start 246: FilterJsonTest.FilterExpressionToJson_DateTimeFormat
-246/326 Test #246: FilterJsonTest.FilterExpressionToJson_DateTimeFormat .................................   Passed    0.00 sec
-        Start 247: FilterJsonTest.FilterExpressionFromJson_DateTimeFormat
-247/326 Test #247: FilterJsonTest.FilterExpressionFromJson_DateTimeFormat ...............................   Passed    0.00 sec
-        Start 248: FilterJsonTest.FilterExpressionToJson_CaseSensitive
-248/326 Test #248: FilterJsonTest.FilterExpressionToJson_CaseSensitive ..................................   Passed    0.00 sec
-        Start 249: FilterJsonTest.FilterExpressionFromJson_CaseSensitive
-249/326 Test #249: FilterJsonTest.FilterExpressionFromJson_CaseSensitive ................................   Passed    0.00 sec
-        Start 250: FilterJsonTest.FilterExpressionFromJson_CaseInsensitiveDefault
-250/326 Test #250: FilterJsonTest.FilterExpressionFromJson_CaseInsensitiveDefault .......................   Passed    0.00 sec
-        Start 251: FilterJsonTest.FilterRuleToJson
-251/326 Test #251: FilterJsonTest.FilterRuleToJson ......................................................   Passed    0.00 sec
-        Start 252: FilterJsonTest.FilterRuleFromJsonSuccess
-252/326 Test #252: FilterJsonTest.FilterRuleFromJsonSuccess .............................................   Passed    0.00 sec
-        Start 253: FilterJsonTest.FilterRuleFromJsonInvalidField
-253/326 Test #253: FilterJsonTest.FilterRuleFromJsonInvalidField ........................................   Passed    0.00 sec
-        Start 254: FilterJsonTest.FilterRuleFromJsonMissingField
-254/326 Test #254: FilterJsonTest.FilterRuleFromJsonMissingField ........................................   Passed    0.00 sec
-        Start 255: FilterJsonTest.FilterRuleFromJsonMissingOp
-255/326 Test #255: FilterJsonTest.FilterRuleFromJsonMissingOp ...........................................   Passed    0.00 sec
-        Start 256: FilterJsonTest.FilterRuleFromJsonMissingValue
-256/326 Test #256: FilterJsonTest.FilterRuleFromJsonMissingValue ........................................   Passed    0.00 sec
-        Start 257: FilterJsonTest.FilterRuleFromJsonInvalidOp
-257/326 Test #257: FilterJsonTest.FilterRuleFromJsonInvalidOp ...........................................   Passed    0.00 sec
-        Start 258: FilterTest.SourceFileFilterRegex
-258/326 Test #258: FilterTest.SourceFileFilterRegex .....................................................   Passed    0.00 sec
-        Start 259: FilterTest.FieldValueFilterRegex
-259/326 Test #259: FilterTest.FieldValueFilterRegex .....................................................   Passed    0.00 sec
-        Start 260: FilterTest.FieldValueFilterRegexCaseSensitive
-260/326 Test #260: FilterTest.FieldValueFilterRegexCaseSensitive ........................................   Passed    0.00 sec
-        Start 261: FilterTest.RegexFilterCaseSensitive
-261/326 Test #261: FilterTest.RegexFilterCaseSensitive ..................................................   Passed    0.00 sec
-        Start 262: FilterTest.RegexFilterInvalidPattern
-262/326 Test #262: FilterTest.RegexFilterInvalidPattern .................................................   Passed    0.00 sec
-        Start 263: FilterTest.NumericComparisonFilter
-263/326 Test #263: FilterTest.NumericComparisonFilter ...................................................   Passed    0.00 sec
-        Start 264: FilterTest.NestedNumericComparisonFilter
-264/326 Test #264: FilterTest.NestedNumericComparisonFilter .............................................   Passed    0.00 sec
-        Start 265: FilterTest.NumericComparisonFilterFloatingPointPrecision
-265/326 Test #265: FilterTest.NumericComparisonFilterFloatingPointPrecision .............................   Passed    0.00 sec
-        Start 266: FilterTest.NestedNumericComparisonFilterFloatingPointPrecision
-266/326 Test #266: FilterTest.NestedNumericComparisonFilterFloatingPointPrecision .......................   Passed    0.00 sec
-        Start 267: FilterTest.NestedBoolFilter
-267/326 Test #267: FilterTest.NestedBoolFilter ..........................................................   Passed    0.00 sec
-        Start 268: FilterTest.NestedFieldValueFilter
-268/326 Test #268: FilterTest.NestedFieldValueFilter ....................................................   Passed    0.00 sec
-        Start 269: FilterTest.NestedFieldValueFilterWildcardSubstringMatch
-269/326 Test #269: FilterTest.NestedFieldValueFilterWildcardSubstringMatch ..............................   Passed    0.00 sec
-        Start 270: FilterTest.TimeRangeFilterFromStrings
-270/326 Test #270: FilterTest.TimeRangeFilterFromStrings ................................................   Passed    0.00 sec
-        Start 271: FilterTest.TimeRangeFilterForDay
-271/326 Test #271: FilterTest.TimeRangeFilterForDay .....................................................   Passed    0.00 sec
-        Start 272: FilterTest.TimeRangeFilterSince
-272/326 Test #272: FilterTest.TimeRangeFilterSince ......................................................   Passed    0.00 sec
-        Start 273: FilterTest.SourceFileFilterLiteral
-273/326 Test #273: FilterTest.SourceFileFilterLiteral ...................................................   Passed    0.00 sec
-        Start 274: FilterTest.SourceFileFilterGlob
-274/326 Test #274: FilterTest.SourceFileFilterGlob ......................................................   Passed    0.00 sec
-        Start 275: FilterTest.SourceFileFilterGlobSubstringMatch
-275/326 Test #275: FilterTest.SourceFileFilterGlobSubstringMatch ........................................   Passed    0.00 sec
-        Start 276: FilterTest.PredicateFilter
-276/326 Test #276: FilterTest.PredicateFilter ...........................................................   Passed    0.00 sec
-        Start 277: FilterTest.LogLevelSetFilter
-277/326 Test #277: FilterTest.LogLevelSetFilter .........................................................   Passed    0.00 sec
-        Start 278: FilterTest.LevelFilterTest
-278/326 Test #278: FilterTest.LevelFilterTest ...........................................................   Passed    0.00 sec
-        Start 279: FilterTest.MinLevelFilterTest
-279/326 Test #279: FilterTest.MinLevelFilterTest ........................................................   Passed    0.00 sec
-        Start 280: FilterTest.BoolFilterTest
-280/326 Test #280: FilterTest.BoolFilterTest ............................................................   Passed    0.00 sec
-        Start 281: FilterTest.KeywordFilterSingle
-281/326 Test #281: FilterTest.KeywordFilterSingle .......................................................   Passed    0.00 sec
-        Start 282: FilterTest.KeywordFilterSingleCaseInsensitive
-282/326 Test #282: FilterTest.KeywordFilterSingleCaseInsensitive ........................................   Passed    0.00 sec
-        Start 283: FilterTest.KeywordFilterMultiAny
-283/326 Test #283: FilterTest.KeywordFilterMultiAny .....................................................   Passed    0.00 sec
-        Start 284: FilterTest.KeywordFilterEmptyListAny
-284/326 Test #284: FilterTest.KeywordFilterEmptyListAny .................................................   Passed    0.00 sec
-        Start 285: FilterTest.KeywordFilterEmptyListAll
-285/326 Test #285: FilterTest.KeywordFilterEmptyListAll .................................................   Passed    0.00 sec
-        Start 286: FilterTest.KeywordFilterMultiAll
-286/326 Test #286: FilterTest.KeywordFilterMultiAll .....................................................   Passed    0.00 sec
-        Start 287: FilterTest.FieldExistsFilter
-287/326 Test #287: FilterTest.FieldExistsFilter .........................................................   Passed    0.00 sec
-        Start 288: FilterTest.FieldValueFilter
-288/326 Test #288: FilterTest.FieldValueFilter ..........................................................   Passed    0.00 sec
-        Start 289: FilterTest.FieldValueFilterWildcardSubstringMatch
-289/326 Test #289: FilterTest.FieldValueFilterWildcardSubstringMatch ....................................   Passed    0.00 sec
-        Start 290: FilterTest.ValueSetFilter
-290/326 Test #290: FilterTest.ValueSetFilter ............................................................   Passed    0.00 sec
-        Start 291: FilterTest.NestedValueSetFilter
-291/326 Test #291: FilterTest.NestedValueSetFilter ......................................................   Passed    0.00 sec
-        Start 292: StatisticsTest.LogLevelCountCollector
-292/326 Test #292: StatisticsTest.LogLevelCountCollector ................................................   Passed    0.00 sec
-        Start 293: StatisticsTest.FieldValueCountCollectorForLevel
-293/326 Test #293: StatisticsTest.FieldValueCountCollectorForLevel ......................................   Passed    0.00 sec
-        Start 294: StatisticsTest.FieldValueCountCollectorForCustomField
-294/326 Test #294: StatisticsTest.FieldValueCountCollectorForCustomField ................................   Passed    0.00 sec
-        Start 295: StatisticsTest.TopNFieldValuesCollectorForMessage
-295/326 Test #295: StatisticsTest.TopNFieldValuesCollectorForMessage ....................................   Passed    0.00 sec
-        Start 296: StatisticsTest.CreateCollectorFactory
-296/326 Test #296: StatisticsTest.CreateCollectorFactory ................................................   Passed    0.00 sec
-        Start 297: UtilsTime.ParseDuration
-297/326 Test #297: UtilsTime.ParseDuration ..............................................................   Passed    0.01 sec
-        Start 298: UtilsTime.ParseRelativeTime
-298/326 Test #298: UtilsTime.ParseRelativeTime ..........................................................   Passed    0.01 sec
-        Start 299: UtilsTime.ParseAbsoluteTime
-299/326 Test #299: UtilsTime.ParseAbsoluteTime ..........................................................   Passed    0.00 sec
-        Start 300: UtilsTime.ParseISO8601
-300/326 Test #300: UtilsTime.ParseISO8601 ...............................................................   Passed    0.01 sec
-        Start 301: UtilsTime.ParseDayRange
-301/326 Test #301: UtilsTime.ParseDayRange ..............................................................   Passed    0.00 sec
-        Start 302: UtilsTime.FormatTimestamp
-302/326 Test #302: UtilsTime.FormatTimestamp ............................................................   Passed    0.00 sec
-        Start 303: UtilsEnumConversionTest.LogLevelToString
-303/326 Test #303: UtilsEnumConversionTest.LogLevelToString .............................................   Passed    0.00 sec
-        Start 304: UtilsEnumConversionTest.StringToLogLevel
-304/326 Test #304: UtilsEnumConversionTest.StringToLogLevel .............................................   Passed    0.00 sec
-        Start 305: UtilsEnumConversionTest.LogEntryFieldToString
-305/326 Test #305: UtilsEnumConversionTest.LogEntryFieldToString ........................................   Passed    0.00 sec
-        Start 306: UtilsEnumConversionTest.StringToLogEntryField
-306/326 Test #306: UtilsEnumConversionTest.StringToLogEntryField ........................................   Passed    0.00 sec
-        Start 307: UtilsEnumConversionTest.ExportFormatToString
-307/326 Test #307: UtilsEnumConversionTest.ExportFormatToString .........................................   Passed    0.00 sec
-        Start 308: UtilsEnumConversionTest.StringToExportFormat
-308/326 Test #308: UtilsEnumConversionTest.StringToExportFormat .........................................   Passed    0.00 sec
-        Start 309: UtilsEnumConversionTest.StatisticTypeToString
-309/326 Test #309: UtilsEnumConversionTest.StatisticTypeToString ........................................   Passed    0.00 sec
-        Start 310: UtilsEnumConversionTest.StringToStatisticType
-310/326 Test #310: UtilsEnumConversionTest.StringToStatisticType ........................................   Passed    0.00 sec
-        Start 311: UtilsEnumConversionTest.PatternTypeToString
-311/326 Test #311: UtilsEnumConversionTest.PatternTypeToString ..........................................   Passed    0.00 sec
-        Start 312: UtilsEnumConversionTest.StringToPatternType
-312/326 Test #312: UtilsEnumConversionTest.StringToPatternType ..........................................   Passed    0.00 sec
-        Start 313: UtilsEnumConversionTest.ParseErrorToString
-313/326 Test #313: UtilsEnumConversionTest.ParseErrorToString ...........................................   Passed    0.00 sec
-        Start 314: UtilsEnumConversionTest.StringToParseError
-314/326 Test #314: UtilsEnumConversionTest.StringToParseError ...........................................   Passed    0.00 sec
-        Start 315: UtilsEnumConversionTest.SortByToString
-315/326 Test #315: UtilsEnumConversionTest.SortByToString ...............................................   Passed    0.00 sec
-        Start 316: UtilsEnumConversionTest.StringToSortBy
-316/326 Test #316: UtilsEnumConversionTest.StringToSortBy ...............................................   Passed    0.00 sec
-        Start 317: UtilsEnumConversionTest.SortOrderToString
-317/326 Test #317: UtilsEnumConversionTest.SortOrderToString ............................................   Passed    0.00 sec
-        Start 318: UtilsEnumConversionTest.StringToSortOrder
-318/326 Test #318: UtilsEnumConversionTest.StringToSortOrder ............................................   Passed    0.00 sec
-        Start 319: StringUtilsTest.ReplaceAll
-319/326 Test #319: StringUtilsTest.ReplaceAll ...........................................................   Passed    0.00 sec
-        Start 320: StringUtilsTest.ReplaceAllIgnoreCase
-320/326 Test #320: StringUtilsTest.ReplaceAllIgnoreCase .................................................   Passed    0.00 sec
-        Start 321: StringUtilsTest.Trim
-321/326 Test #321: StringUtilsTest.Trim .................................................................   Passed    0.00 sec
-        Start 322: StringUtilsTest.Split
-322/326 Test #322: StringUtilsTest.Split ................................................................   Passed    0.00 sec
-        Start 323: StringUtilsTest.ToLower
-323/326 Test #323: StringUtilsTest.ToLower ..............................................................   Passed    0.00 sec
-        Start 324: StringUtilsTest.ToUpper
-324/326 Test #324: StringUtilsTest.ToUpper ..............................................................   Passed    0.00 sec
-        Start 325: StringUtilsTest.EscapeJsonString
-325/326 Test #325: StringUtilsTest.EscapeJsonString .....................................................   Passed    0.00 sec
-        Start 326: StringUtilsTest.GlobToRegex
-326/326 Test #326: StringUtilsTest.GlobToRegex ..........................................................   Passed    0.00 sec
-
-96% tests passed, 14 tests failed out of 326
-
-Total Test time (real) =   1.06 sec
+Total Test time (real) =   0.00 sec
 
 The following tests FAILED:
-	  3 - LogAnalyzerTest.AnalyzeStreamFileOpenError (Failed)
-	  4 - LogAnalyzerTest.AnalyzeStreamInvalidRegexError (Failed)
-	  7 - LogAnalyzerTest.ExportAsJsonEdgeCases (Failed)
-	 79 - LogAnalyzerConfigTest.FromJsonMalformedInternalStructures (Failed)
-	 85 - LogAnalyzerConfigTest.ToJsonComprehensive (Failed)
-	106 - LogParserErrorHandling.VariousActions (Failed)
-	123 - ExportSettingsTest.ToJson (Failed)
-	124 - ExportSettingsTest.FromJsonValid (Failed)
-	128 - ExportSettingsTest.FromJsonInvalidFieldsToExportType (Failed)
-	139 - ExporterJsonTest.EmptySourceFileAndMessage (Failed)
-	140 - ExporterJsonTest.BoundaryValuesForIdAndLineNumber (Failed)
-	181 - FilterJsonTest.FilterConditionFromJsonInvalidField (Failed)
-	202 - FilterJsonTest.FilterConditionFromJsonInvalidField (Failed)
-	244 - FilterJsonTest.FilterExpressionToJson_MixedOperatorsAndTypes (Failed)
+	  1 - CLIConfig_InputOutput_NOT_BUILT (Not Run)
+	  2 - CLIConfig_Filtering_NOT_BUILT (Not Run)
+	  3 - CLIConfig_Formatting_NOT_BUILT (Not Run)
+	  4 - CLIConfig_Analysis_NOT_BUILT (Not Run)
+	  5 - CLIConfig_Errors_NOT_BUILT (Not Run)
+	  6 - CLIConfig_Defaults_NOT_BUILT (Not Run)
+	  7 - CoreBasic_NOT_BUILT (Not Run)
+	  8 - CoreJson_NOT_BUILT (Not Run)
+	  9 - CoreValidation_NOT_BUILT (Not Run)
+	 10 - CoreFeatures_NOT_BUILT (Not Run)
+	 11 - LogParser_NOT_BUILT (Not Run)
+	 12 - Exporter_NOT_BUILT (Not Run)
+	 13 - ExportFieldMappingTest_NOT_BUILT (Not Run)
+	 14 - ExportSettingsTest_NOT_BUILT (Not Run)
+	 15 - ExportTestUtils_test_NOT_BUILT (Not Run)
+	 16 - Core_NOT_BUILT (Not Run)
+	 17 - Expression_NOT_BUILT (Not Run)
+	 18 - CoreJsonBasic_NOT_BUILT (Not Run)
+	 19 - CoreJsonCondition_NOT_BUILT (Not Run)
+	 20 - CoreJsonExpression_NOT_BUILT (Not Run)
+	 21 - CoreJsonRule_NOT_BUILT (Not Run)
+	 22 - CoreUnitAdvanced_NOT_BUILT (Not Run)
+	 23 - CoreUnitBasic_NOT_BUILT (Not Run)
+	 24 - CoreUnitField_NOT_BUILT (Not Run)
+	 25 - Expression_Advanced_NOT_BUILT (Not Run)
+	 26 - Iteration2Tests_NOT_BUILT (Not Run)
+	 27 - Statistics_NOT_BUILT (Not Run)
+	 28 - Time_NOT_BUILT (Not Run)
+	 29 - Enum_NOT_BUILT (Not Run)
+	 30 - String_NOT_BUILT (Not Run)
 Errors while running CTest
+Output from these tests are in: /opt/lxl/c++/logAnalyzer/Testing/Temporary/LastTest.log
+Use "--rerun-failed --output-on-failure" to re-run the failed cases verbosely.

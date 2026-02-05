@@ -226,6 +226,7 @@ struct LogEntry {
   std::optional<std::string> module;   // New: Direct member for module
   std::optional<std::string> host;     // New: Direct member for host
   std::map<std::string, std::string> customFields;
+  std::optional<std::string> structuredData; // New: Raw structured data string
   std::vector<ErrorCode::Error> parsingErrors; // Added to store parsing errors
           
   // Helper to check if any parsing errors occurred

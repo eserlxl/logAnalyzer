@@ -47,7 +47,7 @@ TEST_F(CLIConfigTest, DefaultValues) {
     ASSERT_TRUE(settings.filterRules.empty()); // No filters by default
     ASSERT_FALSE(settings.rootFilterExpression.has_value());
     ASSERT_EQ(settings.exportSettings.outputPath, "");
-    ASSERT_EQ(settings.exportSettings.format, ExportFormat::TEXT);
+    ASSERT_EQ(settings.exportSettings.format, ExportFormat::PLAINTEXT);
     ASSERT_EQ(settings.exportSettings.textOutputFormat, "{timestamp} {level}: {message}");
     ASSERT_FALSE(settings.exportSettings.includeSummary);
     ASSERT_FALSE(settings.exportSettings.prettyPrint);

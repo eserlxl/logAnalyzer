@@ -18,7 +18,7 @@ TEST_F(CLIConfigTest, OutputTextOption) {
     auto& [settings, options] = result.value();
 
     ASSERT_EQ(options.outputFormat, "text");
-    ASSERT_EQ(settings.exportSettings.format, ExportFormat::TEXT);
+    ASSERT_EQ(settings.exportSettings.format, ExportFormat::PLAINTEXT);
 }
 
 TEST_F(CLIConfigTest, NoColorOption) {

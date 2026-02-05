@@ -388,7 +388,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     } else if (appOptions.outputFormat == "csv") {
         settings.exportSettings.format = ExportFormat::CSV;
     } else {
-        settings.exportSettings.format = ExportFormat::TEXT;
+        settings.exportSettings.format = ExportFormat::PLAINTEXT;
     }
     
     settings.exportSettings.sortBy = appOptions.sortBy;

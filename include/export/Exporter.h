@@ -14,20 +14,13 @@
 // New: Enum for different export formats
 enum class ExportFormat {
     PLAINTEXT,
-    TEXT,
     JSON,
     CSV,
     XML,
     UNKNOWN // Default for unrecognized formats
 };
 
-// New: Enum for export operation results
-enum class ExportResult {
-    SUCCESS,
-    ERROR_UNSUPPORTED_FORMAT,
-    ERROR_UNKNOWN
-    // Add more specific error types as needed
-};
+
 
 // New: Custom exception for export errors
 class ExportException : public std::runtime_error {
@@ -47,41 +40,8 @@ struct ExportFieldMapping {
 };
 
 // JSON conversion for ExportFieldMapping
-inline void to_json(nlohmann::json& j, const ExportFieldMapping& efm) {
-    j = nlohmann::json{
-        {"field", Utils::logEntryFieldToString(efm.field)},
-        {"customHeader", efm.customHeader}
-    };
-    if (efm.datetimeFormat) {
-        j["datetimeFormat"] = *efm.datetimeFormat;
-    }
-}
-
-inline void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
-    std::vector<std::string> errors;
-
-    if (j.contains("field") && j.at("field").is_string()) {
-        std::string fieldStr = j.at("field").get<std::string>();
-        efm.field = Utils::stringToLogEntryField(fieldStr);
-        if (efm.field == LogEntryField::UNKNOWN && fieldStr != "UNKNOWN") {
-             errors.push_back("ExportFieldMapping has an unrecognized field: " + fieldStr);
-        }
-    } else {
-        errors.push_back("ExportFieldMapping is missing or has invalid 'field'.");
-    }
-
-    if (j.contains("customHeader") && j.at("customHeader").is_string()) {
-        efm.customHeader = j.at("customHeader").get<std::string>();
-    } // customHeader is optional
-
-    if (j.contains("datetimeFormat") && j.at("datetimeFormat").is_string()) {
-        efm.datetimeFormat = j.at("datetimeFormat").get<std::string>();
-    } // datetimeFormat is optional
-
-    if (!errors.empty()) {
-        throw std::runtime_error(errors[0]);
-    }
-}
+void to_json(nlohmann::json& j, const ExportFieldMapping& efm);
+void from_json(const nlohmann::json& j, ExportFieldMapping& efm);
 
 struct ExportSettings {
     std::string outputPath = "output.log"; // Default output file
@@ -113,97 +73,8 @@ struct ExportSettings {
 };
 
 // --- JSON Conversion for ExportSettings ---
-inline void to_json(nlohmann::json& j, const ExportSettings& es) {
-    j = nlohmann::json{
-        {"outputPath", es.outputPath},
-        {"format", Utils::exportFormatToString(es.format)},
-        {"includeHeader", es.includeHeader},
-        {"separator", std::string(1, es.separator)},
-        {"textFormatString", es.textFormatString},
-        {"useAnsiColors", es.useAnsiColors},
-        {"fieldsToExport", es.fieldsToExport}
-    };
-    if (es.jsonIndent) {
-        j["jsonIndent"] = *es.jsonIndent;
-    }
-}
-
-inline void from_json(const nlohmann::json& j, ExportSettings& es) {
-    // Default construct ensures fieldsToExport is empty by default, indicating "all standard fields"
-    // if no specific fieldsToExport are provided in JSON.
-    es = ExportSettings(); 
-
-    if (j.contains("outputPath")) {
-        if (j.at("outputPath").is_string()) {
-            es.outputPath = j.at("outputPath").get<std::string>();
-        } else {
-             throw std::runtime_error("ExportSettings: 'outputPath' has invalid type. Expected string.");
-        }
-    }
-
-    if (j.contains("fieldsToExport")) {
-        if (j.at("fieldsToExport").is_array()) {
-            es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
-        } else {
-            throw std::runtime_error("ExportSettings: 'fieldsToExport' has invalid type. Expected array.");
-        }
-    }
-
-    if (j.contains("format")) {
-        if (j.at("format").is_string()) {
-            std::string formatStr = j.at("format").get<std::string>();
-            auto formatOpt = Utils::stringToExportFormat(formatStr);
-            if (formatOpt) {
-                es.format = *formatOpt;
-            } else {
-                 // If the string is not recognized, throw an error, as format is a critical setting.
-                 throw std::runtime_error("ExportSettings: 'format' has invalid value: " + formatStr);
-            }
-        } else {
-            throw std::runtime_error("ExportSettings: 'format' has invalid type. Expected string.");
-        }
-    }
-
-    if (j.contains("includeHeader")) {
-        if (j.at("includeHeader").is_boolean()) {
-            es.includeHeader = j.at("includeHeader").get<bool>();
-        } else {
-            throw std::runtime_error("ExportSettings: 'includeHeader' has invalid type. Expected boolean."); 
-        }
-    }
-
-    if (j.contains("jsonIndent")) {
-        if (j.at("jsonIndent").is_number_integer()) {
-            es.jsonIndent = j.at("jsonIndent").get<int>();
-        } else {
-            throw std::runtime_error("ExportSettings: 'jsonIndent' has invalid type. Expected integer.");
-        }
-    }
-
-    if (j.contains("separator")) {
-        if (j.at("separator").is_string() && j.at("separator").get<std::string>().length() == 1) {
-            es.separator = j.at("separator").get<std::string>().at(0);
-        } else {
-            throw std::runtime_error("ExportSettings: 'separator' has invalid type or length. Expected a single character string.");
-        }
-    }
-
-    if (j.contains("textFormatString")) {
-        if (j.at("textFormatString").is_string()) {
-            es.textFormatString = j.at("textFormatString").get<std::string>();
-        } else {
-            throw std::runtime_error("ExportSettings: 'textFormatString' has invalid type. Expected string.");
-        }
-    }
-
-    if (j.contains("useAnsiColors")) {
-        if (j.at("useAnsiColors").is_boolean()) {
-            es.useAnsiColors = j.at("useAnsiColors").get<bool>();
-        } else {
-            throw std::runtime_error("ExportSettings: 'useAnsiColors' has invalid type. Expected boolean.");
-        }
-    }
-}
+void to_json(nlohmann::json& j, const ExportSettings& es);
+void from_json(const nlohmann::json& j, ExportSettings& es);
 
 // Forward declaration of LogAnalyzer to avoid circular dependency if needed for utility methods
 class LogAnalyzer; 
@@ -211,7 +82,7 @@ class LogAnalyzer;
 class Exporter {
 public:
     // New unified export method that takes ExportSettings
-    ExportResult exportLogEntries( // Changed return type to ExportResult
+    void exportLogEntries(
         std::ostream& os, 
         const std::vector<LogEntry>& entries, 
         const ExportSettings& settings);
@@ -241,11 +112,25 @@ private:
         const std::vector<LogEntry>& entries,
         const ExportSettings& settings);
 
-    // Helper to format a single log entry for text output
-    std::string formatEntryForText(
-        const LogEntry& entry, 
-        const std::string& formatString, 
-        bool useColors);
-};
-
+        // Helper to format a single log entry for text output
+        std::string formatEntryForText(
+            const LogEntry& entry, 
+            const std::string& formatString, 
+            bool useColors);
+    
+        // Helper to determine the effective fields to export, including discovery of custom fields
+        std::vector<ExportFieldMapping> getEffectiveExportFieldMappings(
+            const std::vector<LogEntry>& entries, 
+            const ExportSettings& settings);
+    
+        // Helper to format a single CSV field, including quoting and escaping
+        std::string formatCsvField(const std::string& value, char separator);
+    
+        // Static constexpr string_views for text format placeholders
+        static constexpr std::string_view PLACEHOLDER_LEVEL = "{level}";
+        static constexpr std::string_view PLACEHOLDER_ID = "{id}";
+        static constexpr std::string_view PLACEHOLDER_TIMESTAMP = "{timestamp}";
+        static constexpr std::string_view PLACEHOLDER_MESSAGE = "{message}";
+        static constexpr std::string_view PLACEHOLDER_CUSTOM_PREFIX = "{custom.";
+    };
 #endif // EXPORTER_H
