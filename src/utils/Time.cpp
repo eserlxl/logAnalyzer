@@ -123,7 +123,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRela
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unknown time unit in 'ago' expression."));
     }
 
-    static const std::regex inRegex("^in (\\d+)([smhd])$ ");
+    static const std::regex inRegex("^in (\\d+)([smhd])$");
     if (std::regex_match(timeStr, matches, inRegex)) {
         long long val;
         try {

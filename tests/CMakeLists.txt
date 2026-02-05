@@ -107,6 +107,7 @@ set(TEST_SOURCES
     "config/CoreBasic.cpp"
     "config/CoreJson.cpp"
     "config/CoreValidation.cpp"
+    "config/CoreFeatures.cpp"
     "core/LogParser.cpp"
     "export/Exporter.cpp"
     "filter/Expression.cpp"

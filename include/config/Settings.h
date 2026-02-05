@@ -12,6 +12,7 @@
 #include <string_view>
 #include <expected>
 #include "core/CiLess.h" // Include for LogAnalyzer::ci_less
+#include <filesystem>
 
 
 // Define DEFAULT_LOG_REGEX_PATTERN directly in LogAnalyzerConfig.h or a common header
@@ -48,11 +49,28 @@ struct LogAnalyzerSettings {
     // Statistics configuration
     std::vector<StatisticConfig> statisticConfigs;
 
+    // Schema versioning
+    std::string version = "1.0";
+
     // JSON serialization/deserialization methods
     static std::expected<LogAnalyzerSettings, std::vector<std::string>> fromJson(const std::string& jsonContent);
-    static std::expected<LogAnalyzerSettings, std::vector<std::string>> fromFile(const std::string& filePath);
+    static std::expected<LogAnalyzerSettings, std::vector<std::string>> fromFile(
+        const std::filesystem::path& filePath, 
+        bool expandEnv = true);
     std::string toJson() const;
     std::vector<std::string> validate() const;
+
+    /**
+     * Merges settings from 'other' into this object.
+     * Scalar values (strings, bools, optionals) in 'other' will overwrite current values if set.
+     * Collections (vectors, maps) will be replaced by the collections in 'other' if they are not empty.
+     */
+    void merge(const LogAnalyzerSettings& other);
+
+    /**
+     * Returns a LogAnalyzerSettings object initialized with the project's standard defaults.
+     */
+    static LogAnalyzerSettings createDefault();
 
     // Fluent API helpers for tests
     LogAnalyzerSettings& setLineParsePattern(std::string p) { lineParsePattern = std::move(p); return *this; }

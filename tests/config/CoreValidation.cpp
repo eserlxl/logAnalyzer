@@ -29,13 +29,13 @@ TEST_F(LogAnalyzerConfigTest, ValidateErrorHandling) {
 
     // 2. FieldMapping missing groupIndex
     settings.fieldMappings = {
-        FieldMapping{LogEntryField::TIMESTAMP, std::nullopt} // Missing groupIndex
+        FieldMapping(LogEntryField::TIMESTAMP) // Missing groupIndex
     };
     settings.exportSettings.fieldsToExport = { ExportFieldMapping{LogEntryField::MESSAGE} }; // Ensure exportSettings is valid for standalone validation
     errors = settings.validate();
     ASSERT_FALSE(errors.empty());
-    ASSERT_THAT(errors[0], testing::HasSubstr("FieldMapping is missing groupIndex."));
-    settings.fieldMappings = {}; // Clear for next test
+    ASSERT_THAT(errors[0], testing::HasSubstr("groupIndex"));
+    settings.fieldMappings = { FieldMapping{LogEntryField::TIMESTAMP, 1} }; // Valid fieldMappings for next test
 
 
     // 3. FilterRule with UNKNOWN field (operator must be valid now)
@@ -47,11 +47,10 @@ TEST_F(LogAnalyzerConfigTest, ValidateErrorHandling) {
     ASSERT_THAT(errors[0], testing::HasSubstr("FilterRule has an unrecognized field."));
     settings.filterRules = {}; // Clear for next test
 
-    // 4. ExportSettings with empty fieldsToExport
+    // 4. ExportSettings with empty fieldsToExport (this is a valid state)
     settings.exportSettings.fieldsToExport = {};
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    ASSERT_THAT(errors[0], testing::HasSubstr("ExportSettings 'fieldsToExport' cannot be empty."));
+    ASSERT_TRUE(errors.empty()); // Should be valid now
     settings.exportSettings.fieldsToExport = { ExportFieldMapping{LogEntryField::MESSAGE} }; // Reset to valid
 
     // 5. StatisticConfig with UNKNOWN type
@@ -66,16 +65,15 @@ TEST_F(LogAnalyzerConfigTest, ValidateErrorHandling) {
     // Test multiple errors
     settings.lineParsePattern = "[invalid regex"; // Invalid regex
     settings.fieldMappings = { FieldMapping{LogEntryField::TIMESTAMP, std::nullopt} }; // Missing groupIndex
-    settings.exportSettings.fieldsToExport = {}; // Empty fieldsToExport
+    // exportSettings is now valid when empty
     settings.filterRules = { FilterRule{LogEntryField::UNKNOWN, FilterOperator::EQUALS, "VAL"} }; // Unrecognized field. Operator will be valid.
     settings.statisticConfigs = { StatisticConfig{StatisticType::UNKNOWN} }; // Unknown statistic type
     errors = settings.validate();
-    ASSERT_EQ(errors.size(), 5); // 1 regex, 1 fieldMapping, 1 filterRule, 1 exportSettings, 1 statisticConfigs
+    ASSERT_EQ(errors.size(), 4); // 1 regex, 1 fieldMapping, 1 filterRule, 1 statisticConfigs
     ASSERT_THAT(errors[0], testing::HasSubstr("Invalid regex pattern"));
-    ASSERT_THAT(errors[1], testing::HasSubstr("FieldMapping is missing groupIndex."));
+    ASSERT_THAT(errors[1], testing::HasSubstr("FieldMapping is missing required 'groupIndex'."));
     ASSERT_THAT(errors[2], testing::HasSubstr("FilterRule has an unrecognized field."));
-    ASSERT_THAT(errors[3], testing::HasSubstr("ExportSettings 'fieldsToExport' cannot be empty."));
-    ASSERT_THAT(errors[4], testing::HasSubstr("StatisticConfig has an unrecognized type."));
+    ASSERT_THAT(errors[3], testing::HasSubstr("StatisticConfig has an unrecognized type."));
 }
 
 

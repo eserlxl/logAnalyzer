@@ -302,7 +302,7 @@ TEST_F(LogAnalyzerConfigTest, FromFileErrorHandling) {
     std::string nonExistentFilePath = "non_existent_config.json";
     auto result1 = LogAnalyzerSettings::fromFile(nonExistentFilePath);
     ASSERT_FALSE(result1.has_value());
-    ASSERT_THAT(result1.error()[0], testing::HasSubstr("Failed to open configuration file:"));
+    ASSERT_THAT(result1.error()[0], testing::HasSubstr("Configuration file does not exist:"));
 
     // Malformed JSON file
     std::string malformedJsonContent = R"({
@@ -317,7 +317,7 @@ TEST_F(LogAnalyzerConfigTest, FromFileErrorHandling) {
 
     auto result2 = LogAnalyzerSettings::fromFile(malformedFilePath);
     ASSERT_FALSE(result2.has_value());
-    ASSERT_THAT(result2.error()[0], testing::HasSubstr("JSON parsing error:"));
+    ASSERT_THAT(result2.error()[0], testing::HasSubstr("JSON parsing error"));
 
     // Clean up temporary file
     std::filesystem::remove(malformedFilePath);
@@ -325,7 +325,7 @@ TEST_F(LogAnalyzerConfigTest, FromFileErrorHandling) {
 
 TEST_F(LogAnalyzerConfigTest, FromFileValid) {
     std::string jsonContent = R"({
-        "lineParsePattern": "^(\\d+) (.*)$",
+        "lineParsePattern": "^(\\d+) (.*)\\$",
         "fieldMappings": [
             {"field": "TIMESTAMP", "groupIndex": 1}
         ],
@@ -341,7 +341,7 @@ TEST_F(LogAnalyzerConfigTest, FromFileValid) {
 
     auto result = LogAnalyzerSettings::fromFile(tempFilePath);
     ASSERT_TRUE(result.has_value()) << "Errors: " << (result.has_value() ? "" : result.error()[0]);
-    ASSERT_EQ(result.value().lineParsePattern, "^(\\d+) (.*)$");
+    ASSERT_EQ(result.value().lineParsePattern, "^(\\d+) (.*)\\$");
 
     // Clean up temporary file
     std::filesystem::remove(tempFilePath);

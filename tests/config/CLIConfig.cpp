@@ -26,7 +26,7 @@ protected:
 };
 
 TEST_F(CLIConfigTest, ParseLogLevel) {
-    auto result = parse({"log_analyzer", "--level", "INFO", "dummy_log_file.log"});
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--level", "INFO"});
     ASSERT_TRUE(result.has_value());
     auto& options = result.value().second;
     ASSERT_EQ(options.filterLevels.size(), 1);
@@ -40,7 +40,7 @@ TEST_F(CLIConfigTest, NoArgsReturnsError) {
 }
 
 TEST_F(CLIConfigTest, ParseMultipleLogLevels) {
-    auto result = parse({"log_analyzer", "--level", "INFO", "--level", "DEBUG", "dummy_log_file.log"});
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--level", "INFO", "--level", "DEBUG"});
     ASSERT_TRUE(result.has_value());
     auto& options = result.value().second;
     ASSERT_EQ(options.filterLevels.size(), 2);

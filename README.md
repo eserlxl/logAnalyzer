@@ -2,7 +2,9 @@
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
+[![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake.yml/badge.svg)](https://github.com/eserlxl/logAnalyzer/actions)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
 [![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
 
@@ -280,6 +282,38 @@ An example `config.json`:
   ]
 }
 ```
+
+### Advanced Configuration Features
+
+#### Environment Variable Expansion
+
+You can use environment variables in your configuration file using the syntax `${VAR}` or `$VAR`. They will be expanded when the file is loaded.
+
+**Example:**
+```json
+{
+  "exportSettings": {
+    "outputFile": "${HOME}/analysis_results.json"
+  }
+}
+```
+
+#### Configuration Includes
+
+You can split your configuration into multiple files using the `includes` key. This allows you to share common settings across different configurations. The paths can be relative to the main configuration file or absolute.
+
+**Example `config.json`:**
+```json
+{
+  "includes": [
+    "common_filters.json",
+    "output_settings.json"
+  ],
+  "lineParsePattern": "..."
+}
+```
+
+**Note:** Properties in the main file override those in included files. Later includes override earlier ones if there are conflicts.
 
 ## Project Structure
 
