@@ -13,6 +13,10 @@ std::string trim(const std::string& str, std::string_view whitespace = " \t\n\r\
 std::vector<std::string> split(const std::string& str, char delimiter);
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
+bool caseInsensitiveEquals(const std::string& s1, const std::string& s2);
+bool caseInsensitiveSearch(const std::string& text, const std::string& pattern);
+bool startsWithIgnoreCase(const std::string& text, const std::string& prefix);
+bool endsWithIgnoreCase(const std::string& text, const std::string& suffix);
 std::string escapeJsonString(const std::string& input);
 std::string globToRegex(const std::string& globPattern);
 

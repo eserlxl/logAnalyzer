@@ -393,18 +393,9 @@ LogAnalyzerSettings LogAnalyzerSettings::createDefault() {
     
     // Default export settings
     defaults.exportSettings.fieldsToExport = {
-        {LogEntryField::TIMESTAMP},
-        {LogEntryField::LEVEL},
-        {LogEntryField::MESSAGE}
-        {"fieldsToExport", es.fieldsToExport}
-        {"fieldsToExport", es.fieldsToExport}
-        {"fieldsToExport", es.fieldsToExport}
-        {"fieldsToExport", es.fieldsToExport}
-        {"fieldsToExport", es.fieldsToExport}
-        {"fieldsToExport", es.fieldsToExport}
-        {"fieldsToExport", es.fieldsToExport}
-        {"fieldsToExport", es.fieldsToExport}
-        {"fieldsToExport", es.fieldsToExport}
+        LogEntryField::TIMESTAMP,
+        LogEntryField::LEVEL,
+        LogEntryField::MESSAGE
     };
     
     return defaults;

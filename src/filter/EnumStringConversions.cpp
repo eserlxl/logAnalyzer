@@ -13,17 +13,30 @@ namespace { // Anonymous namespace for helper function
 // FilterOperator conversions
 std::string toString(FilterOperator op) {
     switch (op) {
+        // Relational
         case FilterOperator::EQUALS: return "EQUALS";
         case FilterOperator::NOT_EQUALS: return "NOT_EQUALS";
+        case FilterOperator::LESS_THAN: return "LESS_THAN";
+        case FilterOperator::GREATER_THAN: return "GREATER_THAN";
+        case FilterOperator::LESS_THAN_OR_EQUAL: return "LESS_THAN_OR_EQUAL";
+        case FilterOperator::GREATER_THAN_OR_EQUAL: return "GREATER_THAN_OR_EQUAL";
+        // String
         case FilterOperator::CONTAINS: return "CONTAINS";
         case FilterOperator::NOT_CONTAINS: return "NOT_CONTAINS";
         case FilterOperator::STARTS_WITH: return "STARTS_WITH";
         case FilterOperator::ENDS_WITH: return "ENDS_WITH";
         case FilterOperator::REGEX_MATCH: return "REGEX_MATCH";
-        case FilterOperator::LESS_THAN: return "LESS_THAN";
-        case FilterOperator::GREATER_THAN: return "GREATER_THAN";
-        case FilterOperator::LESS_THAN_OR_EQUAL: return "LESS_THAN_OR_EQUAL";
-        case FilterOperator::GREATER_THAN_OR_EQUAL: return "GREATER_THAN_OR_EQUAL";
+        // Case-Insensitive String
+        case FilterOperator::EQUALS_I: return "EQUALS_I";
+        case FilterOperator::NOT_EQUALS_I: return "NOT_EQUALS_I";
+        case FilterOperator::CONTAINS_I: return "CONTAINS_I";
+        case FilterOperator::NOT_CONTAINS_I: return "NOT_CONTAINS_I";
+        case FilterOperator::STARTS_WITH_I: return "STARTS_WITH_I";
+        case FilterOperator::ENDS_WITH_I: return "ENDS_WITH_I";
+        // Set-based
+        case FilterOperator::IN: return "IN";
+        case FilterOperator::NOT_IN: return "NOT_IN";
+        // Presence
         case FilterOperator::IS_PRESENT: return "IS_PRESENT";
         case FilterOperator::IS_ABSENT: return "IS_ABSENT";
         // Default case should ideally not be reached if all enums are covered
@@ -46,6 +59,16 @@ std::optional<FilterOperator> fromStringToFilterOperator(const std::string& opSt
     if (upperOpStr == "GREATER_THAN_OR_EQUAL" || upperOpStr == "GTE") return FilterOperator::GREATER_THAN_OR_EQUAL;
     if (upperOpStr == "IS_PRESENT") return FilterOperator::IS_PRESENT;
     if (upperOpStr == "IS_ABSENT") return FilterOperator::IS_ABSENT;
+    // New case-insensitive operators
+    if (upperOpStr == "EQUALS_I") return FilterOperator::EQUALS_I;
+    if (upperOpStr == "NOT_EQUALS_I") return FilterOperator::NOT_EQUALS_I;
+    if (upperOpStr == "CONTAINS_I") return FilterOperator::CONTAINS_I;
+    if (upperOpStr == "NOT_CONTAINS_I") return FilterOperator::NOT_CONTAINS_I;
+    if (upperOpStr == "STARTS_WITH_I") return FilterOperator::STARTS_WITH_I;
+    if (upperOpStr == "ENDS_WITH_I") return FilterOperator::ENDS_WITH_I;
+    // New set-based operators
+    if (upperOpStr == "IN") return FilterOperator::IN;
+    if (upperOpStr == "NOT_IN") return FilterOperator::NOT_IN;
     return std::nullopt;
 }
 
@@ -68,21 +91,67 @@ std::optional<FilterLogicalOperator> fromStringToFilterLogicalOperator(const std
 // FilterValueType conversions
 std::string toString(FilterValueType type) {
     switch (type) {
+        case FilterValueType::AUTO: return "AUTO";
         case FilterValueType::STRING: return "STRING";
         case FilterValueType::INT: return "INT";
         case FilterValueType::DOUBLE: return "DOUBLE";
         case FilterValueType::BOOL: return "BOOL";
         case FilterValueType::DATETIME: return "DATETIME";
+        case FilterValueType::VERSION: return "VERSION";
+        case FilterValueType::IP_ADDRESS: return "IP_ADDRESS";
         default: return "UNKNOWN_VALUE_TYPE";
     }
 }
 
+
 std::optional<FilterValueType> fromStringToFilterValueType(const std::string& typeStr) {
     std::string upperTypeStr = toUpper(typeStr);
+    if (upperTypeStr == "AUTO") return FilterValueType::AUTO;
     if (upperTypeStr == "STRING") return FilterValueType::STRING;
     if (upperTypeStr == "INT") return FilterValueType::INT;
     if (upperTypeStr == "DOUBLE") return FilterValueType::DOUBLE;
     if (upperTypeStr == "BOOL") return FilterValueType::BOOL;
     if (upperTypeStr == "DATETIME") return FilterValueType::DATETIME;
+    if (upperTypeStr == "VERSION") return FilterValueType::VERSION;
+    if (upperTypeStr == "IP_ADDRESS") return FilterValueType::IP_ADDRESS;
     return std::nullopt;
 }
+
+// SortBy conversions
+std::string toString(SortBy sortBy) {
+    switch (sortBy) {
+        case SortBy::TIMESTAMP: return "TIMESTAMP";
+        case SortBy::LEVEL: return "LEVEL";
+        case SortBy::MESSAGE: return "MESSAGE";
+        case SortBy::SOURCE: return "SOURCE";
+        case SortBy::THREAD_ID: return "THREAD_ID";
+        default: return "UNKNOWN_SORT_BY";
+    }
+}
+
+std::optional<SortBy> fromStringToSortBy(const std::string& sortByStr) {
+    std::string upperSortByStr = toUpper(sortByStr);
+    if (upperSortByStr == "TIMESTAMP") return SortBy::TIMESTAMP;
+    if (upperSortByStr == "LEVEL") return SortBy::LEVEL;
+    if (upperSortByStr == "MESSAGE") return SortBy::MESSAGE;
+    if (upperSortByStr == "SOURCE") return SortBy::SOURCE;
+    if (upperSortByStr == "THREAD_ID") return SortBy::THREAD_ID;
+    return std::nullopt;
+}
+
+// SortOrder conversions
+std::string toString(SortOrder sortOrder) {
+    switch (sortOrder) {
+        case SortOrder::ASCENDING: return "ASCENDING";
+        case SortOrder::DESCENDING: return "DESCENDING";
+        default: return "UNKNOWN_SORT_ORDER";
+    }
+}
+
+std::optional<SortOrder> fromStringToSortOrder(const std::string& sortOrderStr) {
+    std::string upperSortOrderStr = toUpper(sortOrderStr);
+    if (upperSortOrderStr == "ASCENDING" || upperSortOrderStr == "ASC") return SortOrder::ASCENDING;
+    if (upperSortOrderStr == "DESCENDING" || upperSortOrderStr == "DESC") return SortOrder::DESCENDING;
+    return std::nullopt;
+}
+

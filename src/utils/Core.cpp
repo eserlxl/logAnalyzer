@@ -196,6 +196,8 @@ std::string sortByToString(SortBy sort) {
         case SortBy::TIMESTAMP: return "TIMESTAMP";
         case SortBy::LEVEL: return "LEVEL";
         case SortBy::MESSAGE: return "MESSAGE";
+        case SortBy::SOURCE: return "SOURCE";
+        case SortBy::THREAD_ID: return "THREAD_ID";
         default: return "UNKNOWN";
     }
 }
@@ -207,6 +209,8 @@ std::optional<SortBy> stringToSortBy(const std::string& sortStr) {
     if (upperSortStr == "TIMESTAMP" || upperSortStr == "TIME") return SortBy::TIMESTAMP;
     if (upperSortStr == "LEVEL") return SortBy::LEVEL;
     if (upperSortStr == "MESSAGE" || upperSortStr == "MSG") return SortBy::MESSAGE;
+    if (upperSortStr == "SOURCE") return SortBy::SOURCE;
+    if (upperSortStr == "THREAD_ID" || upperSortStr == "THREAD") return SortBy::THREAD_ID;
     return std::nullopt;
 }
 

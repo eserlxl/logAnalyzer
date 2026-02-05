@@ -7,7 +7,9 @@
 enum class SortBy : uint8_t {
     TIMESTAMP, // Sort by the timestamp of the log entry.
     LEVEL,     // Sort by the log level (e.g., INFO, WARN, ERROR).
-    MESSAGE    // Sort by the content of the log message.
+    MESSAGE,   // Sort by the content of the log message.
+    SOURCE,    // Sort by the source of the log (e.g., file name, component name).
+    THREAD_ID  // Sort by the thread identifier, if available.
 };
 
 // Enum for the order in which sorted results should be presented.
@@ -18,20 +20,36 @@ enum class SortOrder : uint8_t {
 
 // Enum for operators used in filter conditions.
 enum class FilterOperator : uint8_t {
-    EQUALS,             // Checks if a field's value is exactly equal to the filter value. (e.g., ==)
-    NOT_EQUALS,         // Checks if a field's value is not equal to the filter value. (e.g., !=)
-    CONTAINS,           // Checks if a field's string value contains the filter value as a substring.
-    NOT_CONTAINS,       // Checks if a field's string value does not contain the filter value as a substring.
-    STARTS_WITH,        // Checks if a field's string value starts with the filter value (prefix search).
-    ENDS_WITH,          // Checks if a field's string value ends with the filter value (suffix search).
-    REGEX_MATCH,        // Checks if a field's string value matches a given regular expression.
-    LESS_THAN,          // Checks if a field's numeric or datetime value is less than the filter value. (e.g., <)
-    GREATER_THAN,       // Checks if a field's numeric or datetime value is greater than the filter value. (e.g., >)
-    LESS_THAN_OR_EQUAL, // Checks if a field's numeric or datetime value is less than or equal to the filter value. (e.g., <=)
-    GREATER_THAN_OR_EQUAL, // Checks if a field's numeric or datetime value is greater than or equal to the filter value. (e.g., >=)
-    IS_PRESENT,         // Checks if a field exists and has a non-null/non-empty value.
-    IS_ABSENT           // Checks if a field does not exist or has a null/empty value.
-    // TODO: Removed UNKNOWN. Implement explicit error handling or std::optional for parsing invalid operator strings.
+    // Relational
+    EQUALS,
+    NOT_EQUALS,
+    LESS_THAN,
+    GREATER_THAN,
+    LESS_THAN_OR_EQUAL,
+    GREATER_THAN_OR_EQUAL,
+
+    // String
+    CONTAINS,
+    NOT_CONTAINS,
+    STARTS_WITH,
+    ENDS_WITH,
+    REGEX_MATCH,
+
+    // Case-Insensitive String (New)
+    EQUALS_I,
+    NOT_EQUALS_I,
+    CONTAINS_I,
+    NOT_CONTAINS_I,
+    STARTS_WITH_I,
+    ENDS_WITH_I,
+
+    // Set-based (New)
+    IN,
+    NOT_IN,
+
+    // Presence
+    IS_PRESENT,
+    IS_ABSENT
 };
 
 // Enum for logical operators used to combine multiple filter expressions.
@@ -42,14 +60,16 @@ enum class FilterLogicalOperator : uint8_t {
     // TODO: Removed UNKNOWN. Implement explicit error handling or std::optional for parsing invalid logical operator strings.
 };
 
-// Enum to indicate how a filter value should be interpreted (e.g., for type conversion and comparison).
+// Enum to indicate how a filter value should be interpreted.
 enum class FilterValueType : uint8_t {
-    STRING,   // The filter value should be treated as a string.
-    INT,      // The filter value should be treated as an integer.
-    DOUBLE,   // The filter value should be treated as a double-precision floating-point number.
-    BOOL,     // The filter value should be treated as a boolean.
-    DATETIME  // The filter value should be treated as a date and/or time.
-    // TODO: Removed UNKNOWN. Implement explicit error handling or std::optional for parsing invalid value type strings.
+    STRING = 0,
+    INT = 1,
+    DOUBLE = 2,
+    BOOL = 3,
+    DATETIME = 4,
+    AUTO = 5,     // Infer the type from the value's syntax (New).
+    VERSION = 6,  // Treat value as a semantic version string (New).
+    IP_ADDRESS = 7 // Treat value as an IPv4/IPv6 address (New).
 };
 
 #endif // FILTER_TYPES_H

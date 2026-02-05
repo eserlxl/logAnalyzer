@@ -164,6 +164,45 @@ bool evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
                 default: return false; // Invalid operator for DATETIME type
             }
         }
+        case FilterValueType::VERSION: {
+            // Requires a semantic version parsing and comparison library/function.
+            // For now, assume a simple string comparison, but this should be improved.
+            // TODO: Implement proper semantic version parsing and comparison.
+            // Example of a basic (and likely insufficient) string comparison:
+            // return fieldValue == condValue; // This is NOT semantic versioning.
+
+            // Placeholder for actual semantic version comparison logic:
+            // std::optional<SemanticVersion> fieldVersion = parseSemanticVersion(fieldValue);
+            // std::optional<SemanticVersion> condVersion = parseSemanticVersion(condValue);
+            // if (!fieldVersion || !condVersion) return false;
+            //
+            // switch (cond.op) {
+            //     case FilterOperator::EQUALS: return *fieldVersion == *condVersion;
+            //     case FilterOperator::NOT_EQUALS: return *fieldVersion != *condVersion;
+            //     case FilterOperator::GREATER_THAN: return *fieldVersion > *condVersion;
+            //     case FilterOperator::LESS_THAN: return *fieldVersion < *condVersion;
+            //     case FilterOperator::GREATER_THAN_OR_EQUAL: return *fieldVersion >= *condVersion;
+            //     case FilterOperator::LESS_THAN_OR_EQUAL: return *fieldVersion <= *condVersion;
+            //     default: return false;
+            // }
+            // For now, as a fallback, we use string comparison with case sensitivity.
+            // This is a placeholder and needs to be replaced with actual version logic.
+            if (cond.caseSensitive) {
+                return fieldValue == condValue;
+            } else {
+                return Utils::caseInsensitiveEquals(fieldValue, condValue);
+            }
+        }
+        case FilterValueType::IP_ADDRESS: {
+            // Requires IP address parsing and comparison logic.
+            // TODO: Implement proper IP address parsing and comparison.
+            // For now, fall back to string comparison.
+            if (cond.caseSensitive) {
+                return fieldValue == condValue;
+            } else {
+                return Utils::caseInsensitiveEquals(fieldValue, condValue);
+            }
+        }
         case FilterValueType::STRING:
         default: // Default to STRING comparison if type is UNKNOWN or not specified
             switch (cond.op) {
@@ -171,6 +210,11 @@ bool evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
                     return cond.caseSensitive ? (fieldValue == condValue) : Utils::caseInsensitiveEquals(fieldValue, condValue);
                 case FilterOperator::NOT_EQUALS:
                     return cond.caseSensitive ? (fieldValue != condValue) : !Utils::caseInsensitiveEquals(fieldValue, condValue);
+                case FilterOperator::EQUALS_I: // Case-insensitive EQUALS
+                    return Utils::caseInsensitiveEquals(fieldValue, condValue);
+                case FilterOperator::NOT_EQUALS_I: // Case-insensitive NOT_EQUALS
+                    return !Utils::caseInsensitiveEquals(fieldValue, condValue);
+
                 case FilterOperator::CONTAINS:
                     if (cond.caseSensitive) {
                         return fieldValue.find(condValue) != std::string::npos;
@@ -183,6 +227,11 @@ bool evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
                     } else {
                         return !Utils::caseInsensitiveSearch(fieldValue, condValue);
                     }
+                case FilterOperator::CONTAINS_I: // Case-insensitive CONTAINS
+                    return Utils::caseInsensitiveSearch(fieldValue, condValue);
+                case FilterOperator::NOT_CONTAINS_I: // Case-insensitive NOT_CONTAINS
+                    return !Utils::caseInsensitiveSearch(fieldValue, condValue);
+
                 case FilterOperator::STARTS_WITH:
                     if (cond.caseSensitive) {
                         return fieldValue.starts_with(condValue);
@@ -199,6 +248,50 @@ bool evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
                         std::string lowerCondValue = Utils::toLower(condValue);
                         return lowerFieldValue.ends_with(lowerCondValue);
                     }
+                case FilterOperator::STARTS_WITH_I: { // Case-insensitive STARTS_WITH
+                    std::string lowerFieldValue = Utils::toLower(fieldValue);
+                    std::string lowerCondValue = Utils::toLower(condValue);
+                    return lowerFieldValue.starts_with(lowerCondValue);
+                }
+                case FilterOperator::ENDS_WITH_I: { // Case-insensitive ENDS_WITH
+                    std::string lowerFieldValue = Utils::toLower(fieldValue);
+                    std::string lowerCondValue = Utils::toLower(condValue);
+                    return lowerFieldValue.ends_with(lowerCondValue);
+                }
+
+                case FilterOperator::IN: { // Set-based IN
+                    try {
+                        auto jsonArray = nlohmann::json::parse(condValue);
+                        if (!jsonArray.is_array()) {
+                            return false; // Expected an array
+                        }
+                        for (const auto& item : jsonArray) {
+                            if (item.is_string() && (cond.caseSensitive ? (fieldValue == item.get<std::string>()) : Utils::caseInsensitiveEquals(fieldValue, item.get<std::string>()))) {
+                                return true; // Found a match
+                            }
+                        }
+                        return false; // No match found in the set
+                    } catch (const nlohmann::json::parse_error&) {
+                        return false; // Invalid JSON format
+                    }
+                }
+                case FilterOperator::NOT_IN: { // Set-based NOT_IN
+                    try {
+                        auto jsonArray = nlohmann::json::parse(condValue);
+                        if (!jsonArray.is_array()) {
+                            return false; // Expected an array
+                        }
+                        for (const auto& item : jsonArray) {
+                            if (item.is_string() && (cond.caseSensitive ? (fieldValue == item.get<std::string>()) : Utils::caseInsensitiveEquals(fieldValue, item.get<std::string>()))) {
+                                return false; // Found a match, so NOT_IN condition fails
+                            }
+                        }
+                        return true; // No match found in the set, so NOT_IN condition passes
+                    } catch (const nlohmann::json::parse_error&) {
+                        return false; // Invalid JSON format
+                    }
+                }
+                
                 case FilterOperator::REGEX_MATCH:
                     try {
                         auto flags = cond.caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;

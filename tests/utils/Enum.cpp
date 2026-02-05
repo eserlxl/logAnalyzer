@@ -132,6 +132,8 @@ TEST(UtilsEnumConversionTest, SortByToString) {
     EXPECT_EQ(Utils::sortByToString(SortBy::TIMESTAMP), "TIMESTAMP");
     EXPECT_EQ(Utils::sortByToString(SortBy::LEVEL), "LEVEL");
     EXPECT_EQ(Utils::sortByToString(SortBy::MESSAGE), "MESSAGE");
+    EXPECT_EQ(Utils::sortByToString(SortBy::SOURCE), "SOURCE");
+    EXPECT_EQ(Utils::sortByToString(SortBy::THREAD_ID), "THREAD_ID");
 }
 
 TEST(UtilsEnumConversionTest, StringToSortBy) {
@@ -140,6 +142,9 @@ TEST(UtilsEnumConversionTest, StringToSortBy) {
     EXPECT_EQ(Utils::stringToSortBy("LEVEL").value(), SortBy::LEVEL);
     EXPECT_EQ(Utils::stringToSortBy("MESSAGE").value(), SortBy::MESSAGE);
     EXPECT_EQ(Utils::stringToSortBy("msg").value(), SortBy::MESSAGE); // Alias
+    EXPECT_EQ(Utils::stringToSortBy("SOURCE").value(), SortBy::SOURCE);
+    EXPECT_EQ(Utils::stringToSortBy("THREAD_ID").value(), SortBy::THREAD_ID);
+    EXPECT_EQ(Utils::stringToSortBy("thread").value(), SortBy::THREAD_ID); // Alias
     EXPECT_FALSE(Utils::stringToSortBy("SIZE").has_value());
 }
 

@@ -71,19 +71,22 @@ For detailed build instructions, installation options, and more usage examples, 
 
 ## Features
 
-| Feature                      | Description                                                                          |
-| ---------------------------- | ------------------------------------------------------------------------------------ |
-| **Memory-Efficient Processing** | Handles very large files with minimal memory usage using the `--stream` mode.        |
-| **Multi-File Support**       | Parses and analyzes multiple log files at once.                                      |
-| **Structured Field Parsing** | Automatically parses log messages into key-value pairs using custom delimiters.      |
-| **Advanced Filtering**       | Filter by log level, time range (absolute, relative, and ISO 8601), keywords, glob patterns, regular expressions, and field values.  |
-| **Field-Value Matching**     | Match against structured fields with literal, glob, or regex patterns.           |
-| **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on fields.  |
-| **Set-Based Filtering**      | Check if a field's value belongs to a specific set of values.                        |
-| **Complex Filtering Expressions** | Build sophisticated filter logic using parenthesized, nested AND/OR conditions.      |
-| **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).            |
-| **Flexible Export**          | Save results in Text, JSON, or CSV formats.                                          |
-| **Statistical Analysis**     | Generate statistics on your log data, such as entry rates and top messages.          |
+| Feature                      | Description                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Memory-Efficient Processing** | Handles massive files with minimal memory usage using the `--stream` mode.                              |
+| **Multi-File Support**       | Parses and analyzes multiple log files in a single run.                                                 |
+| **Sorting**                  | Sort results by timestamp, log level, message, or other fields in ascending or descending order.        |
+| **Structured Field Parsing** | Automatically parses log messages into key-value pairs using custom delimiters.                         |
+| **Advanced Filtering**       | Filter by log level, time range, keywords, glob patterns, and regular expressions.                      |
+| **Field-Value Matching**     | Match field values with case-sensitive/insensitive text, regex, and glob patterns.                      |
+| **Advanced Data Types**      | Compare fields as `version` numbers (semantic versioning) or `IP addresses`.                            |
+| **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on fields.                     |
+| **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                    |
+| **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
+| **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR` conditions.                     |
+| **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).                               |
+| **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable output fields.                             |
+| **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, and time-gap detection.             |
 
 ## Building from Source
 
@@ -323,25 +326,32 @@ Run `LogAnalyzer --help` for a full list of commands.
 | `--color OPT`          |           | Controls colorized output. Options are `always`, `auto` (default, colors if stdout is a TTY and not redirected), or `never`.                                                              | `auto`     |
 | `--stream`             |           | Enables memory-efficient stream processing mode for very large files. Not all features are available in stream mode (e.g., sorting).                                                    | `false`    |
 | `--on-parse-error OPT` |           | Determines the action when a log line cannot be parsed. Options are `ignore`, `warn` (default, prints a warning to stderr), or `throw` (exits with an error).                           | `warn`     |
-| `--stdin`              | `-`       | Reads log entries from standard input. This is automatically enabled if `-` is provided as a filename.                                                                                  | `false`    |
+| `--stdin`              | `-`       | Reads log entries from standard input (e.g., from a pipe). Automatically enabled if `-` is used as a log file path. See Example 5 for details.                                           | `false`    |
 
 ### Filtering
 
-| Option                   | Shorthand | Description                                                                                                                                           | Default   |
-| :----------------------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- | :-------- |
-| `--keyword TEXT`         | `-k`      | Filters log messages containing this keyword or phrase. Can be used multiple times, combined by `--logic`.                                            |           |
-| `--exclude-keyword TEXT` |           | Excludes log messages containing this keyword or phrase. Can be used multiple times.                                                                  |           |
-| `--regex PATTERN`        | `-r`      | Filters log messages matching this regular expression. Can be used multiple times, combined by `--logic`.                                             |           |
-| `--exclude-regex PATTERN`|           | Excludes log messages matching this regular expression. Can be used multiple times.                                                                   |           |
-| `--logic [AND|OR]`      |           | Specifies the logical operator for combining multiple `--keyword` or `--regex` filters.                                                               | `AND`     |
-| `--case-sensitive`       |           | Makes keyword and regex filtering case-sensitive.                                                                                                     | `false`   |
-| `--level LEVEL`          | `-l`      | Includes log entries of a specific level (e.g., `ERROR`, `INFO`). Can be used multiple times to include multiple levels.                              |           |
-| `--min-level LEVEL`      | `-m`      | Includes log entries with a level equal to or more severe than the specified level (e.g., `WARNING` will include `WARNING`, `ERROR`, `CRITICAL`).    |           |
-| `--map-level KEY=LEVEL`  |           | Maps a custom log level string found in logs (KEY) to a recognized internal level (LEVEL, e.g., `TRC=TRACE`, `WRN=WARNING`). Can be used multiple times. |           |
-| `--start TIME`           |           | Filters logs appearing after the specified timestamp. Supports absolute, relative, ISO 8601, and Unix timestamp formats.                              |           |
-| `--end TIME`             |           | Filters logs appearing before the specified timestamp. Supports the same formats as `--start`.                                                        |           |
-| `--duration DURATION`    |           | Specifies a time window when used with `--start` or `--end`. Accepts units like `s` (seconds), `m` (minutes), `h` (hours), or `d` (days).             |           |
-| `--expression "EXPR"`    | `-e`      | A powerful filter using a logical expression language (e.g., `(level=ERROR and msg contains "db") or msg contains "timeout"`).                       |           |
+| Option                   | Shorthand | Description                                                                                                                                                                                                                                                                                                                                                         | Default   |
+| :----------------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------- |
+| `--keyword TEXT`         | `-k`      | Filters log messages containing this keyword or phrase. Can be used multiple times, combined by `--logic`.                                                                                                                                                                                                                                                          |           |
+| `--exclude-keyword TEXT` |           | Excludes log messages containing this keyword or phrase. Can be used multiple times.                                                                                                                                                                                                                                                                                |           |
+| `--regex PATTERN`        | `-r`      | Filters log messages matching this regular expression. Can be used multiple times, combined by `--logic`.                                                                                                                                                                                                                                                           |           |
+| `--exclude-regex PATTERN`|           | Excludes log messages matching this regular expression. Can be used multiple times.                                                                                                                                                                                                                                                                                 |           |
+| `--logic [AND|OR]`       |           | Specifies the logical operator for combining multiple `--keyword` or `--regex` filters.                                                                                                                                                                                                                                                                             | `AND`     |
+| `--case-sensitive`       |           | Makes keyword and regex filtering case-sensitive.                                                                                                                                                                                                                                                                                                                   | `false`   |
+| `--level LEVEL`          | `-l`      | Includes log entries of a specific level (e.g., `ERROR`, `INFO`). Can be used multiple times to include multiple levels.                                                                                                                                                                                                                                            |           |
+| `--min-level LEVEL`      | `-m`      | Includes log entries with a level equal to or more severe than the specified level (e.g., `WARNING` will include `WARNING`, `ERROR`, `CRITICAL`).                                                                                                                                                                                                                  |           |
+| `--map-level KEY=LEVEL`  |           | Maps a custom log level string found in logs (KEY) to a recognized internal level (LEVEL, e.g., `TRC=TRACE`, `WRN=WARNING`). Can be used multiple times.                                                                                                                                                                                                               |           |
+| `--start TIME`           |           | Filters logs appearing after the specified timestamp. Supports absolute, relative, ISO 8601, and Unix timestamp formats.                                                                                                                                                                                                                                            |           |
+| `--end TIME`             |           | Filters logs appearing before the specified timestamp. Supports the same formats as `--start`.                                                                                                                                                                                                                                                                      |           |
+| `--duration DURATION`    |           | Specifies a time window when used with `--start` or `--end`. Accepts units like `s` (seconds), `m` (minutes), `h` (hours), or `d` (days).                                                                                                                                                                                                                           |           |
+| `--expression "EXPR"`    | `-e`      | A powerful filter using a logical expression language. Supports fields, nested `and`/`or` logic, and rich operators like `contains_i` (case-insensitive), `in` (set), `> ` (numeric), `startswith`, `is present`, and type casting (e.g., `ip(client_ip)`) for advanced filtering. Example: `(level=ERROR and msg contains_i "database") or status_code in [500, 503]` |           |
+
+### Sorting
+
+| Option                 | Shorthand | Description                                                                                         | Default     |
+| :--------------------- | :-------- | :-------------------------------------------------------------------------------------------------- | :---------- |
+| `--sort-by FIELD`      |           | Sorts the output by a specific field. Available fields: `timestamp`, `level`, `message`, `source`, `thread_id`. | `timestamp` |
+| `--sort-order ORDER`   |           | Sets the sorting order. Available orders: `ascending`, `descending`.                                | `ascending` |
 
 ### Output & Export
 
