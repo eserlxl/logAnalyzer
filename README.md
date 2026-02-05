@@ -8,6 +8,10 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
 [![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
 
+## Project Status
+
+`logAnalyzer` is currently under **active development**. We are continuously adding new features, improving performance, and refining the user experience. While it is stable for general use, expect potential API changes in major releases as the project evolves.
+
 ## Overview
 
 `logAnalyzer` is a high-performance command-line utility built in C++ that enables detailed analysis, filtering, and extraction of insights from large log files. It is designed for efficiency, handling massive datasets with minimal memory footprint by processing logs as streams.
@@ -24,7 +28,8 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 ## Table of Contents
 
 -   [Features](#features)
--   [Getting Started](#getting-started)
+-   [Building from Source](#building-from-source)
+-   [Installation](#installation)
 -   [Usage](#usage)
 -   [Command-Line Interface (CLI)](#command-line-interface-cli)
 -   [Configuration](#configuration)
@@ -42,21 +47,34 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 | **Memory-Efficient Processing** | Handles very large files with minimal memory usage using the `--stream` mode.        |
 | **Multi-File Support**       | Parses and analyzes multiple log files at once.                                      |
 | **Structured Field Parsing** | Automatically parses log messages into key-value pairs using custom delimiters.      |
-| **Advanced Filtering**       | Filter by keywords, regular expressions, log levels, and time ranges.                |
+| **Advanced Filtering**       | Filter by log level, time range, keywords, regular expressions, and field values.  |
+| **Field-Value Matching**     | Match against structured fields with literal, wildcard, or regex patterns.           |
+| **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on fields.  |
+| **Set-Based Filtering**      | Check if a field's value belongs to a specific set of values.                        |
 | **Complex Filtering Expressions** | Build sophisticated filter logic using parenthesized, nested AND/OR conditions.      |
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).            |
 | **Flexible Export**          | Save results in Text, JSON, or CSV formats.                                          |
 | **Statistical Analysis**     | Generate statistics on your log data, such as entry rates and top messages.          |
 
-## Getting Started
+## Building from Source
 
-### 1. Prerequisites
+This section guides you through setting up `logAnalyzer` from its source code.
+
+### Prerequisites
 
 -   **Compiler**: A C++23 compatible compiler (e.g., GCC 13+, Clang 16+).
 -   **Build System**: CMake 3.20 or higher.
 -   **Version Control**: Git for cloning the repository.
 
-### 2. Clone the Repository
+### Dependencies
+
+`logAnalyzer` leverages several excellent open-source libraries, which CMake will automatically fetch during the build process:
+
+-   [**CLI11**](https://github.com/CLIUtils/CLI11): A header-only library for robust command-line argument parsing.
+-   [**nlohmann/json**](https://github.com/nlohmann/json): A header-only JSON library for C++.
+-   [**GoogleTest**](https://github.com/google/googletest): A Google testing and mocking framework for C++ (used for tests).
+
+### Clone the Repository
 
 First, clone the repository and navigate into the project directory:
 
@@ -65,7 +83,7 @@ git clone https://github.com/eserlxl/logAnalyzer.git
 cd logAnalyzer
 ```
 
-### 3. Build the Project
+### Build
 
 Next, use CMake to configure and build the project. We recommend an out-of-source build.
 
@@ -92,7 +110,9 @@ To use an option, add it to the `cmake` command:
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 ```
 
-### 4. (Optional) Install `logAnalyzer`
+**Note:** To build the documentation, use `cmake --build . --target doc` from the `build` directory.
+
+## Installation
 
 To install the `logAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from the `build` directory. This allows you to run `logAnalyzer` from any directory.
 

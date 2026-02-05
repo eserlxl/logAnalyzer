@@ -4,6 +4,7 @@
 #include "filter/IFilter.h"
 #include "core/LogTypes.h" // For LogLevel, PatternType etc.
 #include "core/Error.h"    // For ErrorCode::Result
+#include "utils/Core.h"    // For ci_less
 #include <string>
 #include <vector>
 #include <set>
@@ -20,21 +21,9 @@
 // This provides consistent substring matching behavior across these pattern types.
 class SourceFileFilter : public IFilter {
 public:
-    /**
-     * @brief Constructs a SourceFileFilter.
-     * @param pattern The pattern to match against the LogEntry's source file.
-     * @param type The type of pattern (Literal, Wildcard, Regex).
-     *             For Wildcard and Regex, uses std::regex_search for substring matching.
-     * @param caseSensitive Whether the comparison should be case-sensitive.
-     */
     explicit SourceFileFilter(std::string pattern,
                               PatternType type = PatternType::Literal,
                               bool caseSensitive = false);
-    /**
-     * @brief Checks if the log entry's source file matches the configured pattern.
-     * @param entry The log entry to check.
-     * @return True if the source file matches, false otherwise.
-     */
     bool matches(const LogEntry &entry) const override;
 private:
     std::string pattern_;
@@ -53,25 +42,12 @@ private:
 
 class FieldValueFilter : public IFilter {
 public:
-    /**
-     * @brief Constructs a FieldValueFilter.
-     * @param fieldKey The key of the custom field to filter on.
-     * @param valuePattern The pattern to match against the field's value.
-     * @param type The type of pattern (Literal, Wildcard, Regex).
-     *             For Wildcard and Regex, uses std::regex_search for substring matching.
-     * @param caseSensitive Whether the comparison should be case-sensitive.
-     */
     explicit FieldValueFilter(std::string fieldKey,
                               std::string valuePattern,
                               PatternType type = PatternType::Literal,
                               bool caseSensitive = false);
-    /**
-     * @brief Checks if the custom field's value in the log entry matches the configured pattern.
-     * @param entry The log entry to check.
-     * @return True if the field exists and its value matches, false otherwise.
-     */
     bool matches(const LogEntry &entry) const override;
-private:
+protected:
     std::string fieldKey_;
     std::string valuePattern_;
     PatternType type_;
@@ -174,16 +150,6 @@ public:
     void add(std::shared_ptr<IFilter> filter) {
         filters_.push_back(std::move(filter));
     }
-    /**
-     * @brief Checks if a log entry matches the composite filter's conditions.
-     *
-     * If the filter list is empty:
-     * - For Logic::AND, it returns true (no conditions means no constraints).
-     * - For Logic::OR, it returns false (no condition can be met).
-     *
-     * @param entry The log entry to check.
-     * @return True if the entry matches the composite filter, false otherwise.
-     */
     bool matches(const LogEntry &entry) const override;
 private:
     Logic logic_;
@@ -192,9 +158,6 @@ private:
 
 class NumericComparisonFilter : public IFilter {
 public:
-    // Epsilon for floating-point comparisons. A common choice for relative comparisons.
-    static constexpr double EPSILON = 1e-9; 
-
     enum class Operator {
         EQ,  // Equal to
         NEQ, // Not equal to
@@ -206,7 +169,7 @@ public:
 
     NumericComparisonFilter(std::string fieldKey, double value, Operator op);
     bool matches(const LogEntry &entry) const override;
-private:
+protected:
     std::string fieldKey_;
     double value_;
     Operator op_;
@@ -214,79 +177,48 @@ private:
 
 class BoolFilter : public IFilter {
 public:
-    explicit BoolFilter(std::string fieldKey, bool value);
+    explicit BoolFilter(std::string fieldKey, bool value, bool caseSensitive = false);
     bool matches(const LogEntry &entry) const override;
-private:
+protected:
     std::string fieldKey_;
     bool value_;
-};
-
-class NestedFieldValueFilter : public IFilter {
-public:
-    /**
-     * @brief Constructs a NestedFieldValueFilter.
-     * @param fieldPath The dot-separated path to the nested field (e.g., "user.id").
-     * @param valuePattern The pattern to match against the nested field's value.
-     * @param type The type of pattern (Literal, Wildcard, Regex).
-     *             For Wildcard and Regex, uses std::regex_search for substring matching.
-     * @param caseSensitive Whether the comparison should be case-sensitive.
-     */
-    NestedFieldValueFilter(std::string fieldPath,
-                           std::string valuePattern,
-                           PatternType type = PatternType::Literal,
-                           bool caseSensitive = false);
-    /**
-     * @brief Checks if the nested field's value in the log entry matches the configured pattern.
-     * @param entry The log entry to check.
-     * @return True if the nested field exists and its value matches, false otherwise.
-     */
-    bool matches(const LogEntry &entry) const override;
-private:
-    std::string fieldPath_;
-    std::string valuePattern_;
-    PatternType type_;
     bool caseSensitive_;
-    std::optional<std::regex> regexPattern_;
-};
-
-class NestedNumericComparisonFilter : public IFilter {
-public:
-    // Operator enum as in NumericComparisonFilter
-    explicit NestedNumericComparisonFilter(std::string fieldPath, double value, NumericComparisonFilter::Operator op);
-    bool matches(const LogEntry &entry) const override;
-private:
-    std::string fieldPath_;
-    double value_;
-    NumericComparisonFilter::Operator op_;
-};
-
-class NestedBoolFilter : public IFilter {
-public:
-    explicit NestedBoolFilter(std::string fieldPath, bool value);
-    bool matches(const LogEntry &entry) const override;
-private:
-    std::string fieldPath_;
-    bool value_;
 };
 
 class ValueSetFilter : public IFilter {
 public:
     ValueSetFilter(std::string fieldKey, std::set<std::string> values, bool caseSensitive = false);
     bool matches(const LogEntry &entry) const override;
-private:
+protected:
     std::string fieldKey_;
-    std::set<std::string> valueSet_;
+    std::set<std::string, LogAnalyzerInternal::ci_less> valueSetInsensitive_;
+    std::set<std::string> valueSetSensitive_;
     bool caseSensitive_;
 };
 
-class NestedValueSetFilter : public IFilter {
+// --- Nested Filters: Support dot-notation (currently flat map lookup) ---
+
+class NestedFieldValueFilter : public FieldValueFilter {
+public:
+    NestedFieldValueFilter(std::string fieldPath,
+                           std::string valuePattern,
+                           PatternType type = PatternType::Literal,
+                           bool caseSensitive = false);
+};
+
+class NestedNumericComparisonFilter : public NumericComparisonFilter {
+public:
+    explicit NestedNumericComparisonFilter(std::string fieldPath, double value, NumericComparisonFilter::Operator op);
+};
+
+class NestedBoolFilter : public BoolFilter {
+public:
+    explicit NestedBoolFilter(std::string fieldPath, bool value);
+};
+
+class NestedValueSetFilter : public ValueSetFilter {
 public:
     NestedValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive = false);
-    bool matches(const LogEntry &entry) const override;
-private:
-    std::string fieldPath_;
-    std::set<std::string> valueSet_;
-    bool caseSensitive_;
 };
 
 #endif // CONCRETE_FILTERS_H

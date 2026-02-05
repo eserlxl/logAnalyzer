@@ -1,41 +1,62 @@
 #include "filter/ConcreteFilters.h"
 #include "utils/Core.h"
+#include <charconv>
 #include <regex>
 #include <cmath>
+#include <limits>
 
 namespace {
-    /**
-     * @brief Retrieves a "nested" value from a LogEntry's custom fields.
-     */
-    std::optional<std::string> getNestedValue(const LogEntry& entry, const std::string& fieldPath) {
-        auto it = entry.customFields.find(fieldPath);
-        if (it != entry.customFields.end()) {
+    // A more robust floating-point comparison
+    bool areAlmostEqual(double a, double b) {
+        constexpr double relative_epsilon = 1e-9;
+        return std::abs(a - b) <= relative_epsilon * std::max(1.0, std::max(std::abs(a), std::abs(b)));
+    }
+
+    std::optional<std::string> getFieldValue(const LogEntry& entry, const std::string& fieldKey) {
+        if (auto it = entry.customFields.find(fieldKey); it != entry.customFields.end()) {
             return it->second;
         }
         return std::nullopt;
     }
 
-    std::optional<double> getNestedNumericValue(const LogEntry& entry, const std::string& fieldPath) {
-        auto strValueOpt = getNestedValue(entry, fieldPath);
-        if (strValueOpt) {
-            try {
-                return std::stod(*strValueOpt);
-            } catch (...) {}
+    std::optional<double> tryParseDouble(std::string_view str) {
+        double value;
+        auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
+        if (ec == std::errc()) {
+            return value;
         }
         return std::nullopt;
     }
 
-    std::optional<bool> getNestedBoolValue(const LogEntry& entry, const std::string& fieldPath) {
-        auto strValueOpt = getNestedValue(entry, fieldPath);
-        if (strValueOpt) {
-            std::string lowerStr = Utils::toLower(*strValueOpt);
-            if (lowerStr == "true" || lowerStr == "1" || lowerStr == "t" || lowerStr == "yes") {
-                return true;
-            } else if (lowerStr == "false" || lowerStr == "0" || lowerStr == "f" || lowerStr == "no") {
-                return false;
-            }
+    std::optional<bool> tryParseBool(std::string_view str) {
+        std::string lowerStr;
+        std::transform(str.begin(), str.end(), std::back_inserter(lowerStr),
+                       [](unsigned char c){ return std::tolower(c); });
+
+        if (lowerStr == "true" || lowerStr == "1" || lowerStr == "t" || lowerStr == "yes") {
+            return true;
+        } else if (lowerStr == "false" || lowerStr == "0" || lowerStr == "f" || lowerStr == "no") {
+            return false;
         }
         return std::nullopt;
+    }
+
+    std::optional<std::regex> createRegexForPattern(const std::string& pattern, PatternType type, bool caseSensitive) {
+        if (type == PatternType::Literal) {
+            return std::nullopt;
+        }
+
+        auto flags = std::regex::ECMAScript;
+        if (!caseSensitive) {
+            flags |= std::regex::icase;
+        }
+
+        if (type == PatternType::Wildcard) {
+            std::string regexStr = Utils::globToRegex(pattern);
+            return std::regex(regexStr, flags);
+        } else { // Regex
+            return std::regex(pattern, flags);
+        }
     }
 }
 
@@ -43,65 +64,59 @@ NumericComparisonFilter::NumericComparisonFilter(std::string fieldKey, double va
     : fieldKey_(std::move(fieldKey)), value_(value), op_(op) {}
 
 bool NumericComparisonFilter::matches(const LogEntry &entry) const {
-    auto it = entry.customFields.find(fieldKey_);
-    if (it == entry.customFields.end()) {
+    auto valueStrOpt = getFieldValue(entry, fieldKey_);
+    if (!valueStrOpt) {
         return false;
     }
 
-    try {
-        double actualValue = std::stod(it->second);
+    if (auto actualValueOpt = tryParseDouble(*valueStrOpt)) {
+        double actualValue = *actualValueOpt;
         switch (op_) {
-            case Operator::EQ:  return std::abs(actualValue - value_) < NumericComparisonFilter::EPSILON;
-            case Operator::NEQ: return std::abs(actualValue - value_) >= NumericComparisonFilter::EPSILON;
+            case Operator::EQ:  return areAlmostEqual(actualValue, value_);
+            case Operator::NEQ: return !areAlmostEqual(actualValue, value_);
             case Operator::GT:  return actualValue > value_;
             case Operator::LT:  return actualValue < value_;
-            case Operator::GTE: return actualValue >= value_;
-            case Operator::LTE: return actualValue <= value_;
+            case Operator::GTE: return actualValue >= value_ || areAlmostEqual(actualValue, value_);
+            case Operator::LTE: return actualValue <= value_ || areAlmostEqual(actualValue, value_);
         }
-    } catch (...) {}
+    }
     return false;
 }
 
-BoolFilter::BoolFilter(std::string fieldKey, bool value)
-    : fieldKey_(std::move(fieldKey)), value_(value) {}
+BoolFilter::BoolFilter(std::string fieldKey, bool value, bool caseSensitive)
+    : fieldKey_(std::move(fieldKey)), value_(value), caseSensitive_(caseSensitive) {}
 
 bool BoolFilter::matches(const LogEntry &entry) const {
-    auto it = entry.customFields.find(fieldKey_);
-    if (it == entry.customFields.end()) {
+    auto valueStrOpt = getFieldValue(entry, fieldKey_);
+    if (!valueStrOpt) {
         return false;
     }
 
-    std::string lowerStr = Utils::toLower(it->second);
-    if (value_) {
-        return (lowerStr == "true" || lowerStr == "1" || lowerStr == "t" || lowerStr == "yes");
-    } else {
-        return (lowerStr == "false" || lowerStr == "0" || lowerStr == "f" || lowerStr == "no");
+    if (caseSensitive_) {
+        // Strict parsing for case-sensitive mode
+        if (value_) {
+            return (*valueStrOpt == "true" || *valueStrOpt == "1");
+        } else {
+            return (*valueStrOpt == "false" || *valueStrOpt == "0");
+        }
     }
+
+    if (auto actualValueOpt = tryParseBool(*valueStrOpt)) {
+        return *actualValueOpt == value_;
+    }
+    return false;
 }
 
-NestedFieldValueFilter::NestedFieldValueFilter(std::string fieldPath,
-                                               std::string valuePattern,
-                                               PatternType type,
-                                               bool caseSensitive)
-    : fieldPath_(std::move(fieldPath)),
+
+FieldValueFilter::FieldValueFilter(std::string fieldKey, std::string valuePattern, PatternType type, bool caseSensitive)
+    : fieldKey_(std::move(fieldKey)),
       valuePattern_(std::move(valuePattern)),
       type_(type),
-      caseSensitive_(caseSensitive)
-{
-    if (type_ == PatternType::Regex) {
-        auto flags = std::regex::ECMAScript;
-        if (!caseSensitive_) {
-            flags |= std::regex::icase;
-        }
-        regexPattern_.emplace(valuePattern_, flags);
-    } else if (type_ == PatternType::Wildcard) {
-        std::string regexStr = Utils::globToRegex(valuePattern_);
-        regexPattern_.emplace(regexStr, caseSensitive_ ? std::regex::ECMAScript : std::regex::icase);
-    }
-}
+      caseSensitive_(caseSensitive),
+      regexPattern_(createRegexForPattern(valuePattern_, type_, caseSensitive_)) {}
 
-bool NestedFieldValueFilter::matches(const LogEntry &entry) const {
-    auto actualValueOpt = getNestedValue(entry, fieldPath_);
+bool FieldValueFilter::matches(const LogEntry &entry) const {
+    auto actualValueOpt = getFieldValue(entry, fieldKey_);
     if (!actualValueOpt) {
         return false;
     }
@@ -118,107 +133,63 @@ bool NestedFieldValueFilter::matches(const LogEntry &entry) const {
         if (regexPattern_.has_value()) {
             return std::regex_search(actualValue, *regexPattern_);
         }
-        return false;
+        return false; // Should not happen if constructor logic is correct
     }
 }
+
+// --- Nested Filters: Implemented as aliases for non-nested counterparts ---
+
+NestedFieldValueFilter::NestedFieldValueFilter(std::string fieldPath,
+                                               std::string valuePattern,
+                                               PatternType type,
+                                               bool caseSensitive)
+    : FieldValueFilter(std::move(fieldPath), std::move(valuePattern), type, caseSensitive) {}
+
 
 NestedNumericComparisonFilter::NestedNumericComparisonFilter(std::string fieldPath,
                                                            double value,
                                                            NumericComparisonFilter::Operator op)
-    : fieldPath_(std::move(fieldPath)), value_(value), op_(op) {}
+    : NumericComparisonFilter(std::move(fieldPath), value, op) {}
 
-bool NestedNumericComparisonFilter::matches(const LogEntry &entry) const {
-    auto actualValueOpt = getNestedNumericValue(entry, fieldPath_);
-    if (!actualValueOpt) {
-        return false;
-    }
-
-    double actualValue = *actualValueOpt;
-    switch (op_) {
-        case NumericComparisonFilter::Operator::EQ:  return std::abs(actualValue - value_) < NumericComparisonFilter::EPSILON;
-        case NumericComparisonFilter::Operator::NEQ: return std::abs(actualValue - value_) >= NumericComparisonFilter::EPSILON;
-        case NumericComparisonFilter::Operator::GT:  return actualValue > value_;
-        case NumericComparisonFilter::Operator::LT:  return actualValue < value_;
-        case NumericComparisonFilter::Operator::GTE: return actualValue >= value_;
-        case NumericComparisonFilter::Operator::LTE: return actualValue <= value_;
-    }
-    return false;
-}
 
 NestedBoolFilter::NestedBoolFilter(std::string fieldPath, bool value)
-    : fieldPath_(std::move(fieldPath)), value_(value) {}
+    : BoolFilter(std::move(fieldPath), value, false) {} // Keep original behavior: case-insensitive
 
-bool NestedBoolFilter::matches(const LogEntry &entry) const {
-    auto actualValueOpt = getNestedBoolValue(entry, fieldPath_);
-    if (!actualValueOpt) {
-        return false;
-    }
-    return *actualValueOpt == value_;
-}
 
 ValueSetFilter::ValueSetFilter(std::string fieldKey, std::set<std::string> values, bool caseSensitive)
     : fieldKey_(std::move(fieldKey)), caseSensitive_(caseSensitive) {
     if (caseSensitive_) {
-        valueSet_ = std::move(values);
+        // For case-sensitive, we need a different set
+        valueSetSensitive_ = std::move(values);
     } else {
         for (const auto& val : values) {
-            valueSet_.insert(Utils::toLower(val));
+            valueSetInsensitive_.insert(val);
         }
     }
 }
 
 bool ValueSetFilter::matches(const LogEntry &entry) const {
-    auto it = entry.customFields.find(fieldKey_);
-    if (it == entry.customFields.end()) {
-        return false;
-    }
-
-    const std::string& actualValue = it->second;
-    if (caseSensitive_) {
-        return valueSet_.count(actualValue) > 0;
-    } else {
-        return valueSet_.count(Utils::toLower(actualValue)) > 0;
-    }
-}
-
-NestedValueSetFilter::NestedValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive)
-    : fieldPath_(std::move(fieldPath)), caseSensitive_(caseSensitive) {
-    if (caseSensitive_) {
-        valueSet_ = std::move(values);
-    } else {
-        for (const auto& val : values) {
-            valueSet_.insert(Utils::toLower(val));
-        }
-    }
-}
-
-bool NestedValueSetFilter::matches(const LogEntry &entry) const {
-    auto actualValueOpt = getNestedValue(entry, fieldPath_);
+    auto actualValueOpt = getFieldValue(entry, fieldKey_);
     if (!actualValueOpt) {
         return false;
     }
 
-    const std::string& actualValue = *actualValueOpt;
     if (caseSensitive_) {
-        return valueSet_.count(actualValue) > 0;
+        return valueSetSensitive_.count(*actualValueOpt) > 0;
     } else {
-        return valueSet_.count(Utils::toLower(actualValue)) > 0;
+        return valueSetInsensitive_.count(*actualValueOpt) > 0;
     }
 }
 
+NestedValueSetFilter::NestedValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive)
+    : ValueSetFilter(std::move(fieldPath), std::move(values), caseSensitive) {}
+
+
 SourceFileFilter::SourceFileFilter(std::string pattern, PatternType type, bool caseSensitive)
-    : pattern_(std::move(pattern)), type_(type), caseSensitive_(caseSensitive) {
-    if (type_ == PatternType::Regex) {
-        auto flags = std::regex::ECMAScript;
-        if (!caseSensitive_) {
-            flags |= std::regex::icase;
-        }
-        regexPattern_.emplace(pattern_, flags);
-    } else if (type_ == PatternType::Wildcard) {
-        std::string regexStr = Utils::globToRegex(pattern_);
-        regexPattern_.emplace(regexStr, caseSensitive_ ? std::regex::ECMAScript : std::regex::icase);
-    }
-}
+    : pattern_(std::move(pattern)),
+      type_(type),
+      caseSensitive_(caseSensitive),
+      regexPattern_(createRegexForPattern(pattern_, type_, caseSensitive_)) {}
 
 bool SourceFileFilter::matches(const LogEntry &entry) const {
     if (type_ == PatternType::Literal) {
@@ -239,42 +210,6 @@ FieldExistsFilter::FieldExistsFilter(std::string fieldKey) : fieldKey_(std::move
 
 bool FieldExistsFilter::matches(const LogEntry &entry) const {
     return entry.customFields.count(fieldKey_) > 0;
-}
-
-FieldValueFilter::FieldValueFilter(std::string fieldKey, std::string valuePattern, PatternType type, bool caseSensitive)
-    : fieldKey_(std::move(fieldKey)), valuePattern_(std::move(valuePattern)), type_(type), caseSensitive_(caseSensitive) {
-    if (type_ == PatternType::Regex) {
-        auto flags = std::regex::ECMAScript;
-        if (!caseSensitive_) {
-            flags |= std::regex::icase;
-        }
-        regexPattern_.emplace(valuePattern_, flags);
-    } else if (type_ == PatternType::Wildcard) {
-        std::string regexStr = Utils::globToRegex(valuePattern_);
-        regexPattern_.emplace(regexStr, caseSensitive_ ? std::regex::ECMAScript : std::regex::icase);
-    }
-}
-
-bool FieldValueFilter::matches(const LogEntry &entry) const {
-    auto it = entry.customFields.find(fieldKey_);
-    if (it == entry.customFields.end()) {
-        return false;
-    }
-
-    const std::string& actualValue = it->second;
-
-    if (type_ == PatternType::Literal) {
-        if (caseSensitive_) {
-            return actualValue == valuePattern_;
-        } else {
-            return Utils::caseInsensitiveEquals(actualValue, valuePattern_);
-        }
-    } else {
-        if (regexPattern_.has_value()) {
-            return std::regex_search(actualValue, *regexPattern_);
-        }
-        return false;
-    }
 }
 
 PredicateFilter::PredicateFilter(PredicateFilter::Predicate predicate) : predicate_(std::move(predicate)) {}
@@ -299,6 +234,10 @@ KeywordFilter::KeywordFilter(std::vector<std::string> keywords, Logic logic, boo
     : keywords_(std::move(keywords)), logic_(logic), isCaseSensitive_(isCaseSensitive) {}
 
 bool KeywordFilter::matches(const LogEntry &entry) const {
+    if (keywords_.empty()) {
+        return logic_ == Logic::ALL; // Consistent with CompositeFilter
+    }
+    
     auto search_fn = [this](const std::string& text, const std::string& keyword) {
         if (isCaseSensitive_) {
             return text.find(keyword) != std::string::npos;
@@ -308,19 +247,13 @@ bool KeywordFilter::matches(const LogEntry &entry) const {
     };
 
     if (logic_ == Logic::ANY) {
-        for (const auto& keyword : keywords_) {
-            if (search_fn(entry.message, keyword)) {
-                return true;
-            }
-        }
-        return false;
-    } else {
-        for (const auto& keyword : keywords_) {
-            if (!search_fn(entry.message, keyword)) {
-                return false;
-            }
-        }
-        return true;
+        return std::any_of(keywords_.begin(), keywords_.end(), [&](const auto& kw) {
+            return search_fn(entry.message, kw);
+        });
+    } else { // ALL
+        return std::all_of(keywords_.begin(), keywords_.end(), [&](const auto& kw) {
+            return search_fn(entry.message, kw);
+        });
     }
 }
 
@@ -345,7 +278,10 @@ TimeRangeFilter::TimeRangeFilter(std::chrono::system_clock::time_point start, st
     : startTime_(start), endTime_(end) {}
 
 bool TimeRangeFilter::matches(const LogEntry &entry) const {
-    return entry.timestamp >= startTime_ && entry.timestamp < endTime_;
+    // Only match if the entry has a valid timestamp
+    return entry.timestamp.has_value() &&
+           entry.timestamp.value() >= startTime_ &&
+           entry.timestamp.value() < endTime_;
 }
 
 std::expected<TimeRangeFilter, std::string> TimeRangeFilter::fromStrings(const std::string& start, const std::string& end) {
@@ -384,14 +320,12 @@ bool CompositeFilter::matches(const LogEntry &entry) const {
     }
 
     if (logic_ == Logic::AND) {
-        for (const auto &filter : filters_) {
-            if (!filter->matches(entry)) return false;
-        }
-        return true;
-    } else {
-        for (const auto &filter : filters_) {
-            if (filter->matches(entry)) return true;
-        }
-        return false;
+        return std::all_of(filters_.begin(), filters_.end(), [&](const auto& filter) {
+            return filter->matches(entry);
+        });
+    } else { // OR
+        return std::any_of(filters_.begin(), filters_.end(), [&](const auto& filter) {
+            return filter->matches(entry);
+        });
     }
 }
