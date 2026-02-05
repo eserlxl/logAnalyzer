@@ -61,6 +61,7 @@ CTestTestfile.cmake
 install_manifest.txt
 Makefile
 Makefile.in
+*.in
 *.mk
 *.make
 
@@ -110,6 +111,7 @@ docs/rtf/
 docs/man/
 
 doxyfile.user
+Doxyfile
 
 doc/_build/
 docs/_build/
