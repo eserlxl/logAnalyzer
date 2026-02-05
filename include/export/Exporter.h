@@ -235,6 +235,12 @@ private:
         const std::vector<LogEntry>& entries, 
         const ExportSettings& settings);
 
+    // New method for XML export
+    void exportAsXml(
+        std::ostream& os,
+        const std::vector<LogEntry>& entries,
+        const ExportSettings& settings);
+
     // Helper to format a single log entry for text output
     std::string formatEntryForText(
         const LogEntry& entry, 

@@ -1,5 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include <gtest/gtest.h>
-#include "analyzer/Core.h"
+#include "analyzer/AnalyzerCore.h"
 #include "config/CLIConfig.h"
 #include <fstream>
 #include <filesystem>

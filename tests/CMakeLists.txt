@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (c) 2026 eserlxl
+
 include(CTest)
 
 # Define a macro to add GTest tests with advanced features
@@ -102,13 +105,22 @@ endif()
 
 # Find all test source files ending with _test.cpp
 set(TEST_SOURCES
-    "config/CLIConfig.cpp"
+    "config/CLIConfig_InputOutput.cpp"
+    "config/CLIConfig_Filtering.cpp"
+    "config/CLIConfig_Formatting.cpp"
+    "config/CLIConfig_Analysis.cpp"
+    "config/CLIConfig_Errors.cpp"
+    "config/CLIConfig_Defaults.cpp"
     "config/CoreBasic.cpp"
     "config/CoreJson.cpp"
     "config/CoreValidation.cpp"
     "config/CoreFeatures.cpp"
     "core/LogParser.cpp"
     "export/Exporter.cpp"
+    "export/ExportFieldMappingTest.cpp"
+    "export/ExportSettingsTest.cpp"
+    "export/ExportTestUtils_test.cpp"
+    "analyzer/Core.cpp"
     "filter/Expression.cpp"
     "filter/CoreJsonBasic.cpp"
     "filter/CoreJsonCondition.cpp"
@@ -131,6 +143,9 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
 
     # Create an executable for each test file
     add_executable(${TEST_NAME} ${TEST_SOURCE})
+
+    # Add project root to include path for 'tests/...' includes
+    target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
         message(STATUS "Including test-specific options for ${TEST_NAME} from ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "utils/String.h"
 #include "utils/UtilsCore.h"
 #include <gtest/gtest.h>

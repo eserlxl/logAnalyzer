@@ -32,13 +32,10 @@ ExportResult Exporter::exportLogEntries( // Changed return type
             exportAsText(os, entries, settings);
             break;
         case ExportFormat::XML:
-            // TODO: Implement XML export
-            // Throw an exception for unimplemented XML export
-            throw ExportException("XML export not yet implemented.");
         case ExportFormat::UNKNOWN:
         default:
-            // Throw an exception for unknown export format
-            throw ExportException("Unknown export format.");
+            // Throw an exception for unknown or unsupported export formats
+            throw ExportException("Unknown or unsupported export format specified.");
     }
     return ExportResult::SUCCESS;
 }
@@ -195,6 +192,23 @@ namespace {
         std::string escapedValue = value;
         Utils::replaceAll(escapedValue, "\"", "\"\""); // Double internal quotes
         return escapedValue;
+    }
+
+    // Helper function for XML escaping
+    std::string xmlEscape(const std::string& data) {
+        std::string buffer;
+        buffer.reserve(data.size());
+        for (size_t pos = 0; pos != data.size(); ++pos) {
+            switch (data[pos]) {
+                case '&':  buffer.append("&amp;");       break;
+                case '\"': buffer.append("&quot;");      break;
+                case '\'': buffer.append("&apos;");      break;
+                case '<':  buffer.append("&lt;");        break;
+                case '>':  buffer.append("&gt;");        break;
+                default:   buffer.append(1, data[pos]); break;
+            }
+        }
+        return buffer;
     }
 } // anonymous namespace
 
@@ -391,6 +405,107 @@ void Exporter::exportAsText(
     }
 }
 
+void Exporter::exportAsXml(
+    std::ostream& os,
+    const std::vector<LogEntry>& entries,
+    const ExportSettings& settings) {
+    
+    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
+    os << "<log>" << std::endl;
+
+    std::vector<ExportFieldMapping> fieldsToConsider = settings.fieldsToExport;
+
+    // If fieldsToExport is empty, discover default fields and all available custom fields
+    if (fieldsToConsider.empty()) {
+        fieldsToConsider.emplace_back(LogEntryField::ID, "ID");
+        fieldsToConsider.emplace_back(LogEntryField::TIMESTAMP, "Timestamp");
+        fieldsToConsider.emplace_back(LogEntryField::LEVEL, "Level");
+        fieldsToConsider.emplace_back(LogEntryField::MESSAGE, "Message");
+
+        // Discover unique custom fields across all log entries
+        std::set<std::string> uniqueCustomFieldNames;
+        for (const auto& entry : entries) {
+            for (const auto& customFieldPair : entry.customFields) {
+                uniqueCustomFieldNames.insert(customFieldPair.first);
+            }
+        }
+        for (const auto& fieldName : uniqueCustomFieldNames) {
+            fieldsToConsider.emplace_back(LogEntryField::CUSTOM, fieldName);
+        }
+    }
+
+    for (const auto& entry : entries) {
+        os << "  <entry>" << std::endl;
+        for (const auto& fieldMapping : fieldsToConsider) {
+            std::string tagName;
+            std::string value;
+
+            if (fieldMapping.field == LogEntryField::CUSTOM) {
+                tagName = fieldMapping.customHeader;
+                if (!tagName.empty() && entry.customFields.count(tagName)) {
+                    value = entry.customFields.at(tagName);
+                }
+            } else {
+                tagName = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(fieldMapping.field) : fieldMapping.customHeader;
+                switch (fieldMapping.field) {
+                    case LogEntryField::ID:
+                        if (entry.id.has_value()) {
+                            value = std::to_string(entry.id.value());
+                        }
+                        break;
+                    case LogEntryField::TIMESTAMP:
+                        if (entry.timestamp.has_value()) {
+                            if (fieldMapping.datetimeFormat.has_value()) {
+                                value = Utils::formatTimestamp(entry.timestamp.value(), fieldMapping.datetimeFormat.value());
+                            } else {
+                                value = Utils::formatTimestamp(entry.timestamp.value());
+                            }
+                        }
+                        break;
+                    case LogEntryField::LEVEL:
+                        value = Utils::logLevelToString(entry.level);
+                        break;
+                    case LogEntryField::MESSAGE:
+                        value = entry.message;
+                        break;
+                    case LogEntryField::SOURCE_FILE:
+                        value = entry.sourceFile;
+                        break;
+                    case LogEntryField::LINE_NUMBER:
+                        if (entry.sourceLineNumber.has_value()) {
+                            value = std::to_string(entry.sourceLineNumber.value());
+                        }
+                        break;
+                    case LogEntryField::THREAD_ID:
+                        if (entry.threadId.has_value()) {
+                            value = entry.threadId.value();
+                        }
+                        break;
+                    case LogEntryField::MODULE:
+                        if (entry.module.has_value()) {
+                            value = entry.module.value();
+                        }
+                        break;
+                    case LogEntryField::HOST:
+                        if (entry.host.has_value()) {
+                            value = entry.host.value();
+                        }
+                        break;
+                    case LogEntryField::STRUCTURED_FIELD:
+                    case LogEntryField::UNKNOWN:
+                    default:
+                        // No value for structured or unknown fields in simple XML export
+                        break;
+                }
+            }
+            if (!tagName.empty()) {
+                os << "    <" << tagName << ">" << xmlEscape(value) << "</" << tagName << ">" << std::endl;
+            }
+        }
+        os << "  </entry>" << std::endl;
+    }
+    os << "</log>" << std::endl;
+}
 
 std::string Exporter::formatEntryForText(
     const LogEntry& entry,

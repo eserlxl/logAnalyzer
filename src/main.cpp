@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "analyzer/Core.h"
+#include "export/Exporter.h"
 #include "utils/UtilsCore.h"
 #include "utils/String.h"
 #include "config/Settings.h"
@@ -108,6 +109,52 @@ int main(int argc, char *argv[]) {
             std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << std::endl;
             return 1;
         }
+
+        // Prepare CSV fields if needed
+        std::vector<ExportFieldMapping> csvFieldsToExport;
+        if (cliOptions.outputFormat == "csv") {
+             if (!analyzerSettings.exportSettings.csvFields.empty()) {
+                for (const auto& fieldPair : analyzerSettings.exportSettings.csvFields) {
+                    ExportFieldMapping mapping;
+                    mapping.field = Utils::stringToLogEntryField(fieldPair.first);
+                    if (mapping.field == LogEntryField::UNKNOWN) {
+                        mapping.field = LogEntryField::CUSTOM;
+                        mapping.customHeader = fieldPair.first;
+                    } else {
+                         if (fieldPair.first != fieldPair.second) {
+                            mapping.customHeader = fieldPair.second;
+                        }
+                    }
+                    csvFieldsToExport.push_back(mapping);
+                }
+            } else {
+                // Default CSV fields
+                csvFieldsToExport.emplace_back(LogEntryField::TIMESTAMP, "Timestamp");
+                csvFieldsToExport.emplace_back(LogEntryField::LEVEL, "Level");
+                csvFieldsToExport.emplace_back(LogEntryField::MESSAGE, "Message");
+                csvFieldsToExport.emplace_back(LogEntryField::SOURCE_FILE, "File");
+            }
+            
+            // Print Header
+            for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
+                std::string header = csvFieldsToExport[i].customHeader;
+                if (header.empty()) header = Utils::logEntryFieldToString(csvFieldsToExport[i].field);
+                
+                // Escape header
+                 bool needsQuotes = header.find(cliOptions.csvSeparator) != std::string::npos || header.find('"') != std::string::npos;
+                 if (needsQuotes) {
+                     std::string escaped = header;
+                     Utils::replaceAll(escaped, "\"", "\"\"");
+                     *outputStream << "\"" << escaped << "\"";
+                 } else {
+                     *outputStream << header;
+                 }
+                 
+                 if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
+            }
+            *outputStream << std::endl;
+        }
+
         auto streamEntryCallback = [&](const LogEntry &entry) {
             if (rootFilter->matches(entry)) {
                  if (cliOptions.outputFormat == "text") {
@@ -116,27 +163,53 @@ int main(int argc, char *argv[]) {
                     fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
                     *outputStream << analyzer.formatEntry(entry, cliOptions.textOutputFormat, fmtOptions) << std::endl;
                  } else { // CSV
-                    // TODO: Implement configurable CSV fields from cliOptions.csvFields
-                    *outputStream << (entry.timestamp.has_value() ? Utils::formatTimestamp(*entry.timestamp) : "") << cliOptions.csvSeparator
-                                  << Utils::logLevelToString(entry.level) << cliOptions.csvSeparator;
+                    for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
+                        const auto& fieldMapping = csvFieldsToExport[i];
+                        std::string value;
+                         switch (fieldMapping.field) {
+                            case LogEntryField::ID:
+                                if (entry.id.has_value()) value = std::to_string(entry.id.value());
+                                break;
+                            case LogEntryField::TIMESTAMP:
+                                if (entry.timestamp.has_value()) value = Utils::formatTimestamp(entry.timestamp.value());
+                                break;
+                            case LogEntryField::LEVEL:
+                                value = Utils::logLevelToString(entry.level);
+                                break;
+                            case LogEntryField::MESSAGE:
+                                value = entry.message;
+                                break;
+                            case LogEntryField::SOURCE_FILE:
+                                value = entry.sourceFile;
+                                break;
+                            case LogEntryField::LINE_NUMBER:
+                                if (entry.sourceLineNumber.has_value()) value = std::to_string(entry.sourceLineNumber.value());
+                                break;
+                            case LogEntryField::THREAD_ID:
+                                if (entry.threadId.has_value()) value = entry.threadId.value();
+                                break;
+                            case LogEntryField::MODULE:
+                                if (entry.module.has_value()) value = entry.module.value();
+                                break;
+                            case LogEntryField::HOST:
+                                if (entry.host.has_value()) value = entry.host.value();
+                                break;
+                            case LogEntryField::CUSTOM:
+                                if (!fieldMapping.customHeader.empty() && entry.customFields.count(fieldMapping.customHeader)) {
+                                    value = entry.customFields.at(fieldMapping.customHeader);
+                                }
+                                break;
+                            default: break;
+                        }
 
-                    std::string msg = entry.message;
-                    bool needsQuotes = msg.find(cliOptions.csvSeparator) != std::string::npos || msg.find('"') != std::string::npos;
-                    if (needsQuotes) {
-                        Utils::replaceAll(msg, "\"", "\"\"");
-                        *outputStream << "\"" << msg << "\"";
-                    } else {
-                        *outputStream << msg;
-                    }
-                    *outputStream << cliOptions.csvSeparator;
-
-                    std::string sourceFile = entry.sourceFile;
-                    needsQuotes = sourceFile.find(cliOptions.csvSeparator) != std::string::npos || sourceFile.find('"') != std::string::npos;
-                    if (needsQuotes) {
-                        Utils::replaceAll(sourceFile, "\"", "\"\"");
-                        *outputStream << "\"" << sourceFile << "\"";
-                    } else {
-                        *outputStream << sourceFile;
+                        bool needsQuotes = value.find(cliOptions.csvSeparator) != std::string::npos || value.find('"') != std::string::npos || value.find('\n') != std::string::npos;
+                        if (needsQuotes) {
+                            Utils::replaceAll(value, "\"", "\"\"");
+                            *outputStream << "\"" << value << "\"";
+                        } else {
+                            *outputStream << value;
+                        }
+                        if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
                     }
                     *outputStream << std::endl;
                  }
@@ -176,58 +249,61 @@ int main(int argc, char *argv[]) {
             });
         }
 
+        ExportSettings exportSettings;
+        exportSettings.useAnsiColors = useColors;
+        exportSettings.separator = cliOptions.csvSeparator;
+        if (cliOptions.prettyPrint) {
+            exportSettings.jsonIndent = 4;
+        }
+
+        auto convertCliFieldsToExportMappings = [&](const std::vector<std::pair<std::string, std::string>>& cliFields) {
+            std::vector<ExportFieldMapping> mappings;
+            for (const auto& fieldPair : cliFields) {
+                ExportFieldMapping mapping;
+                mapping.field = Utils::stringToLogEntryField(fieldPair.first);
+                if (mapping.field == LogEntryField::UNKNOWN) {
+                    // If not a standard field, assume it's a custom field.
+                    mapping.field = LogEntryField::CUSTOM;
+                    mapping.customHeader = fieldPair.first; // The actual name of the custom field
+                } else {
+                    // If it's a standard field, use the alias as customHeader if provided.
+                    if (fieldPair.first != fieldPair.second) {
+                        mapping.customHeader = fieldPair.second;
+                    }
+                }
+                mappings.push_back(mapping);
+            }
+            return mappings;
+        };
+
         if (cliOptions.outputFormat == "text") {
-            for(const auto& entry : filteredEntries) {
-                FormattingOptions fmtOptions;
-                fmtOptions.useColor = useColors;
-                fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
-                *outputStream << analyzer.formatEntry(entry, cliOptions.textOutputFormat, fmtOptions) << std::endl;
-            }
+            exportSettings.format = ExportFormat::PLAINTEXT;
+            exportSettings.textFormatString = cliOptions.textOutputFormat;
+            exportSettings.useAnsiColors = useColors;
         } else if (cliOptions.outputFormat == "csv") {
-            // TODO: Implement configurable CSV fields from cliOptions.csvFields
-            *outputStream << "Timestamp" << cliOptions.csvSeparator << "Level" << cliOptions.csvSeparator << "Message" << cliOptions.csvSeparator << "File\n";
-            for (const auto& entry : filteredEntries) {
-                *outputStream << (entry.timestamp.has_value() ? Utils::formatTimestamp(*entry.timestamp) : "") << cliOptions.csvSeparator
-                              << Utils::logLevelToString(entry.level) << cliOptions.csvSeparator;
-                std::string msg = entry.message;
-                bool needsQuotes = msg.find(cliOptions.csvSeparator) != std::string::npos || msg.find('"') != std::string::npos;
-                if (needsQuotes) {
-                    Utils::replaceAll(msg, "\"", "\"\"");
-                    *outputStream << "\"" << msg << "\"";
-                } else {
-                    *outputStream << msg;
-                }
-                *outputStream << cliOptions.csvSeparator;
-                std::string sourceFile = entry.sourceFile;
-                needsQuotes = sourceFile.find(cliOptions.csvSeparator) != std::string::npos || sourceFile.find('"') != std::string::npos;
-                if (needsQuotes) {
-                    Utils::replaceAll(sourceFile, "\"", "\"\"");
-                    *outputStream << "\"" << sourceFile << "\"";
-                } else {
-                    *outputStream << sourceFile;
-                }
-                *outputStream << "\n";
-            }
+            exportSettings.format = ExportFormat::CSV;
+            exportSettings.fieldsToExport = convertCliFieldsToExportMappings(analyzerSettings.exportSettings.csvFields);
+            exportSettings.includeHeader = true; // Always include header for CSV
         } else if (cliOptions.outputFormat == "json") {
-             json j;
-             if (cliOptions.includeSummary) {
-                 j["totalEntries"] = filteredEntries.size();
-             }
-             j["entries"] = json::array();
-             for (const auto& entry : filteredEntries) {
-                 // TODO: Implement configurable JSON fields (less critical, but good for consistency)
-                 j["entries"].push_back(json{
-                     {"timestamp", entry.timestamp.has_value() ? json(Utils::formatTimestamp(*entry.timestamp)) : json(json::value_t::null)},
-                     {"level", Utils::logLevelToString(entry.level)},
-                     {"message", entry.message},
-                     {"file", entry.sourceFile}
-                 });
-             }
-             if (cliOptions.prettyPrint) {
-                 *outputStream << std::setw(4) << j << std::endl;
-             } else {
-                 *outputStream << j << std::endl;
-             }
+            exportSettings.format = ExportFormat::JSON;
+            exportSettings.fieldsToExport = convertCliFieldsToExportMappings(analyzerSettings.exportSettings.jsonFields);
+        } else if (cliOptions.outputFormat == "xml") {
+            exportSettings.format = ExportFormat::XML;
+            // For XML, if specific fields are not requested, the Exporter will use its default logic.
+            // If cliOptions.jsonFields (used as a generic field specification) contained data for XML,
+            // we could convert it similarly, but for now, rely on Exporter's default.
+        } else {
+             std::cerr << "Error: Unknown output format: " << cliOptions.outputFormat << std::endl;
+             return 1;
+        }
+
+        // Use the Exporter class for all non-text outputs
+        Exporter exporter;
+        try {
+            exporter.exportLogEntries(*outputStream, filteredEntries, exportSettings);
+        } catch (const ExportException& e) {
+            std::cerr << "Error exporting log entries: " << e.what() << std::endl;
+            return 1;
         }
 
         // IStatisticCollector logic
