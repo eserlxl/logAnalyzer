@@ -10,7 +10,7 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 
 ## Project Status
 
-`LogAnalyzer` is under active development. We are continuously adding new features, improving performance, and refining the user experience. While it is stable for general use, expect potential API changes in major releases as the project evolves.
+`LogAnalyzer` is under active development. We are continuously adding new features, improving performance, and refining the user experience. While it is stable for general use, expect potential API changes in major releases as the project evolves. For production use, we recommend using a tagged release for stability.
 
 ## Overview
 
@@ -148,7 +148,7 @@ Next, use CMake to configure and build the project. We recommend an out-of-sourc
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build .
+cmake --build . -- -j$(nproc) # Use -j<number_of_cores> to speed up compilation
 ```
 
 The compiled `LogAnalyzer` executable will be available in the `build/bin` directory.
@@ -273,6 +273,13 @@ tail -f /var/log/app.log | LogAnalyzer --stdin --keyword "error"
 LogAnalyzer system.log --level ERROR --stats top_messages:5
 ```
 
+### Example 7: Tailing a File
+
+```bash
+# Monitor a log file in real-time for new entries containing "critical"
+LogAnalyzer /var/log/app.log --tail --keyword "critical"
+```
+
 ### Time-based Filtering
 
 `LogAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.
@@ -385,40 +392,84 @@ Monitor files for new lines, similar to `tail -f`. Not compatible with `--stdin`
 
 ## Configuration
 
-`LogAnalyzer` can be configured using a JSON file for persistent setups. Use the `--config` option to load a file. Command-line arguments override settings from the configuration file.
+`LogAnalyzer` can be configured using a JSON file for complex or persistent setups. Use the `--config` option to specify a configuration file. Settings provided via command-line arguments will override the corresponding settings in the file.
 
-An example `config.json`:
+The application performs robust validation on startup. If it finds any errors in the configuration file (e.g., a missing required parameter, an invalid value, or a malformed regex), it will print a descriptive error message and exit.
+
+### Example `config.json`
+
+Here is an example demonstrating a more advanced configuration:
 
 ```json
 {
-  "lineParsePattern": "^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$",
+  "lineParsePattern": "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z) \\[(\\w+)\\] \\(tid:(\\d+)\\) (.*) \\{ \"session\": \"([a-f0-9-]+)\" \\}$",
   "fieldMappings": [
     { "field": "timestamp", "groupIndex": 1 },
     { "field": "level", "groupIndex": 2 },
-    { "field": "message", "groupIndex": 3 }
+    { "field": "threadId", "groupIndex": 3 },
+    { "field": "message", "groupIndex": 4 },
+    { "field": "customFields", "groupIndex": 5, "key": "session" }
   ],
   "customLogLevelMappings": {
-    "INFO": "INFO",
-    "WARN": "WARNING",
-    "ERROR": "ERROR"
+    "db_trace": "TRACE",
+    "warn": "WARNING"
   },
-  "logEntryStartPattern": "^\d{4}-\d{2}-\d{2}",
-  "caseSensitiveParsing": false,
   "filterRules": [
-    { "field": "level", "operator": "EQ", "value": "ERROR" }
+    { "field": "level", "operator": "EQUALS", "value": "ERROR" },
+    { "field": "message", "operator": "REGEX_MATCH", "value": "database connection failed" }
   ],
-  // `filterRules` support complex conditions based on log entry fields.
-  // Consult the Doxygen documentation for a full list of supported fields and operators.
   "exportSettings": {
     "format": "json",
-    "fieldsToExport": ["timestamp", "level", "message"],
-    "outputFile": "analysis_results.json"
+    "outputFile": "error_report.json",
+    "fieldsToExport": [
+      { "field": "timestamp" },
+      { "field": "level" },
+      { "field": "message" },
+      { "field": "customFields", "customFieldKey": "session" }
+    ]
   },
   "statisticConfigs": [
-    { "type": "UNIQUE_MESSAGES", "topN": 10 }
+    {
+      "type": "TOP_MESSAGES",
+      "params": { "top_n": "5" }
+    },
+    {
+      "type": "TOP_N_FIELD_VALUES",
+      "params": {
+        "target_field": "customFields",
+        "custom_field_key": "session",
+        "top_n": "10"
+      }
+    },
+    {
+      "type": "FIELD_VALUE_COUNT",
+      "params": { "target_field": "level" }
+    }
   ]
 }
 ```
+
+### Key Configuration Sections
+
+#### `filterRules`
+An array of rule objects that define how to filter log entries. Each rule is an object with:
+-   `field`: The log entry field to check (e.g., `level`, `message`, `customFields`).
+-   `operator`: The comparison operator (e.g., `EQUALS`, `CONTAINS`, `REGEX_MATCH`, `GREATER_THAN`).
+-   `value`: The value to compare against.
+-   `customFieldKey` (optional): Required if `field` is `customFields`.
+
+#### `statisticConfigs`
+An array of objects to configure which statistics to generate. Each object has a `type` and an optional `params` object.
+
+| Type                 | Description                                       | Required `params`                                                                                                 |
+| -------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `LOG_LEVEL_COUNT`    | Counts entries for each log level.                | None                                                                                                              |
+| `TOP_MESSAGES`       | Finds the most frequently occurring messages.     | `top_n`: A positive integer (e.g., `"5"`).                                                                        |
+| `FIELD_VALUE_COUNT`  | Counts unique values for a given field.           | `target_field`: The field to analyze (e.g., `level`). If `customFields`, `custom_field_key` is also required.      |
+| `TOP_N_FIELD_VALUES` | Finds the most frequent values for a given field. | `top_n`: A positive integer.<br>`target_field`: The field to analyze. If `customFields`, `custom_field_key` is also required. |
+| `ENTRY_RATE`         | Calculates the rate of log entries per second.    | None                                                                                                              |
+| `UNIQUE_MESSAGES`    | Counts the number of unique log messages.         | None                                                                                                              |
+
 
 ### Advanced Configuration Features
 
@@ -466,7 +517,7 @@ logAnalyzer/
 ├── examples/                # Example log files and configuration examples.
 ├── include/                 # Public header files for core logic, configuration, filters, and utilities.
 ├── lib/                     # Compiled libraries (static/shared).
-├── logAnalyzer/             # A nested copy of the project, might be a submodule or a backup.
+├── logAnalyzer/             # A nested copy of the project, used for development and testing.
 ├── src/                     # Source code (.cpp files) implementing header functionalities.
 ├── tests/                   # Unit and integration tests.
 ├── tools/                   # Development scripts and utilities.
@@ -514,4 +565,4 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
-This project is licensed under the GNU GENERAL PUBLIC LICENSE Version 3.
+This project is licensed under the terms of the [GPL-3.0 license](LICENSE).

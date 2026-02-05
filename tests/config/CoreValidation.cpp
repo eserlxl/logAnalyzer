@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
-#include "config/Core.h"
+#include "config/Settings.h" // Use direct include
 #include "core/LogTypes.h"
 #include <string>
 #include <vector>
@@ -8,159 +8,184 @@
 #include <optional>
 #include <regex> // For std::regex
 
-struct LogAnalyzerConfigTest : public ::testing::Test {};
-
-TEST_F(LogAnalyzerConfigTest, DefaultRegexPatternCompiles) {
-    ASSERT_NO_THROW({
-        std::regex re(DEFAULT_LOG_REGEX_PATTERN_SV.data(), DEFAULT_LOG_REGEX_PATTERN_SV.size());
-    });
-}
-
-TEST_F(LogAnalyzerConfigTest, ValidateErrorHandling) {
+// Consolidated test fixture for all validation tests
+struct ConfigValidationTest : public ::testing::Test {
     LogAnalyzerSettings settings;
     std::vector<std::string> errors;
 
-    // 1. Invalid regex pattern
+    void SetUp() override {
+        // Start with a known valid state for each test.
+        settings = LogAnalyzerSettings::createDefault();
+    }
+};
+
+TEST_F(ConfigValidationTest, DefaultRegexPatternCompiles) {
+    ASSERT_NO_THROW({
+        std::regex re(settings.lineParsePattern);
+    });
+}
+
+TEST_F(ConfigValidationTest, Validate_InvalidRegexPattern) {
     settings.lineParsePattern = "[invalid regex";
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    ASSERT_THAT(errors[0], testing::HasSubstr("Invalid regex pattern for 'lineParsePattern'"));
-    settings.lineParsePattern = std::string(DEFAULT_LOG_REGEX_PATTERN_SV); // Reset to valid
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("Invalid regex pattern for 'lineParsePattern'"));
+}
 
-    // 2. FieldMapping missing groupIndex
+TEST_F(ConfigValidationTest, Validate_FieldMappingMissingGroupIndex) {
     settings.fieldMappings = {
         FieldMapping(LogEntryField::TIMESTAMP) // Missing groupIndex
     };
-    settings.exportSettings.fieldsToExport = { ExportFieldMapping{LogEntryField::MESSAGE} }; // Ensure exportSettings is valid for standalone validation
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    ASSERT_THAT(errors[0], testing::HasSubstr("groupIndex"));
-    settings.fieldMappings = { FieldMapping{LogEntryField::TIMESTAMP, 1} }; // Valid fieldMappings for next test
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("FieldMapping is missing required 'groupIndex'."));
+}
 
-
-    // 3. FilterRule with UNKNOWN field (operator must be valid now)
+TEST_F(ConfigValidationTest, Validate_FilterRuleWithUnknownField) {
     settings.filterRules = {
         FilterRule{LogEntryField::UNKNOWN, FilterOperator::EQUALS, "ERROR"}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    ASSERT_THAT(errors[0], testing::HasSubstr("FilterRule has an unrecognized field."));
-    settings.filterRules = {}; // Clear for next test
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("FilterRule has an unrecognized field."));
+}
 
-    // 4. ExportSettings with empty fieldsToExport (this is a valid state)
-    settings.exportSettings.fieldsToExport = {};
-    errors = settings.validate();
-    ASSERT_TRUE(errors.empty()); // Should be valid now
-    settings.exportSettings.fieldsToExport = { ExportFieldMapping{LogEntryField::MESSAGE} }; // Reset to valid
-
-    // 5. StatisticConfig with UNKNOWN type
+TEST_F(ConfigValidationTest, Validate_StatisticConfigWithUnknownType) {
     settings.statisticConfigs = {
         StatisticConfig{StatisticType::UNKNOWN}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    ASSERT_THAT(errors[0], testing::HasSubstr("StatisticConfig has an unrecognized type."));
-    settings.statisticConfigs = {}; // Clear for next test
-
-    // Test multiple errors
-    settings.lineParsePattern = "[invalid regex"; // Invalid regex
-    settings.fieldMappings = { FieldMapping{LogEntryField::TIMESTAMP, std::nullopt} }; // Missing groupIndex
-    // exportSettings is now valid when empty
-    settings.filterRules = { FilterRule{LogEntryField::UNKNOWN, FilterOperator::EQUALS, "VAL"} }; // Unrecognized field. Operator will be valid.
-    settings.statisticConfigs = { StatisticConfig{StatisticType::UNKNOWN} }; // Unknown statistic type
-    errors = settings.validate();
-    ASSERT_EQ(errors.size(), 4); // 1 regex, 1 fieldMapping, 1 filterRule, 1 statisticConfigs
-    ASSERT_THAT(errors[0], testing::HasSubstr("Invalid regex pattern"));
-    ASSERT_THAT(errors[1], testing::HasSubstr("FieldMapping is missing required 'groupIndex'."));
-    ASSERT_THAT(errors[2], testing::HasSubstr("FilterRule has an unrecognized field."));
-    ASSERT_THAT(errors[3], testing::HasSubstr("StatisticConfig has an unrecognized type."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("StatisticConfig has an unrecognized type."));
 }
 
-
-struct ConfigValidationTest : public ::testing::Test {
-    LogAnalyzerSettings settings;
-    std::vector<std::string> errors;
-};
+TEST_F(ConfigValidationTest, Validate_MultipleErrors) {
+    settings.lineParsePattern = "[invalid regex";
+    settings.fieldMappings = { FieldMapping{LogEntryField::TIMESTAMP, std::nullopt} };
+    settings.filterRules = { FilterRule{LogEntryField::UNKNOWN, FilterOperator::EQUALS, "VAL"} };
+    settings.statisticConfigs = { StatisticConfig{StatisticType::UNKNOWN} };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 4);
+    EXPECT_THAT(errors, testing::Contains(testing::HasSubstr("Invalid regex pattern")));
+    EXPECT_THAT(errors, testing::Contains(testing::HasSubstr("FieldMapping is missing required 'groupIndex'.")));
+    EXPECT_THAT(errors, testing::Contains(testing::HasSubstr("FilterRule has an unrecognized field.")));
+    EXPECT_THAT(errors, testing::Contains(testing::HasSubstr("StatisticConfig has an unrecognized type.")));
+}
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopMessages_MissingTopN) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::TOP_MESSAGES} // Missing "top_n"
+        StatisticConfig{StatisticType::TOP_MESSAGES}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Statistic 'TOP_MESSAGES' requires a 'top_n' parameter."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'top_n' parameter"));
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_MissingTopN) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{"target_field", "level"}}} // Missing "top_n"
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{std::string(config_keys::TARGET_FIELD), "level"}}}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Statistic 'TOP_N_FIELD_VALUES' requires a 'top_n' parameter."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'top_n' parameter."));
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_InvalidTopN) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::TOP_MESSAGES, {{"top_n", "abc"}}} // invalid integer
+        StatisticConfig{StatisticType::TOP_MESSAGES, {{std::string(config_keys::TOP_N), "abc"}}}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Parameter 'top_n' for statistic 'TOP_MESSAGES' must be a positive integer."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("must be a positive integer."));
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_ZeroTopN) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::TOP_MESSAGES, {{"top_n", "0"}}} // Zero
+        StatisticConfig{StatisticType::TOP_MESSAGES, {{std::string(config_keys::TOP_N), "0"}}}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Parameter 'top_n' for statistic 'TOP_MESSAGES' must be a positive integer."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("must be a positive integer."));
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_NegativeTopN) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::TOP_MESSAGES, {{"top_n", "-1"}}} // Negative
+        StatisticConfig{StatisticType::TOP_MESSAGES, {{std::string(config_keys::TOP_N), "-1"}}}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Parameter 'top_n' for statistic 'TOP_MESSAGES' must be a positive integer."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("must be a positive integer."));
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCount_MissingTargetField) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::FIELD_VALUE_COUNT} // Missing "target_field"
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Statistic 'FIELD_VALUE_COUNT' requires a 'target_field' parameter."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'target_field' parameter."));
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_MissingTargetField) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{"top_n", "5"}}} // Missing "target_field"
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{std::string(config_keys::TOP_N), "5"}}}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Statistic 'TOP_N_FIELD_VALUES' requires a 'target_field' parameter."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'target_field' parameter."));
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_InvalidTargetField) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "non_existent_field"}}}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("Invalid 'target_field' value 'non_existent_field'"));
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_CaseInsensitiveTargetField) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {
+            {std::string(config_keys::TARGET_FIELD), "LeVeL"},
+            {std::string(config_keys::TOP_N), "5"}
+        }}
+    };
+    errors = settings.validate();
+    EXPECT_TRUE(errors.empty()) << "Validation should pass with case-insensitive target_field. Error: " << (errors.empty() ? "" : errors[0]);
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCount_MissingCustomFieldKey) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{"target_field", "customFields"}}} // Missing "custom_field_key"
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "customFields"}}}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Statistic 'FIELD_VALUE_COUNT' with target_field 'customFields' requires a 'custom_field_key' parameter."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'custom_field_key' parameter."));
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_MissingCustomFieldKey) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{"target_field", "customFields"}, {"top_n", "5"}}} // Missing "custom_field_key"
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {
+            {std::string(config_keys::TARGET_FIELD), "customFields"}, 
+            {std::string(config_keys::TOP_N), "5"}
+        }}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
-    EXPECT_THAT(errors[0], testing::HasSubstr("Statistic 'TOP_N_FIELD_VALUES' with target_field 'customFields' requires a 'custom_field_key' parameter."));
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'custom_field_key' parameter."));
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCount_EmptyCustomFieldKey) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {
+            {std::string(config_keys::TARGET_FIELD), "customFields"},
+            {std::string(config_keys::CUSTOM_FIELD_KEY), ""}
+        }}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("'custom_field_key' parameter cannot be empty."));
 }
 
 TEST_F(ConfigValidationTest, ValidateFilterRule_InvalidRegex) {
@@ -168,15 +193,21 @@ TEST_F(ConfigValidationTest, ValidateFilterRule_InvalidRegex) {
         {LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, "[invalid regex"}
     };
     errors = settings.validate();
-    ASSERT_FALSE(errors.empty());
+    ASSERT_EQ(errors.size(), 1);
     EXPECT_THAT(errors[0], testing::HasSubstr("Invalid regex pattern in FilterRule"));
 }
 
-TEST_F(LogAnalyzerConfigTest, ValidateValidSettings) {
-    LogAnalyzerSettings settings;
-    // Default constructor already sets a valid regex (std::string(DEFAULT_LOG_REGEX_PATTERN_SV))
-    // and valid field mappings.
+TEST_F(ConfigValidationTest, ValidateFilterRule_ValueTypeMismatch_GreaterThanNotANumber) {
+    settings.filterRules.push_back(
+        {LogEntryField::ID, FilterOperator::GREATER_THAN, "abc"}
+    );
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a numeric value, but got 'abc'"));
+}
 
+TEST_F(ConfigValidationTest, ValidateValidSettings) {
+    // Settings are already created with createDefault() in SetUp()
     settings.exportSettings.fieldsToExport = {
         ExportFieldMapping{LogEntryField::TIMESTAMP},
         ExportFieldMapping{LogEntryField::MESSAGE}
@@ -186,15 +217,15 @@ TEST_F(LogAnalyzerConfigTest, ValidateValidSettings) {
     };
     settings.statisticConfigs = {
         StatisticConfig{StatisticType::UNIQUE_MESSAGES},
-        StatisticConfig{StatisticType::TOP_MESSAGES, {{"top_n", "5"}}},
+        StatisticConfig{StatisticType::TOP_MESSAGES, {{std::string(config_keys::TOP_N), "5"}}},
         StatisticConfig{StatisticType::ENTRY_RATE},
         StatisticConfig{StatisticType::LOG_LEVEL_COUNT},
-        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{"target_field", "level"}}},
-        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{"target_field", "message"}, {"top_n", "10"}}},
-        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{"target_field", "customFields"}, {"custom_field_key", "session"}}},
-        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{"target_field", "customFields"}, {"custom_field_key", "session"}, {"top_n", "3"}}}
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "level"}}},
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{std::string(config_keys::TARGET_FIELD), "message"}, {std::string(config_keys::TOP_N), "10"}}},
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "customFields"}, {std::string(config_keys::CUSTOM_FIELD_KEY), "session"}}},
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{std::string(config_keys::TARGET_FIELD), "customFields"}, {std::string(config_keys::CUSTOM_FIELD_KEY), "session"}, {std::string(config_keys::TOP_N), "3"}}}
     };
 
-    std::vector<std::string> errors = settings.validate();
+    errors = settings.validate();
     ASSERT_TRUE(errors.empty()) << "Validation errors: " << (errors.empty() ? "" : errors[0]);
 }

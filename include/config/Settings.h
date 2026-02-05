@@ -19,6 +19,12 @@
 // to avoid circular dependency with LogAnalyzer.h
 constexpr std::string_view DEFAULT_LOG_REGEX_PATTERN_INTERNAL = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$)";
 
+namespace config_keys {
+    constexpr std::string_view TOP_N = "top_n";
+    constexpr std::string_view TARGET_FIELD = "target_field";
+    constexpr std::string_view CUSTOM_FIELD_KEY = "custom_field_key";
+} // namespace config_keys
+
 struct LogAnalyzerSettings {
     // The regex pattern used to parse individual log lines.
     std::string lineParsePattern;

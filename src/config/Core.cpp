@@ -405,12 +405,22 @@ LogAnalyzerSettings LogAnalyzerSettings::createDefault() {
 std::vector<std::string> LogAnalyzerSettings::validate() const {
     std::vector<std::string> errors;
 
+    // Validate regex patterns
     try {
         std::regex re(lineParsePattern);
     } catch (const std::regex_error& e) {
         errors.push_back("Invalid regex pattern for 'lineParsePattern': " + std::string(e.what()));
     }
 
+    if (logEntryStartPattern) {
+        try {
+            std::regex re(*logEntryStartPattern);
+        } catch (const std::regex_error& e) {
+            errors.push_back("Invalid regex pattern for 'logEntryStartPattern': " + std::string(e.what()));
+        }
+    }
+
+    // Validate field mappings
     if (fieldMappings.empty()) {
         errors.push_back("'fieldMappings' cannot be empty for parsing to work.");
     }
@@ -420,10 +430,24 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
         }
     }
 
+    // Validate filter rules
     for (const auto& fr : filterRules) {
         if (fr.field == LogEntryField::UNKNOWN) {
             errors.push_back("FilterRule has an unrecognized field.");
         }
+
+        // Validate value type for numeric operators
+        if (fr.op == FilterOperator::GREATER_THAN || fr.op == FilterOperator::LESS_THAN) {
+            if (fr.field == LogEntryField::THREAD_ID) {
+                try {
+                    std::stoll(fr.value);
+                } catch (const std::invalid_argument&) {
+                    errors.push_back("FilterRule operator for field '" + Utils::logEntryFieldToString(fr.field) +
+                                     "' requires a numeric value, but got '" + fr.value + "'.");
+                }
+            }
+        }
+
         if (fr.op == FilterOperator::REGEX_MATCH) {
             try {
                 std::regex re(fr.value);
@@ -433,7 +457,10 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
         }
     }
 
-
+    // Validate statistic configurations
+    const std::set<std::string, LogAnalyzerInternal::ci_less> validTargetFields = {
+        "timestamp", "level", "message", "source_file", "lineNumber", "pid", "tid", "customFields"
+    };
 
     for (const auto& sc : statisticConfigs) {
         if (sc.type == StatisticType::UNKNOWN) {
@@ -441,13 +468,12 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
             continue;
         }
 
-        auto it_top_n = sc.params.find("top_n");
+        std::string typeStr = Utils::statisticTypeToString(sc.type);
+        auto it_top_n = sc.params.find(std::string(config_keys::TOP_N));
         bool has_top_n = (it_top_n != sc.params.end());
         
-        auto it_target_field = sc.params.find("target_field");
+        auto it_target_field = sc.params.find(std::string(config_keys::TARGET_FIELD));
         bool has_target_field = (it_target_field != sc.params.end());
-
-        std::string typeStr = Utils::statisticTypeToString(sc.type);
 
         if (sc.type == StatisticType::TOP_MESSAGES || sc.type == StatisticType::TOP_N_FIELD_VALUES) {
             if (!has_top_n) {
@@ -466,10 +492,17 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
         if (sc.type == StatisticType::FIELD_VALUE_COUNT || sc.type == StatisticType::TOP_N_FIELD_VALUES) {
             if (!has_target_field) {
                 errors.push_back("Statistic '" + typeStr + "' requires a 'target_field' parameter.");
-            } else if (it_target_field->second == "customFields") {
-                auto it_custom_field_key = sc.params.find("custom_field_key");
-                if (it_custom_field_key == sc.params.end()) {
-                    errors.push_back("Statistic '" + typeStr + "' with target_field 'customFields' requires a 'custom_field_key' parameter.");
+            } else {
+                const std::string& targetField = it_target_field->second;
+                if (validTargetFields.find(targetField) == validTargetFields.end()) {
+                    errors.push_back("Invalid 'target_field' value '" + targetField + "' for statistic '" + typeStr + "'.");
+                } else if (targetField == "customFields") {
+                    auto it_custom_field_key = sc.params.find(std::string(config_keys::CUSTOM_FIELD_KEY));
+                    if (it_custom_field_key == sc.params.end()) {
+                        errors.push_back("Statistic '" + typeStr + "' with target_field 'customFields' requires a 'custom_field_key' parameter.");
+                    } else if (it_custom_field_key->second.empty()) {
+                        errors.push_back("'custom_field_key' parameter cannot be empty.");
+                    }
                 }
             }
         }
