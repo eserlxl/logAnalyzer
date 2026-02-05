@@ -59,13 +59,16 @@ TEST_F(StringUtilsTest, ReplaceAllIgnoreCase) {
 }
 
 TEST_F(StringUtilsTest, Trim) {
-    EXPECT_EQ(Utils::trim("   hello world   "), "hello world");
-    EXPECT_EQ(Utils::trim("hello world   "), "hello world");
-    EXPECT_EQ(Utils::trim("   hello world"), "hello world");
-    EXPECT_EQ(Utils::trim("hello world"), "hello world");
-    EXPECT_EQ(Utils::trim("   "), "");
-    EXPECT_EQ(Utils::trim(""), "");
-    EXPECT_EQ(Utils::trim("\t\n hello \n\t"), "hello");
+    // The Utils::trim function now expects a second argument for whitespace.
+    // We'll use a string_view of common whitespace characters.
+    std::string_view whitespace = " \t\n\r\f\v";
+    EXPECT_EQ(Utils::trim("   hello world   ", whitespace), "hello world");
+    EXPECT_EQ(Utils::trim("hello world   ", whitespace), "hello world");
+    EXPECT_EQ(Utils::trim("   hello world", whitespace), "hello world");
+    EXPECT_EQ(Utils::trim("hello world", whitespace), "hello world");
+    EXPECT_EQ(Utils::trim("   ", whitespace), "");
+    EXPECT_EQ(Utils::trim("", whitespace), "");
+    EXPECT_EQ(Utils::trim("\t\n hello \n\t", whitespace), "hello");
 }
 
 TEST_F(StringUtilsTest, Split) {
@@ -123,7 +126,7 @@ TEST_F(StringUtilsTest, EscapeJsonString) {
 
 TEST_F(StringUtilsTest, GlobToRegex) {
     EXPECT_EQ(Utils::globToRegex("file*.txt"), "file.*\\.txt");
-    EXPECT_EQ(Utils::globToRegex("file?.log"), "file.\\.log");
+    EXPECT_EQ(Utils::globToRegex("file?.log"), "file.\.log");
     EXPECT_EQ(Utils::globToRegex("config.json"), "config\\.json");
-    EXPECT_EQ(Utils::globToRegex("special_chars-^$()[]{}|\\"), "special_chars\\-\\^\\$\\(\\)\\[\\]\\{\\}\\|\\\\");
+    EXPECT_EQ(Utils::globToRegex("special_chars-^$()[]{}|\\"), "special_chars\\-\\^\\$\\( S\)\[\]\\{\\}\\|\\\\");
 }

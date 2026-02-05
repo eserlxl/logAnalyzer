@@ -1,3 +1,4 @@
+#include "utils/String.h" // Explicitly include String.h
 #include "utils/Core.h" // Includes all necessary declarations for Utils namespace
 #include <algorithm>
 #include <string>
@@ -77,6 +78,36 @@ std::string toUpper(const std::string& str) {
     return upperStr;
 }
 
+bool caseInsensitiveEquals(const std::string& s1, const std::string& s2) {
+    return toLower(s1) == toLower(s2);
+}
+
+bool caseInsensitiveSearch(const std::string& text, const std::string& pattern) {
+    std::string lowerText = toLower(text);
+    std::string lowerPattern = toLower(pattern);
+    return lowerText.find(lowerPattern) != std::string::npos;
+}
+
+[[deprecated("Use caseInsensitiveStarts instead.")]]
+bool startsWithIgnoreCase(const std::string& text, const std::string& prefix) {
+    if (prefix.length() > text.length()) return false;
+    return toLower(text.substr(0, prefix.length())) == toLower(prefix);
+}
+
+[[deprecated("Use caseInsensitiveEnds instead.")]]
+bool endsWithIgnoreCase(const std::string& text, const std::string& suffix) {
+    if (suffix.length() > text.length()) return false;
+    return toLower(text.substr(text.length() - suffix.length())) == toLower(suffix);
+}
+
+bool caseInsensitiveStarts(const std::string& text, const std::string& prefix) {
+    return startsWithIgnoreCase(text, prefix);
+}
+
+bool caseInsensitiveEnds(const std::string& text, const std::string& suffix) {
+    return endsWithIgnoreCase(text, suffix);
+}
+
 std::string escapeJsonString(const std::string& input) {
     std::string output;
     output.reserve(input.length()); // Reserve at least the original length
@@ -138,3 +169,4 @@ std::string globToRegex(const std::string& globPattern) {
 }
 
 } // namespace Utils
+

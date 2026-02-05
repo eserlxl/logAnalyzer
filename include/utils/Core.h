@@ -58,7 +58,7 @@ std::string getDirectory(const std::string& filePath);
 // --- String Utilities (from UtilsString.cpp) ---
 void replaceAll(std::string &str, const std::string &from, const std::string &to);
 void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to);
-std::string trim(const std::string& str, std::string_view whitespace = " \t\n\r\f\v");
+std::string trim(const std::string& str, std::string_view whitespace);
 std::vector<std::string> split(const std::string& str, char delimiter);
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);

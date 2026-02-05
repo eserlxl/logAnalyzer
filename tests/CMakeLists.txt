@@ -118,6 +118,7 @@ set(TEST_SOURCES
     "filter/CoreUnitAdvanced.cpp"
     "filter/CoreUnitBasic.cpp"
     "filter/CoreUnitField.cpp"
+    "filter/Expression_Advanced.cpp"
     "stats/Statistics.cpp"
     "utils/Time.cpp"
     "utils/Enum.cpp"

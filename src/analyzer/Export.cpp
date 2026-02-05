@@ -64,8 +64,7 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
     const std::string entryIndent = prettyPrint ? "    " : "";
 
     // Always output a root JSON object.
-    out << "{"
- << newline;
+    out << "{" << newline;
     // Ensure "summary" root element is always present for consistency.
     // It will contain at least "count".
     out << indent << "\"summary\":{\"count\": " << filtered.size() << "}," << newline;
@@ -73,42 +72,67 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
 
     for (size_t i = 0; i < filtered.size(); ++i) {
         const auto& entry = filtered[i];
+        
+        // Use nlohmann::json to construct the entry object for robustness
+        nlohmann::json entryJson;
+
+        if (entry.id.has_value()) {
+            entryJson["ID"] = entry.id.value();
+        } else {
+            entryJson["ID"] = nullptr;
+        }
+
         std::string timestampStr;
         if (entry.timestamp.has_value()) {
             timestampStr = Utils::formatTimestamp(entry.timestamp.value(), timestampFormat);
-        } // else: timestampStr remains empty
-
-        out << entryIndent; // Always use entryIndent for log entries
-        out << "{";
-        out << "\"ID\":\"" << entry.id << "\","; // Export ID
-        if (entry.timestamp.has_value()) {
-            out << "\"TIMESTAMP\":\"" << timestampStr << "\",";
+            entryJson["TIMESTAMP"] = timestampStr;
         } else {
-            out << "\"TIMESTAMP\":\"" << "\","; // Export empty string if no timestamp
+            entryJson["TIMESTAMP"] = nullptr;
         }
-        out << "\"LEVEL\":\"" << Utils::logLevelToString(entry.level) << "\",";
-        out << "\"MESSAGE\":\"" << Utils::escapeJsonString(entry.message) << "\",";
-        out << "\"SOURCE_FILE\":\"" << Utils::escapeJsonString(entry.sourceFile) << "\","; // Changed key to SOURCE_FILE
-        out << "\"LINE_NUMBER\":\"" << entry.sourceLineNumber << "\""; // Export LINE_NUMBER
+        
+        entryJson["LEVEL"] = Utils::logLevelToString(entry.level);
+        entryJson["MESSAGE"] = entry.message;
+        entryJson["SOURCE_FILE"] = entry.sourceFile;
+        
+        if (entry.sourceLineNumber.has_value()) {
+            entryJson["LINE_NUMBER"] = entry.sourceLineNumber.value();
+        } else {
+            entryJson["LINE_NUMBER"] = nullptr;
+        }
+
+        if (entry.threadId.has_value()) {
+            entryJson["THREAD_ID"] = entry.threadId.value();
+        } else {
+            entryJson["THREAD_ID"] = nullptr;
+        }
+
+        if (entry.module.has_value()) {
+            entryJson["MODULE"] = entry.module.value();
+        } else {
+            entryJson["MODULE"] = nullptr;
+        }
+
+        if (entry.host.has_value()) {
+            entryJson["HOST"] = entry.host.value();
+        } else {
+            entryJson["HOST"] = nullptr;
+        }
 
         // Export custom fields
         if (!entry.customFields.empty()) {
-            out << ", \"CUSTOM_FIELDS\": {";
-            bool firstCustomField = true;
+            nlohmann::json customFieldsJson;
             for (const auto& pair : entry.customFields) {
-                if (!firstCustomField) {
-                    out << ",";
-                }
-                out << "\"" << Utils::escapeJsonString(pair.first) << "\":\"" << Utils::escapeJsonString(pair.second) << "\"";
-                firstCustomField = false;
+                customFieldsJson[Utils::escapeJsonString(pair.first)] = Utils::escapeJsonString(pair.second);
             }
-            out << "}";
+            entryJson["CUSTOM_FIELDS"] = customFieldsJson;
         }
-        out << "}";
-        if (i < filtered.size() - 1) {
-            out << ",";
+
+        // Output the constructed JSON object
+        if (prettyPrint) {
+            out << entryJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << (i < filtered.size() - 1 ? "," : "") << newline;
+        } else {
+            out << entryJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << (i < filtered.size() - 1 ? "," : "") << newline;
         }
-        out << newline;
     }
 
     out << indent << "]" << newline;

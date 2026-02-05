@@ -514,8 +514,12 @@ std::string LogAnalyzer::formatEntry(const LogEntry& entry, std::string_view for
     }
     
     Utils::replaceAll(formattedString, "{message}", entry.message);
+    Utils::replaceAll(formattedString, "{id}", entry.id.has_value() ? std::to_string(entry.id.value()) : "");
     Utils::replaceAll(formattedString, "{sourceFile}", entry.sourceFile);
-    Utils::replaceAll(formattedString, "{id}", std::to_string(entry.id));
+    Utils::replaceAll(formattedString, "{lineNumber}", entry.sourceLineNumber.has_value() ? std::to_string(entry.sourceLineNumber.value()) : "");
+    Utils::replaceAll(formattedString, "{threadId}", entry.threadId.has_value() ? entry.threadId.value() : "");
+    Utils::replaceAll(formattedString, "{module}", entry.module.has_value() ? entry.module.value() : "");
+    Utils::replaceAll(formattedString, "{host}", entry.host.has_value() ? entry.host.value() : "");
 
     if (options.includeStructuredFields && !entry.customFields.empty()) {
         std::ostringstream ss;

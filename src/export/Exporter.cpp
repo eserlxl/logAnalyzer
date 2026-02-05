@@ -91,7 +91,11 @@ void Exporter::exportAsJson(
                 // The key should always be valid here.
                 switch (fieldMapping.field) {
                     case LogEntryField::ID:
-                        entryJson[key] = entry.id; // Assign as integer
+                        if (entry.id.has_value()) {
+                            entryJson[key] = entry.id.value();
+                        } else {
+                            entryJson[key] = json::value_t::null;
+                        }
                         break;
                     case LogEntryField::TIMESTAMP: {
                         if (entry.timestamp.has_value()) {
@@ -117,21 +121,32 @@ void Exporter::exportAsJson(
                         entryJson[key] = entry.sourceFile; // Always assign, even if empty
                         break;
                     case LogEntryField::LINE_NUMBER:
-                        entryJson[key] = entry.sourceLineNumber; // Always assign, even if zero
+                        if (entry.sourceLineNumber.has_value()) {
+                            entryJson[key] = entry.sourceLineNumber.value();
+                        } else {
+                            entryJson[key] = json::value_t::null;
+                        }
                         break;
-                    // For other standard fields that might be explicitly requested, ensure they are added
                     case LogEntryField::THREAD_ID:
-                        // Assign default/empty value if not present in LogEntry, else actual value.
-                        // For now, LogEntry doesn't have a direct thread_id field, so assume empty.
-                        entryJson[key] = ""; 
+                        if (entry.threadId.has_value()) {
+                            entryJson[key] = entry.threadId.value();
+                        } else {
+                            entryJson[key] = json::value_t::null;
+                        }
                         break;
                     case LogEntryField::MODULE:
-                        // LogEntry doesn't have a direct module field, assume empty.
-                        entryJson[key] = "";
+                        if (entry.module.has_value()) {
+                            entryJson[key] = entry.module.value();
+                        } else {
+                            entryJson[key] = json::value_t::null;
+                        }
                         break;
                     case LogEntryField::HOST:
-                        // LogEntry doesn't have a direct host field, assume empty.
-                        entryJson[key] = "";
+                        if (entry.host.has_value()) {
+                            entryJson[key] = entry.host.value();
+                        } else {
+                            entryJson[key] = json::value_t::null;
+                        }
                         break;
                     case LogEntryField::STRUCTURED_FIELD:
                         // Structured fields need special handling for parsing.
@@ -260,7 +275,11 @@ void Exporter::exportAsCsv(
 
             switch (fieldMapping.field) {
                 case LogEntryField::ID:
-                    value_str = std::to_string(entry.id);
+                    if (entry.id.has_value()) {
+                        value_str = std::to_string(entry.id.value());
+                    } else {
+                        value_str = "";
+                    }
                     is_numeric_field = true;
                     break;
                 case LogEntryField::TIMESTAMP:
@@ -292,14 +311,36 @@ void Exporter::exportAsCsv(
                     value_str = entry.sourceFile;
                     break;
                 case LogEntryField::LINE_NUMBER:
-                    value_str = std::to_string(entry.sourceLineNumber);
+                    if (entry.sourceLineNumber.has_value()) {
+                        value_str = std::to_string(entry.sourceLineNumber.value());
+                    } else {
+                        value_str = "";
+                    }
                     is_numeric_field = true;
                     break;
-                case LogEntryField::UNKNOWN:
                 case LogEntryField::THREAD_ID:
+                    if (entry.threadId.has_value()) {
+                        value_str = entry.threadId.value();
+                    } else {
+                        value_str = "";
+                    }
+                    break;
                 case LogEntryField::MODULE:
+                    if (entry.module.has_value()) {
+                        value_str = entry.module.value();
+                    } else {
+                        value_str = "";
+                    }
+                    break;
                 case LogEntryField::HOST:
+                    if (entry.host.has_value()) {
+                        value_str = entry.host.value();
+                    } else {
+                        value_str = "";
+                    }
+                    break;
                 case LogEntryField::STRUCTURED_FIELD:
+                case LogEntryField::UNKNOWN:
                 default:
                     value_str = ""; // For unhandled or unknown fields, export an empty string
                     break;
@@ -374,7 +415,7 @@ std::string Exporter::formatEntryForText(
     // Substitute {level} with the potentially colored string
     Utils::replaceAll(result, "{level}", finalLevelStr);
     // Substitute other placeholders
-    Utils::replaceAll(result, "{id}", std::to_string(entry.id));
+    Utils::replaceAll(result, "{id}", entry.id.has_value() ? std::to_string(entry.id.value()) : "");
     Utils::replaceAll(result, "{timestamp}", entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : "");
     Utils::replaceAll(result, "{message}", entry.message);
 

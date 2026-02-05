@@ -62,14 +62,15 @@ enum class FilterLogicalOperator : uint8_t {
 
 // Enum to indicate how a filter value should be interpreted.
 enum class FilterValueType : uint8_t {
-    STRING = 0,
-    INT = 1,
-    DOUBLE = 2,
-    BOOL = 3,
-    DATETIME = 4,
-    AUTO = 5,     // Infer the type from the value's syntax (New).
-    VERSION = 6,  // Treat value as a semantic version string (New).
-    IP_ADDRESS = 7 // Treat value as an IPv4/IPv6 address (New).
+    UNKNOWN = 0,  // Default or unhandled type, implies string comparison
+    STRING = 1,
+    INT = 2,
+    DOUBLE = 3,
+    BOOL = 4,
+    DATETIME = 5,
+    AUTO = 6,     // Infer the type from the value's syntax (New).
+    VERSION = 7,  // Treat value as a semantic version string (New).
+    IP_ADDRESS = 8 // Treat value as an IPv4/IPv6 address (New).
 };
 
 #endif // FILTER_TYPES_H

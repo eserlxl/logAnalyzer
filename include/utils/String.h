@@ -15,8 +15,10 @@ std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
 bool caseInsensitiveEquals(const std::string& s1, const std::string& s2);
 bool caseInsensitiveSearch(const std::string& text, const std::string& pattern);
-bool startsWithIgnoreCase(const std::string& text, const std::string& prefix);
-bool endsWithIgnoreCase(const std::string& text, const std::string& suffix);
+bool startsWithIgnoreCase(const std::string& text, const std::string& prefix); // Deprecated: Use caseInsensitiveStarts
+bool endsWithIgnoreCase(const std::string& text, const std::string& suffix);   // Deprecated: Use caseInsensitiveEnds
+bool caseInsensitiveStarts(const std::string& text, const std::string& prefix);
+bool caseInsensitiveEnds(const std::string& text, const std::string& suffix);
 std::string escapeJsonString(const std::string& input);
 std::string globToRegex(const std::string& globPattern);
 

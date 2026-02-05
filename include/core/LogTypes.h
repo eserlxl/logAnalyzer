@@ -216,37 +216,40 @@ struct TimeGap {
 };
 
 struct LogEntry {
-  size_t id = std::numeric_limits<size_t>::max(); // Unique identifier for each log entry
+  std::optional<size_t> id; // Unique identifier for each log entry
   std::string sourceFile; // The file from which this entry was read
-  size_t sourceLineNumber = 0; // New: Line number in the source file
+  std::optional<size_t> sourceLineNumber; // New: Line number in the source file
   std::optional<std::chrono::system_clock::time_point> timestamp;
   LogLevel level;
-              std::string message;
-              std::map<std::string, std::string> customFields;
-              std::vector<ErrorCode::Error> parsingErrors; // Added to store parsing errors
+  std::string message;
+  std::optional<std::string> threadId; // New: Direct member for thread ID
+  std::optional<std::string> module;   // New: Direct member for module
+  std::optional<std::string> host;     // New: Direct member for host
+  std::map<std::string, std::string> customFields;
+  std::vector<ErrorCode::Error> parsingErrors; // Added to store parsing errors
           
-              // Helper to check if any parsing errors occurred
-              bool hasParsingErrors() const {
-                  return !parsingErrors.empty();
-              }
+  // Helper to check if any parsing errors occurred
+  bool hasParsingErrors() const {
+      return !parsingErrors.empty();
+  }
           
-              // Helper to get all error messages concatenated
-              std::string getParsingErrorsAsString() const {
-                  std::string all_errors;
-                  for (const auto& err : parsingErrors) {
-                      if (!all_errors.empty()) {
-                          all_errors += "; ";
-                      }
-                      all_errors += err.message;
-                  }
-                  return all_errors;
-              } // Changed from structuredFields to customFields, to align with design and allow for any custom data
-                    // Previously structuredFields, now intended for advanced text output formatting
-  // The 'structuredFields' was already a map<string, string>, so the change is semantic and name-based.
-
+  // Helper to get all error messages concatenated
+  std::string getParsingErrorsAsString() const {
+      std::string all_errors;
+      for (const auto& err : parsingErrors) {
+          if (!all_errors.empty()) {
+              all_errors += "; ";
+          }
+          all_errors += err.message;
+      }
+      return all_errors;
+  }
   bool operator==(const LogEntry &other) const {
     return id == other.id && timestamp == other.timestamp &&
            level == other.level && message == other.message &&
+           threadId == other.threadId && // Compare new members
+           module == other.module &&     // Compare new members
+           host == other.host &&         // Compare new members
            customFields == other.customFields;
   }
 };

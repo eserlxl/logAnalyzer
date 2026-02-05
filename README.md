@@ -487,8 +487,10 @@ logAnalyzer/
 │   ├── stats/
 │   │   └── Statistics.h
 │   └── utils/
+│       ├── IpAddress.h
 │       ├── String.h
-│       └── Time.h
+│       ├── Time.h
+│       └── Version.h
 ├── lib/                     # Compiled libraries (static/shared).
 ├── src/                     # Source code (.cpp files) implementing header functionalities.
 │   ├── main.cpp             # Application entry point and CLI orchestration.
