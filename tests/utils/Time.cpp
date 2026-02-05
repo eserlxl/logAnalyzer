@@ -25,33 +25,32 @@ TEST(UtilsTime, ParseDuration) {
     using namespace Utils;
 
     // Test valid durations
-    EXPECT_EQ(parseDuration("10s").value(), std::chrono::seconds(10));
-    EXPECT_EQ(parseDuration("5m").value(), std::chrono::minutes(5));
-    EXPECT_EQ(parseDuration("2h").value(), std::chrono::hours(2));
-    EXPECT_EQ(parseDuration("1d").value(), std::chrono::days(1));
+    EXPECT_EQ(parseDuration("10s", false).value(), std::chrono::seconds(10));
+    EXPECT_EQ(parseDuration("5m", false).value(), std::chrono::minutes(5));
+    EXPECT_EQ(parseDuration("2h", false).value(), std::chrono::hours(2));
+    EXPECT_EQ(parseDuration("1d", false).value(), std::chrono::days(1));
 
     // Test extended units (ms, us, w, M, y)
-    // Values smaller than a second should be truncated to 0 seconds
-    EXPECT_EQ(parseDuration("500ms", true).value(), std::chrono::seconds(0));
-    EXPECT_EQ(parseDuration("999ms", true).value(), std::chrono::seconds(0));
+    EXPECT_EQ(parseDuration("500ms", true).value(), std::chrono::milliseconds(500));
+    EXPECT_EQ(parseDuration("999ms", true).value(), std::chrono::milliseconds(999));
     EXPECT_EQ(parseDuration("1000ms", true).value(), std::chrono::seconds(1));
-    EXPECT_EQ(parseDuration("500us", true).value(), std::chrono::seconds(0));
+    EXPECT_EQ(parseDuration("500us", true).value(), std::chrono::microseconds(500));
     EXPECT_EQ(parseDuration("1w", true).value(), std::chrono::days(7));
     EXPECT_EQ(parseDuration("1M", true).value(), std::chrono::days(30)); // Approximate month
     EXPECT_EQ(parseDuration("1y", true).value(), std::chrono::days(365)); // Approximate year
 
     // Test invalid formats
-    EXPECT_FALSE(parseDuration("10x").has_value());
-    EXPECT_FALSE(parseDuration("s").has_value());
-    EXPECT_FALSE(parseDuration("1000").has_value());
-    EXPECT_FALSE(parseDuration("10s extra").has_value());
+    EXPECT_FALSE(parseDuration("10x", false).has_value());
+    EXPECT_FALSE(parseDuration("s", false).has_value());
+    EXPECT_FALSE(parseDuration("1000", false).has_value());
+    EXPECT_FALSE(parseDuration("10s extra", false).has_value());
 
     // Test stoll out_of_range
     // Assuming a very large number that would exceed long long capacity
     // This might need adjustment based on actual LLONG_MAX, but testing the concept
     std::string max_ll_str(std::to_string(LLONG_MAX));
     std::string too_large_str = max_ll_str + "0";
-    EXPECT_FALSE(parseDuration(too_large_str + "s").has_value()); // Should fail due to out_of_range
+    EXPECT_FALSE(parseDuration(too_large_str + "s", false).has_value()); // Should fail due to out_of_range
     
     // Test extended units disabled
     EXPECT_FALSE(parseDuration("500ms", false).has_value());

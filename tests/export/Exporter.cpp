@@ -596,7 +596,7 @@ TEST(ExporterCsvTest, ExportCustomFieldsExplicitly) {
 TEST(ExporterCsvTest, DateTimeFormat) {
     Exporter exporter;
     std::vector<LogEntry> entries;
-    auto tp = Utils::parseTime("2023-10-27 10:30:00").value();
+    auto tp = Utils::parseAbsoluteTime("2023-10-27 10:30:00").value();
     entries.push_back(createLogEntry(1, LogLevel::INFO, "Message", tp));
 
     std::stringstream ss;

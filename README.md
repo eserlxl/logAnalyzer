@@ -10,20 +10,37 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 
 ## Project Status
 
-`logAnalyzer` is currently under **active development**. We are continuously adding new features, improving performance, and refining the user experience. While it is stable for general use, expect potential API changes in major releases as the project evolves.
+`logAnalyzer` is under active development. We are continuously adding new features, improving performance, and refining the user experience. While it is stable for general use, expect potential API changes in major releases as the project evolves.
 
 ## Overview
 
-`logAnalyzer` is a high-performance command-line utility built in C++ that enables detailed analysis, filtering, and extraction of insights from large log files. It is designed for efficiency, handling massive datasets with minimal memory footprint by processing logs as streams.
+`logAnalyzer` is a high-performance, command-line utility built in C++ for detailed analysis, filtering, and extraction of insights from large log files. It is designed for efficiency, handling massive datasets with a minimal memory footprint by processing logs as streams.
 
 ## Why logAnalyzer?
 
-In a world of ever-growing log files, traditional tools like `grep`, `awk`, and `sed` can become cumbersome and slow. `logAnalyzer` was built to address these challenges by providing:
+In a world of ever-growing log files, traditional tools like `grep`, `awk`, and `sed` can become cumbersome and slow. `logAnalyzer` addresses these challenges by providing:
 
 -   **Performance**: A C++ core that processes large volumes of data quickly.
--   -   **Structured Filtering**: Go beyond simple text matching with filters for log levels, timestamps, and structured data.
+-   **Structured Filtering**: Go beyond simple text matching with filters for log levels, timestamps, and structured data.
 -   **Ease of Use**: A single, powerful CLI that combines the functionality of multiple tools.
 -   **Low Memory Usage**: Stream processing for analyzing files that are too large to fit in memory.
+
+## Table of Contents
+
+-   [Quick Start](#quick-start)
+-   [Features](#features)
+-   [Building from Source](#building-from-source)
+-   [Installation](#installation)
+-   [Usage](#usage)
+-   [Time-based Filtering](#time-based-filtering)
+-   [Command-Line Interface (CLI)](#command-line-interface-cli)
+-   [Configuration](#configuration)
+-   [Project Structure](#project-structure)
+-   [Running Tests](#running-tests)
+-   [Developer Tools](#developer-tools)
+-   [Contributing](#contributing)
+-   [Code of Conduct](#code-of-conduct)
+-   [License](#license)
 
 ## Quick Start
 
@@ -41,6 +58,8 @@ Get `logAnalyzer` up and running on your system with these simple steps:
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
     cmake --build .
+    # Or, on Unix-like systems, you can use make
+    # make
     ```
 
 3.  **Run a Basic Analysis**:
@@ -52,22 +71,6 @@ Get `logAnalyzer` up and running on your system with these simple steps:
 
 For detailed build instructions, installation options, and more usage examples, please refer to the respective sections below.
 
-## Table of Contents
-
--   [Quick Start](#quick-start)
--   [Features](#features)
--   [Building from Source](#building-from-source)
--   [Installation](#installation)
--   [Usage](#usage)
--   [Command-Line Interface (CLI)](#command-line-interface-cli)
--   [Configuration](#configuration)
--   [Project Structure](#project-structure)
--   [Running Tests](#running-tests)
--   [Developer Tools](#developer-tools)
--   [Contributing](#contributing)
--   [Code of Conduct](#code-of-conduct)
--   [License](#license)
-
 ## Features
 
 | Feature                      | Description                                                                          |
@@ -75,13 +78,13 @@ For detailed build instructions, installation options, and more usage examples, 
 | **Memory-Efficient Processing** | Handles very large files with minimal memory usage using the `--stream` mode.        |
 | **Multi-File Support**       | Parses and analyzes multiple log files at once.                                      |
 | **Structured Field Parsing** | Automatically parses log messages into key-value pairs using custom delimiters.      |
-| **Advanced Filtering**       | Filter by log level, time range, keywords, regular expressions, and field values.  |
+| **Advanced Filtering**       | Filter by log level, time range (absolute, relative, and ISO 8601), keywords, regular expressions, and field values.  |
 | **Field-Value Matching**     | Match against structured fields with literal, wildcard, or regex patterns.           |
 | **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on fields.  |
 | **Set-Based Filtering**      | Check if a field's value belongs to a specific set of values.                        |
 | **Complex Filtering Expressions** | Build sophisticated filter logic using parenthesized, nested AND/OR conditions.      |
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).            |
-| **Flexible Export** | Save results in Text, JSON, CSV, or YAML formats. |
+| **Flexible Export**          | Save results in Text, JSON, CSV, or YAML formats.                                    |
 | **Statistical Analysis**     | Generate statistics on your log data, such as entry rates and top messages.          |
 
 ## Building from Source
@@ -120,6 +123,8 @@ mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
+# Or, on Unix-like systems, you can use make
+# make
 ```
 
 The compiled `logAnalyzer` executable will be available in the `build/bin` directory.
@@ -138,7 +143,7 @@ To use an option, add it to the `cmake` command:
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 ```
 
-**Note:** To build the documentation, use `cmake --build . --target doc` from the `build` directory.
+**Note:** To build the documentation, use `cmake --build . --target doc` or `make doc` from the `build` directory.
 
 ## Installation
 
@@ -147,6 +152,8 @@ To install the `logAnalyzer` executable to a system-wide location (e.g., `/usr/l
 ```bash
 # Use sudo for system-wide installation
 sudo cmake --install . --prefix /usr/local
+# Or, on Unix-like systems
+# sudo make install
 ```
 
 For a local installation, you can specify a different prefix. This is useful if you don't have administrative privileges.
@@ -208,13 +215,13 @@ logAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
 
 ### Example 5: Process Logs from Standard Input
 
-`logAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines.
+`logAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines. Use `-` as the filename to signify `stdin`.
 
 ```bash
 # Pipe logs from another command and filter for errors
 cat /var/log/syslog | logAnalyzer --stdin --level ERROR
 
-# Tail a file and filter for a keyword. Use '-' as the filename to signify stdin.
+# Tail a file and filter for a keyword
 tail -f /var/log/app.log | logAnalyzer - --keyword "error"
 ```
 
@@ -223,6 +230,42 @@ tail -f /var/log/app.log | logAnalyzer - --keyword "error"
 ```bash
 # Get the top 5 most common error messages from a log file
 logAnalyzer system.log --level ERROR --stats top_messages:5
+```
+
+### Time-based Filtering
+
+`logAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.
+
+You can specify timestamps in several formats:
+
+*   **Absolute Time**: A specific date and time.
+    *   `"YYYY-MM-DD HH:MM:SS"` (e.g., `"2023-11-20 14:30:00"`)
+*   **Relative Time**: A time relative to now.
+    *   Simple keywords: `yesterday`, `today`, `tomorrow`.
+    *   Offset from now: `"1h ago"`, `"30m ago"`, `"2d ago"`.
+*   **ISO 8601 Format**:
+    *   `YYYY-MM-DDTHH:MM:SSZ` (UTC)
+    *   `YYYY-MM-DDTHH:MM:SS+HH:MM` (with offset)
+*   **Unix Timestamp**: An integer representing seconds since the Unix epoch.
+
+#### Using `--duration`
+
+The `--duration` flag can be combined with either `--start` or `--end` to specify a time window. It accepts durations with units: `s` (seconds), `m` (minutes), `h` (hours), `d` (days).
+
+#### Examples
+
+```bash
+# Get logs from the last 2 hours
+logAnalyzer app.log --start "2h ago"
+
+# Get logs from yesterday
+logAnalyzer app.log --start "yesterday" --end "today"
+
+# Get logs for a 30-minute window starting at a specific time
+logAnalyzer app.log --start "2023-11-20 10:00:00" --duration "30m"
+
+# Get logs from a specific day (using ISO 8601 date)
+logAnalyzer app.log --start "2023-11-20T00:00:00Z" --end "2023-11-21T00:00:00Z"
 ```
 
 ## Command-Line Interface (CLI)
@@ -268,12 +311,12 @@ Run `logAnalyzer --help` for a full list of commands.
 
 | Option                  | Description                                                                                                                             | Default                         |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `--format [text\|json\|csv]`  | Sets the output format.                                                                                                                 | `text`                          |
+| `--format [text\|json\|csv\|yaml]` | Sets the output format.                                                                                                       | `text`                          |
 | `--text-format TEXT`    | Custom format string for `text` output. Available: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
 | `--csv-sep CHAR`        | Separator character for `csv` output.                                                                                                   | `,`                             |
 | `--csv-fields "FIELDS"` | Comma-separated fields for `csv` output (e.g., `timestamp,level,message`).                                                              |                                 |
 | `--json-fields "FIELDS"`| Comma-separated fields for `json` output (e.g., `timestamp,level,message`).                                                             |                                 |
-| `--pretty`              | Pretty-print `json` output.                                                                                                             | `false`                         |
+| `--pretty`              | Pretty-print `json` or `yaml` output.                                                                                                   | `false`                         |
 | `--include-summary`     | Include a summary section in `json` output.                                                                                             | `false`                         |
 
 ### Statistics
@@ -367,24 +410,15 @@ You can split your configuration into multiple files using the `includes` key. T
 
 ```
 logAnalyzer/
+├── _deps/                   # External dependencies (fetched by CMake)
+├── bin/                     # Compiled binaries (in build directory)
+├── build/                   # Build directory
 ├── cmake/                   # CMake modules and scripts
-├── docs/                    # Documentation files
+├── docs/                    # Doxygen documentation files
+├── examples/                # Example usage and configurations
 ├── include/                 # Public header files
-│   ├── analyzer/
-│   ├── config/
-│   ├── core/
-│   ├── export/
-│   ├── filter/
-│   ├── stats/
-│   └── utils/
+├── lib/                     # Compiled libraries (in build directory)
 ├── src/                     # Source code
-│   ├── analyzer/
-│   ├── config/
-│   ├── core/
-│   ├── export/
-│   ├── filter/
-│   ├── stats/
-│   └── utils/
 ├── tests/                   # Unit and integration tests
 ├── tools/                   # Helper scripts for development
 ├── .gitignore
@@ -408,11 +442,15 @@ The following commands can be run from the `build` directory.
 -   **Generate Documentation**:
     ```bash
     cmake --build . --target doc
+    # or
+    make doc
     ```
 
 -   **Format Code**:
     ```bash
     cmake --build . --target format
+    # or
+    make format
     ```
 
 ## Contributing

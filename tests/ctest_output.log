@@ -1,76 +1,540 @@
 Test project /opt/lxl/c++/logAnalyzer/build
-      Start 18: LogAnalyzerTest.SetCustomLogLevelMapping
-      Start 19: LogAnalyzerTest.DefaultLogLevelMapping
-      Start 20: LogAnalyzerTest.AnalyzeStreamFileOpenError
-      Start 21: LogAnalyzerTest.AnalyzeStreamInvalidRegexError
-      Start 22: LogAnalyzerTest.GetFilteredEntriesInvalidRegex
-      Start 23: LogAnalyzerTest.ExportAsCsvEdgeCases
-      Start 24: LogAnalyzerTest.ExportAsJsonEdgeCases
-      Start 25: LogAnalyzerTest.GetFrequencyDistributionEdgeCases
-      Start 26: LogAnalyzerTest.AppendCorrectness
-      Start 27: LogAnalyzerTest.Concurrency_Placeholder
-      Start 37: StatisticsTest.FindLogBursts
-      Start 31: StatisticsTest.GetRankedMessagesDescending
-      Start 28: StatisticsTest.ConstructorSortsEntries
-      Start 30: StatisticsTest.CalculateUniqueMessageCounts
-      Start 29: StatisticsTest.CalculateLogLevelDistribution
-      Start 32: StatisticsTest.GetRankedMessagesAscending
-      Start 36: StatisticsTest.CalculateAverageEntryRate
-      Start 35: StatisticsTest.FindTimeGaps
-      Start 33: StatisticsTest.CalculateDistributionByGroup
-      Start 34: StatisticsTest.GetTimeGapPercentile
- 1/38 Test #18: LogAnalyzerTest.SetCustomLogLevelMapping ............   Passed    0.01 sec
- 2/38 Test #19: LogAnalyzerTest.DefaultLogLevelMapping ..............   Passed    0.01 sec
- 3/38 Test #20: LogAnalyzerTest.AnalyzeStreamFileOpenError ..........   Passed    0.01 sec
- 4/38 Test #21: LogAnalyzerTest.AnalyzeStreamInvalidRegexError ......   Passed    0.01 sec
- 5/38 Test #22: LogAnalyzerTest.GetFilteredEntriesInvalidRegex ......   Passed    0.01 sec
- 6/38 Test #24: LogAnalyzerTest.ExportAsJsonEdgeCases ...............***Failed    0.01 sec
- 7/38 Test #25: LogAnalyzerTest.GetFrequencyDistributionEdgeCases ...***Failed    0.01 sec
- 8/38 Test #26: LogAnalyzerTest.AppendCorrectness ...................***Failed    0.01 sec
- 9/38 Test #27: LogAnalyzerTest.Concurrency_Placeholder .............   Passed    0.01 sec
-10/38 Test #37: StatisticsTest.FindLogBursts ........................   Passed    0.01 sec
-11/38 Test #31: StatisticsTest.GetRankedMessagesDescending ..........   Passed    0.01 sec
-12/38 Test #28: StatisticsTest.ConstructorSortsEntries ..............   Passed    0.01 sec
-13/38 Test #30: StatisticsTest.CalculateUniqueMessageCounts .........   Passed    0.01 sec
-14/38 Test #29: StatisticsTest.CalculateLogLevelDistribution ........   Passed    0.01 sec
-15/38 Test #32: StatisticsTest.GetRankedMessagesAscending ...........   Passed    0.00 sec
-16/38 Test #36: StatisticsTest.CalculateAverageEntryRate ............   Passed    0.00 sec
-17/38 Test #35: StatisticsTest.FindTimeGaps .........................   Passed    0.00 sec
-      Start 38: StatisticsTest.EmptyEntries
-      Start 17: FilterTest.TimeRangeFilterSince
-      Start  1: FilterTest.SourceFileFilterLiteral
-      Start  6: FilterTest.FieldValueFilterRegex
-      Start 16: FilterTest.TimeRangeFilterFromStrings
-      Start 15: FilterTest.RegexFilterCaseInsensitive
-      Start 13: FilterTest.KeywordFilterMultiAll
-      Start  5: FilterTest.FieldValueFilter
-      Start  2: FilterTest.SourceFileFilterGlob
-      Start 10: FilterTest.KeywordFilterSingle
-      Start  8: FilterTest.PredicateFilter
-      Start 14: FilterTest.RegexFilterCaseSensitive
-      Start  9: FilterTest.LogLevelSetFilter
-      Start  4: FilterTest.FieldExistsFilter
-      Start  3: FilterTest.SourceFileFilterRegex
-      Start 12: FilterTest.KeywordFilterMultiAny
-      Start 11: FilterTest.KeywordFilterSingleCaseInsensitive
-18/38 Test #33: StatisticsTest.CalculateDistributionByGroup .........   Passed    0.01 sec
-19/38 Test #34: StatisticsTest.GetTimeGapPercentile .................   Passed    0.01 sec
-20/38 Test #38: StatisticsTest.EmptyEntries .........................   Passed    0.01 sec
-21/38 Test #17: FilterTest.TimeRangeFilterSince .....................   Passed    0.01 sec
-22/38 Test  #1: FilterTest.SourceFileFilterLiteral ..................   Passed    0.01 sec
-23/38 Test  #6: FilterTest.FieldValueFilterRegex ....................   Passed    0.01 sec
-24/38 Test #16: FilterTest.TimeRangeFilterFromStrings ...............   Passed    0.01 sec
-25/38 Test #15: FilterTest.RegexFilterCaseInsensitive ...............   Passed    0.01 sec
-26/38 Test #13: FilterTest.KeywordFilterMultiAll ....................   Passed    0.01 sec
-27/38 Test  #5: FilterTest.FieldValueFilter .........................   Passed    0.01 sec
-28/38 Test  #2: FilterTest.SourceFileFilterGlob .....................   Passed    0.01 sec
-29/38 Test #10: FilterTest.KeywordFilterSingle ......................   Passed    0.01 sec
-30/38 Test  #8: FilterTest.PredicateFilter ..........................   Passed    0.01 sec
-31/38 Test #14: FilterTest.RegexFilterCaseSensitive .................   Passed    0.01 sec
-32/38 Test  #9: FilterTest.LogLevelSetFilter ........................   Passed    0.00 sec
-33/38 Test  #4: FilterTest.FieldExistsFilter ........................   Passed    0.00 sec
-34/38 Test  #3: FilterTest.SourceFileFilterRegex ....................   Passed    0.00 sec
-      Start  7: FilterTest.FieldValueFilterRegexCaseSensitive
-35/38 Test #12: FilterTest.KeywordFilterMultiAny ....................   Passed    0.00 sec
-36/38 Test #11: FilterTest.KeywordFilterSingleCaseInsensitive .......   Passed    0.00 sec
-37/38 Test  #7: FilterTest.FieldValueFilterRegexCaseSensitive .......   Passed    0.00 sec
+        Start   1: LogAnalyzerTest.SetCustomLogLevelMapping
+  1/245 Test   #1: LogAnalyzerTest.SetCustomLogLevelMapping .............................................   Passed    0.00 sec
+        Start   2: LogAnalyzerTest.DefaultLogLevelMapping
+  2/245 Test   #2: LogAnalyzerTest.DefaultLogLevelMapping ...............................................   Passed    0.00 sec
+        Start   3: LogAnalyzerTest.AnalyzeStreamFileOpenError
+  3/245 Test   #3: LogAnalyzerTest.AnalyzeStreamFileOpenError ...........................................   Passed    0.00 sec
+        Start   4: LogAnalyzerTest.AnalyzeStreamInvalidRegexError
+  4/245 Test   #4: LogAnalyzerTest.AnalyzeStreamInvalidRegexError .......................................   Passed    0.00 sec
+        Start   5: LogAnalyzerTest.GetFilteredEntriesInvalidRegex
+  5/245 Test   #5: LogAnalyzerTest.GetFilteredEntriesInvalidRegex .......................................   Passed    0.00 sec
+        Start   6: LogAnalyzerTest.ExportAsCsvEdgeCases
+  6/245 Test   #6: LogAnalyzerTest.ExportAsCsvEdgeCases .................................................   Passed    0.00 sec
+        Start   7: LogAnalyzerTest.ExportAsJsonEdgeCases
+  7/245 Test   #7: LogAnalyzerTest.ExportAsJsonEdgeCases ................................................   Passed    0.00 sec
+        Start   8: LogAnalyzerTest.AppendCorrectness
+  8/245 Test   #8: LogAnalyzerTest.AppendCorrectness ....................................................   Passed    0.00 sec
+        Start   9: LogAnalyzerTest.Concurrency_Placeholder
+  9/245 Test   #9: LogAnalyzerTest.Concurrency_Placeholder ..............................................   Passed    0.00 sec
+        Start  10: CLIConfigTest.ParseLogLevel
+ 10/245 Test  #10: CLIConfigTest.ParseLogLevel ..........................................................   Passed    0.00 sec
+        Start  11: CLIConfigTest.NoArgsReturnsError
+ 11/245 Test  #11: CLIConfigTest.NoArgsReturnsError .....................................................   Passed    0.00 sec
+        Start  12: CLIConfigTest.ParseMultipleLogLevels
+ 12/245 Test  #12: CLIConfigTest.ParseMultipleLogLevels .................................................   Passed    0.00 sec
+        Start  13: CLIConfigTest.InvalidLogLevel
+ 13/245 Test  #13: CLIConfigTest.InvalidLogLevel ........................................................   Passed    0.00 sec
+        Start  14: CLIConfigTest.SortByTimestampAsc
+ 14/245 Test  #14: CLIConfigTest.SortByTimestampAsc .....................................................   Passed    0.00 sec
+        Start  15: CLIConfigTest.ReadFromStdin
+ 15/245 Test  #15: CLIConfigTest.ReadFromStdin ..........................................................   Passed    0.00 sec
+        Start  16: CLIConfigTest.ReadFromStdinWithDash
+ 16/245 Test  #16: CLIConfigTest.ReadFromStdinWithDash ..................................................   Passed    0.00 sec
+        Start  17: CLIConfigTest.StdinAndFileError
+ 17/245 Test  #17: CLIConfigTest.StdinAndFileError ......................................................   Passed    0.00 sec
+        Start  18: LogAnalyzerConfigTest.DefaultConstructorInitializesCorrectly
+ 18/245 Test  #18: LogAnalyzerConfigTest.DefaultConstructorInitializesCorrectly .........................   Passed    0.00 sec
+        Start  19: LogAnalyzerConfigTest.CustomPatternConstructorInitializesCorrectly
+ 19/245 Test  #19: LogAnalyzerConfigTest.CustomPatternConstructorInitializesCorrectly ...................   Passed    0.00 sec
+        Start  20: LogAnalyzerConfigTest.FluentApiForParsing
+ 20/245 Test  #20: LogAnalyzerConfigTest.FluentApiForParsing ............................................   Passed    0.00 sec
+        Start  21: LogAnalyzerConfigTest.FluentApiForFiltering
+ 21/245 Test  #21: LogAnalyzerConfigTest.FluentApiForFiltering ..........................................   Passed    0.00 sec
+        Start  22: LogAnalyzerConfigTest.FromJsonValid
+ 22/245 Test  #22: LogAnalyzerConfigTest.FromJsonValid ..................................................   Passed    0.00 sec
+        Start  23: LogAnalyzerConfigTest.FromJsonRootFilterExpression
+ 23/245 Test  #23: LogAnalyzerConfigTest.FromJsonRootFilterExpression ...................................   Passed    0.00 sec
+        Start  24: LogAnalyzerConfigTest.FromJsonOptionalFields
+ 24/245 Test  #24: LogAnalyzerConfigTest.FromJsonOptionalFields .........................................   Passed    0.00 sec
+        Start  25: LogAnalyzerConfigTest.FromJsonMalformedInternalStructures
+ 25/245 Test  #25: LogAnalyzerConfigTest.FromJsonMalformedInternalStructures ............................   Passed    0.00 sec
+        Start  26: LogAnalyzerConfigTest.FromJsonIncorrectFieldType
+ 26/245 Test  #26: LogAnalyzerConfigTest.FromJsonIncorrectFieldType .....................................   Passed    0.00 sec
+        Start  27: LogAnalyzerConfigTest.FromJsonMalformedJson
+ 27/245 Test  #27: LogAnalyzerConfigTest.FromJsonMalformedJson ..........................................   Passed    0.00 sec
+        Start  28: LogAnalyzerConfigTest.FromJsonInvalidCustomLogLevelMapping
+ 28/245 Test  #28: LogAnalyzerConfigTest.FromJsonInvalidCustomLogLevelMapping ...........................   Passed    0.00 sec
+        Start  29: LogAnalyzerConfigTest.FromFileErrorHandling
+ 29/245 Test  #29: LogAnalyzerConfigTest.FromFileErrorHandling ..........................................   Passed    0.00 sec
+        Start  30: LogAnalyzerConfigTest.FromFileValid
+ 30/245 Test  #30: LogAnalyzerConfigTest.FromFileValid ..................................................   Passed    0.00 sec
+        Start  31: LogAnalyzerConfigTest.ToJsonComprehensive
+ 31/245 Test  #31: LogAnalyzerConfigTest.ToJsonComprehensive ............................................   Passed    0.00 sec
+        Start  32: LogAnalyzerConfigTest.ToJsonSerialization
+ 32/245 Test  #32: LogAnalyzerConfigTest.ToJsonSerialization ............................................   Passed    0.00 sec
+        Start  33: LogAnalyzerConfigTest.DefaultRegexPatternCompiles
+ 33/245 Test  #33: LogAnalyzerConfigTest.DefaultRegexPatternCompiles ....................................   Passed    0.00 sec
+        Start  34: LogAnalyzerConfigTest.ValidateErrorHandling
+ 34/245 Test  #34: LogAnalyzerConfigTest.ValidateErrorHandling ..........................................   Passed    0.00 sec
+        Start  35: LogAnalyzerConfigTest.ValidateValidSettings
+ 35/245 Test  #35: LogAnalyzerConfigTest.ValidateValidSettings ..........................................   Passed    0.00 sec
+        Start  36: ConfigValidationTest.ValidateStatisticConfig_TopMessages_MissingTopN
+ 36/245 Test  #36: ConfigValidationTest.ValidateStatisticConfig_TopMessages_MissingTopN .................   Passed    0.00 sec
+        Start  37: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingTopN
+ 37/245 Test  #37: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingTopN .............   Passed    0.00 sec
+        Start  38: ConfigValidationTest.ValidateStatisticConfig_InvalidTopN
+ 38/245 Test  #38: ConfigValidationTest.ValidateStatisticConfig_InvalidTopN .............................   Passed    0.00 sec
+        Start  39: ConfigValidationTest.ValidateStatisticConfig_ZeroTopN
+ 39/245 Test  #39: ConfigValidationTest.ValidateStatisticConfig_ZeroTopN ................................   Passed    0.00 sec
+        Start  40: ConfigValidationTest.ValidateStatisticConfig_NegativeTopN
+ 40/245 Test  #40: ConfigValidationTest.ValidateStatisticConfig_NegativeTopN ............................   Passed    0.00 sec
+        Start  41: ConfigValidationTest.ValidateStatisticConfig_FieldValueCount_MissingTargetField
+ 41/245 Test  #41: ConfigValidationTest.ValidateStatisticConfig_FieldValueCount_MissingTargetField ......   Passed    0.00 sec
+        Start  42: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingTargetField
+ 42/245 Test  #42: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingTargetField ......   Passed    0.00 sec
+        Start  43: ConfigValidationTest.ValidateStatisticConfig_FieldValueCount_MissingCustomFieldKey
+ 43/245 Test  #43: ConfigValidationTest.ValidateStatisticConfig_FieldValueCount_MissingCustomFieldKey ...   Passed    0.00 sec
+        Start  44: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingCustomFieldKey
+ 44/245 Test  #44: ConfigValidationTest.ValidateStatisticConfig_TopNFieldValues_MissingCustomFieldKey ...   Passed    0.00 sec
+        Start  45: ConfigValidationTest.ValidateFilterRule_InvalidRegex
+ 45/245 Test  #45: ConfigValidationTest.ValidateFilterRule_InvalidRegex .................................   Passed    0.00 sec
+        Start  46: ConfigCoreTest.CreateDefault
+ 46/245 Test  #46: ConfigCoreTest.CreateDefault .........................................................   Passed    0.00 sec
+        Start  47: ConfigCoreTest.Merge
+ 47/245 Test  #47: ConfigCoreTest.Merge .................................................................   Passed    0.00 sec
+        Start  48: ConfigCoreTest.EnvVarExpansion
+ 48/245 Test  #48: ConfigCoreTest.EnvVarExpansion .......................................................   Passed    0.00 sec
+        Start  49: ConfigCoreTest.FileIncludes
+ 49/245 Test  #49: ConfigCoreTest.FileIncludes ..........................................................   Passed    0.00 sec
+        Start  50: ConfigCoreTest.IncludeOverridesRoot
+ 50/245 Test  #50: ConfigCoreTest.IncludeOverridesRoot ..................................................   Passed    0.00 sec
+        Start  51: ConfigCoreTest.CircularIncludeDetection
+ 51/245 Test  #51: ConfigCoreTest.CircularIncludeDetection ..............................................   Passed    0.00 sec
+        Start  52: LogParserErrorHandling.VariousActions
+ 52/245 Test  #52: LogParserErrorHandling.VariousActions ................................................   Passed    0.00 sec
+        Start  53: LogParserTest.InvalidMainRegexPattern
+ 53/245 Test  #53: LogParserTest.InvalidMainRegexPattern ................................................   Passed    0.00 sec
+        Start  54: LogParserTest.InvalidLogEntryStartRegexPattern
+ 54/245 Test  #54: LogParserTest.InvalidLogEntryStartRegexPattern .......................................   Passed    0.00 sec
+        Start  55: LogParserTest.StructuredFieldCustomDelimiters
+ 55/245 Test  #55: LogParserTest.StructuredFieldCustomDelimiters ........................................   Passed    0.00 sec
+        Start  56: LogParserTest.StructuredFieldQuotedValuesAndSpecialChars
+ 56/245 Test  #56: LogParserTest.StructuredFieldQuotedValuesAndSpecialChars .............................   Passed    0.00 sec
+        Start  57: LogParserTest.MultiLineSingleEntryFile
+ 57/245 Test  #57: LogParserTest.MultiLineSingleEntryFile ...............................................   Passed    0.00 sec
+        Start  58: LogParserTest.MultiLineWithBlankAndAmbiguousLines
+ 58/245 Test  #58: LogParserTest.MultiLineWithBlankAndAmbiguousLines ....................................   Passed    0.00 sec
+        Start  59: LogParserTest.MultiLineInterleaving
+ 59/245 Test  #59: LogParserTest.MultiLineInterleaving ..................................................   Passed    0.00 sec
+        Start  60: LogParserTest.BufferLimitExceeded
+ 60/245 Test  #60: LogParserTest.BufferLimitExceeded ....................................................   Passed    0.00 sec
+        Start  61: LogParserTest.StreamProcessing
+ 61/245 Test  #61: LogParserTest.StreamProcessing .......................................................   Passed    0.00 sec
+        Start  62: LogParserTest.StateIntrospectionDuringMultiLine
+ 62/245 Test  #62: LogParserTest.StateIntrospectionDuringMultiLine ......................................   Passed    0.00 sec
+        Start  63: ExportFieldMappingTest.ToJson
+ 63/245 Test  #63: ExportFieldMappingTest.ToJson ........................................................   Passed    0.00 sec
+        Start  64: ExportFieldMappingTest.FromJsonValid
+ 64/245 Test  #64: ExportFieldMappingTest.FromJsonValid .................................................   Passed    0.00 sec
+        Start  65: ExportFieldMappingTest.FromJsonInvalidField
+ 65/245 Test  #65: ExportFieldMappingTest.FromJsonInvalidField ..........................................   Passed    0.00 sec
+        Start  66: ExportFieldMappingTest.FromJsonMissingField
+ 66/245 Test  #66: ExportFieldMappingTest.FromJsonMissingField ..........................................   Passed    0.00 sec
+        Start  67: ExportFieldMappingTest.FromJsonInvalidFieldType
+ 67/245 Test  #67: ExportFieldMappingTest.FromJsonInvalidFieldType ......................................   Passed    0.00 sec
+        Start  68: ExportSettingsTest.DefaultConstructor
+ 68/245 Test  #68: ExportSettingsTest.DefaultConstructor ................................................   Passed    0.00 sec
+        Start  69: ExportSettingsTest.ToJson
+ 69/245 Test  #69: ExportSettingsTest.ToJson ............................................................   Passed    0.00 sec
+        Start  70: ExportSettingsTest.FromJsonValid
+ 70/245 Test  #70: ExportSettingsTest.FromJsonValid .....................................................   Passed    0.00 sec
+        Start  71: ExportSettingsTest.FromJsonInvalidOutputPathType
+ 71/245 Test  #71: ExportSettingsTest.FromJsonInvalidOutputPathType .....................................   Passed    0.00 sec
+        Start  72: ExportSettingsTest.FromJsonInvalidFormatType
+ 72/245 Test  #72: ExportSettingsTest.FromJsonInvalidFormatType .........................................   Passed    0.00 sec
+        Start  73: ExportSettingsTest.FromJsonInvalidFormatValue
+ 73/245 Test  #73: ExportSettingsTest.FromJsonInvalidFormatValue ........................................   Passed    0.00 sec
+        Start  74: ExportSettingsTest.FromJsonInvalidFieldsToExportType
+ 74/245 Test  #74: ExportSettingsTest.FromJsonInvalidFieldsToExportType .................................   Passed    0.00 sec
+        Start  75: ExportSettingsTest.FromJsonInvalidIncludeHeaderType
+ 75/245 Test  #75: ExportSettingsTest.FromJsonInvalidIncludeHeaderType ..................................   Passed    0.00 sec
+        Start  76: ExportSettingsTest.FromJsonInvalidJsonIndentType
+ 76/245 Test  #76: ExportSettingsTest.FromJsonInvalidJsonIndentType .....................................   Passed    0.00 sec
+        Start  77: ExportSettingsTest.FromJsonInvalidSeparatorType
+ 77/245 Test  #77: ExportSettingsTest.FromJsonInvalidSeparatorType ......................................   Passed    0.00 sec
+        Start  78: ExportSettingsTest.FromJsonInvalidSeparatorLength
+ 78/245 Test  #78: ExportSettingsTest.FromJsonInvalidSeparatorLength ....................................   Passed    0.00 sec
+        Start  79: ExportSettingsTest.FromJsonInvalidTextFormatStringType
+ 79/245 Test  #79: ExportSettingsTest.FromJsonInvalidTextFormatStringType ...............................   Passed    0.00 sec
+        Start  80: ExportSettingsTest.FromJsonInvalidUseAnsiColorsType
+ 80/245 Test  #80: ExportSettingsTest.FromJsonInvalidUseAnsiColorsType ..................................   Passed    0.00 sec
+        Start  81: ExporterTest.ExportEmptyEntries
+ 81/245 Test  #81: ExporterTest.ExportEmptyEntries ......................................................   Passed    0.00 sec
+        Start  82: ExporterJsonTest.FieldsToExportConfig
+ 82/245 Test  #82: ExporterJsonTest.FieldsToExportConfig ................................................   Passed    0.00 sec
+        Start  83: ExporterJsonTest.JsonIndentBehavior
+ 83/245 Test  #83: ExporterJsonTest.JsonIndentBehavior ..................................................   Passed    0.00 sec
+        Start  84: ExporterJsonTest.DefaultFieldDiscoveryLogic
+ 84/245 Test  #84: ExporterJsonTest.DefaultFieldDiscoveryLogic ..........................................   Passed    0.00 sec
+        Start  85: ExporterJsonTest.EmptySourceFileAndMessage
+ 85/245 Test  #85: ExporterJsonTest.EmptySourceFileAndMessage ...........................................***Failed    0.00 sec
+Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = ExporterJsonTest.EmptySourceFileAndMessage
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ExporterJsonTest
+[ RUN      ] ExporterJsonTest.EmptySourceFileAndMessage
+/opt/lxl/c++/logAnalyzer/tests/export/Exporter.cpp:408: Failure
+Expected: j["entries"][0].at("Message") doesn't throw an exception.
+  Actual: it throws nlohmann::json_abi_v3_12_0::detail::out_of_range with description "[json.exception.out_of_range.403] key 'Message' not found".
+[  FAILED  ] ExporterJsonTest.EmptySourceFileAndMessage (0 ms)
+[----------] 1 test from ExporterJsonTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ExporterJsonTest.EmptySourceFileAndMessage
+
+ 1 FAILED TEST
+
+        Start  86: ExporterJsonTest.BoundaryValuesForIdAndLineNumber
+ 86/245 Test  #86: ExporterJsonTest.BoundaryValuesForIdAndLineNumber ....................................***Failed    0.00 sec
+Running main() from /opt/lxl/c++/logAnalyzer/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = ExporterJsonTest.BoundaryValuesForIdAndLineNumber
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ExporterJsonTest
+[ RUN      ] ExporterJsonTest.BoundaryValuesForIdAndLineNumber
+/opt/lxl/c++/logAnalyzer/tests/export/Exporter.cpp:442: Failure
+Expected: j["entries"][0].at("LineNumber") doesn't throw an exception.
+  Actual: it throws nlohmann::json_abi_v3_12_0::detail::out_of_range with description "[json.exception.out_of_range.403] key 'LineNumber' not found".
+[  FAILED  ] ExporterJsonTest.BoundaryValuesForIdAndLineNumber (0 ms)
+[----------] 1 test from ExporterJsonTest (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ExporterJsonTest.BoundaryValuesForIdAndLineNumber
+
+ 1 FAILED TEST
+
+        Start  87: ExporterCsvTest.BasicExport
+ 87/245 Test  #87: ExporterCsvTest.BasicExport ..........................................................   Passed    0.00 sec
+        Start  88: ExporterCsvTest.CustomSeparator
+ 88/245 Test  #88: ExporterCsvTest.CustomSeparator ......................................................   Passed    0.00 sec
+        Start  89: ExporterCsvTest.NoHeader
+ 89/245 Test  #89: ExporterCsvTest.NoHeader .............................................................   Passed    0.00 sec
+        Start  90: ExporterCsvTest.FieldsWithSpecialCharsAndQuoting
+ 90/245 Test  #90: ExporterCsvTest.FieldsWithSpecialCharsAndQuoting .....................................   Passed    0.00 sec
+        Start  91: ExporterCsvTest.ExportSpecificFields
+ 91/245 Test  #91: ExporterCsvTest.ExportSpecificFields .................................................   Passed    0.00 sec
+        Start  92: ExporterCsvTest.ExportCustomFieldsDynamically
+ 92/245 Test  #92: ExporterCsvTest.ExportCustomFieldsDynamically ........................................   Passed    0.00 sec
+        Start  93: ExporterCsvTest.ExportCustomFieldsExplicitly
+ 93/245 Test  #93: ExporterCsvTest.ExportCustomFieldsExplicitly .........................................   Passed    0.00 sec
+        Start  94: ExporterCsvTest.DateTimeFormat
+ 94/245 Test  #94: ExporterCsvTest.DateTimeFormat .......................................................   Passed    0.00 sec
+        Start  95: ExporterCsvTest.QuotingAndEscaping_OnlySeparator
+ 95/245 Test  #95: ExporterCsvTest.QuotingAndEscaping_OnlySeparator .....................................   Passed    0.00 sec
+        Start  96: ExporterCsvTest.QuotingAndEscaping_OnlyDoubleQuote
+ 96/245 Test  #96: ExporterCsvTest.QuotingAndEscaping_OnlyDoubleQuote ...................................   Passed    0.00 sec
+        Start  97: ExporterCsvTest.QuotingAndEscaping_NewlineAndCR
+ 97/245 Test  #97: ExporterCsvTest.QuotingAndEscaping_NewlineAndCR ......................................   Passed    0.00 sec
+        Start  98: ExporterCsvTest.QuotingAndEscaping_EmptyField
+ 98/245 Test  #98: ExporterCsvTest.QuotingAndEscaping_EmptyField ........................................   Passed    0.00 sec
+        Start  99: ExporterCsvTest.QuotingAndEscaping_AllSpecialChars
+ 99/245 Test  #99: ExporterCsvTest.QuotingAndEscaping_AllSpecialChars ...................................   Passed    0.00 sec
+        Start 100: ExporterTextTest.BasicExport
+100/245 Test #100: ExporterTextTest.BasicExport .........................................................   Passed    0.00 sec
+        Start 101: ExporterTextTest.ColorFormatting
+101/245 Test #101: ExporterTextTest.ColorFormatting .....................................................   Passed    0.00 sec
+        Start 102: ExporterDispatchTest.JsonDispatch
+102/245 Test #102: ExporterDispatchTest.JsonDispatch ....................................................   Passed    0.00 sec
+        Start 103: ExporterDispatchTest.CsvDispatch
+103/245 Test #103: ExporterDispatchTest.CsvDispatch .....................................................   Passed    0.00 sec
+        Start 104: ExporterDispatchTest.PlaintextDispatch
+104/245 Test #104: ExporterDispatchTest.PlaintextDispatch ...............................................   Passed    0.00 sec
+        Start 105: ExporterErrorHandlingTest.UnknownFormatThrowsException
+105/245 Test #105: ExporterErrorHandlingTest.UnknownFormatThrowsException ...............................   Passed    0.00 sec
+        Start 106: ExporterErrorHandlingTest.XmlFormatThrowsException
+106/245 Test #106: ExporterErrorHandlingTest.XmlFormatThrowsException ...................................   Passed    0.00 sec
+        Start 107: LegacyFilterTest.CompositeFilterEmptyListAND
+107/245 Test #107: LegacyFilterTest.CompositeFilterEmptyListAND .........................................   Passed    0.00 sec
+        Start 108: LegacyFilterTest.CompositeFilterEmptyListOR
+108/245 Test #108: LegacyFilterTest.CompositeFilterEmptyListOR ..........................................   Passed    0.00 sec
+        Start 109: LegacyFilterTest.ExclusionFilter
+109/245 Test #109: LegacyFilterTest.ExclusionFilter .....................................................   Passed    0.00 sec
+        Start 110: FilterExpressionTest.FluentApiAndOptimization
+110/245 Test #110: FilterExpressionTest.FluentApiAndOptimization ........................................   Passed    0.00 sec
+        Start 111: FilterExpressionTest.FluentApiOrOptimization
+111/245 Test #111: FilterExpressionTest.FluentApiOrOptimization .........................................   Passed    0.00 sec
+        Start 112: FilterExpressionTest.FluentApiNot
+112/245 Test #112: FilterExpressionTest.FluentApiNot ....................................................   Passed    0.00 sec
+        Start 113: FilterExpressionTest.EvaluateStringEquals
+113/245 Test #113: FilterExpressionTest.EvaluateStringEquals ............................................   Passed    0.00 sec
+        Start 114: FilterExpressionTest.EvaluateStringContains
+114/245 Test #114: FilterExpressionTest.EvaluateStringContains ..........................................   Passed    0.00 sec
+        Start 115: FilterExpressionTest.EvaluateNumericComparison
+115/245 Test #115: FilterExpressionTest.EvaluateNumericComparison .......................................   Passed    0.00 sec
+        Start 116: FilterExpressionTest.EvaluateLogicalAnd
+116/245 Test #116: FilterExpressionTest.EvaluateLogicalAnd ..............................................   Passed    0.00 sec
+        Start 117: FilterExpressionTest.EvaluateLogicalOr
+117/245 Test #117: FilterExpressionTest.EvaluateLogicalOr ...............................................   Passed    0.00 sec
+        Start 118: FilterExpressionTest.EvaluateLogicalNot
+118/245 Test #118: FilterExpressionTest.EvaluateLogicalNot ..............................................   Passed    0.00 sec
+        Start 119: FilterExpressionTest.EvaluateComplexExpression
+119/245 Test #119: FilterExpressionTest.EvaluateComplexExpression .......................................   Passed    0.00 sec
+        Start 120: FilterJsonTest.FilterRuleToJson
+120/245 Test #120: FilterJsonTest.FilterRuleToJson ......................................................   Passed    0.00 sec
+        Start 121: FilterJsonTest.FilterRuleFromJsonSuccess
+121/245 Test #121: FilterJsonTest.FilterRuleFromJsonSuccess .............................................   Passed    0.00 sec
+        Start 122: FilterJsonTest.FilterRuleFromJsonInvalidField
+122/245 Test #122: FilterJsonTest.FilterRuleFromJsonInvalidField ........................................   Passed    0.00 sec
+        Start 123: FilterJsonTest.FilterRuleFromJsonMissingField
+123/245 Test #123: FilterJsonTest.FilterRuleFromJsonMissingField ........................................   Passed    0.00 sec
+        Start 124: FilterJsonTest.FilterConditionToJson
+124/245 Test #124: FilterJsonTest.FilterConditionToJson .................................................   Passed    0.00 sec
+        Start 125: FilterJsonTest.FilterConditionFromJsonSuccess
+125/245 Test #125: FilterJsonTest.FilterConditionFromJsonSuccess ........................................   Passed    0.00 sec
+        Start 126: FilterJsonTest.FilterConditionFromJsonDatetimeSuccess
+126/245 Test #126: FilterJsonTest.FilterConditionFromJsonDatetimeSuccess ................................   Passed    0.00 sec
+        Start 127: FilterJsonTest.FilterConditionFromJsonInvalidField
+127/245 Test #127: FilterJsonTest.FilterConditionFromJsonInvalidField ...................................   Passed    0.00 sec
+        Start 128: FilterJsonTest.FilterConditionFromJsonMissingOp
+128/245 Test #128: FilterJsonTest.FilterConditionFromJsonMissingOp ......................................   Passed    0.00 sec
+        Start 129: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeString
+129/245 Test #129: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeString .........................   Passed    0.00 sec
+        Start 130: FilterJsonTest.FilterConditionFromJsonNumericSuccess
+130/245 Test #130: FilterJsonTest.FilterConditionFromJsonNumericSuccess .................................   Passed    0.00 sec
+        Start 131: FilterJsonTest.FilterConditionFromJsonDatetimeMissingFormat
+131/245 Test #131: FilterJsonTest.FilterConditionFromJsonDatetimeMissingFormat ..........................   Passed    0.00 sec
+        Start 132: FilterJsonTest.FilterConditionDatetimeConstructorValidation
+132/245 Test #132: FilterJsonTest.FilterConditionDatetimeConstructorValidation ..........................   Passed    0.00 sec
+        Start 133: FilterJsonTest.FilterRuleFromJsonMissingOp
+133/245 Test #133: FilterJsonTest.FilterRuleFromJsonMissingOp ...........................................   Passed    0.00 sec
+        Start 134: FilterJsonTest.FilterRuleFromJsonMissingValue
+134/245 Test #134: FilterJsonTest.FilterRuleFromJsonMissingValue ........................................   Passed    0.00 sec
+        Start 135: FilterJsonTest.FilterRuleFromJsonInvalidOp
+135/245 Test #135: FilterJsonTest.FilterRuleFromJsonInvalidOp ...........................................   Passed    0.00 sec
+        Start 136: FilterJsonTest.FilterConditionFromJsonMissingValue
+136/245 Test #136: FilterJsonTest.FilterConditionFromJsonMissingValue ...................................   Passed    0.00 sec
+        Start 137: FilterJsonTest.FilterConditionFromJsonMissingValueType
+137/245 Test #137: FilterJsonTest.FilterConditionFromJsonMissingValueType ...............................   Passed    0.00 sec
+        Start 138: FilterJsonTest.FilterConditionFromJsonMalformedDatetimeFormat
+138/245 Test #138: FilterJsonTest.FilterConditionFromJsonMalformedDatetimeFormat ........................   Passed    0.00 sec
+        Start 139: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeInt
+139/245 Test #139: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeInt ............................   Passed    0.00 sec
+        Start 140: FilterJsonTest.FilterConditionFromJsonLegacyValueTypeInt
+140/245 Test #140: FilterJsonTest.FilterConditionFromJsonLegacyValueTypeInt .............................   Passed    0.00 sec
+        Start 141: FilterJsonTest.FilterConditionToJson
+141/245 Test #141: FilterJsonTest.FilterConditionToJson .................................................   Passed    0.00 sec
+        Start 142: FilterJsonTest.FilterConditionToJsonWithCustomField
+142/245 Test #142: FilterJsonTest.FilterConditionToJsonWithCustomField ..................................   Passed    0.00 sec
+        Start 143: FilterJsonTest.FilterConditionFromJsonSuccess
+143/245 Test #143: FilterJsonTest.FilterConditionFromJsonSuccess ........................................   Passed    0.00 sec
+        Start 144: FilterJsonTest.FilterConditionFromJsonWithCustomField
+144/245 Test #144: FilterJsonTest.FilterConditionFromJsonWithCustomField ................................   Passed    0.00 sec
+        Start 145: FilterJsonTest.FilterConditionFromJsonWithNullCustomField
+145/245 Test #145: FilterJsonTest.FilterConditionFromJsonWithNullCustomField ............................   Passed    0.00 sec
+        Start 146: FilterJsonTest.FilterConditionFromJsonWithoutCustomField
+146/245 Test #146: FilterJsonTest.FilterConditionFromJsonWithoutCustomField .............................   Passed    0.00 sec
+        Start 147: FilterJsonTest.FilterConditionFromJsonDatetimeSuccess
+147/245 Test #147: FilterJsonTest.FilterConditionFromJsonDatetimeSuccess ................................   Passed    0.00 sec
+        Start 148: FilterJsonTest.FilterConditionFromJsonInvalidField
+148/245 Test #148: FilterJsonTest.FilterConditionFromJsonInvalidField ...................................   Passed    0.00 sec
+        Start 149: FilterJsonTest.FilterConditionFromJsonMissingOp
+149/245 Test #149: FilterJsonTest.FilterConditionFromJsonMissingOp ......................................   Passed    0.00 sec
+        Start 150: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeString
+150/245 Test #150: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeString .........................   Passed    0.00 sec
+        Start 151: FilterJsonTest.FilterConditionFromJsonNumericSuccess
+151/245 Test #151: FilterJsonTest.FilterConditionFromJsonNumericSuccess .................................   Passed    0.00 sec
+        Start 152: FilterJsonTest.FilterConditionFromJsonDatetimeMissingFormat
+152/245 Test #152: FilterJsonTest.FilterConditionFromJsonDatetimeMissingFormat ..........................   Passed    0.00 sec
+        Start 153: FilterJsonTest.FilterConditionDatetimeConstructorValidation
+153/245 Test #153: FilterJsonTest.FilterConditionDatetimeConstructorValidation ..........................   Passed    0.00 sec
+        Start 154: FilterJsonTest.FilterConditionFromJsonMissingValue
+154/245 Test #154: FilterJsonTest.FilterConditionFromJsonMissingValue ...................................   Passed    0.00 sec
+        Start 155: FilterJsonTest.FilterConditionFromJsonMissingValueType
+155/245 Test #155: FilterJsonTest.FilterConditionFromJsonMissingValueType ...............................   Passed    0.00 sec
+        Start 156: FilterJsonTest.FilterConditionFromJsonMalformedDatetimeFormat
+156/245 Test #156: FilterJsonTest.FilterConditionFromJsonMalformedDatetimeFormat ........................   Passed    0.00 sec
+        Start 157: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeInt
+157/245 Test #157: FilterJsonTest.FilterConditionFromJsonInvalidValueTypeInt ............................   Passed    0.00 sec
+        Start 158: FilterJsonTest.FilterConditionFromJsonLegacyValueTypeInt
+158/245 Test #158: FilterJsonTest.FilterConditionFromJsonLegacyValueTypeInt .............................   Passed    0.00 sec
+        Start 159: FilterJsonTest.FilterExpressionToJsonCondition
+159/245 Test #159: FilterJsonTest.FilterExpressionToJsonCondition .......................................   Passed    0.00 sec
+        Start 160: FilterJsonTest.FilterExpressionFromJsonCondition
+160/245 Test #160: FilterJsonTest.FilterExpressionFromJsonCondition .....................................   Passed    0.00 sec
+        Start 161: FilterJsonTest.FilterExpressionToJsonLogicalAND
+161/245 Test #161: FilterJsonTest.FilterExpressionToJsonLogicalAND ......................................   Passed    0.00 sec
+        Start 162: FilterJsonTest.FilterExpressionFromJsonLogicalOR
+162/245 Test #162: FilterJsonTest.FilterExpressionFromJsonLogicalOR .....................................   Passed    0.00 sec
+        Start 163: FilterJsonTest.FilterExpressionToJsonLogicalNOT
+163/245 Test #163: FilterJsonTest.FilterExpressionToJsonLogicalNOT ......................................   Passed    0.00 sec
+        Start 164: FilterJsonTest.FilterExpressionFromJsonLogicalNOT
+164/245 Test #164: FilterJsonTest.FilterExpressionFromJsonLogicalNOT ....................................   Passed    0.00 sec
+        Start 165: FilterJsonTest.FilterExpressionFromJsonWithNegatedFlag
+165/245 Test #165: FilterJsonTest.FilterExpressionFromJsonWithNegatedFlag ...............................   Passed    0.00 sec
+        Start 166: FilterJsonTest.FilterExpressionFromJsonNested
+166/245 Test #166: FilterJsonTest.FilterExpressionFromJsonNested ........................................   Passed    0.00 sec
+        Start 167: FilterJsonTest.FilterExpressionFromJsonInvalidOperand
+167/245 Test #167: FilterJsonTest.FilterExpressionFromJsonInvalidOperand ................................   Passed    0.00 sec
+        Start 168: FilterJsonTest.FilterExpressionFromJsonMissingOperands
+168/245 Test #168: FilterJsonTest.FilterExpressionFromJsonMissingOperands ...............................   Passed    0.00 sec
+        Start 169: FilterJsonTest.FilterExpressionFromJsonUnknownOperator
+169/245 Test #169: FilterJsonTest.FilterExpressionFromJsonUnknownOperator ...............................   Passed    0.00 sec
+        Start 170: FilterJsonTest.FilterExpressionFromJsonMissingConditionOrOperator
+170/245 Test #170: FilterJsonTest.FilterExpressionFromJsonMissingConditionOrOperator ....................   Passed    0.00 sec
+        Start 171: FilterJsonTest.FilterExpressionDefaultConstructor
+171/245 Test #171: FilterJsonTest.FilterExpressionDefaultConstructor ....................................   Passed    0.00 sec
+        Start 172: FilterJsonTest.FilterRuleToJson
+172/245 Test #172: FilterJsonTest.FilterRuleToJson ......................................................   Passed    0.00 sec
+        Start 173: FilterJsonTest.FilterRuleFromJsonSuccess
+173/245 Test #173: FilterJsonTest.FilterRuleFromJsonSuccess .............................................   Passed    0.00 sec
+        Start 174: FilterJsonTest.FilterRuleFromJsonInvalidField
+174/245 Test #174: FilterJsonTest.FilterRuleFromJsonInvalidField ........................................   Passed    0.00 sec
+        Start 175: FilterJsonTest.FilterRuleFromJsonMissingField
+175/245 Test #175: FilterJsonTest.FilterRuleFromJsonMissingField ........................................   Passed    0.00 sec
+        Start 176: FilterJsonTest.FilterRuleFromJsonMissingOp
+176/245 Test #176: FilterJsonTest.FilterRuleFromJsonMissingOp ...........................................   Passed    0.00 sec
+        Start 177: FilterJsonTest.FilterRuleFromJsonMissingValue
+177/245 Test #177: FilterJsonTest.FilterRuleFromJsonMissingValue ........................................   Passed    0.00 sec
+        Start 178: FilterJsonTest.FilterRuleFromJsonInvalidOp
+178/245 Test #178: FilterJsonTest.FilterRuleFromJsonInvalidOp ...........................................   Passed    0.00 sec
+        Start 179: FilterTest.SourceFileFilterRegex
+179/245 Test #179: FilterTest.SourceFileFilterRegex .....................................................   Passed    0.00 sec
+        Start 180: FilterTest.FieldValueFilterRegex
+180/245 Test #180: FilterTest.FieldValueFilterRegex .....................................................   Passed    0.00 sec
+        Start 181: FilterTest.FieldValueFilterRegexCaseSensitive
+181/245 Test #181: FilterTest.FieldValueFilterRegexCaseSensitive ........................................   Passed    0.00 sec
+        Start 182: FilterTest.RegexFilterCaseSensitive
+182/245 Test #182: FilterTest.RegexFilterCaseSensitive ..................................................   Passed    0.00 sec
+        Start 183: FilterTest.RegexFilterInvalidPattern
+183/245 Test #183: FilterTest.RegexFilterInvalidPattern .................................................   Passed    0.00 sec
+        Start 184: FilterTest.NumericComparisonFilter
+184/245 Test #184: FilterTest.NumericComparisonFilter ...................................................   Passed    0.00 sec
+        Start 185: FilterTest.NestedNumericComparisonFilter
+185/245 Test #185: FilterTest.NestedNumericComparisonFilter .............................................   Passed    0.00 sec
+        Start 186: FilterTest.NumericComparisonFilterFloatingPointPrecision
+186/245 Test #186: FilterTest.NumericComparisonFilterFloatingPointPrecision .............................   Passed    0.00 sec
+        Start 187: FilterTest.NestedNumericComparisonFilterFloatingPointPrecision
+187/245 Test #187: FilterTest.NestedNumericComparisonFilterFloatingPointPrecision .......................   Passed    0.00 sec
+        Start 188: FilterTest.NestedBoolFilter
+188/245 Test #188: FilterTest.NestedBoolFilter ..........................................................   Passed    0.00 sec
+        Start 189: FilterTest.NestedFieldValueFilter
+189/245 Test #189: FilterTest.NestedFieldValueFilter ....................................................   Passed    0.00 sec
+        Start 190: FilterTest.NestedFieldValueFilterWildcardSubstringMatch
+190/245 Test #190: FilterTest.NestedFieldValueFilterWildcardSubstringMatch ..............................   Passed    0.00 sec
+        Start 191: FilterTest.TimeRangeFilterFromStrings
+191/245 Test #191: FilterTest.TimeRangeFilterFromStrings ................................................   Passed    0.00 sec
+        Start 192: FilterTest.TimeRangeFilterForDay
+192/245 Test #192: FilterTest.TimeRangeFilterForDay .....................................................   Passed    0.00 sec
+        Start 193: FilterTest.TimeRangeFilterSince
+193/245 Test #193: FilterTest.TimeRangeFilterSince ......................................................   Passed    0.00 sec
+        Start 194: FilterTest.SourceFileFilterLiteral
+194/245 Test #194: FilterTest.SourceFileFilterLiteral ...................................................   Passed    0.00 sec
+        Start 195: FilterTest.SourceFileFilterGlob
+195/245 Test #195: FilterTest.SourceFileFilterGlob ......................................................   Passed    0.00 sec
+        Start 196: FilterTest.SourceFileFilterGlobSubstringMatch
+196/245 Test #196: FilterTest.SourceFileFilterGlobSubstringMatch ........................................   Passed    0.00 sec
+        Start 197: FilterTest.PredicateFilter
+197/245 Test #197: FilterTest.PredicateFilter ...........................................................   Passed    0.00 sec
+        Start 198: FilterTest.LogLevelSetFilter
+198/245 Test #198: FilterTest.LogLevelSetFilter .........................................................   Passed    0.00 sec
+        Start 199: FilterTest.LevelFilterTest
+199/245 Test #199: FilterTest.LevelFilterTest ...........................................................   Passed    0.00 sec
+        Start 200: FilterTest.MinLevelFilterTest
+200/245 Test #200: FilterTest.MinLevelFilterTest ........................................................   Passed    0.00 sec
+        Start 201: FilterTest.BoolFilterTest
+201/245 Test #201: FilterTest.BoolFilterTest ............................................................   Passed    0.00 sec
+        Start 202: FilterTest.KeywordFilterSingle
+202/245 Test #202: FilterTest.KeywordFilterSingle .......................................................   Passed    0.00 sec
+        Start 203: FilterTest.KeywordFilterSingleCaseInsensitive
+203/245 Test #203: FilterTest.KeywordFilterSingleCaseInsensitive ........................................   Passed    0.00 sec
+        Start 204: FilterTest.KeywordFilterMultiAny
+204/245 Test #204: FilterTest.KeywordFilterMultiAny .....................................................   Passed    0.00 sec
+        Start 205: FilterTest.KeywordFilterEmptyListAny
+205/245 Test #205: FilterTest.KeywordFilterEmptyListAny .................................................   Passed    0.00 sec
+        Start 206: FilterTest.KeywordFilterEmptyListAll
+206/245 Test #206: FilterTest.KeywordFilterEmptyListAll .................................................   Passed    0.00 sec
+        Start 207: FilterTest.KeywordFilterMultiAll
+207/245 Test #207: FilterTest.KeywordFilterMultiAll .....................................................   Passed    0.00 sec
+        Start 208: FilterTest.FieldExistsFilter
+208/245 Test #208: FilterTest.FieldExistsFilter .........................................................   Passed    0.00 sec
+        Start 209: FilterTest.FieldValueFilter
+209/245 Test #209: FilterTest.FieldValueFilter ..........................................................   Passed    0.00 sec
+        Start 210: FilterTest.FieldValueFilterWildcardSubstringMatch
+210/245 Test #210: FilterTest.FieldValueFilterWildcardSubstringMatch ....................................   Passed    0.00 sec
+        Start 211: FilterTest.ValueSetFilter
+211/245 Test #211: FilterTest.ValueSetFilter ............................................................   Passed    0.00 sec
+        Start 212: FilterTest.NestedValueSetFilter
+212/245 Test #212: FilterTest.NestedValueSetFilter ......................................................   Passed    0.00 sec
+        Start 213: StatisticsTest.LogLevelCountCollector
+213/245 Test #213: StatisticsTest.LogLevelCountCollector ................................................   Passed    0.00 sec
+        Start 214: StatisticsTest.FieldValueCountCollectorForLevel
+214/245 Test #214: StatisticsTest.FieldValueCountCollectorForLevel ......................................   Passed    0.00 sec
+        Start 215: StatisticsTest.FieldValueCountCollectorForCustomField
+215/245 Test #215: StatisticsTest.FieldValueCountCollectorForCustomField ................................   Passed    0.00 sec
+        Start 216: StatisticsTest.TopNFieldValuesCollectorForMessage
+216/245 Test #216: StatisticsTest.TopNFieldValuesCollectorForMessage ....................................   Passed    0.00 sec
+        Start 217: StatisticsTest.CreateCollectorFactory
+217/245 Test #217: StatisticsTest.CreateCollectorFactory ................................................   Passed    0.00 sec
+        Start 218: UtilsTime.ParseDuration
+218/245 Test #218: UtilsTime.ParseDuration ..............................................................   Passed    0.00 sec
+        Start 219: UtilsTime.ParseRelativeTime
+219/245 Test #219: UtilsTime.ParseRelativeTime ..........................................................   Passed    0.00 sec
+        Start 220: UtilsTime.ParseAbsoluteTime
+220/245 Test #220: UtilsTime.ParseAbsoluteTime ..........................................................   Passed    0.00 sec
+        Start 221: UtilsTime.ParseISO8601
+221/245 Test #221: UtilsTime.ParseISO8601 ...............................................................   Passed    0.00 sec
+        Start 222: UtilsTime.ParseDayRange
+222/245 Test #222: UtilsTime.ParseDayRange ..............................................................   Passed    0.00 sec
+        Start 223: UtilsTime.FormatTimestamp
+223/245 Test #223: UtilsTime.FormatTimestamp ............................................................   Passed    0.00 sec
+        Start 224: UtilsEnumConversionTest.LogLevelToString
+224/245 Test #224: UtilsEnumConversionTest.LogLevelToString .............................................   Passed    0.00 sec
+        Start 225: UtilsEnumConversionTest.StringToLogLevel
+225/245 Test #225: UtilsEnumConversionTest.StringToLogLevel .............................................   Passed    0.00 sec
+        Start 226: UtilsEnumConversionTest.LogEntryFieldToString
+226/245 Test #226: UtilsEnumConversionTest.LogEntryFieldToString ........................................   Passed    0.00 sec
+        Start 227: UtilsEnumConversionTest.StringToLogEntryField
+227/245 Test #227: UtilsEnumConversionTest.StringToLogEntryField ........................................   Passed    0.00 sec
+        Start 228: UtilsEnumConversionTest.FilterOperatorToString
+228/245 Test #228: UtilsEnumConversionTest.FilterOperatorToString .......................................   Passed    0.00 sec
+        Start 229: UtilsEnumConversionTest.StringToFilterOperator
+229/245 Test #229: UtilsEnumConversionTest.StringToFilterOperator .......................................   Passed    0.00 sec
+        Start 230: UtilsEnumConversionTest.FilterLogicalOperatorToString
+230/245 Test #230: UtilsEnumConversionTest.FilterLogicalOperatorToString ................................   Passed    0.00 sec
+        Start 231: UtilsEnumConversionTest.StringToFilterLogicalOperator
+231/245 Test #231: UtilsEnumConversionTest.StringToFilterLogicalOperator ................................   Passed    0.00 sec
+        Start 232: UtilsEnumConversionTest.FilterValueTypeToString
+232/245 Test #232: UtilsEnumConversionTest.FilterValueTypeToString ......................................   Passed    0.00 sec
+        Start 233: UtilsEnumConversionTest.StringToFilterValueType
+233/245 Test #233: UtilsEnumConversionTest.StringToFilterValueType ......................................   Passed    0.00 sec
+        Start 234: UtilsEnumConversionTest.ExportFormatToString
+234/245 Test #234: UtilsEnumConversionTest.ExportFormatToString .........................................   Passed    0.00 sec
+        Start 235: UtilsEnumConversionTest.StringToExportFormat
+235/245 Test #235: UtilsEnumConversionTest.StringToExportFormat .........................................   Passed    0.00 sec
+        Start 236: UtilsEnumConversionTest.StatisticTypeToString
+236/245 Test #236: UtilsEnumConversionTest.StatisticTypeToString ........................................   Passed    0.00 sec
+        Start 237: UtilsEnumConversionTest.StringToStatisticType
+237/245 Test #237: UtilsEnumConversionTest.StringToStatisticType ........................................   Passed    0.00 sec
+        Start 238: UtilsEnumConversionTest.PatternTypeToString
+238/245 Test #238: UtilsEnumConversionTest.PatternTypeToString ..........................................   Passed    0.00 sec
+        Start 239: UtilsEnumConversionTest.StringToPatternType
+239/245 Test #239: UtilsEnumConversionTest.StringToPatternType ..........................................   Passed    0.00 sec
+        Start 240: UtilsEnumConversionTest.ParseErrorToString
+240/245 Test #240: UtilsEnumConversionTest.ParseErrorToString ...........................................   Passed    0.00 sec
+        Start 241: UtilsEnumConversionTest.StringToParseError
+241/245 Test #241: UtilsEnumConversionTest.StringToParseError ...........................................   Passed    0.00 sec
+        Start 242: UtilsEnumConversionTest.SortByToString
+242/245 Test #242: UtilsEnumConversionTest.SortByToString ...............................................   Passed    0.00 sec
+        Start 243: UtilsEnumConversionTest.StringToSortBy
+243/245 Test #243: UtilsEnumConversionTest.StringToSortBy ...............................................   Passed    0.00 sec
+        Start 244: UtilsEnumConversionTest.SortOrderToString
+244/245 Test #244: UtilsEnumConversionTest.SortOrderToString ............................................   Passed    0.00 sec
+        Start 245: UtilsEnumConversionTest.StringToSortOrder
+245/245 Test #245: UtilsEnumConversionTest.StringToSortOrder ............................................   Passed    0.00 sec
+
+99% tests passed, 2 tests failed out of 245
+
+Total Test time (real) =   0.68 sec
+
+The following tests FAILED:
+	 85 - ExporterJsonTest.EmptySourceFileAndMessage (Failed)
+	 86 - ExporterJsonTest.BoundaryValuesForIdAndLineNumber (Failed)
+Errors while running CTest
