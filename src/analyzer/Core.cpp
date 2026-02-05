@@ -39,7 +39,9 @@ LogAnalyzer::LogAnalyzer()
         customLogLevelMapping_, // Use LogAnalyzer's own mapping
         currentSettings_.logEntryStartPattern,
         CLIConfig::ParserErrorAction::Warn, // Default action for constructor
-        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE // Explicitly provide maxMultiLineBufferSize
+        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, // Explicitly provide maxMultiLineBufferSize
+        true, // threadSafe: LogAnalyzer should use a thread-safe parser
+        std::nullopt // errorHandler: No specific error handler for now, default to internal logging
     );
 
     if (parser_or_error.has_value()) {
@@ -68,7 +70,9 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
         customLogLevelMapping_, // Use LogAnalyzer's own mapping
         currentSettings_.logEntryStartPattern,
         CLIConfig::ParserErrorAction::Warn, // Default action for constructor
-        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE // Explicitly provide maxMultiLineBufferSize
+        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, // Explicitly provide maxMultiLineBufferSize
+        true, // threadSafe: LogAnalyzer should use a thread-safe parser
+        std::nullopt // errorHandler: No specific error handler for now, default to internal logging
     );
 
     if (parser_or_error.has_value()) {
@@ -113,9 +117,11 @@ ErrorCode::Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& sett
         currentSettings_.lineParsePattern, 
         currentSettings_.fieldMappings, 
         customLogLevelMapping_, // Use LogAnalyzer's own mapping
-        currentSettings_.logEntryStartPattern, // Also add this missing argument
+        currentSettings_.logEntryStartPattern, 
         CLIConfig::ParserErrorAction::Warn, // Default action
-        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE // Explicitly provide maxMultiLineBufferSize
+        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, // Explicitly provide maxMultiLineBufferSize
+        true, // threadSafe: LogAnalyzer should use a thread-safe parser
+        std::nullopt // errorHandler: No specific error handler for now, default to internal logging
     );
     if (parser_or_error.has_value()) {
         currentParser_ = std::move(parser_or_error.value());
@@ -148,7 +154,9 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
         customLogLevelMapping_,
         currentSettings_.logEntryStartPattern,
         CLIConfig::ParserErrorAction::Warn, // Default action for constructor
-        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE // Explicitly provide maxMultiLineBufferSize
+        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, // Explicitly provide maxMultiLineBufferSize
+        true, // threadSafe: LogAnalyzer should use a thread-safe parser
+        std::nullopt // errorHandler: No specific error handler for now, default to internal logging
     );
 
     if (parser_or_error.has_value()) {

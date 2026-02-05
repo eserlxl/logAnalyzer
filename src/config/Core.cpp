@@ -437,8 +437,13 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
         }
 
         // Validate value type for numeric operators
-        if (fr.op == FilterOperator::GREATER_THAN || fr.op == FilterOperator::LESS_THAN) {
-            if (fr.field == LogEntryField::THREAD_ID) {
+        if (fr.op == FilterOperator::GREATER_THAN || fr.op == FilterOperator::LESS_THAN ||
+            fr.op == FilterOperator::GREATER_THAN_OR_EQUAL || fr.op == FilterOperator::LESS_THAN_OR_EQUAL ||
+            fr.op == FilterOperator::EQUALS || fr.op == FilterOperator::NOT_EQUALS) // Also applies to EQUALS and NOT_EQUALS for numeric fields
+        {
+            if (fr.field == LogEntryField::ID || fr.field == LogEntryField::LINE_NUMBER ||
+                fr.field == LogEntryField::THREAD_ID)
+            {
                 try {
                     std::stoll(fr.value);
                 } catch (const std::invalid_argument&) {

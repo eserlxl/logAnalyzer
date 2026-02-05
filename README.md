@@ -57,7 +57,7 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    cmake --build .
+    cmake --build . -- -j$(nproc) # Use -j<number_of_cores> to speed up compilation
     ```
 
 3.  **Run a Basic Analysis**:
@@ -76,7 +76,7 @@ For detailed build instructions, installation options, and more usage examples, 
 | **Memory-Efficient Processing** | Handles massive files with minimal memory usage using the `--stream` mode.                              |
 | **Multi-File Support**       | Parses and analyzes multiple log files in a single run.                                                 |
 | **Sorting**                  | Sort results by timestamp, log level, message, or other fields in ascending or descending order.        |
-| **Structured Field Parsing** | Automatically parses log messages into key-value pairs using custom delimiters.                         |
+| **Structured Field Parsing** | Automatically parses log messages into fields, including structured data, using custom patterns and intelligent detection.                         |
 | **Advanced Filtering**       | Filter by log level, time range, keywords, glob patterns, and regular expressions.                      |
 | **Field-Value Matching**     | Match field values with case-sensitive/insensitive text, regex, and glob patterns.                      |
 | **Advanced Data Types**      | Compare fields as `version` numbers (semantic versioning) or `IP addresses`.                            |

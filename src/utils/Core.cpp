@@ -18,7 +18,7 @@ LogLevel stringToLogLevel(const std::string &levelStr) {
     if (upperLevelStr == "TRACE") return LogLevel::TRACE;
     if (upperLevelStr == "DEBUG") return LogLevel::DEBUG;
     if (upperLevelStr == "INFO") return LogLevel::INFO;
-    if (upperLevelStr == "WARNING") return LogLevel::WARNING;
+    if (upperLevelStr == "WARN" || upperLevelStr == "WARNING") return LogLevel::WARNING;
     if (upperLevelStr == "ERROR") return LogLevel::ERROR;
     if (upperLevelStr == "CRITICAL") return LogLevel::CRITICAL;
     if (upperLevelStr == "FATAL") return LogLevel::FATAL;

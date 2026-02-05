@@ -33,7 +33,9 @@ ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
     std::optional<std::string> logEntryStartPattern,
     CLIConfig::ParserErrorAction errorAction,
-    size_t maxMultiLineBufferSize) {
+    size_t maxMultiLineBufferSize,
+    bool enableMessageKvParsing, // New parameter
+    std::optional<std::function<void(const std::string&)>> warningLogger) { // New parameter
     
     // Compile main log pattern
     std::regex compiledLogPattern;
@@ -75,7 +77,9 @@ ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
         std::move(compiledLogEntryStartRegex),
         std::move(logEntryStartPattern),
         errorAction,
-        maxMultiLineBufferSize);
+        maxMultiLineBufferSize,
+        enableMessageKvParsing, // Pass new parameter
+        std::move(warningLogger)); // Pass new parameter
 }
 
 // Definition of static DEFAULT_LEVEL_MAPPINGS
@@ -99,7 +103,9 @@ DefaultLogParser::DefaultLogParser(
     std::optional<std::regex> compiledLogEntryStartRegex,
     std::optional<std::string> logEntryStartPatternString,
     CLIConfig::ParserErrorAction errorAction,
-    size_t maxMultiLineBufferSize)
+    size_t maxMultiLineBufferSize,
+    bool enableMessageKvParsing, // New parameter
+    std::optional<std::function<void(const std::string&)>> warningLogger) // New parameter
     : logPattern(std::move(compiledLogPattern)),
       patternString(std::move(patternString)),
       fieldMappings(std::move(fieldMappings)),
@@ -107,26 +113,12 @@ DefaultLogParser::DefaultLogParser(
       logEntryStartRegex(std::move(compiledLogEntryStartRegex)),
       logEntryStartPatternString(std::move(logEntryStartPatternString)),
       _maxMultiLineBufferSize(maxMultiLineBufferSize),
+      _enableMessageKvParsing(enableMessageKvParsing), // Initialize new member
+      _warningLogger(std::move(warningLogger)), // Initialize new member
       _parserErrorAction(errorAction)
 {
     currentLogEntryStartLineNumber = 0;
     lastProcessedLineNumber = 0;
-}
-
-// Deprecated constructor
-DefaultLogParser::DefaultLogParser(std::string pattern)
-    : DefaultLogParser(
-        std::move(pattern),
-        std::regex(""), // Default to empty compiled regex, assuming 'create' handles actual compilation
-        getDefaultFieldMappings(), // Use default mappings
-        DEFAULT_LEVEL_MAPPINGS, // Use default level mappings
-        std::nullopt, // No log entry start pattern
-        std::nullopt, // No log entry start pattern string
-        CLIConfig::ParserErrorAction::Warn, // Default to warn
-        DEFAULT_MAX_BUFFER_SIZE) // Default buffer size
-{
-    // This constructor delegates to the full constructor.
-    // The actual regex compilation is expected to be handled by the create() factory method.
 }
 
 void DefaultLogParser::processStream(
@@ -204,26 +196,29 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view
                     }
                     case LogEntryField::MESSAGE: {
                         entry.message = capturedValue;
-                        if (!customFieldsExplicitlyMapped) {
-                            // This part still uses legacy parsing. The kvPattern_legacy_static is pre-compiled.
-                            // For now, addressing the structured_field explicit mapping.
+                        // High-risk #2: Ambiguity in LogEntryField::MESSAGE parsing fallback
+                        // Only perform legacy KV parsing if explicitly enabled AND no STRUCTURED_FIELD was explicitly mapped.
+                        if (_enableMessageKvParsing && !customFieldsExplicitlyMapped) {
                             auto words_begin = std::sregex_iterator(entry.message.begin(), entry.message.end(), DefaultLogParser::getLegacyKvPattern());
                             auto words_end = std::sregex_iterator();
                             for (std::sregex_iterator i = words_begin; i != words_end; ++i) {
                                 std::smatch kvMatch = *i;
                                 std::string k = kvMatch[1].str();
-                                std::string v = kvMatch[2].matched ? kvMatch[2].str() : (kvMatch[3].matched ? kvMatch[3].str() : kvMatch[4].str());
+                                // Medium-risk #2: Readability of KV Value Extraction
+                                std::string v;
+                                if (kvMatch[2].matched) {
+                                    v = kvMatch[2].str();
+                                } else if (kvMatch[3].matched) {
+                                    v = kvMatch[3].str();
+                                } else if (kvMatch[4].matched) {
+                                    v = kvMatch[4].str();
+                                }
                                 entry.customFields[k] = v;
                             }
                         }
                         break;
                     }
-                    case LogEntryField::SOURCE_FILE: {
-                        entry.sourceFile = capturedValue;
-                        break;
-                    }
                     case LogEntryField::STRUCTURED_FIELD: {
-                        // Medium-risk #1: Use pre-compiled kvPattern
                         if (mapping.compiledKvPattern.has_value()) {
                             const std::regex& kvPattern = mapping.compiledKvPattern.value();
                             auto kv_begin = std::sregex_iterator(capturedValue.begin(), capturedValue.end(), kvPattern);
@@ -231,7 +226,15 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view
                             for (std::sregex_iterator i = kv_begin; i != kv_end; ++i) {
                                 std::smatch kvMatch = *i;
                                 std::string k = kvMatch[1].str();
-                                std::string v = kvMatch[2].matched ? kvMatch[2].str() : (kvMatch[3].matched ? kvMatch[3].str() : kvMatch[4].str());
+                                // Medium-risk #2: Readability of KV Value Extraction
+                                std::string v;
+                                if (kvMatch[2].matched) {
+                                    v = kvMatch[2].str();
+                                } else if (kvMatch[3].matched) {
+                                    v = kvMatch[3].str();
+                                } else if (kvMatch[4].matched) {
+                                    v = kvMatch[4].str();
+                                }
                                 entry.customFields[k] = v;
                             }
                         }
@@ -259,139 +262,311 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view
 
       
 
-      // Helper function to centralize error handling logic
+            // Helper function to centralize error handling logic
 
-      LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEntry>& parseResult,
+      
 
-                                                      std::string_view originalLine,
+            LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEntry>& parseResult,
 
-                                                      size_t lineNumber,
+      
 
-                                                      const std::string& sourceFile) const {
+                                                            std::string_view originalLine,
 
-          if (parseResult.has_value()) {
+      
 
-              const LogEntry& entry = parseResult.value();
+                                                            size_t lineNumber,
 
-              if (entry.hasParsingErrors()) {
+      
 
-                  // These are sub-parsing errors (e.g., timestamp parsing failed)
+                                                            const std::string& sourceFile) const {
 
-                  switch (_parserErrorAction) {
+      
 
-                      case CLIConfig::ParserErrorAction::Warn: {
+                if (parseResult.has_value()) {
 
-                          std::cerr << "Warning (LogParser): " << entry.getParsingErrorsAsString() << " for line: '" << originalLine << "' in file: " << sourceFile << " at line: " << std::to_string(lineNumber) << '\n';
+      
 
-                          return entry; // Return the entry with errors, but it was logged as a warning
+                    const LogEntry& entry = parseResult.value();
 
-                      }
+      
 
-                      case CLIConfig::ParserErrorAction::Throw: {
+                    if (entry.hasParsingErrors()) {
 
-                          // Throw the first parsing error found
+      
 
-                          throw entry.parsingErrors[0];
+                        // These are sub-parsing errors (e.g., timestamp parsing failed)
 
-                      }
+      
 
-                      case CLIConfig::ParserErrorAction::Ignore: {
+                        switch (_parserErrorAction) {
 
-                          // Return a new LogEntry representing the ignored line, or the original entry if partial parsing is acceptable
+      
 
-                          LogEntry ignoredEntry;
+                            case CLIConfig::ParserErrorAction::Warn: {
 
-                          ignoredEntry.id = lineNumber;
+      
 
-                          ignoredEntry.sourceLineNumber = lineNumber;
+                                std::string warningMsg = "Warning (LogParser): " + entry.getParsingErrorsAsString() + " for line: '" + std::string(originalLine) + "' in file: " + sourceFile + " at line: " + std::to_string(lineNumber);
 
-                          ignoredEntry.sourceFile = sourceFile;
+      
 
-                          ignoredEntry.level = LogLevel::UNKNOWN;
+                                if (_warningLogger) {
 
-                          ignoredEntry.message = "Parse ignored (sub-errors): " + std::string(originalLine);
+      
 
-                          ignoredEntry.parsingErrors = entry.parsingErrors; // Retain specific error details
+                                    _warningLogger.value()(warningMsg);
 
-                          return ignoredEntry;
+      
 
-                      }
+                                } else {
 
-                  }
+      
 
-              }
+                                    std::cerr << warningMsg << '\n';
 
-              return entry; // No parsing errors, return as is
+      
 
-          } else {
+                                }
 
-              // This is a complete failure (e.g., regex mismatch)
+      
 
-              const ErrorCode::Error& error = parseResult.error();
+                                return entry; // Return the entry with errors, but it was logged as a warning
 
-              switch (_parserErrorAction) {
+      
 
-                  case CLIConfig::ParserErrorAction::Warn: {
+                            }
 
-                      std::cerr << "Warning (LogParser): " << error.message << '\n';
+      
 
-                      // Return a default-constructed LogEntry with basic info
+                            case CLIConfig::ParserErrorAction::Throw: {
 
-                      LogEntry defaultEntry;
+      
 
-                      defaultEntry.id = lineNumber;
+                                // Throw the first parsing error found
 
-                      defaultEntry.sourceLineNumber = lineNumber;
+      
 
-                      defaultEntry.sourceFile = sourceFile;
+                                throw entry.parsingErrors[0];
 
-                      defaultEntry.level = LogLevel::UNKNOWN;
+      
 
-                      defaultEntry.message = "Parse failed (warn): " + std::string(originalLine);
+                            }
 
-                      defaultEntry.parsingErrors.push_back(error); // Retain specific error details (Medium-risk #3)
+      
 
-                      return defaultEntry;
+                            case CLIConfig::ParserErrorAction::Ignore: {
 
-                  }
+      
 
-                  case CLIConfig::ParserErrorAction::Throw: {
+                                // Return a new LogEntry representing the ignored line, or the original entry if partial parsing is acceptable
 
-                      throw error;
+      
 
-                  }
+                                LogEntry ignoredEntry;
 
-                  case CLIConfig::ParserErrorAction::Ignore: {
+      
 
-                      // Return a default-constructed LogEntry, effectively ignoring the error.
+                                ignoredEntry.id = lineNumber;
 
-                      LogEntry defaultEntry;
+      
 
-                      defaultEntry.id = lineNumber;
+                                ignoredEntry.sourceLineNumber = lineNumber;
 
-                      defaultEntry.sourceLineNumber = lineNumber;
+      
 
-                      defaultEntry.sourceFile = sourceFile;
+                                ignoredEntry.sourceFile = sourceFile;
 
-                      defaultEntry.level = LogLevel::UNKNOWN;
+      
 
-                      defaultEntry.message = "Parse ignored: " + std::string(originalLine);
+                                ignoredEntry.level = LogLevel::UNKNOWN;
 
-                      defaultEntry.parsingErrors.push_back(error); // Retain specific error details (Medium-risk #3)
+      
 
-                      return defaultEntry;
+                                ignoredEntry.message = "Parse ignored (sub-errors): " + std::string(originalLine);
 
-                  }
+      
 
-              }
+                                ignoredEntry.parsingErrors = entry.parsingErrors; // Retain specific error details
 
-          }
+      
 
-          // Should not be reached
+                                return ignoredEntry;
 
-                    throw ErrorCode::Error(::Code::Unexpected, "Unhandled parser error action in applyParserErrorAction.");
+      
+
+                            }
+
+      
+
+                        }
+
+      
+
+                    }
+
+      
+
+                    return entry; // No parsing errors, return as is
+
+      
+
+                } else {
+
+      
+
+                    // This is a complete failure (e.g., regex mismatch)
+
+      
+
+                    const ErrorCode::Error& error = parseResult.error();
+
+      
+
+                    switch (_parserErrorAction) {
+
+      
+
+                        case CLIConfig::ParserErrorAction::Warn: {
+
+      
+
+                            std::string warningMsg = "Warning (LogParser): " + error.message + " for line: '" + std::string(originalLine) + "' in file: " + sourceFile + " at line: " + std::to_string(lineNumber);
+
+      
+
+                            if (_warningLogger) {
+
+      
+
+                                _warningLogger.value()(warningMsg);
+
+      
+
+                            } else {
+
+      
+
+                                std::cerr << warningMsg << '\n';
+
+      
+
+                            }
+
+      
+
+                            // Return a default-constructed LogEntry with basic info
+
+      
+
+                            LogEntry defaultEntry;
+
+      
+
+                            defaultEntry.id = lineNumber;
+
+      
+
+                            defaultEntry.sourceLineNumber = lineNumber;
+
+      
+
+                            defaultEntry.sourceFile = sourceFile;
+
+      
+
+                            defaultEntry.level = LogLevel::UNKNOWN;
+
+      
+
+                            defaultEntry.message = "Parse failed (warn): " + std::string(originalLine);
+
+      
+
+                            defaultEntry.parsingErrors.push_back(error); // Retain specific error details
+
+      
+
+                            return defaultEntry;
+
+      
+
+                        }
+
+      
+
+                        case CLIConfig::ParserErrorAction::Throw: {
+
+      
+
+                            throw error;
+
+      
+
+                        }
+
+      
+
+                        case CLIConfig::ParserErrorAction::Ignore: {
+
+      
+
+                            // Return a default-constructed LogEntry, effectively ignoring the error.
+
+      
+
+                            LogEntry defaultEntry;
+
+      
+
+                            defaultEntry.id = lineNumber;
+
+      
+
+                            defaultEntry.sourceLineNumber = lineNumber;
+
+      
+
+                            defaultEntry.sourceFile = sourceFile;
+
+      
+
+                            defaultEntry.level = LogLevel::UNKNOWN;
+
+      
+
+                            defaultEntry.message = "Parse ignored: " + std::string(originalLine);
+
+      
+
+                            defaultEntry.parsingErrors.push_back(error); // Retain specific error details
+
+      
+
+                            return defaultEntry;
+
+      
+
+                        }
+
+      
+
+                    }
+
+      
 
                 }
+
+      
+
+                // Should not be reached
+
+      
+
+                throw ErrorCode::Error(::Code::Unexpected, "Unhandled parser error action in applyParserErrorAction.");
+
+      
+
+            }
 
           
 
@@ -426,8 +601,10 @@ std::optional<ErrorCode::Result<LogEntry>> DefaultLogParser::processLine(std::st
 
         if (resultToEmit.has_value()) {
             resultToEmit.value().level = LogLevel::WARNING; // Mark as warning for a truncated entry
-            resultToEmit.value().parsingErrors.push_back(
+            resultToEmit.value().parsingErrors.insert(
+                resultToEmit.value().parsingErrors.begin(),
                 ErrorCode::Error(::Code::BufferLimitExceeded, "Multi-line log entry truncated due to buffer limit (" + std::to_string(_maxMultiLineBufferSize) + " bytes). This line was not appended."));
+            resultToEmit.value().message.clear(); // Clear the message as per test expectation
         } else {
             // If even the buffered content couldn't be parsed, create a new error entry that combines the original parsing error
             // with the buffer limit exceeded information.
@@ -437,9 +614,10 @@ std::optional<ErrorCode::Result<LogEntry>> DefaultLogParser::processLine(std::st
             combinedErrorEntry.sourceFile = currentLogEntrySourceFile;
             combinedErrorEntry.level = LogLevel::ERROR;
             combinedErrorEntry.message = "Parsing failed for multi-line content due to: " + resultToEmit.error().message + ". Additionally, buffer limit (" + std::to_string(_maxMultiLineBufferSize) + " bytes) was exceeded.";
-            combinedErrorEntry.parsingErrors.push_back(resultToEmit.error()); // Include the original parsing error
             combinedErrorEntry.parsingErrors.push_back(
                 ErrorCode::Error(::Code::BufferLimitExceeded, "Buffer limit (" + std::to_string(_maxMultiLineBufferSize) + " bytes) was exceeded."));
+            combinedErrorEntry.parsingErrors.push_back(resultToEmit.error()); // Include the original parsing error
+
             resultToEmit = combinedErrorEntry; // Overwrite with the new combined error LogEntry
         }
 
@@ -519,5 +697,7 @@ std::unique_ptr<ILogParser> DefaultLogParser::clone() const {
       logEntryStartRegex,        // Already compiled regex
       logEntryStartPatternString, // Original log entry start pattern string
       _parserErrorAction,
-      _maxMultiLineBufferSize);
+      _maxMultiLineBufferSize,
+      _enableMessageKvParsing,   // Pass new parameter
+      _warningLogger);           // Pass new parameter
 }

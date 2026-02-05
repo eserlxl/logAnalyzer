@@ -65,6 +65,18 @@ public:
 };
 
 // Default implementation of ILogParser using regex
+//
+// THIS CLASS IS NOT THREAD-SAFE.
+// Instances of DefaultLogParser maintain internal state related to multi-line log entry
+// processing (e.g., currentLogEntryBuffer, bufferedLineNumbers). Concurrent calls to
+// state-modifying methods like processLine(), processStream(), or flushRemaining()
+// on the same instance from multiple threads will lead to race conditions and
+// undefined behavior.
+//
+// For multi-threaded environments, ensure that:
+// 1. Each thread uses its own independent DefaultLogParser instance (e.g., by calling clone()).
+// 2. Access to a shared DefaultLogParser instance is protected by external synchronization
+//    mechanisms (e.g., mutexes).
 class DefaultLogParser : public ILogParser {
 public:
     static constexpr size_t DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024; // 10 MiB
@@ -76,7 +88,10 @@ public:
         const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
         std::optional<std::string> logEntryStartPattern, // Reverted to string
         CLIConfig::ParserErrorAction errorAction,
-        size_t maxMultiLineBufferSize); // New parameter
+        size_t maxMultiLineBufferSize,
+        bool enableMessageKvParsing, // New parameter: Explicitly enable legacy KV parsing in MESSAGE field
+        std::optional<std::function<void(const std::string&)>> warningLogger = std::nullopt // New: Configurable warning logger
+        );
 
     // New constructor with field mappings and level mappings, and optional log entry start pattern
     DefaultLogParser(
@@ -87,18 +102,18 @@ public:
         std::optional<std::regex> compiledLogEntryStartRegex, // The compiled start regex
         std::optional<std::string> logEntryStartPatternString, // The original start regex string
         CLIConfig::ParserErrorAction errorAction,
-        size_t maxMultiLineBufferSize);
+        size_t maxMultiLineBufferSize,
+        bool enableMessageKvParsing, // New parameter
+        std::optional<std::function<void(const std::string&)>> warningLogger = std::nullopt // New parameter
+        );
 
-    // Deprecated constructor, now delegates to the new one
-    [[deprecated("Use constructor with fieldMappings for explicit control.")]]
-    DefaultLogParser(
-        std::string pattern
-    );
+    // Removed deprecated constructor
 
     // New API for multi-line log processing
     std::optional<ErrorCode::Result<LogEntry>> processLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) override; // Changed to ErrorCode::Result<LogEntry>
     std::vector<ErrorCode::Result<LogEntry>> flushRemaining() override; // Changed to ErrorCode::Result<LogEntry>
 
+    // processStream is not const because it calls processLine which modifies internal state.
     void processStream(
         std::istream& inputStream, 
         const std::function<void(ErrorCode::Result<LogEntry>)>& onEntry,
@@ -129,11 +144,15 @@ private:
     size_t currentLogEntryStartLineNumber = 0;
     size_t lastProcessedLineNumber = 0;
     size_t _maxMultiLineBufferSize;
+    bool _enableMessageKvParsing; // New: Member to store the flag for MESSAGE field KV parsing
+    std::optional<std::function<void(const std::string&)>> _warningLogger; // New: Configurable warning logger
 
     std::vector<size_t> bufferedLineNumbers;
 
 public:
     // Public override for ILogParser::parseLine
+    // parseLine is const as it performs parsing based on immutable configuration
+    // and returns results without modifying the parser's internal state.
     ErrorCode::Result<LogEntry> parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const override; // Changed to ErrorCode::Result<LogEntry>
 
     // Internal parsing logic helper
