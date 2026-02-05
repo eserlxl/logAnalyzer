@@ -2,6 +2,7 @@
 // Copyright (c) 2026 eserlxl
 
 #include "filter/ConcreteFilters.h"
+#include "utils/String.h"
 #include "utils/Core.h"
 #include <charconv>
 #include <regex>

@@ -4,13 +4,15 @@
 #include "utils/String.h" // Explicitly include String.h
 #include "utils/Core.h" // Includes all necessary declarations for Utils namespace
 #include <algorithm>
-#include <string>
-#include <sstream> // For std::ostringstream in escapeJsonString
-#include <iomanip> // For std::hex in escapeJsonString
 #include <vector>
 #include <regex>
 
 namespace Utils {
+
+// Helper for case-insensitive character comparison
+static auto caseInsensitiveCharCompare = [](char c1, char c2) {
+    return std::tolower(static_cast<unsigned char>(c1)) == std::tolower(static_cast<unsigned char>(c2));
+};
 
 void replaceAll(std::string &str, const std::string &from, const std::string &to) {
     if (from.empty()) return;
@@ -22,21 +24,38 @@ void replaceAll(std::string &str, const std::string &from, const std::string &to
 }
 
 void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to) {
-    if (from.empty()) return;
+    if (from.empty() || str.empty()) {
+        return;
+    }
 
-    std::string lowerFrom = toLower(from);
-    size_t start_pos = 0;
-    while (true) {
-        std::string lowerStr = toLower(str); // Recalculate lowerStr in each iteration
-        start_pos = lowerStr.find(lowerFrom, start_pos);
-        if (start_pos == std::string::npos) {
+    std::string result;
+    result.reserve(str.length()); // Optimistic reservation
+
+    size_t current_pos = 0;
+    while (current_pos < str.length()) {
+        auto it = std::search(str.begin() + current_pos, str.end(),
+                              from.begin(), from.end(),
+                              caseInsensitiveCharCompare);
+
+        if (it == str.end()) {
+            // No more occurrences found, append remaining part and break
+            result.append(str, current_pos, std::string::npos);
             break;
         }
-        str.replace(start_pos, from.length(), to);
-        // Important: Do NOT modify lowerStr directly with 'to' as it might not be lowercase
-        // The next iteration will recalculate lowerStr from the updated 'str'
-        start_pos += to.length();
+
+        size_t found_pos = std::distance(str.begin(), it);
+
+        // Append the part of the string before the match
+        result.append(str, current_pos, found_pos - current_pos);
+
+        // Append the replacement string
+        result.append(to);
+
+        // Advance current_pos past the *found* (original) 'from' string
+        // This is key to allowing 'to' to be part of subsequent searches, if 'from' overlaps with 'to'
+        current_pos = found_pos + from.length();
     }
+    str = std::move(result);
 }
 
 std::string trim(const std::string& str, std::string_view whitespace) {
@@ -82,39 +101,72 @@ std::string toUpper(const std::string& str) {
 }
 
 bool caseInsensitiveEquals(const std::string& s1, const std::string& s2) {
-    return toLower(s1) == toLower(s2);
+    if (s1.length() != s2.length()) {
+        return false;
+    }
+    return std::equal(s1.begin(), s1.end(), s2.begin(), caseInsensitiveCharCompare);
 }
 
 bool caseInsensitiveSearch(const std::string& text, const std::string& pattern) {
-    std::string lowerText = toLower(text);
-    std::string lowerPattern = toLower(pattern);
-    return lowerText.find(lowerPattern) != std::string::npos;
-}
-
-[[deprecated("Use caseInsensitiveStarts instead.")]]
-bool startsWithIgnoreCase(const std::string& text, const std::string& prefix) {
-    if (prefix.length() > text.length()) return false;
-    return toLower(text.substr(0, prefix.length())) == toLower(prefix);
-}
-
-[[deprecated("Use caseInsensitiveEnds instead.")]]
-bool endsWithIgnoreCase(const std::string& text, const std::string& suffix) {
-    if (suffix.length() > text.length()) return false;
-    return toLower(text.substr(text.length() - suffix.length())) == toLower(suffix);
+    if (pattern.empty()) {
+        return true; // Or false, depending on desired behavior; true is common
+    }
+    if (text.empty() && !pattern.empty()) {
+        return false;
+    }
+    auto it = std::search(text.begin(), text.end(),
+                          pattern.begin(), pattern.end(),
+                          caseInsensitiveCharCompare);
+    return it != text.end();
 }
 
 bool caseInsensitiveStarts(const std::string& text, const std::string& prefix) {
-    return startsWithIgnoreCase(text, prefix);
+    if (prefix.length() > text.length()) {
+        return false;
+    }
+    return std::equal(prefix.begin(), prefix.end(), text.begin(), caseInsensitiveCharCompare);
 }
 
 bool caseInsensitiveEnds(const std::string& text, const std::string& suffix) {
-    return endsWithIgnoreCase(text, suffix);
+    if (suffix.length() > text.length()) {
+        return false;
+    }
+    return std::equal(suffix.rbegin(), suffix.rend(), text.rbegin(), caseInsensitiveCharCompare);
+}
+
+// Helper to convert a Unicode code point to its UTF-16 surrogate pair representation if necessary
+// and format it as JSON \uXXXX escapes.
+static void appendJsonUnicodeEscape(std::string& output, uint32_t cp) {
+    if (cp <= 0xFFFF) {
+        // Basic Multilingual Plane (BMP) characters
+        char buf[7]; // \uXXXX\0
+        snprintf(buf, sizeof(buf), "\\u%04X", cp);
+        output += buf;
+    } else if (cp <= 0x10FFFF) {
+        // Supplementary Plane characters (requires surrogate pair)
+        // Convert to surrogate pair
+        cp -= 0x10000;
+        uint32_t high_surrogate = (cp >> 10) + 0xD800;
+        uint32_t low_surrogate = (cp & 0x3FF) + 0xDC00;
+
+        char buf[13]; // \uXXXX\uYYYY\0
+        snprintf(buf, sizeof(buf), "\\u%04X\\u%04X", high_surrogate, low_surrogate);
+        output += buf;
+    } else {
+        // Invalid Unicode code point, escape as replacement character
+        char buf[7]; // \uFFFD\0
+        snprintf(buf, sizeof(buf), "\\u%04X", 0xFFFD); // Use Unicode replacement character
+        output += buf;
+    }
 }
 
 std::string escapeJsonString(const std::string& input) {
     std::string output;
-    output.reserve(input.length()); // Reserve at least the original length
-    for (char c : input) {
+    output.reserve(input.length()); // Reserve space
+
+    for (size_t i = 0; i < input.length(); ++i) {
+        unsigned char c = static_cast<unsigned char>(input[i]);
+
         switch (c) {
             case '"':  output += "\\\""; break;
             case '\\': output += "\\\\"; break;
@@ -124,12 +176,60 @@ std::string escapeJsonString(const std::string& input) {
             case '\r': output += "\\r"; break;
             case '\t': output += "\\t"; break;
             default:
-                if (static_cast<unsigned char>(c) < 0x20 || static_cast<unsigned char>(c) > 0x7e) {
-                    std::ostringstream ss;
-                    ss << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(static_cast<unsigned char>(c));
-                    output += ss.str();
-                } else {
+                if (c < 0x20) { // Control characters
+                    char buf[7];
+                    snprintf(buf, sizeof(buf), "\\u%04X", c);
+                    output += buf;
+                } else if (c <= 0x7E) { // Printable ASCII
                     output += c;
+                } else { // Potential multi-byte UTF-8
+                    uint32_t code_point = 0;
+                    int num_bytes = 0;
+
+                    if ((c & 0xE0) == 0xC0) { // 2-byte sequence
+                        if (i + 1 < input.length()) {
+                            unsigned char c2 = static_cast<unsigned char>(input[i+1]);
+                            if ((c2 & 0xC0) == 0x80) {
+                                code_point = ((c & 0x1F) << 6) | (c2 & 0x3F);
+                                if (code_point >= 0x80) { // Not overlong
+                                    num_bytes = 2;
+                                }
+                            }
+                        }
+                    } else if ((c & 0xF0) == 0xE0) { // 3-byte sequence
+                        if (i + 2 < input.length()) {
+                            unsigned char c2 = static_cast<unsigned char>(input[i+1]);
+                            unsigned char c3 = static_cast<unsigned char>(input[i+2]);
+                            if ((c2 & 0xC0) == 0x80 && (c3 & 0xC0) == 0x80) {
+                                code_point = ((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+                                if (code_point >= 0x800 && (code_point < 0xD800 || code_point > 0xDFFF)) { // Not overlong and not a surrogate
+                                    num_bytes = 3;
+                                }
+                            }
+                        }
+                    } else if ((c & 0xF8) == 0xF0) { // 4-byte sequence
+                        if (i + 3 < input.length()) {
+                            unsigned char c2 = static_cast<unsigned char>(input[i+1]);
+                            unsigned char c3 = static_cast<unsigned char>(input[i+2]);
+                            unsigned char c4 = static_cast<unsigned char>(input[i+3]);
+                            if ((c2 & 0xC0) == 0x80 && (c3 & 0xC0) == 0x80 && (c4 & 0xC0) == 0x80) {
+                                code_point = ((c & 0x07) << 18) | ((c2 & 0x3F) << 12) | ((c3 & 0x3F) << 6) | (c4 & 0x3F);
+                                if (code_point >= 0x10000 && code_point <= 0x10FFFF) { // Not overlong and in valid range
+                                    num_bytes = 4;
+                                }
+                            }
+                        }
+                    }
+
+                    if (num_bytes > 0) {
+                        appendJsonUnicodeEscape(output, code_point);
+                        i += (num_bytes - 1);
+                    } else {
+                        // Invalid UTF-8 sequence, escape the byte
+                        char buf[7];
+                        snprintf(buf, sizeof(buf), "\\u%04X", c);
+                        output += buf;
+                    }
                 }
                 break;
         }

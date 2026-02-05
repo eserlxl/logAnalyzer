@@ -15,11 +15,23 @@ std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
 bool caseInsensitiveEquals(const std::string& s1, const std::string& s2);
 bool caseInsensitiveSearch(const std::string& text, const std::string& pattern);
-bool startsWithIgnoreCase(const std::string& text, const std::string& prefix); // Deprecated: Use caseInsensitiveStarts
-bool endsWithIgnoreCase(const std::string& text, const std::string& suffix);   // Deprecated: Use caseInsensitiveEnds
 bool caseInsensitiveStarts(const std::string& text, const std::string& prefix);
 bool caseInsensitiveEnds(const std::string& text, const std::string& suffix);
 std::string escapeJsonString(const std::string& input);
+
+/**
+ * @brief Converts a limited glob pattern to a regex string.
+ *
+ * This implementation supports:
+ * - `*`: matches any sequence of zero or more characters.
+ * - `?`: matches any single character.
+ *
+ * It does NOT support more advanced glob features like character sets (`[a-z]`),
+ * negations (`[!abc]`), or brace expansion (`{foo,bar}`).
+ *
+ * @param globPattern The glob pattern to convert.
+ * @return A string representing the equivalent regular expression.
+ */
 std::string globToRegex(const std::string& globPattern);
 
 } // namespace Utils

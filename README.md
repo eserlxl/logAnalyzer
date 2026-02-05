@@ -3,8 +3,9 @@
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
 [![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/eserlxl/logAnalyzer/actions)
-[![License: GPL v3](https.img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
+![CMake](https://img.shields.io/badge/cmake-3.20%2B-blue.svg)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
 [![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
 
@@ -61,9 +62,9 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
     ```
 
 3.  **Run a Basic Analysis**:
-    After building, the executable will be in the `build` directory.
+    After building, the executable will be in the `build/bin` directory.
     ```bash
-    ./build/LogAnalyzer /var/log/syslog --level ERROR
+    ./build/bin/LogAnalyzer /var/log/syslog --level ERROR
     ```
     *(Replace `/var/log/syslog` with a path to one of your log files.)*
 
@@ -261,7 +262,7 @@ cmake --install . --prefix ../dist
 
 
 
-Alternatively, you can manually add the `build` directory (from your build directory) to your system's `PATH` environment variable or copy the `LogAnalyzer` executable from `build` to any directory already in your `PATH`. For example, after building from the `logAnalyzer` root directory:
+Alternatively, you can manually add the `build/bin` directory to your system's `PATH` environment variable or copy the `LogAnalyzer` executable from `build/bin` to a directory already in your `PATH`. For example, after building from the `logAnalyzer` root directory:
 
 
 
@@ -275,13 +276,13 @@ cd build
 
 # Add to PATH temporarily (for the current session)
 
-export PATH=$(pwd):$PATH
+export PATH=$(pwd)/bin:$PATH
 
 
 
 # Or copy the executable to a user-local bin directory (make sure ~/.local/bin is in your PATH)
 
-cp ./LogAnalyzer ~/.local/bin/
+cp ./bin/LogAnalyzer ~/.local/bin/
 
 ```
 
@@ -598,7 +599,6 @@ logAnalyzer/
 ├── examples/                # Example log files and configuration examples.
 ├── include/                 # Public header files for core logic, configuration, filters, and utilities.
 ├── lib/                     # Compiled libraries (static/shared).
-├── logAnalyzer/             # A nested copy of the project, used for development and testing.
 ├── src/                     # Source code (.cpp files) implementing header functionalities.
 ├── tests/                   # Unit and integration tests.
 ├── tools/                   # Development scripts and utilities.

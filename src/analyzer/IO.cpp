@@ -2,6 +2,7 @@
 // Copyright (c) 2026 eserlxl
 
 #include "analyzer/Core.h"
+#include "utils/String.h"
 #include "core/LogParser.h"
 #include "filter/Core.h"
 #include "stats/Statistics.h"

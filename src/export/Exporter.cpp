@@ -2,12 +2,16 @@
 // Copyright (c) 2026 eserlxl
 
 #include "export/Exporter.h"
-#include "analyzer/Core.h"
-#include "utils/UtilsCore.h"
-#include <nlohmann/json.hpp>
+#include "utils/String.h"
+#include <chrono>
+#include <fstream>
 #include <iomanip>
-// No longer need <iostream> for std::cerr (it was removed in the header fix)
-#include <set> // Required for std::set in field discovery
+#include <iostream>
+#include <nlohmann/json.hpp>
+#include <sstream>
+#include <stdexcept>
+#include <vector>
+#include <set>
 
 using json = nlohmann::json;
 

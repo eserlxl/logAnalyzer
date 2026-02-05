@@ -2,6 +2,7 @@
 // Copyright (c) 2026 eserlxl
 
 #include "analyzer/Core.h"
+#include "utils/String.h"
 #include "utils/UtilsCore.h"
 #include <iostream>
 #include <vector>

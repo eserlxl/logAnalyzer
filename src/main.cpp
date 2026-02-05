@@ -3,6 +3,7 @@
 
 #include "analyzer/Core.h"
 #include "utils/UtilsCore.h"
+#include "utils/String.h"
 #include "config/Settings.h"
 #include "config/CLIConfig.h" // Added for CLIConfig
 #include "core/Error.h" // New: For Error struct and Result alias

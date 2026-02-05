@@ -367,7 +367,7 @@ TEST_F(LogAnalyzerConfigTest, ToJsonComprehensive) {
     };
     settings.exportSettings.includeHeader = true;
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::LOG_LEVEL_COUNT},
+        StatisticConfig{StatisticType::LOG_LEVEL_COUNT, {}},
     };
     settings.rootFilterExpression = FilterExpression{
         FilterLogicalOperator::OR,

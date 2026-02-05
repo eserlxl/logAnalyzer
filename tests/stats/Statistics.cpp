@@ -7,32 +7,20 @@
 using namespace std::chrono_literals;
 using json = nlohmann::json;
 
-// Helper function to convert LogLevel to string, as it's used in the reports.
-// This might exist in Utils.cpp in a real scenario.
-namespace {
-    std::string logLevelToString(LogLevel level) {
-        switch (level) {
-            case LogLevel::INFO: return "INFO";
-            case LogLevel::WARNING: return "WARNING";
-            case LogLevel::ERROR: return "ERROR";
-            case LogLevel::DEBUG: return "DEBUG";
-            default: return "UNKNOWN";
-        }
-    }
-}
+
 
 class StatisticsTest : public ::testing::Test {
 protected:
     void SetUp() override {
         auto now = std::chrono::system_clock::now();
         entries = std::vector<LogEntry>{
-            {0, "main.cpp", 1, now, LogLevel::INFO, "Application starting", {}, {}, {}, {{"session", "A"}}},
-            {0, "main.cpp", 2, now + 1s, LogLevel::INFO, "Application starting", {}, {}, {}, {{"session", "B"}}},
-            {0, "worker.cpp", 3, now + 2s, LogLevel::DEBUG, "Processing data", {}, {}, {}, {{"session", "A"}}},
-            {0, "worker.cpp", 4, now + 3s, LogLevel::WARNING, "High load detected", {}, {}, {}, {{"session", "A"}}},
-            {0, "network.cpp", 5, now + 4s, LogLevel::ERROR, "Connection failed", {}, {}, {}, {{"session", "B"}}},
-            {0, "network.cpp", 6, now + 5s, LogLevel::ERROR, "Connection failed", {}, {}, {}, {{"session", "C"}}},
-            {0, "main.cpp", 7, now + 6s, LogLevel::INFO, "Application shutdown", {}, {}, {}, {{"session", "A"}}},
+            {0, "main.cpp", 1, now, LogLevel::INFO, "Application starting", {}, {}, {}, {{"session", "A"}}, {}},
+            {0, "main.cpp", 2, now + 1s, LogLevel::INFO, "Application starting", {}, {}, {}, {{"session", "B"}}, {}},
+            {0, "worker.cpp", 3, now + 2s, LogLevel::DEBUG, "Processing data", {}, {}, {}, {{"session", "A"}}, {}},
+            {0, "worker.cpp", 4, now + 3s, LogLevel::WARNING, "High load detected", {}, {}, {}, {{"session", "A"}}, {}},
+            {0, "network.cpp", 5, now + 4s, LogLevel::ERROR, "Connection failed", {}, {}, {}, {{"session", "B"}}, {}},
+            {0, "network.cpp", 6, now + 5s, LogLevel::ERROR, "Connection failed", {}, {}, {}, {{"session", "C"}}, {}},
+            {0, "main.cpp", 7, now + 6s, LogLevel::INFO, "Application shutdown", {}, {}, {}, {{"session", "A"}}, {}},
         };
     }
 

@@ -52,7 +52,7 @@ TEST_F(ConfigValidationTest, Validate_FilterRuleWithUnknownField) {
 
 TEST_F(ConfigValidationTest, Validate_StatisticConfigWithUnknownType) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::UNKNOWN}
+        StatisticConfig{StatisticType::UNKNOWN, {}}
     };
     errors = settings.validate();
     ASSERT_EQ(errors.size(), 1);
@@ -63,7 +63,7 @@ TEST_F(ConfigValidationTest, Validate_MultipleErrors) {
     settings.lineParsePattern = "[invalid regex";
     settings.fieldMappings = { FieldMapping{LogEntryField::TIMESTAMP, std::nullopt} };
     settings.filterRules = { FilterRule{LogEntryField::UNKNOWN, FilterOperator::EQUALS, "VAL"} };
-    settings.statisticConfigs = { StatisticConfig{StatisticType::UNKNOWN} };
+    settings.statisticConfigs = { StatisticConfig{StatisticType::UNKNOWN, {}} };
     errors = settings.validate();
     ASSERT_EQ(errors.size(), 4);
     EXPECT_THAT(errors, testing::Contains(testing::HasSubstr("Invalid regex pattern")));
@@ -74,7 +74,7 @@ TEST_F(ConfigValidationTest, Validate_MultipleErrors) {
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopMessages_MissingTopN) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::TOP_MESSAGES}
+        StatisticConfig{StatisticType::TOP_MESSAGES, {}}
     };
     errors = settings.validate();
     ASSERT_EQ(errors.size(), 1);
@@ -119,7 +119,7 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_NegativeTopN) {
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCount_MissingTargetField) {
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::FIELD_VALUE_COUNT}
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {}}
     };
     errors = settings.validate();
     ASSERT_EQ(errors.size(), 1);
@@ -216,10 +216,10 @@ TEST_F(ConfigValidationTest, ValidateValidSettings) {
         FilterRule{LogEntryField::LEVEL, FilterOperator::EQUALS, "INFO"}
     };
     settings.statisticConfigs = {
-        StatisticConfig{StatisticType::UNIQUE_MESSAGES},
+        StatisticConfig{StatisticType::UNIQUE_MESSAGES, {}},
         StatisticConfig{StatisticType::TOP_MESSAGES, {{std::string(config_keys::TOP_N), "5"}}},
-        StatisticConfig{StatisticType::ENTRY_RATE},
-        StatisticConfig{StatisticType::LOG_LEVEL_COUNT},
+        StatisticConfig{StatisticType::ENTRY_RATE, {}},
+        StatisticConfig{StatisticType::LOG_LEVEL_COUNT, {}},
         StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "level"}}},
         StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{std::string(config_keys::TARGET_FIELD), "message"}, {std::string(config_keys::TOP_N), "10"}}},
         StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "customFields"}, {std::string(config_keys::CUSTOM_FIELD_KEY), "session"}}},

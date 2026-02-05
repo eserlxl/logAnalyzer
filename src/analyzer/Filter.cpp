@@ -77,6 +77,17 @@ std::vector<LogEntry> LogAnalyzer::getSortedFilteredEntries(const FilterCriteria
             case SortBy::MESSAGE:
                 result = a.message < b.message;
                 break;
+            case SortBy::SOURCE:
+                result = a.sourceFile < b.sourceFile;
+                break;
+            case SortBy::THREAD_ID:
+                // Handle optional: nullopt is considered "less than" a value.
+                if (a.threadId.has_value() && b.threadId.has_value()) {
+                    result = *a.threadId < *b.threadId;
+                } else {
+                    result = a.threadId.has_value() < b.threadId.has_value();
+                }
+                break;
         }
         return (sortOrder == SortOrder::ASCENDING) ? result : !result;
     };

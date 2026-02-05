@@ -55,32 +55,6 @@ std::string getFileName(const std::string& filePath);
 std::string getFileExtension(const std::string& filePath);
 std::string getDirectory(const std::string& filePath);
 
-// --- String Utilities (from UtilsString.cpp) ---
-void replaceAll(std::string &str, const std::string &from, const std::string &to);
-void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to);
-std::string trim(const std::string& str, std::string_view whitespace);
-std::vector<std::string> split(const std::string& str, char delimiter);
-std::string toLower(const std::string& str);
-std::string toUpper(const std::string& str);
-std::string escapeJsonString(const std::string& input);
-std::string globToRegex(const std::string& globPattern);
-inline bool caseInsensitiveEquals(std::string_view str1, std::string_view str2) {
-    return std::equal(str1.begin(), str1.end(),
-                      str2.begin(), str2.end(),
-                      [](char a, char b) {
-                          return std::tolower(a) == std::tolower(b);
-                      });
-}
-
-// Helper to search for a substring case-insensitively
-inline bool caseInsensitiveSearch(std::string_view text, std::string_view keyword) {
-    auto it = std::search(text.begin(), text.end(),
-                          keyword.begin(), keyword.end(),
-                          [](char ch1, char ch2) { return std::tolower(ch1) == std::tolower(ch2); });
-    return (it != text.end());
-}
-
-
 // --- Time Utilities (from UtilsTime.cpp) ---
 std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format = "%Y-%m-%d %H:%M:%S");
 std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits);
