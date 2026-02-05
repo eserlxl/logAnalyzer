@@ -1,10 +1,10 @@
-# LogAnalyzer
+# logAnalyzer
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
-[![License: MIT](https.img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
-[![Doxygen Documentation](httpshttps://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
+[![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
 
 ## Overview
 
@@ -22,11 +22,11 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 ## Table of Contents
 
 -   [Features](#features)
+-   [Getting Started](#getting-started)
+-   [Usage](#usage)
 -   [Command-Line Interface (CLI)](#command-line-interface-cli)
 -   [Configuration](#configuration)
 -   [Project Structure](#project-structure)
--   [Getting Started](#getting-started)
--   [Usage Examples](#usage-examples)
 -   [Running Tests](#running-tests)
 -   [Developer Tools](#developer-tools)
 -   [Contributing](#contributing)
@@ -35,91 +35,220 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 
 ## Features
 
-| Feature | Description |
-| --- | --- |
-| **Memory-Efficient Processing** | Handles very large files with minimal memory usage using the `--stream` mode. |
-| **Multi-File Support** | Parses and analyzes multiple log files at once. |
-| **Structured Field Parsing** | Automatically parses log messages into key-value pairs using custom delimiters. |
-| **Advanced Filtering** | Filter by keywords, regular expressions, log levels, and time ranges. |
-| **Complex Filtering Expressions** | Build sophisticated filter logic using parenthesized, nested AND/OR conditions. |
-| **Live Tailing** | Monitor log files for new entries in real-time (`tail -f` like behavior). |
-| **Flexible Export** | Save results in Text, JSON, or CSV formats. |
-| **Statistical Analysis** | Generate statistics on your log data, such as entry rates and top messages. |
+| Feature                      | Description                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------ |
+| **Memory-Efficient Processing** | Handles very large files with minimal memory usage using the `--stream` mode.        |
+| **Multi-File Support**       | Parses and analyzes multiple log files at once.                                      |
+| **Structured Field Parsing** | Automatically parses log messages into key-value pairs using custom delimiters.      |
+| **Advanced Filtering**       | Filter by keywords, regular expressions, log levels, and time ranges.                |
+| **Complex Filtering Expressions** | Build sophisticated filter logic using parenthesized, nested AND/OR conditions.      |
+| **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).            |
+| **Flexible Export**          | Save results in Text, JSON, or CSV formats.                                          |
+| **Statistical Analysis**     | Generate statistics on your log data, such as entry rates and top messages.          |
+
+## Getting Started
+
+### 1. Prerequisites
+
+-   **Compiler**: A C++23 compatible compiler (e.g., GCC 13+, Clang 16+).
+-   **Build System**: CMake 3.20 or higher.
+-   **Version Control**: Git for cloning the repository.
+
+### 2. Clone the Repository
+
+First, clone the repository and navigate into the project directory:
+
+```bash
+git clone https://github.com/eserlxl/logAnalyzer.git
+cd logAnalyzer
+```
+
+### 3. Build the Project
+
+Next, use CMake to configure and build the project. We recommend an out-of-source build.
+
+```bash
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build .
+```
+
+The compiled `logAnalyzer` executable will be available in the `build/bin` directory.
+
+#### Build Options
+
+You can customize the build with the following CMake options:
+
+-   `-DBUILD_TESTING=ON/OFF`: Enable or disable the compilation of tests (default: `ON`).
+-   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Build `logAnalyzer` as a shared library (default: `OFF`).
+-   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enable sanitizers for debugging (default: `None`).
+
+To use an option, add it to the `cmake` command:
+
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+```
+
+### 4. (Optional) Install `logAnalyzer`
+
+To install the `logAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from the `build` directory. This allows you to run `logAnalyzer` from any directory.
+
+```bash
+# Use sudo for system-wide installation
+sudo cmake --install . --prefix /usr/local
+```
+
+For a local installation, you can specify a different prefix. This is useful if you don't have administrative privileges.
+
+```bash
+# Install to a 'dist' directory inside the project folder
+cmake --install . --prefix ../dist
+```
+
+## Usage
+
+After building, you can run `logAnalyzer` in two ways:
+
+1.  **From the build directory**:
+    ```bash
+    ./build/bin/logAnalyzer [options] <log_file(s)>
+    ```
+
+2.  **As an installed command** (if you completed the installation step):
+    ```bash
+    logAnalyzer [options] <log_file(s)>
+    ```
+
+**Note**: The following examples assume `logAnalyzer` is in your `PATH` (i.e., installed). If not, replace `logAnalyzer` with the path to the executable (e.g., `./build/bin/logAnalyzer`).
+
+### Example 1: Basic Filtering
+
+```bash
+# Find all errors containing the word "database" in a specific log file
+logAnalyzer /var/log/app.log --level ERROR --keyword "database"
+
+# Find all entries in two different log files, excluding those containing "DEBUG"
+logAnalyzer app.log kern.log --exclude-keyword "DEBUG"
+```
+
+### Example 2: Advanced Filtering and Output
+
+```bash
+# Find entries that are either warnings or errors, and contain "timeout" OR "refused"
+logAnalyzer access.log --level WARNING --level ERROR --keyword "timeout" --keyword "refused" --logic OR
+
+# Export errors between two dates to a pretty-printed JSON file
+logAnalyzer system.log --level ERROR --start "2023-11-01 00:00:00" --end "2023-11-02 00:00:00" --format json --pretty --output errors.json
+```
+
+### Example 3: Complex Expression
+
+```bash
+# Use a complex expression to find database errors or any message containing "timeout"
+logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
+```
+
+### Example 4: Stream a Large File
+
+```bash
+# Process a large log file without loading it all into memory, saving errors to a file
+logAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
+```
+
+### Example 5: Process Logs from Standard Input
+
+`logAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines.
+
+```bash
+# Pipe logs from another command and filter for errors
+cat /var/log/syslog | logAnalyzer --stdin --level ERROR
+
+# Tail a file and filter for a keyword. Use '-' as the filename to signify stdin.
+tail -f /var/log/app.log | logAnalyzer - --keyword "error"
+```
+
+### Example 6: Statistical Analysis
+
+```bash
+# Get the top 5 most common error messages from a log file
+logAnalyzer system.log --level ERROR --stats top_messages:5
+```
 
 ## Command-Line Interface (CLI)
 
 `logAnalyzer` provides a rich command-line interface for ad-hoc analysis.
 
-Run `./bin/logAnalyzer --help` for a full list of commands.
+Run `logAnalyzer --help` for a full list of commands.
 
 ### General Options
 
-| Option | Shorthand | Description | Default |
-| --- | --- | --- | --- |
-| `--help` | `-h` | Shows the help message. | |
-| `--config FILE` | | Load configuration from a JSON file. | |
-| `--pattern REGEX` | | Custom regex for parsing log lines (overrides config). | |
-| `--output FILE` | | Redirect output to a file. | (stdout) |
-| `--color OPT` | | Controls colorized output (`always`, `auto`, `never`). | `auto` |
-| `--stream` | | Enable stream mode to process entries without loading the entire file into memory. | `false` |
-| `--on-parse-error OPT`| | Action on parse errors (`ignore`, `warn`, `throw`). | `warn` |
-| `--stdin` | | Read log entries from standard input. Activated by this flag or by using `-` as a filename. | `false` |
+| Option                 | Shorthand | Description                                                                | Default   |
+| ---------------------- | --------- | -------------------------------------------------------------------------- | --------- |
+| `--help`               | `-h`      | Shows the help message.                                                    |           |
+| `--config FILE`        |           | Load configuration from a JSON file.                                       |           |
+| `--pattern REGEX`      |           | Custom regex for parsing log lines (overrides config).                     |           |
+| `--output FILE`        |           | Redirect output to a file.                                                 | `(stdout)`|
+| `--color OPT`          |           | Controls colorized output (`always`, `auto`, `never`).                     | `auto`    |
+| `--stream`             |           | Enable stream mode for large files (low memory usage).                     | `false`   |
+| `--on-parse-error OPT` |           | Action on parse errors (`ignore`, `warn`, `throw`).                        | `warn`    |
+| `--stdin`              |           | Read log entries from standard input. Also activated by using `-` as a filename. | `false`   |
 
 ### Filtering and Sorting
 
-| Option | Description | Default |
-| --- | --- | --- |
-| `--keyword TEXT` | Keyword/phrase to filter for. Multiple uses are combined with `--logic`. | |
-| `--exclude-keyword TEXT` | Keyword/phrase to exclude. Can be used multiple times. | |
-| `--regex PATTERN` | Regex pattern to filter for. Multiple uses are combined with `--logic`. | |
-| `--exclude-regex PATTERN` | Regex pattern to exclude. Can be used multiple times. | |
-| `--logic [AND\|OR]` | Logic for combining multiple `--keyword` or `--regex` rules. | `AND` |
-| `--case-sensitive` | Makes keyword filtering case-sensitive. | `false` |
-| `--level LEVEL` | Log level to include (e.g., `ERROR`). Can be used multiple times. | |
-| `--min-level LEVEL` | Minimum log level to include (e.g., `WARNING`). | |
-| `--map-level KEY=LEVEL` | Map custom log levels (e.g., `TRC=TRACE`). | |
-| `--start TIME` | Filter logs after a given timestamp (e.g., "2023-10-27 10:00:00"). | |
-| `--end TIME` | Filter logs before a given timestamp. | |
-| `--duration DURATION` | Duration for time filtering (e.g., '30m', '1h'). Must be used with `--start` or `--end`. | |
-| `--expression "EXPR"` | Complex filter expression using nested logic (e.g., `(level=ERROR and msg contains "db") or msg contains "timeout"`). | |
-| `--sort-by [time\|level\|msg]` | Field to sort results by. | `time` |
-| `--order [asc\|desc]` | Sort order. | `asc` |
+| Option                   | Description                                                                                                                                                             | Default |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `--keyword TEXT`         | Keyword/phrase to filter for. Multiple uses are combined with `--logic`.                                                                                                |         |
+| `--exclude-keyword TEXT` | Keyword/phrase to exclude. Can be used multiple times.                                                                                                                  |         |
+| `--regex PATTERN`        | Regex pattern to filter for. Multiple uses are combined with `--logic`.                                                                                                 |         |
+| `--exclude-regex PATTERN`| Regex pattern to exclude. Can be used multiple times.                                                                                                                   |         |
+| `--logic [AND\|OR]`      | Logic for combining multiple `--keyword` or `--regex` rules.                                                                                                            | `AND`   |
+| `--case-sensitive`       | Makes keyword filtering case-sensitive.                                                                                                                                 | `false` |
+| `--level LEVEL`          | Log level to include (e.g., `ERROR`). Can be used multiple times.                                                                                                       |         |
+| `--min-level LEVEL`      | Minimum log level to include (e.g., `WARNING`).                                                                                                                         |         |
+| `--map-level KEY=LEVEL`  | Map custom log levels (e.g., `TRC=TRACE`).                                                                                                                              |         |
+| `--start TIME`           | Filter logs after a given timestamp. Accepts absolute time (e.g., `"2023-10-27 10:00:00"`), relative time (e.g., `"1h ago"`, `"yesterday"`), Unix timestamps, or ISO 8601. |         |
+| `--end TIME`             | Filter logs before a given timestamp. Accepts the same formats as `--start`.                                                                                            |         |
+| `--duration DURATION`    | Duration for time filtering (e.g., '30m', '1h'). Must be used with `--start` or `--end`. Accepts `s` (seconds), `m` (minutes), `h` (hours), or `d` (days).                 |         |
+| `--expression "EXPR"`    | Complex filter expression using nested logic (e.g., `(level=ERROR and msg contains "db") or msg contains "timeout"`).                                                   |         |
+| `--sort-by [time\|level\|msg]` | Field to sort results by.                                                                                                                                             | `time`  |
+| `--order [asc\|desc]`    | Sort order.                                                                                                                                                             | `asc`   |
 
 ### Output Formatting
 
-| Option | Description | Default |
-| --- | --- | --- |
-| `--format [text\|json\|csv]` | Sets the output format. | `text` |
-| `--text-format TEXT` | Custom format string for `text` output. Available: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}` |
-| `--csv-sep CHAR` | Separator character for `csv` output. | `,` |
-| `--csv-fields "FIELDS"` | Comma-separated fields for `csv` output (e.g., `timestamp,level,message`). | |
-| `--json-fields "FIELDS"`| Comma-separated fields for `json` output (e.g., `timestamp,level,message`). | |
-| `--pretty` | Pretty-print `json` output. | `false` |
-| `--include-summary` | Include a summary section in `json` output. | `false` |
+| Option                  | Description                                                                                                                             | Default                         |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `--format [text\|json\|csv]`  | Sets the output format.                                                                                                                 | `text`                          |
+| `--text-format TEXT`    | Custom format string for `text` output. Available: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
+| `--csv-sep CHAR`        | Separator character for `csv` output.                                                                                                   | `,`                             |
+| `--csv-fields "FIELDS"` | Comma-separated fields for `csv` output (e.g., `timestamp,level,message`).                                                              |                                 |
+| `--json-fields "FIELDS"`| Comma-separated fields for `json` output (e.g., `timestamp,level,message`).                                                             |                                 |
+| `--pretty`              | Pretty-print `json` output.                                                                                                             | `false`                         |
+| `--include-summary`     | Include a summary section in `json` output.                                                                                             | `false`                         |
 
 ### Statistics
 
-| Option | Description | Default |
-| --- | --- | --- |
-| `--stats NAME` | Enable a statistic collector. Available: `unique_messages`, `top_messages[:N]`, `entry_rate`. Can be used multiple times. | |
-| `--top-n N` | Sets the 'N' for the `top_messages` collector if not specified directly in `--stats` (e.g., `top_messages:10`). | 10 |
-| `--stats-window SEC` | Shows log frequency distribution over a time window in seconds. | |
-| `--find-gaps MS` | Finds time gaps in logs that are longer than the specified duration in milliseconds. | |
+| Option             | Description                                                                                                       | Default |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------- | ------- |
+| `--stats NAME`     | Enable a statistic collector. Available: `unique_messages`, `top_messages[:N]`, `entry_rate`. Can be used multiple times. |         |
+| `--top-n N`        | Sets 'N' for `top_messages` if not specified directly (e.g., `top_messages:10`).                                     | 10      |
+| `--stats-window SEC` | Shows log frequency distribution over a time window in seconds.                                                   |         |
+| `--find-gaps MS`   | Finds time gaps in logs longer than the specified milliseconds.                                                   |         |
 
 ### Tailing (Live Mode)
 
 Monitor files for new lines, similar to `tail -f`. Not compatible with `--stdin`.
 
-| Option | Description | Default |
-| --- | --- | --- |
-| `--tail` | Enable tail mode to watch files for new entries. | `false` |
-| `--tail-interval MS` | Polling interval in milliseconds for checking for new file entries in tail mode. | 1000 |
+| Option             | Description                                          | Default |
+| ------------------ | ---------------------------------------------------- | ------- |
+| `--tail`           | Enable tail mode to watch files for new entries.     | `false` |
+| `--tail-interval MS` | Polling interval in milliseconds for tail mode.      | 1000    |
 
 ## Configuration
 
-`logAnalyzer` can be configured using a JSON configuration file for persistent setups. Use the `--config` option to load a file. Note that command-line arguments (like `--pattern` or filter options) will override settings found in the configuration file.
+`logAnalyzer` can be configured using a JSON file for persistent setups. Use the `--config` option to load a file. Command-line arguments override settings from the configuration file.
 
-An example configuration file (`config.json`) might look like this:
+An example `config.json`:
 
 ```json
 {
@@ -139,10 +268,8 @@ An example configuration file (`config.json`) might look like this:
   "filterRules": [
     { "field": "level", "operator": "EQ", "value": "ERROR" }
   ],
-  // `filterRules` support complex conditions based on log entry fields,
-  // allowing combinations of operators (e.g., EQ, NE, GT, LT, CONTAINS, REGEX)
-  // and values. Consult the Doxygen documentation for a comprehensive
-  // list of supported fields and operators.
+  // `filterRules` support complex conditions based on log entry fields.
+  // Consult the Doxygen documentation for a full list of supported fields and operators.
   "exportSettings": {
     "format": "json",
     "fieldsToExport": ["timestamp", "level", "message"],
@@ -183,62 +310,6 @@ logAnalyzer/
 └── README.md                # This file
 ```
 
-## Getting Started
-
-### 1. Prerequisites
-
--   **Compiler**: A C++23 compatible compiler (e.g., GCC 13+, Clang 16+).
--   **Build System**: CMake 3.20 or higher.
--   **Version Control**: Git for cloning the repository.
-
-### 2. Build Instructions
-
-First, clone the repository and navigate into the project directory:
-
-```bash
-git clone https://github.com/eserlxl/logAnalyzer.git
-cd logAnalyzer
-```
-
-Next, use CMake to configure and build the project. We recommend an out-of-source build.
-
-```bash
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build .
-```
-
-The compiled `logAnalyzer` executable will be available in the `build/bin` directory.
-
-#### Build Options
-
-You can customize the build with the following CMake options:
-
--   `-DBUILD_TESTING=ON/OFF`: Enable or disable the compilation of tests (default: `ON`).
--   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Build `logAnalyzer` as a shared library (default: `OFF`).
--   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enable sanitizers for debugging (default: `None`).
-
-To use an option, add it to the `cmake` command:
-
-```bash
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
-```
-
-### 3. Installation
-
-To install the `logAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from the `build` directory:
-
-```bash
-sudo cmake --install . --prefix /usr/local
-```
-
-For a local installation, you can specify a different prefix:
-
-```bash
-cmake --install . --prefix ../dist
-```
-
 ## Running Tests
 
 To run the test suite, execute `ctest` from the `build` directory:
@@ -248,63 +319,9 @@ cd build
 ctest --verbose
 ```
 
-
-## Usage Examples
-
-### Example 1: Basic Filtering
-
-```bash
-# Find all errors containing the word "database" in a specific log file
-./build/bin/logAnalyzer /var/log/app.log --level ERROR --keyword "database"
-
-# Find all entries in two different log files, excluding those containing "DEBUG"
-./build/bin/logAnalyzer app.log kern.log --exclude-keyword "DEBUG"
-```
-
-### Example 2: Advanced Filtering and Output
-
-```bash
-# Find entries that are either warnings or errors, and contain "timeout" OR "refused"
-./build/bin/logAnalyzer access.log --level WARNING --level ERROR --keyword "timeout" --keyword "refused" --logic OR
-
-# Export errors between two dates to a pretty-printed JSON file
-./build/bin/logAnalyzer system.log --level ERROR --start "2023-11-01 00:00:00" --end "2023-11-02 00:00:00" --format json --pretty --output errors.json
-```
-
-### Example 3: Complex Expression
-
-```bash
-# Use a complex expression to find database errors or any message containing "timeout"
-./build/bin/logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
-```
-
-### Example 4: Stream a Large File
-
-```bash
-# Process a large log file without loading it all into memory, saving errors to a file
-./build/bin/logAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
-```
-
-### Example 5: Process Logs from Standard Input
-
-`logAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines.
-
-```bash
-# Pipe logs from another command and filter for errors
-cat /var/log/syslog | ./build/bin/logAnalyzer --stdin --level ERROR
-
-# Tail a file and filter for a keyword
-tail -f /var/log/app.log | ./build/bin/logAnalyzer - --keyword "error"
-```
-
-### Example 6: Statistical Analysis
-
-```bash
-# Get the top 5 most common error messages from a log file
-./build/bin/logAnalyzer system.log --level ERROR --stats top_messages:5
-```
-
 ## Developer Tools
+
+The following commands can be run from the `build` directory.
 
 -   **Generate Documentation**:
     ```bash

@@ -3,24 +3,38 @@
 #include <sstream>
 #include <iomanip>
 #include <regex>
-// #include <CLI/CLI.hpp> // Not directly used by functions in this file
+#include <mutex> // Added for thread-safety
 
 namespace Utils {
 
+// Global mutex to protect std::localtime, which is not thread-safe.
+// While C++20 offers std::chrono::localtime, for broader compatibility
+// and given the current C++ version context, a mutex is a pragmatic choice.
+static std::mutex localtimeMutex;
+
 std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format) {
     std::time_t tt = std::chrono::system_clock::to_time_t(tp);
-    std::tm tm = *std::localtime(&tt); // Or gmtime for UTC
+    std::tm tm;
+    { // Scope for lock_guard
+        std::lock_guard<std::mutex> lock(localtimeMutex);
+        tm = *std::localtime(&tt); // Or gmtime for UTC
+    }
     std::ostringstream ss;
     ss << std::put_time(&tm, format.data());
     return ss.str();
 }
 
 std::expected<std::chrono::seconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits) {
-    std::regex durationRegex("^(\\d+)([smhd]|ms|us|w|M|y)$");
+static const std::regex durationRegex("^(\\d+)([smhd]|ms|us|w|M|y)$");
     std::smatch matches;
 
     if (std::regex_match(durationStr, matches, durationRegex)) {
-        long long value = std::stoll(matches[1].str());
+        long long value;
+        try {
+            value = std::stoll(matches[1].str());
+        } catch (const std::out_of_range& oor) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Duration value out of range for 'stoll'."));
+        }
         std::string unit = matches[2].str();
 
         std::chrono::seconds total_seconds(0);
@@ -55,38 +69,55 @@ std::expected<std::chrono::seconds, ErrorCode::Error> parseDuration(const std::s
     return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid duration format. Expected formats like '10s', '5m', '2h', '1d' or extended units if enabled."));
 }
 
+// Helper function to convert a value and unit character to std::chrono::seconds
+std::expected<std::chrono::seconds, ErrorCode::Error> convertUnitToSeconds(long long value, char unitChar) {
+    std::chrono::seconds duration_seconds;
+    switch (unitChar) {
+        case 's': duration_seconds = std::chrono::seconds(value); break;
+        case 'm': duration_seconds = std::chrono::minutes(value); break;
+        case 'h': duration_seconds = std::chrono::hours(value); break;
+        case 'd': duration_seconds = std::chrono::days(value); break;
+        default: return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unknown time unit."));
+    }
+    return duration_seconds;
+}
+
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr) {
     auto now = std::chrono::system_clock::now();
     std::chrono::seconds duration_seconds;
     std::smatch matches;
 
     // Handle "X units ago"
-    std::regex relativeTimeAgoRegex("^(\\d+)([smhd]) ago$");
+    static const std::regex relativeTimeAgoRegex("^(\\d+)([smhd]) ago$");
     if (std::regex_match(timeStr, matches, relativeTimeAgoRegex)) {
-        long long value = std::stoll(matches[1].str());
-        char unit = matches[2].str()[0];
-        switch (unit) {
-            case 's': duration_seconds = std::chrono::seconds(value); break;
-            case 'm': duration_seconds = std::chrono::minutes(value); break;
-            case 'h': duration_seconds = std::chrono::hours(value); break;
-            case 'd': duration_seconds = std::chrono::days(value); break;
-            default: return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unknown time unit in 'ago' expression."));
+        long long value;
+        try {
+            value = std::stoll(matches[1].str());
+        } catch (const std::out_of_range& oor) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Relative time 'ago' value out of range for 'stoll'."));
         }
+        auto durationResult = convertUnitToSeconds(value, matches[2].str()[0]);
+        if (!durationResult) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unknown time unit in 'ago' expression."));
+        }
+        duration_seconds = durationResult.value();
         return now - duration_seconds;
     }
 
     // Handle "in X units"
-    std::regex relativeTimeInRegex("^in (\\d+)([smhd])$ ");
+    static const std::regex relativeTimeInRegex("^in (\\d+)([smhd])$");
     if (std::regex_match(timeStr, matches, relativeTimeInRegex)) {
-        long long value = std::stoll(matches[1].str());
-        char unit = matches[2].str()[0];
-        switch (unit) {
-            case 's': duration_seconds = std::chrono::seconds(value); break;
-            case 'm': duration_seconds = std::chrono::minutes(value); break;
-            case 'h': duration_seconds = std::chrono::hours(value); break;
-            case 'd': duration_seconds = std::chrono::days(value); break;
-            default: return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unknown time unit in 'in' expression."));
+        long long value;
+        try {
+            value = std::stoll(matches[1].str());
+        } catch (const std::out_of_range& oor) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Relative time 'in' value out of range for 'stoll'."));
         }
+        auto durationResult = convertUnitToSeconds(value, matches[2].str()[0]);
+        if (!durationResult) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unknown time unit in 'in' expression."));
+        }
+        duration_seconds = durationResult.value();
         return now + duration_seconds;
     }
 
@@ -115,13 +146,20 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbso
     if (ss.fail()) {
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid absolute time format. Expected 'YYYY-MM-DD HH:MM:SS'."));
     }
-    auto timePoint = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    tm.tm_isdst = -1; // Fix for Medium-risk issue 2.1: Let mktime determine DST
+    std::time_t time = std::mktime(&tm);
+    if (time == (std::time_t)-1) {
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert tm to time_t for ISO8601"));
+    }
+    if (time == (std::time_t)-1) { // This check is redundant as it's checked above, but keeping as it was in original diff logic.
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert tm to time_t"));
+    }
+    auto timePoint = std::chrono::system_clock::from_time_t(time);
     return timePoint;
 }
 
 // Helper to parse ISO 8601 with optional Z or offset
-namespace { // Anonymous namespace for internal helper
-static std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8601(const std::string& timeStr) {
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8601(const std::string& timeStr) {
     std::tm tm = {};
     std::stringstream ss(timeStr);
     std::string format;
@@ -133,18 +171,28 @@ static std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> pa
     format = "%Y-%m-%dT%H:%M:%SZ";
     ss.clear(); ss.seekg(0); ss >> std::get_time(&tm, format.c_str());
     if (!ss.fail() && ss.eof()) { // Check eof to ensure whole string matched
-        return std::chrono::system_clock::from_time_t(timegm(&tm)); // Use timegm for UTC
+        tm.tm_isdst = 0; // UTC does not have DST, explicitly set to 0
+        std::time_t tt = timegm(&tm);
+        if (tt == (std::time_t)-1) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert ISO 8601 UTC time (timegm failed)."));
+        }
+        return std::chrono::system_clock::from_time_t(tt);
     }
     
     // Try YYYY-MM-DDTHH:MM:SS (local time implicitly)
     format = "%Y-%m-%dT%H:%M:%S";
     ss.clear(); ss.seekg(0); ss >> std::get_time(&tm, format.c_str());
     if (!ss.fail() && ss.eof()) {
-        return std::chrono::system_clock::from_time_t(mktime(&tm));
+        tm.tm_isdst = -1; // Let mktime determine DST
+        std::time_t tt = mktime(&tm);
+        if (tt == (std::time_t)-1) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert ISO 8601 local time (mktime failed)."));
+        }
+        return std::chrono::system_clock::from_time_t(tt);
     }
 
     // Try YYYY-MM-DDTHH:MM:SS+HH:MM or YYYY-MM-DDTHH:MM:SS-HH:MM
-    std::regex iso8601_tz_regex("^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})([+-])(\\d{2}):(\\d{2})$");
+    static const std::regex iso8601_tz_regex("^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})([+-])(\\d{2}):(\\d{2})$");
     if (std::regex_match(timeStr, matches, iso8601_tz_regex)) {
         std::string dateTimePart = matches[1].str();
         char sign = matches[2].str()[0];
@@ -154,6 +202,7 @@ static std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> pa
         std::stringstream ss_dt(dateTimePart);
         ss_dt >> std::get_time(&tm, "%Y-%m-%dT%H:%M:%S");
         if (!ss_dt.fail()) {
+            tm.tm_isdst = -1; // Let mktime determine DST
             std::time_t tt = mktime(&tm);
             if (tt != -1) {
                 std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(tt);
@@ -170,7 +219,6 @@ static std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> pa
     
     return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid ISO 8601 format."));
 }
-} // namespace
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime(const std::string& timeStr) {
     // 1. Try to parse as the original absolute time format "YYYY-MM-DD HH:MM:SS"
@@ -216,9 +264,13 @@ parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>&
         if (format.empty()) continue;
         std::stringstream ss(timeStr);
         ss >> std::get_time(&tm, format.c_str());
-        if (!ss.fail() && static_cast<size_t>(ss.tellg()) == timeStr.length()) {
-            auto timePoint = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-            return timePoint;
+        if (!ss.fail() && ss.eof()) { // Fix for Medium-risk issue 2.3: Check eof to ensure whole string matched
+            tm.tm_isdst = -1; // Fix for Medium-risk issue 2.1: Let mktime determine DST
+            std::time_t time = std::mktime(&tm);
+            if (time == (std::time_t)-1) {
+                return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert tm to time_t for a given format"));
+            }
+            return std::chrono::system_clock::from_time_t(time);
         }
     }
     return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to parse time string with any provided format."));
@@ -229,61 +281,51 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateT
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Timestamp string cannot be empty."));
     }
     auto timePointResult = Utils::parseTime(tsStr);
-    if (timePointResult.has_value()) {
-        return timePointResult.value(); // Return the time_point if successful
+    if (timePointResult) { // Check for has_value()
+        return *timePointResult; // Return the time_point if successful
     }
-    // Return an unexpected value with the error
-    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid time format: " + timePointResult.error().message + ". Expected formats: 'YYYY-MM-DD HH:MM:SS', ISO 8601, Unix timestamp, or relative time like '1h ago'."));
+    // Return the specific error from parseTime directly
+    return std::unexpected(timePointResult.error());
 }
 
 std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error>
 parseDayRange(const std::string& dateString) {
     std::tm tm = {};
-    std::istringstream ss(dateString);
+    std::vector<std::string> formats = {"%Y-%m-%d", "%Y/%m/%d", "%m-%d-%Y", "%m/%d/%Y"};
 
-    // Try YYYY-MM-DD
-    ss.clear(); ss.seekg(0);
-    ss >> std::get_time(&tm, "%Y-%m-%d");
-    if (!ss.fail() && ss.eof()) {
-        goto success_parse_date;
+    bool parsedSuccessfully = false;
+    for (const auto& format : formats) {
+        std::istringstream ss(dateString);
+        ss >> std::get_time(&tm, format.c_str());
+        if (!ss.fail() && ss.eof()) { // Fix for Medium-risk issue 2.3: Use ss.eof()
+            parsedSuccessfully = true;
+            break;
+        }
+        tm = {}; // Reset tm for the next format attempt
     }
 
-    // Try YYYY/MM/DD
-    ss.clear(); ss.seekg(0);
-    ss >> std::get_time(&tm, "%Y/%m/%d");
-    if (!ss.fail() && ss.eof()) {
-        goto success_parse_date;
+    if (!parsedSuccessfully) {
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid date format for day range. Expected 'YYYY-MM-DD', 'YYYY/MM/DD', 'MM-DD-YYYY', or 'MM/DD/YYYY'."));
     }
 
-    // Try MM-DD-YYYY
-    ss.clear(); ss.seekg(0);
-    ss >> std::get_time(&tm, "%m-%d-%Y");
-    if (!ss.fail() && ss.eof()) {
-        goto success_parse_date;
-    }
+    // Fix for Medium-risk issue 2.1: Let mktime determine DST
+    tm.tm_isdst = -1; 
 
-    // Try MM/DD/YYYY
-    ss.clear(); ss.seekg(0);
-    ss >> std::get_time(&tm, "%m/%d/%Y");
-    if (!ss.fail() && ss.eof()) {
-        goto success_parse_date;
-    }
-
-    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid date format for day range. Expected 'YYYY-MM-DD', 'YYYY/MM/DD', 'MM-DD-YYYY', or 'MM/DD/YYYY'."));
-
-success_parse_date:
-    // Set time to beginning of the day (00:00:00)
+    // Calculate start of day (00:00:00)
     tm.tm_hour = 0;
     tm.tm_min = 0;
     tm.tm_sec = 0;
-    auto startOfDay = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    std::time_t start_tt = std::mktime(&tm);
+    if (start_tt == (std::time_t)-1) { // Fix for High-risk issue 1.3
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert start of day for date range (mktime failed)."));
+    }
+    auto startOfDay = std::chrono::system_clock::from_time_t(start_tt);
 
-    // Set time to end of the day (23:59:59)
-    tm.tm_hour = 23;
-    tm.tm_min = 59;
-    tm.tm_sec = 59;
-    auto endOfDay = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-
+    // Fix for Medium-risk issue 2.2: Unsafe End-of-Day Calculation
+    // Calculate end of day by adding 24 hours and subtracting 1 second
+    // This correctly handles DST transitions.
+    auto endOfDay = startOfDay + std::chrono::days(1) - std::chrono::seconds(1);
+    
     return std::make_pair(startOfDay, endOfDay);
 }
 

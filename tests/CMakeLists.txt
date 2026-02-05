@@ -25,32 +25,27 @@ macro(loganalyzer_gtest_discover_tests TEST_NAME)
         # Create the test's isolated working directory
         list(APPEND SETUP_SCRIPT_CONTENT "file(MAKE_DIRECTORY \"${TEST_ACTUAL_WORKING_DIRECTORY}\")\n")
 
-        set(DATA_DESTINATION_DIR "${TEST_ACTUAL_WORKING_DIRECTORY}")
-        if(LAGTD_TEST_DATA_SUBDIR)
+        if(LAGTD_TEST_DATA_SUBDIR) # IF 2
             set(DATA_DESTINATION_DIR "${TEST_ACTUAL_WORKING_DIRECTORY}/${LAGTD_TEST_DATA_SUBDIR}")
             list(APPEND SETUP_SCRIPT_CONTENT "file(MAKE_DIRECTORY \"${DATA_DESTINATION_DIR}\")\n")
-        endif()
+        else() # ELSE for IF 2
+            set(DATA_DESTINATION_DIR "${TEST_ACTUAL_WORKING_DIRECTORY}")
+        endif() # ENDIF 2
 
-        foreach(DATA_FILE IN LISTS LAGTD_TEST_DATA_FILES)
-            if(NOT EXISTS "${DATA_FILE}")
+        foreach(DATA_FILE IN LISTS LAGTD_TEST_DATA_FILES) # FOREACH 1
+            if(NOT EXISTS "${DATA_FILE}") # IF 3
                 message(FATAL_ERROR "TEST_DATA_FILE specified for ${TEST_NAME} does not exist: ${DATA_FILE}")
-            endif()
+            endif() # ENDIF 3
             list(APPEND SETUP_SCRIPT_CONTENT "message(STATUS \"Copying data file: ${DATA_FILE} to ${DATA_DESTINATION_DIR}\")\n")
             list(APPEND SETUP_SCRIPT_CONTENT "file(COPY \"${DATA_FILE}\" DESTINATION \"${DATA_DESTINATION_DIR}\")\n")
-        endforeach()
+        endforeach() # END FOREACH 1
 
-        # Write the setup script to a temporary file
         set(SETUP_SCRIPT_PATH "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}_setup_data.cmake")
         file(WRITE "${SETUP_SCRIPT_PATH}" "${SETUP_SCRIPT_CONTENT}")
-
-        # The command prelude will execute this setup script
         set(TEST_COMMAND_PRELUDE "${CMAKE_COMMAND}" "-P" "${SETUP_SCRIPT_PATH}")
-    endif()
+    endif() # ENDIF 1
 
-    # --- Construct ADD_TEST_COMMAND for gtest_discover_tests ---
-    # The ADD_TEST_COMMAND argument needs to be the actual command that runs the test executable.
-    # gtest_discover_tests will wrap this in a script that also handles environment variables.
-    set(ACTUAL_TEST_EXECUTABLE "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}") # The full path to the executable
+    set(ACTUAL_TEST_EXECUTABLE "${CMAKE_BINARY_DIR}/${TEST_NAME}")
 
     # If we have a prelude (for data copying), we need to ensure the executable is part of that command chain.
     # gtest_discover_tests will automatically add the executable to the end of ADD_TEST_COMMAND,
@@ -106,7 +101,26 @@ if(NOT DEFINED LOGANALYZER_TEST_DATA_DIR)
 endif()
 
 # Find all test source files ending with _test.cpp
-file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+set(TEST_SOURCES
+    "analyzer/Analyzer_test.cpp"
+    "config/CLIConfig_test.cpp"
+    "config/Config_Basic_test.cpp"
+    "config/Config_Json_test.cpp"
+    "config/Config_Validation_test.cpp"
+    "core/LogParser_test.cpp"
+    "export/Exporter_test.cpp"
+    "filter/Filter_Expression_test.cpp"
+    "filter/Filter_Json_Basic_test.cpp"
+    "filter/Filter_Json_Condition_test.cpp"
+    "filter/Filter_Json_Expression_test.cpp"
+    "filter/Filter_Json_Rule_test.cpp"
+    "filter/Filter_Unit_Advanced_test.cpp"
+    "filter/Filter_Unit_Basic_test.cpp"
+    "filter/Filter_Unit_Field_test.cpp"
+    "stats/Statistics_test.cpp"
+    "utils/UtilsTime_test.cpp"
+    "utils/Utils_Enum_test.cpp"
+)
 
 # Loop through each test source file
 foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
@@ -115,9 +129,6 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
 
     # Create an executable for each test file
     add_executable(${TEST_NAME} ${TEST_SOURCE})
-
-    # Include test-specific options file if it exists
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
         message(STATUS "Including test-specific options for ${TEST_NAME} from ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
         include("${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
     endif()
@@ -154,4 +165,6 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     loganalyzer_gtest_discover_tests(${TEST_NAME}
         LABELS "${TEST_LABEL}"
     )
-endforeach()
+endmacro() # <-- Added endmacro() here
+
+foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
