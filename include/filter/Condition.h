@@ -126,13 +126,11 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         fc.valueType = *typeOpt;
     } else if (j.at("value_type").is_number_integer()) {
         int vt_int = j.at("value_type").get<int>();
-        // Note: FilterValueType::DATETIME is at index 4 (0-indexed)
-        // Adjust the upper bound check if new types are added
-        if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::DATETIME)) {
-            fc.valueType = static_cast<FilterValueType>(vt_int);
-        } else {
-            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an invalid integer for 'value_type'. Must be between " + std::to_string(static_cast<int>(FilterValueType::STRING)) + " and " + std::to_string(static_cast<int>(FilterValueType::DATETIME)) + "."));
-        }
+            if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::IP_ADDRESS)) {
+                fc.valueType = static_cast<FilterValueType>(vt_int);
+            } else {
+                return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an invalid integer for 'value_type'. Must be between " + std::to_string(static_cast<int>(FilterValueType::STRING)) + " and " + std::to_string(static_cast<int>(FilterValueType::IP_ADDRESS)) + "."));
+            }
     } else {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'value_type' must be a string or integer."));
     }

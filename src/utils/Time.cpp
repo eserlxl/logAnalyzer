@@ -13,9 +13,12 @@ namespace Utils {
 
 static std::mutex localtimeMutex;
 
-// Helper to validate if a date is valid (not normalized by mktime)
-bool isTmValid(const std::tm& tm_orig, const std::tm& tm_new) {
-    // Check if mktime/timegm normalized any fields
+bool isTmValid(const std::tm& tm_orig, std::tm& tm_new) {
+    // Before comparing, adjust tm_new's daylight saving flag to match the original.
+    // This is because std::get_time doesn't set tm_isdst, but mktime does.
+    tm_new.tm_isdst = tm_orig.tm_isdst;
+    
+    // Check if mktime/timegm normalized any other fields
     return tm_new.tm_year == tm_orig.tm_year &&
            tm_new.tm_mon == tm_orig.tm_mon &&
            tm_new.tm_mday == tm_orig.tm_mday &&
@@ -416,13 +419,18 @@ parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>&
     for (const auto& fmt : formats) {
         std::tm tm = {};
         std::stringstream ss(timeStr);
+        
+        // Clear eofbit before parsing, as get_time may not proceed if it's set
+        ss.clear();
         ss >> std::get_time(&tm, fmt.c_str());
+
         if (!ss.fail()) {
-            // Ensure whole string consumed (ignoring trailing whitespace)
             ss >> std::ws;
             if (ss.eof()) {
                 std::tm tm_orig = tm;
                 std::time_t t = std::mktime(&tm);
+                
+                // Use the updated isTmValid function
                 if (t != (time_t)-1 && isTmValid(tm_orig, tm)) {
                     return std::chrono::system_clock::from_time_t(t);
                 }

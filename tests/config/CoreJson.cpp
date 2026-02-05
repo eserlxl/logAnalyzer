@@ -53,12 +53,12 @@ TEST_F(LogAnalyzerConfigTest, FromJsonRootFilterExpression) {
         "rootFilterExpression": {
             "operator": "AND",
             "operands": [
-                {"condition": {"field": "LEVEL", "op": "EQUALS", "value": "ERROR", "value_type": 0}},
+                {"condition": {"field": "LEVEL", "op": "EQUALS", "value": "ERROR", "value_type": 1}},
                 {
                     "operator": "OR",
                     "operands": [
-                        {"condition": {"field": "MESSAGE", "op": "CONTAINS", "value": "fatal", "value_type": 0}},
-                        {"condition": {"field": "MESSAGE", "op": "CONTAINS", "value": "critical", "value_type": 0}}
+                        {"condition": {"field": "MESSAGE", "op": "CONTAINS", "value": "fatal", "value_type": 1}},
+                        {"condition": {"field": "MESSAGE", "op": "CONTAINS", "value": "critical", "value_type": 1}}
                     ]
                 }
             ]

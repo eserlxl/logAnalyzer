@@ -2,7 +2,7 @@
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
-[![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake.yml/badge.svg)](https://github.com/eserlxl/logAnalyzer/actions)
+[![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake.yml/badge.svg?branch=ai)](https://github.com/eserlxl/logAnalyzer/actions)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
@@ -256,14 +256,14 @@ LogAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
 
 ### Example 5: Process Logs from Standard Input
 
-`LogAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines. Use `-` as the filename to signify `stdin`.
+`LogAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines. Use `-` or `--stdin` as the filename to signify `stdin`.
 
 ```bash
 # Pipe logs from another command and filter for errors
-cat /var/log/syslog | LogAnalyzer --stdin --level ERROR
+cat /var/log/syslog | LogAnalyzer - --level ERROR
 
 # Tail a file and filter for a keyword
-tail -f /var/log/app.log | LogAnalyzer - --keyword "error"
+tail -f /var/log/app.log | LogAnalyzer --stdin --keyword "error"
 ```
 
 ### Example 6: Statistical Analysis
@@ -465,55 +465,9 @@ logAnalyzer/
 ├── docs/                    # Doxygen configuration and generated documentation.
 ├── examples/                # Example log files and configuration examples.
 ├── include/                 # Public header files for core logic, configuration, filters, and utilities.
-│   ├── analyzer/
-│   ├── config/
-│   │   ├── CLIConfig.h
-│   │   └── Settings.h
-│   ├── core/
-│   │   ├── CiLess.h
-│   │   ├── Error.h
-│   │   ├── LogParser.h
-│   │   └── LogTypes.h
-│   ├── export/
-│   │   └── Exporter.h
-│   ├── filter/
-│   │   ├── ConcreteFilters.h
-│   │   ├── Condition.h
-│   │   ├── EnumStringConversions.h
-│   │   ├── Expression.h
-│   │   ├── IFilter.h
-│   │   ├── Legacy.h
-│   │   └── Types.h
-│   ├── stats/
-│   │   └── Statistics.h
-│   └── utils/
-│       ├── IpAddress.h
-│       ├── String.h
-│       ├── Time.h
-│       └── Version.h
 ├── lib/                     # Compiled libraries (static/shared).
+├── logAnalyzer/             # A nested copy of the project, might be a submodule or a backup.
 ├── src/                     # Source code (.cpp files) implementing header functionalities.
-│   ├── main.cpp             # Application entry point and CLI orchestration.
-│   ├── analyzer/
-│   │   ├── Export.cpp
-│   │   ├── Filter.cpp
-│   │   ├── IO.cpp
-│   │   └── Stats.cpp
-│   ├── config/
-│   │   └── CLIConfig.cpp
-│   ├── core/
-│   │   └── LogParser.cpp
-│   ├── export/
-│   │   └── Exporter.cpp
-│   ├── filter/
-│   │   ├── ConcreteFilters.cpp
-│   │   ├── EnumStringConversions.cpp
-│   │   └── Expression.cpp
-│   ├── stats/
-│   │   └── Statistics.cpp
-│   └── utils/
-│       ├── String.cpp
-│       └── Time.cpp
 ├── tests/                   # Unit and integration tests.
 ├── tools/                   # Development scripts and utilities.
 ├── .gitignore               # Files/directories ignored by Git.

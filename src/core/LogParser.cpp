@@ -398,20 +398,9 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view
               
 
           ErrorCode::Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const {
-
-              ErrorCode::Result<LogEntry> result = parseLineInternal(line, lineNumber, sourceFile);
-
-              
-
-              // Now use the helper function to apply the error action.
-
-              // The helper always returns a LogEntry, which we then wrap in a successful Result.
-
-              // If the action is 'Throw', the helper will throw, and this function will not return normally.
-
-              return applyParserErrorAction(result, line, lineNumber, sourceFile);
-
-          }
+    ErrorCode::Result<LogEntry> result = parseLineInternal(line, lineNumber, sourceFile);
+    return applyParserErrorAction(result, line, lineNumber, sourceFile);
+}
 
     
 
