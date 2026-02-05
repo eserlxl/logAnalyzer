@@ -59,18 +59,17 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    # Use -j to specify the number of parallel jobs.
-    # For Linux, use -j$(nproc). For macOS, use -j$(sysctl -n hw.ncpu).
-    # For Windows, you can typically omit -j to let Visual Studio manage parallelism.
-    cmake --build . -- -j$(nproc) 
+    cmake --build . # For faster compilation, append -j<num_jobs> (e.g., -j$(nproc) on Linux/macOS, or omit on Windows).
     ```
 
 3.  **Run a Basic Analysis**:
-    After building, the executable will be in the `build/bin` directory.
+    After building, the executable will be in the `build/bin` directory. You can run it directly:
     ```bash
-    ./bin/LogAnalyzer /var/log/syslog --level ERROR
+    ./build/bin/LogAnalyzer /var/log/syslog --level ERROR
     ```
     *(Replace `/var/log/syslog` with a path to one of your log files.)*
+
+    For easier access, consider installing it system-wide or adding `build/bin` to your system's `PATH`. See the [Installation](#installation) section for details.
 
 For detailed build instructions, installation options, and more usage examples, please refer to the respective sections below.
 
