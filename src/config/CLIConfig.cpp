@@ -9,7 +9,7 @@
 using namespace ErrorCode;
 
 // CLI Parsing
-Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCLI(int argc, char *argv[]) {
+Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCLI(int argc, const char *const *argv) {
     LogAnalyzerSettings settings;
     CLIOptions appOptions;
     CLI::App app{"Log Analyzer Tool"};
@@ -81,9 +81,9 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
        ->transform(CLI::CheckedTransformer(CLIConfig::orderMap, CLI::ignore_case));
 
     // Output Configuration
-    app.add_option("--pattern", settings.lineParsePattern, "Custom regex for parsing log lines");
+    app.add_option("--pattern", appOptions.lineParsePattern, "Custom regex for parsing log lines");
     app.add_option("--format", appOptions.outputFormat, "Output format (text, json, csv)")
-       ->check(CLI::IsMember({"text", "json", "csv"}));
+       ->transform(CLI::IsMember({"text", "json", "csv"}, CLI::ignore_case));
     app.add_option("--output", appOptions.outputPath, "Redirect output to a file");
     app.add_option("--text-format", appOptions.textOutputFormat, "Custom format string for text output. Available: {timestamp}, {level}, {message}, {lineNumber}, {fileName}, {elapsedTime}.");
     
@@ -94,13 +94,16 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
        ->transform(CLI::CheckedTransformer(CLIConfig::colorOptionMap, CLI::ignore_case));
 
     app.add_option("--csv-sep", appOptions.csvSeparator, "Custom separator for CSV output (defaults to ',')");
-    app.add_option("--csv-fields", appOptions.csvFields, "Ordered list of fields for CSV output (e.g., timestamp,level,message)");
-    app.add_option("--json-fields", appOptions.jsonFields, "Ordered list of fields for JSON output (e.g., timestamp,level,message)");
+    app.add_option("--csv-fields", appOptions.csvFields, "Ordered list of fields for CSV output (e.g., timestamp,level,message)")
+       ->delimiter(',');
+    app.add_option("--json-fields", appOptions.jsonFields, "Ordered list of fields for JSON output (e.g., timestamp,level,message)")
+       ->delimiter(',');
 
     // Analysis Options
     app.add_flag("--stdin", appOptions.readFromStdin, "Read log entries from standard input (stdin) if no file paths are provided.");
     
-    app.add_option("--stats", appOptions.enabledStatistics, "Enable statistics collectors (e.g., unique_messages,top_messages:10)");
+    app.add_option("--stats", appOptions.enabledStatistics, "Enable statistics collectors (e.g., unique_messages,top_messages:10)")
+       ->delimiter(',');
 
     app.add_option("--top-n", appOptions.topMessagesCount, "Number of top messages to show for top_messages statistic")
        ->check(CLI::PositiveNumber);
@@ -197,6 +200,32 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     if (appOptions.tailMode && appOptions.readFromStdin) {
         return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --tail mode is not compatible with --stdin."));
     }
+
+    // Sync appOptions to settings
+    settings.lineParsePattern = appOptions.lineParsePattern;
+    settings.exportSettings.outputPath = appOptions.outputPath;
+    if (appOptions.outputFormat == "json") {
+        settings.exportSettings.format = ExportFormat::JSON;
+    } else if (appOptions.outputFormat == "csv") {
+        settings.exportSettings.format = ExportFormat::CSV;
+    } else {
+        settings.exportSettings.format = ExportFormat::TEXT;
+    }
+    
+    settings.exportSettings.sortBy = appOptions.sortBy;
+    settings.exportSettings.sortOrder = appOptions.sortOrder;
+    settings.exportSettings.outputNoColor = (appOptions.colorOption == CLIConfig::ColorOption::NEVER);
+    settings.exportSettings.textOutputFormat = appOptions.textOutputFormat;
+    settings.exportSettings.includeSummary = appOptions.includeSummary;
+    settings.exportSettings.prettyPrint = appOptions.prettyPrint;
+    settings.exportSettings.csvSeparator = appOptions.csvSeparator;
+    settings.exportSettings.csvFields = appOptions.csvFields;
+    settings.exportSettings.jsonFields = appOptions.jsonFields;
+    settings.exportSettings.topMessagesCount = appOptions.topMessagesCount;
+    settings.exportSettings.streamMode = appOptions.streamMode;
+    settings.exportSettings.tailMode = appOptions.tailMode;
+    settings.exportSettings.tailInterval = appOptions.tailInterval;
+    settings.parserErrorAction = appOptions.parserErrorAction;
 
     return std::make_pair(settings, appOptions);
 }

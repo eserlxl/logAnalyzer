@@ -46,6 +46,9 @@ struct LogAnalyzerSettings {
     // Export settings
     ExportSettings exportSettings;
 
+    // Action on parse error
+    ParserErrorAction parserErrorAction = ParserErrorAction::Warn;
+
     // Statistics configuration
     std::vector<StatisticConfig> statisticConfigs;
 

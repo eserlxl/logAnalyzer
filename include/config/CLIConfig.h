@@ -20,11 +20,7 @@ public:
         ALWAYS, AUTO, NEVER
     };
 
-    enum class ParserErrorAction {
-        Ignore,
-        Warn,
-        Throw
-    };
+    using ParserErrorAction = ::ParserErrorAction;
 
     // Static maps for CLI argument parsing
     inline static const std::map<std::string, LogLevel> levelMap = {
@@ -52,6 +48,7 @@ public:
 
     struct CLIOptions { // Renamed from CLIAppOptions
         std::vector<std::string> filePaths;
+        std::string lineParsePattern = std::string(DEFAULT_LOG_REGEX_PATTERN_INTERNAL); // Added to match tests
         std::vector<LogLevel> filterLevels;
         std::optional<LogLevel> minLogLevel;
         std::vector<std::string> filterKeywords;
@@ -89,7 +86,7 @@ public:
     };
 
     // CLI parsing function - now returns a pair of LogAnalyzerSettings and CLIOptions
-    static ErrorCode::Result<std::pair<LogAnalyzerSettings, CLIOptions>> parseCLI(int argc, char *argv[]);
+    static ErrorCode::Result<std::pair<LogAnalyzerSettings, CLIOptions>> parseCLI(int argc, const char *const *argv);
 };
 
 #endif // CLICONFIG_H

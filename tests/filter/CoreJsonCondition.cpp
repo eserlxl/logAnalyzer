@@ -188,7 +188,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidField) {
 
     FilterCondition fc;
     auto result = from_json(j, fc);
-    EXPECT_FALSE(result.has_value());
+    ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("unrecognized 'field' string"), std::string::npos);
 }
@@ -202,7 +202,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingOp) {
 
     FilterCondition fc;
     auto result = from_json(j, fc);
-    EXPECT_FALSE(result.has_value());
+    ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("missing or has invalid 'op'"), std::string::npos);
 }
@@ -218,7 +218,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidValueTypeString) {
 
     FilterCondition fc;
     auto result = from_json(j, fc);
-    EXPECT_FALSE(result.has_value());
+    ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("unrecognized 'value_type' string"), std::string::npos);
 }
@@ -255,7 +255,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeMissingFormat) {
 
     FilterCondition fc;
     auto result = from_json(j, fc);
-    EXPECT_FALSE(result.has_value());
+    ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("with DATETIME 'value_type' requires a 'datetimeFormat'"), std::string::npos);
 }
@@ -287,7 +287,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValue) {
     };
     FilterCondition fc;
     auto result = from_json(j, fc);
-    EXPECT_FALSE(result.has_value());
+    ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("missing or has invalid 'value'"), std::string::npos);
 }
@@ -300,7 +300,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValueType) {
     };
     FilterCondition fc;
     auto result = from_json(j, fc);
-    EXPECT_FALSE(result.has_value());
+    ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("missing 'value_type'"), std::string::npos);
 }
@@ -315,7 +315,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMalformedDatetimeFormat) {
     };
     FilterCondition fc;
     auto result = from_json(j, fc);
-    EXPECT_FALSE(result.has_value());
+    ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("'datetimeFormat' must be a string or null"), std::string::npos);
 }
@@ -329,7 +329,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidValueTypeInt) {
     };
     FilterCondition fc;
     auto result = from_json(j, fc);
-    EXPECT_FALSE(result.has_value());
+    ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("invalid integer for 'value_type'"), std::string::npos);
 }

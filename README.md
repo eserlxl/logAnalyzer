@@ -44,7 +44,7 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 
 ## Quick Start
 
-Get `logAnalyzer` up and running on your system with these simple steps:
+Get `logAnalyzer` up and running on your system with these simple steps.
 
 1.  **Clone the Repository**:
     ```bash
@@ -57,7 +57,7 @@ Get `logAnalyzer` up and running on your system with these simple steps:
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    cmake --build .
+    cmake --build . 
     # Or, on Unix-like systems, you can use make
     # make
     ```
@@ -147,7 +147,7 @@ Next, use CMake to configure and build the project. We recommend an out-of-sourc
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build .
+cmake --build . 
 # Or, on Unix-like systems, you can use make
 # make
 ```
@@ -314,66 +314,64 @@ Run `logAnalyzer --help` for a full list of commands.
 
 ### General Options
 
-| Option                 | Shorthand | Description                                                                | Default   |
-| ---------------------- | --------- | -------------------------------------------------------------------------- | --------- |
-| `--help`               | `-h`      | Shows the help message.                                                    |           |
-| `--config FILE`        |           | Load configuration from a JSON file.                                       |           |
-| `--pattern REGEX`      |           | Custom regex for parsing log lines (overrides config).                     |           |
-| `--output FILE`        |           | Redirect output to a file.                                                 | `(stdout)`|
-| `--color OPT`          |           | Controls colorized output (`always`, `auto`, `never`).                     | `auto`    |
-| `--stream`             |           | Enable stream mode for large files (low memory usage).                     | `false`   |
-| `--on-parse-error OPT` |           | Action on parse errors (`ignore`, `warn`, `throw`).                        | `warn`    |
-| `--stdin`              |           | Read log entries from standard input. Also activated by using `-` as a filename. | `false`   |
+| Option                 | Shorthand | Description                                                                                                                                                                             | Default    |
+| :--------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
+| `--help`               | `-h`      | Displays the help message and exits.                                                                                                                                                    |            |
+| `--config FILE`        |           | Specifies a JSON configuration file to load. Command-line arguments will override settings defined in the file.                                                                           |            |
+| `--pattern REGEX`      |           | Overrides the log line parsing regular expression defined in the configuration.                                                                                                           |            |
+| `--output FILE`        |           | Redirects all output (filtered logs, statistics) to the specified file instead of standard output.                                                                                      | `(stdout)` |
+| `--color OPT`          |           | Controls colorized output. Options are `always`, `auto` (default, colors if stdout is a TTY and not redirected), or `never`.                                                              | `auto`     |
+| `--stream`             |           | Enables memory-efficient stream processing mode for very large files. Not all features are available in stream mode (e.g., sorting).                                                    | `false`    |
+| `--on-parse-error OPT` |           | Determines the action when a log line cannot be parsed. Options are `ignore`, `warn` (default, prints a warning to stderr), or `throw` (exits with an error).                           | `warn`     |
+| `--stdin`              | `-`       | Reads log entries from standard input. This is automatically enabled if `-` is provided as a filename.                                                                                  | `false`    |
 
-### Filtering and Sorting
+### Filtering
 
-| Option                   | Description                                                                                                                                                             | Default |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `--keyword TEXT`         | Keyword/phrase to filter for. Multiple uses are combined with `--logic`.                                                                                                |         |
-| `--exclude-keyword TEXT` | Keyword/phrase to exclude. Can be used multiple times.                                                                                                                  |         |
-| `--regex PATTERN`        | Regex pattern to filter for. Multiple uses are combined with `--logic`.                                                                                                 |         |
-| `--exclude-regex PATTERN`| Regex pattern to exclude. Can be used multiple times.                                                                                                                   |         |
-| `--logic [AND\|OR]`      | Logic for combining multiple `--keyword` or `--regex` rules.                                                                                                            | `AND`   |
-| `--case-sensitive`       | Makes keyword filtering case-sensitive.                                                                                                                                 | `false` |
-| `--level LEVEL`          | Log level to include (e.g., `ERROR`). Can be used multiple times.                                                                                                       |         |
-| `--min-level LEVEL`      | Minimum log level to include (e.g., `WARNING`).                                                                                                                         |         |
-| `--map-level KEY=LEVEL`  | Map custom log levels (e.g., `TRC=TRACE`).                                                                                                                              |         |
-| `--start TIME`           | Filter logs after a given timestamp. Accepts absolute time (e.g., `"2023-10-27 10:00:00"`), relative time (e.g., `"1h ago"`, `"yesterday"`), Unix timestamps, or ISO 8601. |         |
-| `--end TIME`             | Filter logs before a given timestamp. Accepts the same formats as `--start`.                                                                                            |         |
-| `--duration DURATION`    | Duration for time filtering (e.g., '30m', '1h'). Must be used with `--start` or `--end`. Accepts `s` (seconds), `m` (minutes), `h` (hours), or `d` (days).                 |         |
-| `--expression "EXPR"`    | Complex filter expression using nested logic (e.g., `(level=ERROR and msg contains "db") or msg contains "timeout"`).                                                   |         |
-| `--sort-by [time\|level\|msg]` | Field to sort results by.                                                                                                                                             | `time`  |
-| `--order [asc\|desc]`    | Sort order.                                                                                                                                                             | `asc`   |
+| Option                   | Shorthand | Description                                                                                                                                           | Default   |
+| :----------------------- | :-------- | :---------------------------------------------------------------------------------------------------------------------------------------------------- | :-------- |
+| `--keyword TEXT`         | `-k`      | Filters log messages containing this keyword or phrase. Can be used multiple times, combined by `--logic`.                                            |           |
+| `--exclude-keyword TEXT` |           | Excludes log messages containing this keyword or phrase. Can be used multiple times.                                                                  |           |
+| `--regex PATTERN`        | `-r`      | Filters log messages matching this regular expression. Can be used multiple times, combined by `--logic`.                                             |           |
+| `--exclude-regex PATTERN`|           | Excludes log messages matching this regular expression. Can be used multiple times.                                                                   |           |
+| `--logic [AND|OR]`      |           | Specifies the logical operator for combining multiple `--keyword` or `--regex` filters.                                                               | `AND`     |
+| `--case-sensitive`       |           | Makes keyword and regex filtering case-sensitive.                                                                                                     | `false`   |
+| `--level LEVEL`          | `-l`      | Includes log entries of a specific level (e.g., `ERROR`, `INFO`). Can be used multiple times to include multiple levels.                              |           |
+| `--min-level LEVEL`      | `-m`      | Includes log entries with a level equal to or more severe than the specified level (e.g., `WARNING` will include `WARNING`, `ERROR`, `CRITICAL`).    |           |
+| `--map-level KEY=LEVEL`  |           | Maps a custom log level string found in logs (KEY) to a recognized internal level (LEVEL, e.g., `TRC=TRACE`, `WRN=WARNING`). Can be used multiple times. |           |
+| `--start TIME`           |           | Filters logs appearing after the specified timestamp. Supports absolute, relative, ISO 8601, and Unix timestamp formats.                              |           |
+| `--end TIME`             |           | Filters logs appearing before the specified timestamp. Supports the same formats as `--start`.                                                        |           |
+| `--duration DURATION`    |           | Specifies a time window when used with `--start` or `--end`. Accepts units like `s` (seconds), `m` (minutes), `h` (hours), or `d` (days).             |           |
+| `--expression "EXPR"`    | `-e`      | A powerful filter using a logical expression language (e.g., `(level=ERROR and msg contains "db") or msg contains "timeout"`).                       |           |
 
-### Output Formatting
+### Output & Export
 
-| Option                  | Description                                                                                                                             | Default                         |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `--format [text\|json\|csv]` | Sets the output format.                                                                                                       | `text`                          |
-| `--text-format TEXT`    | Custom format string for `text` output. Available: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
-| `--csv-sep CHAR`        | Separator character for `csv` output.                                                                                                   | `,`                             |
-| `--csv-fields "FIELDS"` | Comma-separated fields for `csv` output (e.g., `timestamp,level,message`).                                                              |                                 |
-| `--json-fields "FIELDS"`| Comma-separated fields for `json` output (e.g., `timestamp,level,message`).                                                             |                                 |
-| `--pretty`              | Pretty-print `json` output.                                                                                                   | `false`                         |
-| `--include-summary`     | Include a summary section in `json` output.                                                                                             | `false`                         |
+| Option                  | Shorthand | Description                                                                                                                             | Default                         |
+| :---------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------ |
+| `--format [text|json|csv]` | `-f`      | Sets the output format for filtered log entries.                                                                                        | `text`                          |
+| `--text-format FORMAT_STRING` |           | Custom format string for `text` output. Placeholders: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
+| `--csv-sep CHAR`        |           | Specifies the separator character for `csv` output.                                                                                     | `,`                             |
+| `--csv-fields "FIELDS"` |           | Comma-separated list of fields to include in `csv` output (e.g., `timestamp,level,message,file`).                                       | `timestamp,level,message,file`  |
+| `--json-fields "FIELDS"`|           | Comma-separated list of fields to include in `json` output. If omitted, all standard fields are included.                               | `(all)`                         |
+| `--pretty`              | `-p`      | Pretty-prints `json` output with indentation for readability.                                                                           | `false`                         |
+| `--include-summary`     |           | Includes a summary section (e.g., total entries) in `json` output.                                                                      | `false`                         |
 
 ### Statistics
 
 | Option             | Description                                                                                                       | Default |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------- | ------- |
-| `--stats NAME`     | Enable a statistic collector. Available: `unique_messages`, `top_messages[:N]`, `entry_rate`. Can be used multiple times. |         |
-| `--top-n N`        | Sets 'N' for `top_messages` if not specified directly (e.g., `top_messages:10`).                                     | 10      |
+| :----------------- | :---------------------------------------------------------------------------------------------------------------- | :------ |
+| `--stats NAME`     | Enables a statistic collector. Available: `unique_messages`, `top_messages[:N]`, `entry_rate`. Can be used multiple times. |         |
+| `--top-n N`        | Sets the number of top items to display for statistics like `top_messages` if not specified directly (e.g., `top_messages:10`). | `10`    |
 | `--stats-window SEC` | Shows log frequency distribution over a time window in seconds.                                                   |         |
-| `--find-gaps MS`   | Finds time gaps in logs longer than the specified milliseconds.                                                   |         |
+| `--find-gaps MS`   | Detects and reports time gaps in logs longer than the specified milliseconds.                                     |         |
 
 ### Tailing (Live Mode)
 
-Monitor files for new lines, similar to `tail -f`. Not compatible with `--stdin`.
+Monitor files for new lines, similar to `tail -f`. Not compatible with `--stdin` or `--stream`.
 
 | Option             | Description                                          | Default |
-| ------------------ | ---------------------------------------------------- | ------- |
-| `--tail`           | Enable tail mode to watch files for new entries.     | `false` |
-| `--tail-interval MS` | Polling interval in milliseconds for tail mode.      | 1000    |
+| :----------------- | :--------------------------------------------------- | :------ |
+| `--tail`           | Enables tail mode to watch files for new entries in real-time. | `false` |
+| `--tail-interval MS` | Polling interval in milliseconds for tail mode.      | `1000`  |
 
 ## Configuration
 
@@ -383,7 +381,7 @@ An example `config.json`:
 
 ```json
 {
-  "lineParsePattern": "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) ([A-Z]+): (.*)$",
+  "lineParsePattern": "^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$",
   "fieldMappings": [
     { "field": "timestamp", "groupIndex": 1 },
     { "field": "level", "groupIndex": 2 },
@@ -394,7 +392,7 @@ An example `config.json`:
     "WARN": "WARNING",
     "ERROR": "ERROR"
   },
-  "logEntryStartPattern": "^\\d{4}-\\d{2}-\\d{2}",
+  "logEntryStartPattern": "^\d{4}-\d{2}-\d{2}",
   "caseSensitiveParsing": false,
   "filterRules": [
     { "field": "level", "operator": "EQ", "value": "ERROR" }
@@ -450,33 +448,38 @@ Understanding the project's layout can help you navigate the codebase, contribut
 
 ```
 logAnalyzer/
-├── _deps/                   # External dependencies managed by CMake (e.g., CLI11, nlohmann/json, GoogleTest).
-├── bin/                     # Location of the compiled `logAnalyzer` executable and other binaries after building.
-├── build/                   # Directory created by CMake for out-of-source builds; contains build artifacts.
-├── cmake/                   # Custom CMake modules and scripts used for configuring the project.
-├── docs/                    # Doxygen configuration files and potentially generated documentation.
-├── examples/                # Provides example configuration files and usage scenarios.
-├── include/                 # Public header files defining the core API, data structures, filters, and configuration.
-│   ├── analyzer/            # Components for log analysis, I/O, and export.
-│   ├── config/              # Configuration structures and CLI parsing.
-│   ├── core/                # Core log parsing, error handling, and type definitions.
-│   ├── export/              # Interfaces for different output formats.
-│   ├── filter/              # Advanced filtering logic and condition expressions.
-│   └── stats/               # Statistical analysis components.
-├── lib/                     # Location of compiled libraries (e.g., static/shared libraries) after building.
-├── src/                     # Source code (.cpp files) implementing the functionalities defined in `include/`.
-│   ├── main.cpp             # The entry point of the `logAnalyzer` application.
-│   └── ...                  # Other implementation files corresponding to `include/` modules.
-├── tests/                   # Unit and integration tests for various modules.
-├── tools/                   # Utility scripts and development aids.
-├── .gitignore               # Specifies intentionally untracked files to ignore.
-├── CMakeLists.txt           # The primary CMake build script for the project.
-└── README.md                # This comprehensive project overview.
+├── _deps/                   # External dependencies (CLI11, nlohmann/json, GoogleTest) managed by CMake.
+├── bin/                     # Compiled `logAnalyzer` executable and other binaries.
+├── build/                   # CMake build artifacts and temporary files.
+├── cmake/                   # Custom CMake modules and scripts.
+├── docs/                    # Doxygen configuration and generated documentation.
+├── examples/                # Example log files and configuration examples.
+├── include/                 # Public header files for core logic, configuration, filters, and utilities.
+│   ├── analyzer/            # Core analysis engine and entry processing.
+│   ├── config/              # CLI argument parsing and application settings.
+│   ├── core/                # Fundamental data structures (LogEntry, Error) and base log parsing.
+│   ├── export/              # Output formatting and data export interfaces.
+│   ├── filter/              # Advanced log filtering logic and expression evaluation.
+│   ├── stats/               # Statistical data collection and reporting.
+│   └── utils/               # General utility functions (string manipulation, time conversion).
+├── lib/                     # Compiled libraries (static/shared).
+├── src/                     # Source code (.cpp files) implementing header functionalities.
+│   ├── main.cpp             # Application entry point and CLI orchestration.
+│   └── ...                  # Implementation files for corresponding `include/` modules.
+├── tests/                   # Unit and integration tests.
+├── tools/                   # Development scripts and utilities.
+├── .gitignore               # Files/directories ignored by Git.
+├── CMakeLists.txt           # Primary CMake build script.
+├── CODE_OF_CONDUCT.md       # Guidelines for community behavior.
+├── CONTRIBUTING.md          # Contribution guidelines.
+├── Doxyfile                 # Doxygen main configuration.
+├── LICENSE                  # Project license information.
+└── README.md                # Project overview and documentation.
 ```
 
 ## Running Tests
 
-To run the test suite, execute `ctest` from the `build` directory:
+To run the test suite, navigate to the `build` directory and execute `ctest`:
 
 ```bash
 cd build

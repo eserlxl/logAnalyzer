@@ -184,6 +184,12 @@ enum class ParseError {
     INVALID_REGEX_PATTERN
 };
 
+enum class ParserErrorAction {
+    Ignore,
+    Warn,
+    Throw
+};
+
 struct LogParseError {
     ParseError error;
     std::string message;

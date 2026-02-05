@@ -219,30 +219,14 @@ double HighResTimer::elapsedMicroseconds() const {
 }
 
 double HighResTimer::elapsedNanoseconds() const {
-
     auto end = running ? std::chrono::high_resolution_clock::now() : stopTime;
-
     return std::chrono::duration<double, std::nano>(end - startTime).count();
-
 }
-
-
 
 // Iteration 5: Enhanced Parsing and Formatting
-
 std::string format_iso8601(const std::chrono::system_clock::time_point& tp) {
-
     return format_utc(tp, "%Y-%m-%dT%H:%M:%SZ");
-
 }
-
-
-
-
-
-
-
-
 
 // Placeholder implementations for missing functions to allow linking
 std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format) {
@@ -264,7 +248,8 @@ std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const s
     }
 
     std::smatch matches;
-    const std::regex duration_regex(R"((\d+)([smhdwMy]|ms|us))");
+    // Anchor the regex to the entire string and use alternations properly
+    const std::regex duration_regex(R"(^(\d+)\s*(ms|us|s|second|seconds|m|minute|minutes|h|hour|hours|d|day|days|w|week|weeks|M|month|months|y|year|years)$)");
 
     if (!std::regex_match(durationStr, matches, duration_regex)) {
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid duration format: " + durationStr));
@@ -278,21 +263,22 @@ std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const s
     }
 
     std::string unit = matches[2].str();
-    if (unit == "s") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(value));
-    if (unit == "m") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::minutes(value));
-    if (unit == "h") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::hours(value));
-    if (unit == "d") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value));
+        if (unit == "s" || unit == "second" || unit == "seconds") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(value));
+        if (unit == "m" || unit == "minute" || unit == "minutes") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::minutes(value));
+        if (unit == "h" || unit == "hour" || unit == "hours") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::hours(value));
+        if (unit == "d" || unit == "day" || unit == "days") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value));
+        
+        if (allowExtendedUnits) {
+            if (unit == "ms") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds(value));
+            if (unit == "us") return std::chrono::microseconds(value);
+            if (unit == "w" || unit == "week" || unit == "weeks") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::weeks(value));
+            if (unit == "M" || unit == "month" || unit == "months") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value * 30)); // Approximation
+            if (unit == "y" || unit == "year" || unit == "years") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value * 365)); // Approximation
+        }
     
-    if (allowExtendedUnits) {
-        if (unit == "ms") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds(value));
-        if (unit == "us") return std::chrono::microseconds(value);
-        if (unit == "w") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::weeks(value));
-        if (unit == "M") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value * 30)); // Approximation
-        if (unit == "y") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value * 365)); // Approximation
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unsupported duration unit: " + unit));
     }
-
-    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unsupported duration unit: " + unit));
-}
+    
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr) {
     auto now = std::chrono::system_clock::now();
@@ -305,8 +291,8 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRela
     }
     
     std::smatch matches;
-    const std::regex ago_regex(R"((\d+[a-zA-Z]+) ago)");
-    const std::regex in_regex(R"(in (\d+[a-zA-Z]+))");
+    const std::regex ago_regex(R"((\d+\s*[a-zA-Z]+) ago)");
+    const std::regex in_regex(R"(in (\d+\s*[a-zA-Z]+))");
 
     if (std::regex_match(timeStr, matches, ago_regex)) {
         auto duration_str = matches[1].str();
@@ -406,16 +392,48 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime(const std::string& timeStr) {
-    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Not implemented"));
+    // Try ISO 8601
+    auto res_iso = parseISO8601(timeStr);
+    if (res_iso) return res_iso;
+
+    // Try Absolute Time
+    auto res_abs = parseAbsoluteTime(timeStr);
+    if (res_abs) return res_abs;
+
+    // Try Relative Time
+    auto res_rel = parseRelativeTime(timeStr);
+    if (res_rel) return res_rel;
+
+    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unsupported time format: " + timeStr));
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error>
 parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>& formats) {
-    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Not implemented"));
+    if (formats.empty()) {
+        return parseTime(timeStr);
+    }
+    
+    for (const auto& fmt : formats) {
+        std::tm tm = {};
+        std::stringstream ss(timeStr);
+        ss >> std::get_time(&tm, fmt.c_str());
+        if (!ss.fail()) {
+            // Ensure whole string consumed (ignoring trailing whitespace)
+            ss >> std::ws;
+            if (ss.eof()) {
+                std::tm tm_orig = tm;
+                std::time_t t = std::mktime(&tm);
+                if (t != (time_t)-1 && isTmValid(tm_orig, tm)) {
+                    return std::chrono::system_clock::from_time_t(t);
+                }
+            }
+        }
+    }
+    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to parse time with provided formats: " + timeStr));
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr) {
-    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Not implemented"));
+    return parseTime(tsStr);
 }
 
 std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error>

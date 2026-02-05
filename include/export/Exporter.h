@@ -14,6 +14,7 @@
 // New: Enum for different export formats
 enum class ExportFormat {
     PLAINTEXT,
+    TEXT,
     JSON,
     CSV,
     XML,
@@ -91,7 +92,21 @@ struct ExportSettings {
     char separator = ','; // For CSV files
     std::string textFormatString = "{timestamp} [{level}] {message}"; // For PLAINTEXT format
     bool useAnsiColors = false; // For PLAINTEXT format
-    // Add more options as needed, e.g., compression, encoding
+    
+    // Missing fields identified from tests
+    std::optional<SortBy> sortBy;
+    std::optional<SortOrder> sortOrder;
+    bool outputNoColor = false;
+    std::string textOutputFormat = "{timestamp} {level}: {message}";
+    bool includeSummary = false;
+    bool prettyPrint = false;
+    char csvSeparator = ',';
+    std::vector<std::string> csvFields;
+    std::vector<std::string> jsonFields;
+    int topMessagesCount = 10;
+    bool streamMode = false;
+    bool tailMode = false;
+    std::chrono::milliseconds tailInterval = std::chrono::milliseconds(1000);
 
     // Constructor to provide sane defaults for common use cases.
     ExportSettings() = default; // Leave fieldsToExport empty to signal "export all standard fields"
@@ -102,7 +117,6 @@ inline void to_json(nlohmann::json& j, const ExportSettings& es) {
     j = nlohmann::json{
         {"outputPath", es.outputPath},
         {"format", Utils::exportFormatToString(es.format)},
-        {"fieldsToExport", es.fieldsToExport}, // Uses ExportFieldMapping to_json
         {"includeHeader", es.includeHeader},
         {"separator", std::string(1, es.separator)},
         {"textFormatString", es.textFormatString},
@@ -138,14 +152,6 @@ inline void from_json(const nlohmann::json& j, ExportSettings& es) {
             }
         } else {
             throw std::runtime_error("ExportSettings: 'format' has invalid type. Expected string.");
-        }
-    }
-
-    if (j.contains("fieldsToExport")) {
-        if (j.at("fieldsToExport").is_array()) {
-            es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
-        } else {
-            throw std::runtime_error("ExportSettings: 'fieldsToExport' has invalid type. Expected array.");
         }
     }
 
@@ -228,4 +234,3 @@ private:
 };
 
 #endif // EXPORTER_H
-
