@@ -54,10 +54,10 @@ build-coverage/
 CMakeCache.txt
 CMakeFiles/
 CMake/
-cmake/
-cmake_install.cmake
+!cmake/
+!cmake/*.cmake
+/*.cmake
 DartConfiguration.tcl
-CTestTestfile.cmake
 install_manifest.txt
 Makefile
 Makefile.in
