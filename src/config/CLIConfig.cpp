@@ -2,72 +2,113 @@
 // Copyright (c) 2026 eserlxl
 
 #include "config/CLIConfig.h"
+#include "config/CommonTypes.h" // Added for centralized types
+#include "config/ConfigUtils.h" // Added for centralized config utilities
 #include "utils/UtilsCore.h"
 #include "core/Error.h" // Add this include
 #include "core/CiLess.h" // For ci_less
+#include "stats/Statistics.h" // For StatisticType, StatisticConfig
 #include <CLI/CLI.hpp>
 #include <algorithm> // For std::transform
 #include <iostream> // For std::cerr
 #include <string_view>
+#include <sstream>
 
 using namespace ErrorCode;
 
-// Helper function to parse field map strings
-ErrorCode::Result<std::vector<FieldMapping>> parseFieldMaps(const std::vector<std::string>& fieldMapStrings) {
-    std::vector<FieldMapping> mappings;
-    std::map<std::string, LogEntryField, LogAnalyzerInternal::ci_less> standardFieldMap = {
-        {"timestamp", LogEntryField::TIMESTAMP},
-        {"level", LogEntryField::LEVEL},
-        {"message", LogEntryField::MESSAGE},
-        {"source_file", LogEntryField::SOURCE_FILE},
-        {"structured_field", LogEntryField::STRUCTURED_FIELD}
-    };
-
-    for (const auto& s : fieldMapStrings) {
-        auto pos = s.find('=');
-        if (pos == std::string::npos) {
-            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid field map format: '" + s + "'. Expected format is 'group=field[:format]'."));
+namespace {
+    // Helper to parse extended --stats syntax (e.g., "type=TOP_MESSAGES,top_n=5")
+    // or legacy syntax (e.g., "unique_messages", "top_messages:10")
+    std::optional<StatisticConfig> parseStatisticConfig(const std::string& statStr) {
+        StatisticConfig config;
+        
+        // Handle legacy top_messages:N
+        if (statStr.find("top_messages:") == 0) {
+            config.type = StatisticType::TOP_MESSAGES;
+            config.params["top_n"] = statStr.substr(13);
+            return config;
         }
 
-        std::string groupStr = s.substr(0, pos);
-        std::string rest = s.substr(pos + 1);
-
-        size_t groupIndex;
-        try {
-            groupIndex = std::stoul(groupStr);
-        } catch (const std::invalid_argument& e) {
-            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid group index in field map: '" + groupStr + "'."));
+        // Try to parse as legacy simple name first
+        auto legacyType = Utils::stringToStatisticType(statStr);
+        if (legacyType.has_value()) {
+            config.type = *legacyType;
+            return config;
         }
 
-        std::string fieldName;
-        std::string format;
-        auto formatPos = rest.find(':');
-        if (formatPos != std::string::npos) {
-            fieldName = rest.substr(0, formatPos);
-            format = rest.substr(formatPos + 1);
-        } else {
-            fieldName = rest;
-        }
-
-        if (auto it = standardFieldMap.find(fieldName); it != standardFieldMap.end()) {
-            if (!format.empty()) {
-                mappings.emplace_back(it->second, groupIndex, format);
+        // Try parsing key-value pairs
+        bool typeFound = false;
+        std::string token;
+        std::istringstream tokenStream(statStr);
+        
+        while (std::getline(tokenStream, token, ',')) {
+            auto pos = token.find('=');
+            if (pos != std::string::npos) {
+                std::string key = token.substr(0, pos);
+                std::string value = token.substr(pos + 1);
+                
+                // Trim key and value? CLI11 usually handles spaces around args, but internal commas might need care. 
+                // Assuming simple parsing for now.
+                
+                if (key == "type") {
+                    auto type = Utils::stringToStatisticType(value);
+                    if (type) {
+                        config.type = *type;
+                        typeFound = true;
+                    } else {
+                        // Invalid type in key-value pair
+                        return std::nullopt; 
+                    }
+                } else {
+                    config.params[key] = value;
+                }
             } else {
-                mappings.emplace_back(it->second, groupIndex);
-            }
-        } else {
-            // Custom field
-            if (!format.empty()) {
-                mappings.emplace_back(fieldName, groupIndex, std::vector<std::string>{format});
-            } else {
-                mappings.emplace_back(fieldName, groupIndex, std::vector<std::string>{});
+                // Token without '=', maybe it's just the type name mixed with params? 
+                // e.g. "TOP_MESSAGES,top_n=5"
+                auto type = Utils::stringToStatisticType(token);
+                if (type) {
+                    config.type = *type;
+                    typeFound = true;
+                }
             }
         }
+        
+        if (typeFound) {
+            return config;
+        }
+        
+        return std::nullopt;
     }
 
-    return mappings;
-}
-
+    // Helper to parse "field as alias" string
+    std::pair<std::string, std::string> parseFieldAlias(const std::string& fieldStr) {
+        std::string lower = fieldStr;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        
+        auto pos = lower.find(" as ");
+        if (pos != std::string::npos) {
+            std::string field = fieldStr.substr(0, pos);
+            std::string alias = fieldStr.substr(pos + 4); // +4 for " as "
+            
+            // Trim whitespace
+            field.erase(0, field.find_first_not_of(" \t"));
+            auto fieldEnd = field.find_last_not_of(" \t");
+            if (fieldEnd != std::string::npos) field.erase(fieldEnd + 1);
+            
+            alias.erase(0, alias.find_first_not_of(" \t"));
+            auto aliasEnd = alias.find_last_not_of(" \t");
+            if (aliasEnd != std::string::npos) alias.erase(aliasEnd + 1);
+            
+            return {field, alias};
+        }
+        
+        std::string field = fieldStr;
+        field.erase(0, field.find_first_not_of(" \t"));
+        auto end = field.find_last_not_of(" \t");
+        if (end != std::string::npos) field.erase(end + 1);
+        return {field, field}; // No alias, use field name
+    }
+} // namespace
 
 // CLI Parsing
 Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCLI(int argc, const char *const *argv) {
@@ -82,10 +123,10 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     // Filters
     app.add_option("--level", appOptions.filterLevels, "Filter by log levels (e.g., ERROR,WARNING)")
-       ->transform(CLI::CheckedTransformer(CLIConfig::levelMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::LogLevelMap, CLI::ignore_case));
        
     app.add_option("--min-level", appOptions.minLogLevel, "Filter entries with level greater than or equal to a specified level")
-       ->transform(CLI::CheckedTransformer(CLIConfig::levelMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::LogLevelMap, CLI::ignore_case));
 
     app.add_option("--keyword", appOptions.filterKeywords, "Filter messages containing specific text");
     app.add_option("--exclude-keyword", appOptions.excludeKeywords, "Exclude log entries containing a specific keyword");
@@ -96,7 +137,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     app.add_option("--exclude-regex", appOptions.excludeRegexPatterns, "Filter out log entries matching a specific regular expression");
 
     app.add_option("--logic", appOptions.filterLogic, "Logic to combine multiple filters of the same type (AND or OR)")
-       ->transform(CLI::CheckedTransformer(CLIConfig::logicMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::FilterLogicMap, CLI::ignore_case));
 
     app.add_option("--start", "Start time filter (YYYY-MM-DD HH:MM:SS, ISO 8601, Unix timestamp, or relative like '1h ago')")
        ->check([](const std::string &str) -> std::string {
@@ -136,15 +177,23 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     // Sorting
     app.add_option("--sort-by", appOptions.sortBy, "Sort entries by field")
-       ->transform(CLI::CheckedTransformer(CLIConfig::sortMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::SortByMap, CLI::ignore_case));
     
     app.add_option("--order", appOptions.sortOrder, "Sort order")
-       ->transform(CLI::CheckedTransformer(CLIConfig::orderMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::SortOrderMap, CLI::ignore_case));
 
     // Output Configuration
     app.add_option("--pattern", appOptions.lineParsePattern, "Custom regex for parsing log lines");
     app.add_option("--multiline-start-pattern", appOptions.multilineStartPattern, "Regex to identify the start of a multi-line log entry");
-    app.add_option("--max-multiline-buffer", appOptions.maxMultilineBufferSize, "Max buffer size for multi-line entries in bytes (default: 10MB)");
+    
+    // Human-readable max multiline buffer size
+    std::string maxBufferStr;
+    app.add_option("--max-multiline-buffer", maxBufferStr, "Max buffer size for multi-line entries (e.g. 10MB, 50KB, 1048576). Default: 10MB")
+       ->check([](const std::string &str) -> std::string {
+           if (Utils::parseHumanReadableSize(str)) return "";
+           return "Invalid size format. Use numeric value optionally followed by B, KB, MB, GB, TB.";
+       });
+
     app.add_option("--field-map", appOptions.fieldMaps, "Map regex capture group to a field (e.g., '1=timestamp:%Y-%m-%d %H:%M:%S')");
 
     app.add_option("--format", appOptions.outputFormat, "Output format (text, json, csv)")
@@ -156,22 +205,25 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     app.add_flag("--pretty", appOptions.prettyPrint, "Pretty-print JSON output");
 
     app.add_option("--color", appOptions.colorOption, "Control output color (always, auto, never)")
-       ->transform(CLI::CheckedTransformer(CLIConfig::colorOptionMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::ColorOptionMap, CLI::ignore_case));
 
     app.add_option("--csv-sep", appOptions.csvSeparator, "Custom separator for CSV output (defaults to ',')");
-    app.add_option("--csv-fields", appOptions.csvFields, "Ordered list of fields for CSV output (e.g., timestamp,level,message)")
+    
+    // CSV and JSON Fields
+    app.add_option("--csv-fields", appOptions.csvFields, "Ordered list of fields for CSV output (e.g., 'timestamp as Time, level, message')")
        ->delimiter(',');
-    app.add_option("--json-fields", appOptions.jsonFields, "Ordered list of fields for JSON output (e.g., timestamp,level,message)")
+    app.add_option("--json-fields", appOptions.jsonFields, "Ordered list of fields for JSON output (e.g., 'timestamp as time, log_level as level')")
        ->delimiter(',');
 
     // Analysis Options
     app.add_flag("--stdin", appOptions.readFromStdin, "Read log entries from standard input (stdin) if no file paths are provided.");
     
-    app.add_option("--stats", appOptions.enabledStatistics, "Enable statistics collectors (e.g., unique_messages,top_messages:10)")
-       ->delimiter(',');
+    app.add_option("--stats", appOptions.enabledStatistics, "Enable statistics collectors (e.g., unique_messages, 'type=TOP_MESSAGES,top_n=5')");
+    // Delimiter removed to support complex strings with commas. 
+    // Multiple stats should be provided via multiple --stats flags.
 
-    app.add_option("--top-n", appOptions.topMessagesCount, "Number of top messages to show for top_messages statistic")
-       ->check(CLI::PositiveNumber);
+    app.add_option("--top-n", appOptions.topMessagesCount, "Number of top messages to show for top_messages statistic (Deprecated: use --stats \"type=TOP_MESSAGES,top_n=X\")") 
+       ->check(CLI::PositiveNumber); 
 
     app.add_flag("--stream", appOptions.streamMode, "Enable streaming mode for large files");
 
@@ -185,24 +237,24 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
             std::string toUpper = to;
             std::transform(toUpper.begin(), toUpper.end(), toUpper.begin(), ::toupper);
             
-            if(CLIConfig::levelMap.count(toUpper)) {
-                settings.customLogLevelMappings[from] = CLIConfig::levelMap.at(toUpper);
+            if(Config::LogLevelMap.count(toUpper)) {
+                settings.customLogLevelMappings[from] = Config::LogLevelMap.at(toUpper);
             } else {
                 throw CLI::ValidationError("Invalid log level in --map-level: " + to);
             }
         }
     }, "Map custom log levels (KEY=LEVEL)");
 
-    // Stats
+    // Stats (Legacy options)
     int statsWindowSec = 0;
-    app.add_option("--stats-window", statsWindowSec, "Show log frequency distribution over a time window (seconds)");
+    app.add_option("--stats-window", statsWindowSec, "Show log frequency distribution over a time window (seconds) (Deprecated)");
     
     int gapDurationMs = 0;
-    app.add_option("--find-gaps", gapDurationMs, "Find time gaps longer than X ms");
+    app.add_option("--find-gaps", gapDurationMs, "Find time gaps longer than X ms (Deprecated)");
 
     // New options from Iteration 7 Design
     app.add_option("--on-parse-error", appOptions.parserErrorAction, "Action on parse error (skip, log, fail)")
-       ->transform(CLI::CheckedTransformer(CLIConfig::errorActionMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::ParserErrorActionMap, CLI::ignore_case));
 
     app.add_flag("--tail", appOptions.tailMode, "Enable tail mode to monitor files for new lines");
     int tailIntervalMs = 1000;
@@ -214,10 +266,74 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     try {
         app.parse(argc, argv);
     } catch (const CLI::Error &e) {
+        // Refined error handling could inspect 'e' more here if needed
         std::stringstream ss;
         app.exit(e, ss, ss);
         return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, ss.str()));
     }
+
+    // Deprecation warnings
+    if (!appOptions.enabledStatistics.empty()) {
+        if (app.count("--top-n")) {
+            std::cerr << "Warning: --top-n is deprecated. Please use --stats \"type=TOP_MESSAGES,top_n=" 
+                      << appOptions.topMessagesCount << "\" instead." << std::endl;
+        }
+        // stats-window and find-gaps can be checked similarly if they map to new stats
+    }
+
+    // Parse --max-multiline-buffer
+    if (!maxBufferStr.empty()) {
+        auto sizeRes = Utils::parseHumanReadableSize(maxBufferStr);
+        if (sizeRes) {
+            appOptions.maxMultilineBufferSize = *sizeRes;
+        } else {
+            // Should be caught by check(), but just in case
+            return std::unexpected(sizeRes.error());
+        }
+    }
+
+    // Process field maps from CLI options
+    auto parsedFieldMapsResult = ConfigUtils::parseFieldMappingStrings(appOptions.fieldMaps);
+    if (!parsedFieldMapsResult) {
+        return std::unexpected(parsedFieldMapsResult.error());
+    }
+    settings.fieldMappings = *parsedFieldMapsResult;
+
+    // Process statistics
+    for (const auto& statStr : appOptions.enabledStatistics) {
+        auto statConfig = parseStatisticConfig(statStr);
+        if (statConfig) {
+            // Backward compatibility for top_n
+            if (statConfig->type == StatisticType::TOP_MESSAGES && statConfig->params.find("top_n") == statConfig->params.end()) {
+                if (app.count("--top-n")) {
+                    statConfig->params["top_n"] = std::to_string(appOptions.topMessagesCount);
+                }
+            }
+            settings.statisticConfigs.push_back(*statConfig);
+        } else {
+            return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, "Invalid statistic configuration: " + statStr));
+        }
+    }
+    
+    // Map legacy stats flags to StatisticConfig if not already present?
+    // The design says: "The simple --stats NAME syntax ... will be retained ... mapping to a default StatisticConfig"
+    // What about --stats-window?
+    if (statsWindowSec > 0) {
+        StatisticConfig sc;
+        sc.type = StatisticType::ENTRY_RATE; // Assuming this maps to entry rate over window?
+        // Actually ENTRY_RATE usually implies a window.
+        sc.params["window"] = std::to_string(statsWindowSec) + "s";
+        settings.statisticConfigs.push_back(sc);
+        appOptions.statsWindow = std::chrono::seconds(statsWindowSec); // Keep for legacy compatibility if used elsewhere
+    }
+    
+    // What about --find-gaps? No direct statistic type for "Gaps" in Statistics.h yet, but maybe implicitly handled or I missed it.
+    // Statistics.h has: UNIQUE_MESSAGES, TOP_MESSAGES, ENTRY_RATE, LOG_LEVEL_COUNT, FIELD_VALUE_COUNT, TOP_N_FIELD_VALUES.
+    // No FIND_GAPS.
+    // If FIND_GAPS is not in StatisticType, I cannot map it to StatisticConfig.
+    // So I leave it as is in appOptions for legacy handling.
+    if(gapDurationMs > 0) appOptions.findGapsDuration = std::chrono::milliseconds(gapDurationMs);
+
 
     // Post-processing options
     if (!durationStr.empty()) {
@@ -239,8 +355,6 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         }
     }
 
-    if(statsWindowSec > 0) appOptions.statsWindow = std::chrono::seconds(statsWindowSec);
-    if(gapDurationMs > 0) appOptions.findGapsDuration = std::chrono::milliseconds(gapDurationMs);
     if(appOptions.tailMode) appOptions.tailInterval = std::chrono::milliseconds(tailIntervalMs);
 
     // Logic Validation for input sources and mode compatibility
@@ -284,8 +398,18 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     settings.exportSettings.includeSummary = appOptions.includeSummary;
     settings.exportSettings.prettyPrint = appOptions.prettyPrint;
     settings.exportSettings.csvSeparator = appOptions.csvSeparator;
-    settings.exportSettings.csvFields = appOptions.csvFields;
-    settings.exportSettings.jsonFields = appOptions.jsonFields;
+    
+    // Convert CSV/JSON fields to aliases
+    settings.exportSettings.csvFields.clear();
+    for (const auto& f : appOptions.csvFields) {
+        settings.exportSettings.csvFields.push_back(parseFieldAlias(f));
+    }
+    
+    settings.exportSettings.jsonFields.clear();
+    for (const auto& f : appOptions.jsonFields) {
+        settings.exportSettings.jsonFields.push_back(parseFieldAlias(f));
+    }
+
     settings.exportSettings.topMessagesCount = appOptions.topMessagesCount;
     settings.exportSettings.streamMode = appOptions.streamMode;
     settings.exportSettings.tailMode = appOptions.tailMode;

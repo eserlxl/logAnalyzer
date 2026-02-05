@@ -101,8 +101,8 @@ struct ExportSettings {
     bool includeSummary = false;
     bool prettyPrint = false;
     char csvSeparator = ',';
-    std::vector<std::string> csvFields;
-    std::vector<std::string> jsonFields;
+    std::vector<std::pair<std::string, std::string>> csvFields;
+    std::vector<std::pair<std::string, std::string>> jsonFields;
     int topMessagesCount = 10;
     bool streamMode = false;
     bool tailMode = false;

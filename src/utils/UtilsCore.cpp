@@ -236,4 +236,46 @@ std::optional<SortOrder> stringToSortOrder(const std::string& orderStr) {
     return std::nullopt;
 }
 
+std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view sizeStr) {
+    if (sizeStr.empty()) {
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Empty size string"));
+    }
+
+    std::string s(sizeStr);
+    // Remove whitespace
+    s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+
+    size_t unitPos = std::string::npos;
+    for (size_t i = 0; i < s.length(); ++i) {
+        if (!isdigit(s[i]) && s[i] != '.') {
+            unitPos = i;
+            break;
+        }
+    }
+
+    double val = 0.0;
+    size_t multiplier = 1;
+
+    try {
+        if (unitPos == std::string::npos) {
+            val = std::stod(s);
+        } else {
+            val = std::stod(s.substr(0, unitPos));
+            std::string unit = s.substr(unitPos);
+            std::transform(unit.begin(), unit.end(), unit.begin(), ::toupper);
+
+            if (unit == "B" || unit == "BYTES") multiplier = 1;
+            else if (unit == "K" || unit == "KB") multiplier = 1024;
+            else if (unit == "M" || unit == "MB") multiplier = 1024 * 1024;
+            else if (unit == "G" || unit == "GB") multiplier = 1024 * 1024 * 1024;
+            else if (unit == "T" || unit == "TB") multiplier = 1024ULL * 1024 * 1024 * 1024;
+            else return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size unit: " + unit));
+        }
+    } catch (...) {
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
+    }
+
+    return static_cast<size_t>(val * multiplier);
+}
+
 } // namespace Utils

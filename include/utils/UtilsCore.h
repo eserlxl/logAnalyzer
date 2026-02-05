@@ -66,6 +66,8 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr);
 std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error> parseDayRange(const std::string& dateString);
 
+std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view sizeStr);
+
 
 // --- Enum to string and string to enum conversions ---
 std::string logEntryFieldToString(LogEntryField field);

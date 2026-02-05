@@ -4,6 +4,7 @@
 #include "core/LogTypes.h" // For LogLevel, SortBy, SortOrder
 #include "filter/Core.h"   // For CompositeFilter::Logic
 #include "config/Settings.h" // To return a populated LogAnalyzerSettings object
+#include "config/CommonTypes.h" // For shared types and maps
 #include "core/Error.h"    // For Error struct and Result alias
 #include <string>
 #include <vector>
@@ -15,37 +16,13 @@
 
 class CLIConfig {
 public:
-    // Nested enums from original LogAnalyzerConfig
-    enum class ColorOption {
-        ALWAYS, AUTO, NEVER
-    };
-
+    using ColorOption = Config::ColorOption;
     using ParserErrorAction = ::ParserErrorAction;
 
-    // Static maps for CLI argument parsing
-    inline static const std::map<std::string, LogLevel> levelMap = {
-        {"DEBUG", LogLevel::DEBUG}, {"INFO", LogLevel::INFO},
-        {"WARNING", LogLevel::WARNING}, {"ERROR", LogLevel::ERROR},
-        {"UNKNOWN", LogLevel::UNKNOWN}, {"TRACE", LogLevel::TRACE}, {"FATAL", LogLevel::FATAL}
-    };
-    inline static const std::map<std::string, CompositeFilter::Logic> logicMap = {
-        {"AND", CompositeFilter::Logic::AND}, {"OR", CompositeFilter::Logic::OR}
-    };
-    inline static const std::map<std::string, SortBy> sortMap = {
-        {"time", SortBy::TIMESTAMP}, {"level", SortBy::LEVEL}, {"msg", SortBy::MESSAGE}
-    };
-    inline static const std::map<std::string, SortOrder> orderMap = {
-        {"asc", SortOrder::ASCENDING}, {"desc", SortOrder::DESCENDING}
-    };
-    inline static const std::map<std::string, ColorOption> colorOptionMap = {
-        {"always", ColorOption::ALWAYS}, {"auto", ColorOption::AUTO}, {"never", ColorOption::NEVER}
-    };
-    inline static const std::map<std::string, ParserErrorAction> errorActionMap = {
-        {"ignore", ParserErrorAction::Ignore},
-        {"warn", ParserErrorAction::Warn},
-        {"throw", ParserErrorAction::Throw}
-    };
-
+    // Static maps are now in Config::CommonTypes.h
+    // We can add aliases if needed for backward compatibility in this class context, 
+    // but the implementation should use Config::...Map directly.
+    
     struct CLIOptions { // Renamed from CLIAppOptions
         std::vector<std::string> filePaths;
         std::string lineParsePattern = std::string(DEFAULT_LOG_REGEX_PATTERN_INTERNAL); // Added to match tests

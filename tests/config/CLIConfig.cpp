@@ -463,8 +463,19 @@ TEST_F(CLIConfigTest, CsvSeparatorAndFields) {
     ASSERT_EQ(options.csvFields[1], "message");
     ASSERT_EQ(settings.exportSettings.csvSeparator, ';');
     ASSERT_EQ(settings.exportSettings.csvFields.size(), 2);
-    ASSERT_EQ(settings.exportSettings.csvFields[0], "level");
-    ASSERT_EQ(settings.exportSettings.csvFields[1], "message");
+    ASSERT_EQ(settings.exportSettings.csvFields[0].first, "level");
+    ASSERT_EQ(settings.exportSettings.csvFields[1].first, "message");
+}
+
+TEST_F(CLIConfigTest, CsvFieldsWithAliases) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--csv-fields", "timestamp as Time, level as Severity"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.exportSettings.csvFields.size(), 2);
+    ASSERT_EQ(settings.exportSettings.csvFields[0].first, "timestamp");
+    ASSERT_EQ(settings.exportSettings.csvFields[0].second, "Time");
+    ASSERT_EQ(settings.exportSettings.csvFields[1].first, "level");
+    ASSERT_EQ(settings.exportSettings.csvFields[1].second, "Severity");
 }
 
 TEST_F(CLIConfigTest, JsonFields) {
@@ -475,14 +486,21 @@ TEST_F(CLIConfigTest, JsonFields) {
     ASSERT_EQ(options.jsonFields[0], "timestamp");
     ASSERT_EQ(options.jsonFields[1], "level");
     ASSERT_EQ(settings.exportSettings.jsonFields.size(), 2);
-    ASSERT_EQ(settings.exportSettings.jsonFields[0], "timestamp");
-    ASSERT_EQ(settings.exportSettings.jsonFields[1], "level");
+    ASSERT_EQ(settings.exportSettings.jsonFields[0].first, "timestamp");
+    ASSERT_EQ(settings.exportSettings.jsonFields[1].first, "level");
+}
+
+TEST_F(CLIConfigTest, MaxMultilineBufferHumanReadable) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--max-multiline-buffer", "5MB"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_EQ(options.maxMultilineBufferSize, 5 * 1024 * 1024);
 }
 
 TEST_F(CLIConfigTest, EnabledStatistics) {
-    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "unique_messages,top_messages:5"});
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "unique_messages", "--stats", "top_messages:5"});
     ASSERT_TRUE(result.has_value());
-    auto& options = result.value().second; // `settings.statisticConfigs` is complex
+    auto& options = result.value().second; 
     ASSERT_EQ(options.enabledStatistics.size(), 2);
     ASSERT_EQ(options.enabledStatistics[0], "unique_messages");
     ASSERT_EQ(options.enabledStatistics[1], "top_messages:5");

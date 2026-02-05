@@ -8,6 +8,7 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 ![CMake](https://img.shields.io/badge/cmake-3.20%2B-blue.svg)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
 [![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
+[![codecov](https://codecov.io/gh/eserlxl/logAnalyzer/branch/main/graph/badge.svg?token=YOUR_CODECOV_TOKEN)](https://codecov.io/gh/eserlxl/logAnalyzer)
 
 ## Project Status
 
@@ -58,7 +59,7 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    cmake --build . -- -j$(nproc)
+    cmake --build . -- -j<number_of_cores> # e.g., -j4
     ```
 
 3.  **Run a Basic Analysis**:
@@ -106,9 +107,9 @@ For detailed build instructions, installation options, and more usage examples, 
 
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).                               |
 
-| **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable output fields.                             |
+| **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable and aliasable output fields.               |
 
-| **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, and time-gap detection.             |
+| **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, log level counts, and unique value counts for any field. |
 
 ## Building from Source
 
@@ -176,7 +177,7 @@ cd build
 
 cmake .. -DCMAKE_BUILD_TYPE=Release
 
-cmake --build . -- -j$(nproc) # Use -j<number_of_cores> to speed up compilation
+cmake --build . -- -j<number_of_cores> # Use a specific number, e.g., -j4, to speed up compilation
 
 ```
 
@@ -351,8 +352,11 @@ tail -f /var/log/app.log | LogAnalyzer --stdin --keyword "error"
 ### Example 6: Statistical Analysis
 
 ```bash
-# Get the top 5 most common error messages from a log file
+# Get the top 5 most common error messages from a log file (using legacy syntax)
 LogAnalyzer system.log --level ERROR --stats top_messages:5
+
+# Get the top 10 messages using the new, more flexible syntax
+LogAnalyzer system.log --stats "type=TOP_MESSAGES,top_n=10"
 ```
 
 ### Example 7: Tailing a File
@@ -360,6 +364,13 @@ LogAnalyzer system.log --level ERROR --stats top_messages:5
 ```bash
 # Monitor a log file in real-time for new entries containing "critical"
 LogAnalyzer /var/log/app.log --tail --keyword "critical"
+```
+
+### Example 8: Custom CSV Export
+
+```bash
+# Export specific fields to a CSV, with a custom header for the timestamp field
+LogAnalyzer application.log --format csv --csv-fields "timestamp as Time, level, message" --output report.csv
 ```
 
 ### Time-based Filtering
@@ -410,12 +421,20 @@ Run `LogAnalyzer --help` for a full list of commands.
 | :--------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
 | `--help`               | `-h`      | Displays the help message and exits.                                                                                                                                                    |            |
 | `--config FILE`        |           | Specifies a JSON configuration file to load. Command-line arguments will override settings defined in the file.                                                                           |            |
-| `--pattern REGEX`      |           | Overrides the log line parsing regular expression defined in the configuration.                                                                                                           |            |
 | `--output FILE`        |           | Redirects all output (filtered logs, statistics) to the specified file instead of standard output.                                                                                      | `(stdout)` |
 | `--color OPT`          |           | Controls colorized output. Options are `always`, `auto` (default, colors if stdout is a TTY and not redirected), or `never`.                                                              | `auto`     |
 | `--stream`             |           | Enables memory-efficient stream processing mode for very large files. Not all features are available in stream mode (e.g., sorting).                                                    | `false`    |
-| `--on-parse-error OPT` |           | Determines the action when a log line cannot be parsed. Options are `ignore`, `warn` (default, prints a warning to stderr), or `throw` (exits with an error).                           | `warn`     |
 | `--stdin`              | `-`       | Reads log entries from standard input (e.g., from a pipe). Automatically enabled if `-` is used as a log file path. See Example 5 for details.                                           | `false`    |
+
+### Parsing
+
+| Option                          | Description                                                                                                          | Default   |
+| :------------------------------ | :------------------------------------------------------------------------------------------------------------------- | :-------- |
+| `--pattern REGEX`               | Overrides the log line parsing regular expression defined in the configuration.                                      | (builtin) |
+| `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry.                                                               |           |
+| `--max-multiline-buffer SIZE`   | Max buffer size for multi-line entries (e.g. 10MB, 50KB, 1048576).                                                    | `10MB`    |
+| `--field-map MAPPING`           | Map regex capture group to a field (e.g., '1=timestamp:%Y-%m-%d %H:%M:%S'). Can be used multiple times.               |           |
+| `--on-parse-error OPT`          | Action on parse error. Options are `skip` (ignore the line), `log` (print a warning to stderr), or `fail` (exit).     | `log`     |
 
 ### Filtering
 
