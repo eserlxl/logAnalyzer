@@ -2,6 +2,7 @@
 
 #include <string>
 #include <expected> // For std::expected
+#include <stdexcept> // For std::runtime_error
 
 // Moved outside namespace to be globally accessible
 enum class Code {
@@ -23,15 +24,20 @@ enum class Code {
 namespace ErrorCode {
 
 // Define a common error structure for the application
-struct Error {
+struct Error : public std::runtime_error {
     Code code;
     std::string message;
 
     // Constructor
-    Error(Code c, std::string msg) : code(c), message(std::move(msg)) {}
+    Error(Code c, std::string msg) : std::runtime_error(msg), code(c), message(std::move(msg)) {}
 
     // Default constructor for cases where only code is needed
-    Error(Code c) : code(c), message("") {}
+    Error(Code c) : std::runtime_error("Unknown Error"), code(c), message("") {}
+
+    // Override what() method from std::runtime_error
+    const char* what() const noexcept override {
+        return message.c_str();
+    }
 
     // Static factory for common errors
     static Error invalidArgument(const std::string& argName) {

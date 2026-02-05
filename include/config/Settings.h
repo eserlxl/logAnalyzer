@@ -34,6 +34,9 @@ struct LogAnalyzerSettings {
     // If set, the parser will buffer lines until a new start pattern is encountered or EOF.
     std::optional<std::string> logEntryStartPattern;
 
+    // The maximum buffer size in bytes for a single multi-line log entry.
+    size_t maxMultilineBufferSize = 10 * 1024 * 1024; // 10 MiB default
+
     // Defines whether log parsing should be case-sensitive. Applies to regex patterns.
     bool caseSensitiveParsing = false; 
 

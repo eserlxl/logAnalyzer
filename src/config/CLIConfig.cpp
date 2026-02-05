@@ -1,12 +1,70 @@
 #include "config/CLIConfig.h"
 #include "utils/Core.h"
 #include "core/Error.h" // Add this include
+#include "core/CiLess.h" // For ci_less
 #include <CLI/CLI.hpp>
 #include <algorithm> // For std::transform
 #include <iostream> // For std::cerr
 #include <string_view>
 
 using namespace ErrorCode;
+
+// Helper function to parse field map strings
+ErrorCode::Result<std::vector<FieldMapping>> parseFieldMaps(const std::vector<std::string>& fieldMapStrings) {
+    std::vector<FieldMapping> mappings;
+    std::map<std::string, LogEntryField, LogAnalyzerInternal::ci_less> standardFieldMap = {
+        {"timestamp", LogEntryField::TIMESTAMP},
+        {"level", LogEntryField::LEVEL},
+        {"message", LogEntryField::MESSAGE},
+        {"source_file", LogEntryField::SOURCE_FILE},
+        {"structured_field", LogEntryField::STRUCTURED_FIELD}
+    };
+
+    for (const auto& s : fieldMapStrings) {
+        auto pos = s.find('=');
+        if (pos == std::string::npos) {
+            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid field map format: '" + s + "'. Expected format is 'group=field[:format]'."));
+        }
+
+        std::string groupStr = s.substr(0, pos);
+        std::string rest = s.substr(pos + 1);
+
+        size_t groupIndex;
+        try {
+            groupIndex = std::stoul(groupStr);
+        } catch (const std::invalid_argument& e) {
+            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid group index in field map: '" + groupStr + "'."));
+        }
+
+        std::string fieldName;
+        std::string format;
+        auto formatPos = rest.find(':');
+        if (formatPos != std::string::npos) {
+            fieldName = rest.substr(0, formatPos);
+            format = rest.substr(formatPos + 1);
+        } else {
+            fieldName = rest;
+        }
+
+        if (auto it = standardFieldMap.find(fieldName); it != standardFieldMap.end()) {
+            if (!format.empty()) {
+                mappings.emplace_back(it->second, groupIndex, format);
+            } else {
+                mappings.emplace_back(it->second, groupIndex);
+            }
+        } else {
+            // Custom field
+            if (!format.empty()) {
+                mappings.emplace_back(fieldName, groupIndex, std::vector<std::string>{format});
+            } else {
+                mappings.emplace_back(fieldName, groupIndex, std::vector<std::string>{});
+            }
+        }
+    }
+
+    return mappings;
+}
+
 
 // CLI Parsing
 Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCLI(int argc, const char *const *argv) {
@@ -82,6 +140,10 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     // Output Configuration
     app.add_option("--pattern", appOptions.lineParsePattern, "Custom regex for parsing log lines");
+    app.add_option("--multiline-start-pattern", appOptions.multilineStartPattern, "Regex to identify the start of a multi-line log entry");
+    app.add_option("--max-multiline-buffer", appOptions.maxMultilineBufferSize, "Max buffer size for multi-line entries in bytes (default: 10MB)");
+    app.add_option("--field-map", appOptions.fieldMaps, "Map regex capture group to a field (e.g., '1=timestamp:%Y-%m-%d %H:%M:%S')");
+
     app.add_option("--format", appOptions.outputFormat, "Output format (text, json, csv)")
        ->transform(CLI::IsMember({"text", "json", "csv"}, CLI::ignore_case));
     app.add_option("--output", appOptions.outputPath, "Redirect output to a file");
@@ -226,6 +288,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     settings.exportSettings.tailMode = appOptions.tailMode;
     settings.exportSettings.tailInterval = appOptions.tailInterval;
     settings.parserErrorAction = appOptions.parserErrorAction;
+    settings.logEntryStartPattern = appOptions.multilineStartPattern;
+    settings.maxMultilineBufferSize = appOptions.maxMultilineBufferSize;
 
     return std::make_pair(settings, appOptions);
 }

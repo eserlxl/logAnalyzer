@@ -38,7 +38,8 @@ LogAnalyzer::LogAnalyzer()
         currentSettings_.fieldMappings,
         customLogLevelMapping_, // Use LogAnalyzer's own mapping
         currentSettings_.logEntryStartPattern,
-        CLIConfig::ParserErrorAction::Warn // Default action for constructor
+        CLIConfig::ParserErrorAction::Warn, // Default action for constructor
+        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE // Explicitly provide maxMultiLineBufferSize
     );
 
     if (parser_or_error.has_value()) {
@@ -66,7 +67,8 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
         currentSettings_.fieldMappings,
         customLogLevelMapping_, // Use LogAnalyzer's own mapping
         currentSettings_.logEntryStartPattern,
-        CLIConfig::ParserErrorAction::Warn // Default action for constructor
+        CLIConfig::ParserErrorAction::Warn, // Default action for constructor
+        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE // Explicitly provide maxMultiLineBufferSize
     );
 
     if (parser_or_error.has_value()) {
@@ -110,7 +112,10 @@ ErrorCode::Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& sett
     auto parser_or_error = DefaultLogParser::create(
         currentSettings_.lineParsePattern, 
         currentSettings_.fieldMappings, 
-        customLogLevelMapping_ // Use LogAnalyzer's own mapping
+        customLogLevelMapping_, // Use LogAnalyzer's own mapping
+        currentSettings_.logEntryStartPattern, // Also add this missing argument
+        CLIConfig::ParserErrorAction::Warn, // Default action
+        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE // Explicitly provide maxMultiLineBufferSize
     );
     if (parser_or_error.has_value()) {
         currentParser_ = std::move(parser_or_error.value());
@@ -142,7 +147,8 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
         currentSettings_.fieldMappings,
         customLogLevelMapping_,
         currentSettings_.logEntryStartPattern,
-        CLIConfig::ParserErrorAction::Warn // Default action for constructor
+        CLIConfig::ParserErrorAction::Warn, // Default action for constructor
+        DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE // Explicitly provide maxMultiLineBufferSize
     );
 
     if (parser_or_error.has_value()) {

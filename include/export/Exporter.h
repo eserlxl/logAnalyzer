@@ -120,7 +120,8 @@ inline void to_json(nlohmann::json& j, const ExportSettings& es) {
         {"includeHeader", es.includeHeader},
         {"separator", std::string(1, es.separator)},
         {"textFormatString", es.textFormatString},
-        {"useAnsiColors", es.useAnsiColors}
+        {"useAnsiColors", es.useAnsiColors},
+        {"fieldsToExport", es.fieldsToExport}
     };
     if (es.jsonIndent) {
         j["jsonIndent"] = *es.jsonIndent;
@@ -132,11 +133,11 @@ inline void from_json(const nlohmann::json& j, ExportSettings& es) {
     // if no specific fieldsToExport are provided in JSON.
     es = ExportSettings(); 
 
-    if (j.contains("outputPath")) {
-        if (j.at("outputPath").is_string()) {
-            es.outputPath = j.at("outputPath").get<std::string>();
+    if (j.contains("fieldsToExport")) {
+        if (j.at("fieldsToExport").is_array()) {
+            es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
         } else {
-            throw std::runtime_error("ExportSettings: 'outputPath' has invalid type. Expected string.");
+            throw std::runtime_error("ExportSettings: 'fieldsToExport' has invalid type. Expected array.");
         }
     }
 
@@ -192,6 +193,13 @@ inline void from_json(const nlohmann::json& j, ExportSettings& es) {
             es.useAnsiColors = j.at("useAnsiColors").get<bool>();
         } else {
             throw std::runtime_error("ExportSettings: 'useAnsiColors' has invalid type. Expected boolean.");
+        }
+    }
+    if (j.contains("fieldsToExport")) {
+        if (j.at("fieldsToExport").is_array()) {
+            es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
+        } else {
+            throw std::runtime_error("ExportSettings: 'fieldsToExport' has invalid type. Expected array.");
         }
     }
 }

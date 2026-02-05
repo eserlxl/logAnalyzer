@@ -27,18 +27,9 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamFileOpenError) {
 TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {
     LogAnalyzerSettings settings;
     settings.lineParsePattern = "["; // Invalid regex
-    analyzer.setSettings(settings);
-    
-    std::string logPath = "invalid_regex.log";
-    std::ofstream ofs(logPath);
-    ofs << "some line\n";
-    ofs.close();
-
-    auto result = analyzer.loadAndReplace(logPath, CLIConfig::ParserErrorAction::Warn);
+    auto result = analyzer.setSettings(settings);
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidRegex);
-    
-    std::filesystem::remove(logPath);
 }
 
 TEST_F(LogAnalyzerTest, GetFilteredEntriesInvalidRegex) {

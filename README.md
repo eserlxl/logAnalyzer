@@ -1,4 +1,4 @@
-# logAnalyzer
+# LogAnalyzer
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
@@ -10,15 +10,15 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 
 ## Project Status
 
-`logAnalyzer` is under active development. We are continuously adding new features, improving performance, and refining the user experience. While it is stable for general use, expect potential API changes in major releases as the project evolves.
+`LogAnalyzer` is under active development. We are continuously adding new features, improving performance, and refining the user experience. While it is stable for general use, expect potential API changes in major releases as the project evolves.
 
 ## Overview
 
-`logAnalyzer` is a high-performance, command-line utility built in C++ for detailed analysis, filtering, and extraction of insights from large log files. It is designed for efficiency, handling massive datasets with a minimal memory footprint by processing logs as streams.
+`LogAnalyzer` is a high-performance, command-line utility built in C++ for detailed analysis, filtering, and extraction of insights from large log files. It is designed for efficiency, handling massive datasets with a minimal memory footprint by processing logs as streams.
 
-## Why logAnalyzer?
+## Why LogAnalyzer?
 
-In a world of ever-growing log files, traditional tools like `grep`, `awk`, and `sed` can become cumbersome and slow. `logAnalyzer` addresses these challenges by providing:
+In a world of ever-growing log files, traditional tools like `grep`, `awk`, and `sed` can become cumbersome and slow. `LogAnalyzer` addresses these challenges by providing:
 
 -   **Performance**: A C++ core that processes large volumes of data quickly.
 -   **Structured Filtering**: Go beyond simple text matching with filters for log levels, timestamps, and structured data.
@@ -44,7 +44,7 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 
 ## Quick Start
 
-Get `logAnalyzer` up and running on your system with these simple steps.
+Get `LogAnalyzer` up and running on your system with these simple steps.
 
 1.  **Clone the Repository**:
     ```bash
@@ -57,15 +57,13 @@ Get `logAnalyzer` up and running on your system with these simple steps.
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    cmake --build . 
-    # Or, on Unix-like systems, you can use make
-    # make
+    cmake --build .
     ```
 
 3.  **Run a Basic Analysis**:
     After building, the executable will be in `build/bin`.
     ```bash
-    ./bin/logAnalyzer /var/log/syslog --level ERROR
+    ./bin/LogAnalyzer /var/log/syslog --level ERROR
     ```
     *(Replace `/var/log/syslog` with a path to one of your log files.)*
 
@@ -89,7 +87,7 @@ For detailed build instructions, installation options, and more usage examples, 
 
 ## Building from Source
 
-This section guides you through setting up `logAnalyzer` from its source code.
+This section guides you through setting up `LogAnalyzer` from its source code.
 
 ### Prerequisites
 
@@ -124,7 +122,7 @@ Ensure you have [Visual Studio 2022](https://visualstudio.microsoft.com/) with t
 
 ### Dependencies
 
-`logAnalyzer` leverages several excellent open-source libraries, which CMake will automatically fetch during the build process:
+`LogAnalyzer` leverages several excellent open-source libraries, which CMake will automatically fetch during the build process:
 
 -   [**CLI11**](https://github.com/CLIUtils/CLI11): A header-only library for robust command-line argument parsing.
 -   [**nlohmann/json**](https://github.com/nlohmann/json): A header-only JSON library for C++.
@@ -147,20 +145,24 @@ Next, use CMake to configure and build the project. We recommend an out-of-sourc
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . 
-# Or, on Unix-like systems, you can use make
-# make
+cmake --build .
 ```
 
-The compiled `logAnalyzer` executable will be available in the `build/bin` directory.
+The compiled `LogAnalyzer` executable will be available in the `build/bin` directory.
 
 #### Build Options
 
 You can customize the build with the following CMake options:
 
--   `-DBUILD_TESTING=ON/OFF`: Enable or disable the compilation of tests (default: `ON`).
--   `-DLOGANALYZER_BUILD_SHARED=ON/OFF`: Build `logAnalyzer` as a shared library (default: `OFF`).
--   `-DLOGANALYZER_USE_SANITIZER=Address/Undefined/None`: Enable sanitizers for debugging (default: `None`).
+| Option                       | Description                                                     | Default    |
+| :--------------------------- | :-------------------------------------------------------------- | :--------- |
+| `-DBUILD_TESTING=ON/OFF`     | Enable or disable the compilation of tests.                     | `ON`       |
+| `-DLOGANALYZER_BUILD_SHARED=ON/OFF` | Build `LogAnalyzer` as a shared library.                        | `OFF`      |
+| `-DLOGANALYZER_USE_SANITIZER=...` | Enable sanitizers for debugging (`Address`, `Undefined`).       | `None`     |
+| `-DENABLE_COVERAGE=ON/OFF`   | Enable code coverage instrumentation for tests.                 | `OFF`      |
+| `-DENABLE_ASAN=ON/OFF`       | Enable AddressSanitizer for tests.                              | `OFF`      |
+| `-DENABLE_UBSAN=ON/OFF`      | Enable UndefinedBehaviorSanitizer for tests.                    | `OFF`      |
+| `-DENABLE_GMOCK=ON/OFF`      | Enable Google Mock for tests.                                   | `OFF`      |
 
 To use an option, add it to the `cmake` command:
 
@@ -168,17 +170,15 @@ To use an option, add it to the `cmake` command:
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 ```
 
-**Note:** To build the documentation, use `cmake --build . --target doc` or `make doc` from the `build` directory.
+**Note:** To build the documentation, use `cmake --build . --target doc` from the `build` directory.
 
 ## Installation
 
-To install the `logAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from the `build` directory. This allows you to run `logAnalyzer` from any directory.
+To install the `LogAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from the `build` directory. This allows you to run `LogAnalyzer` from any directory.
 
 ```bash
 # Use sudo for system-wide installation
 sudo cmake --install . --prefix /usr/local
-# Or, on Unix-like systems
-# sudo make install
 ```
 
 For a local installation, you can specify a different prefix. This is useful if you don't have administrative privileges.
@@ -188,7 +188,7 @@ For a local installation, you can specify a different prefix. This is useful if 
 cmake --install . --prefix ../dist
 ```
 
-Alternatively, you can manually add the `build/bin` directory (from your build directory) to your system's `PATH` environment variable or copy the `logAnalyzer` executable from `build/bin` to any directory already in your `PATH`. For example, after building from the `logAnalyzer` root directory:
+Alternatively, you can manually add the `build/bin` directory (from your build directory) to your system's `PATH` environment variable or copy the `LogAnalyzer` executable from `build/bin` to any directory already in your `PATH`. For example, after building from the `logAnalyzer` root directory:
 
 ```bash
 # Navigate into the build directory
@@ -198,81 +198,81 @@ cd build
 export PATH=$(pwd)/bin:$PATH
 
 # Or copy the executable to a user-local bin directory (make sure ~/.local/bin is in your PATH)
-cp ./bin/logAnalyzer ~/.local/bin/
+cp ./bin/LogAnalyzer ~/.local/bin/
 ```
 
 ## Usage
 
-After building, you can run `logAnalyzer` in two ways:
+After building, you can run `LogAnalyzer` in two ways:
 
 1.  **From the build directory**:
     ```bash
-    ./build/bin/logAnalyzer [options] <log_file(s)>
+    ./build/bin/LogAnalyzer [options] <log_file(s)>
     ```
 
 2.  **As an installed command** (if you completed the installation step):
     ```bash
-    logAnalyzer [options] <log_file(s)>
+    LogAnalyzer [options] <log_file(s)>
     ```
 
-**Note**: The following examples assume `logAnalyzer` is in your `PATH` (i.e., installed). If not, replace `logAnalyzer` with the path to the executable (e.g., `./build/bin/logAnalyzer`).
+**Note**: The following examples assume `LogAnalyzer` is in your `PATH` (i.e., installed). If not, replace `LogAnalyzer` with the path to the executable (e.g., `./build/bin/LogAnalyzer`).
 
 ### Example 1: Basic Filtering
 
 ```bash
 # Find all errors containing the word "database" in a specific log file
-logAnalyzer /var/log/app.log --level ERROR --keyword "database"
+LogAnalyzer /var/log/app.log --level ERROR --keyword "database"
 
 # Find all entries in two different log files, excluding those containing "DEBUG"
-logAnalyzer app.log kern.log --exclude-keyword "DEBUG"
+LogAnalyzer app.log kern.log --exclude-keyword "DEBUG"
 ```
 
 ### Example 2: Advanced Filtering and Output
 
 ```bash
 # Find entries that are either warnings or errors, and contain "timeout" OR "refused"
-logAnalyzer access.log --level WARNING --level ERROR --keyword "timeout" --keyword "refused" --logic OR
+LogAnalyzer access.log --level WARNING --level ERROR --keyword "timeout" --keyword "refused" --logic OR
 
 # Export errors between two dates to a pretty-printed JSON file
-logAnalyzer system.log --level ERROR --start "2023-11-01 00:00:00" --end "2023-11-02 00:00:00" --format json --pretty --output errors.json
+LogAnalyzer system.log --level ERROR --start "2023-11-01 00:00:00" --end "2023-11-02 00:00:00" --format json --pretty --output errors.json
 ```
 
 ### Example 3: Complex Expression
 
 ```bash
 # Use a complex expression to find database errors or any message containing "timeout"
-logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
+LogAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
 ```
 
 ### Example 4: Stream a Large File
 
 ```bash
 # Process a large log file without loading it all into memory, saving errors to a file
-logAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
+LogAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
 ```
 
 ### Example 5: Process Logs from Standard Input
 
-`logAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines. Use `-` as the filename to signify `stdin`.
+`LogAnalyzer` supports reading from `stdin`, making it easy to integrate into pipelines. Use `-` as the filename to signify `stdin`.
 
 ```bash
 # Pipe logs from another command and filter for errors
-cat /var/log/syslog | logAnalyzer --stdin --level ERROR
+cat /var/log/syslog | LogAnalyzer --stdin --level ERROR
 
 # Tail a file and filter for a keyword
-tail -f /var/log/app.log | logAnalyzer - --keyword "error"
+tail -f /var/log/app.log | LogAnalyzer - --keyword "error"
 ```
 
 ### Example 6: Statistical Analysis
 
 ```bash
 # Get the top 5 most common error messages from a log file
-logAnalyzer system.log --level ERROR --stats top_messages:5
+LogAnalyzer system.log --level ERROR --stats top_messages:5
 ```
 
 ### Time-based Filtering
 
-`logAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.
+`LogAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.
 
 You can specify timestamps in several formats:
 
@@ -294,23 +294,23 @@ The `--duration` flag can be combined with either `--start` or `--end` to specif
 
 ```bash
 # Get logs from the last 2 hours
-logAnalyzer app.log --start "2h ago"
+LogAnalyzer app.log --start "2h ago"
 
 # Get logs from yesterday
-logAnalyzer app.log --start "yesterday" --end "today"
+LogAnalyzer app.log --start "yesterday" --end "today"
 
 # Get logs for a 30-minute window starting at a specific time
-logAnalyzer app.log --start "2023-11-20 10:00:00" --duration "30m"
+LogAnalyzer app.log --start "2023-11-20 10:00:00" --duration "30m"
 
 # Get logs from a specific day (using ISO 8601 date)
-logAnalyzer app.log --start "2023-11-20T00:00:00Z" --end "2023-11-21T00:00:00Z"
+LogAnalyzer app.log --start "2023-11-20T00:00:00Z" --end "2023-11-21T00:00:00Z"
 ```
 
 ## Command-Line Interface (CLI)
 
-`logAnalyzer` provides a rich command-line interface for ad-hoc analysis.
+`LogAnalyzer` provides a rich command-line interface for ad-hoc analysis.
 
-Run `logAnalyzer --help` for a full list of commands.
+Run `LogAnalyzer --help` for a full list of commands.
 
 ### General Options
 
@@ -375,7 +375,7 @@ Monitor files for new lines, similar to `tail -f`. Not compatible with `--stdin`
 
 ## Configuration
 
-`logAnalyzer` can be configured using a JSON file for persistent setups. Use the `--config` option to load a file. Command-line arguments override settings from the configuration file.
+`LogAnalyzer` can be configured using a JSON file for persistent setups. Use the `--config` option to load a file. Command-line arguments override settings from the configuration file.
 
 An example `config.json`:
 
@@ -449,23 +449,59 @@ Understanding the project's layout can help you navigate the codebase, contribut
 ```
 logAnalyzer/
 ├── _deps/                   # External dependencies (CLI11, nlohmann/json, GoogleTest) managed by CMake.
-├── bin/                     # Compiled `logAnalyzer` executable and other binaries.
+├── bin/                     # Compiled `LogAnalyzer` executable and other binaries.
 ├── build/                   # CMake build artifacts and temporary files.
 ├── cmake/                   # Custom CMake modules and scripts.
 ├── docs/                    # Doxygen configuration and generated documentation.
 ├── examples/                # Example log files and configuration examples.
 ├── include/                 # Public header files for core logic, configuration, filters, and utilities.
-│   ├── analyzer/            # Core analysis engine and entry processing.
-│   ├── config/              # CLI argument parsing and application settings.
-│   ├── core/                # Fundamental data structures (LogEntry, Error) and base log parsing.
-│   ├── export/              # Output formatting and data export interfaces.
-│   ├── filter/              # Advanced log filtering logic and expression evaluation.
-│   ├── stats/               # Statistical data collection and reporting.
-│   └── utils/               # General utility functions (string manipulation, time conversion).
+│   ├── analyzer/
+│   ├── config/
+│   │   ├── CLIConfig.h
+│   │   └── Settings.h
+│   ├── core/
+│   │   ├── CiLess.h
+│   │   ├── Error.h
+│   │   ├── LogParser.h
+│   │   └── LogTypes.h
+│   ├── export/
+│   │   └── Exporter.h
+│   ├── filter/
+│   │   ├── ConcreteFilters.h
+│   │   ├── Condition.h
+│   │   ├── EnumStringConversions.h
+│   │   ├── Expression.h
+│   │   ├── IFilter.h
+│   │   ├── Legacy.h
+│   │   └── Types.h
+│   ├── stats/
+│   │   └── Statistics.h
+│   └── utils/
+│       ├── String.h
+│       └── Time.h
 ├── lib/                     # Compiled libraries (static/shared).
 ├── src/                     # Source code (.cpp files) implementing header functionalities.
 │   ├── main.cpp             # Application entry point and CLI orchestration.
-│   └── ...                  # Implementation files for corresponding `include/` modules.
+│   ├── analyzer/
+│   │   ├── Export.cpp
+│   │   ├── Filter.cpp
+│   │   ├── IO.cpp
+│   │   └── Stats.cpp
+│   ├── config/
+│   │   └── CLIConfig.cpp
+│   ├── core/
+│   │   └── LogParser.cpp
+│   ├── export/
+│   │   └── Exporter.cpp
+│   ├── filter/
+│   │   ├── ConcreteFilters.cpp
+│   │   ├── EnumStringConversions.cpp
+│   │   └── Expression.cpp
+│   ├── stats/
+│   │   └── Statistics.cpp
+│   └── utils/
+│       ├── String.cpp
+│       └── Time.cpp
 ├── tests/                   # Unit and integration tests.
 ├── tools/                   # Development scripts and utilities.
 ├── .gitignore               # Files/directories ignored by Git.
@@ -494,16 +530,12 @@ The following commands can be run from the `build` directory to assist with deve
     Generates HTML documentation using Doxygen. The output will be in `build/docs/html/`.
     ```bash
     cmake --build . --target doc
-    # or
-    make doc
     ```
 
 -   **Format Code**:
     Automatically formats the C++ source code using `clang-format` according to the project's style guidelines.
     ```bash
     cmake --build . --target format
-    # or
-    make format
     ```
 
 ## Contributing

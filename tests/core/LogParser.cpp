@@ -23,7 +23,7 @@ TEST(LogParserErrorHandling, VariousActions) {
     std::string sourceFile = "test_timestamp.log";
 
     // --- Test Warn action ---
-    auto warnParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn);
+    auto warnParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(warnParserResult.has_value()) << warnParserResult.error().message; // Fixed .message()
     std::unique_ptr<ILogParser> warnParser = std::move(warnParserResult.value());
 
@@ -40,14 +40,14 @@ TEST(LogParserErrorHandling, VariousActions) {
     std::cerr.rdbuf(oldCerrWarn); // Restore cerr
 
     // --- Test Throw action ---
-    auto throwParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Throw);
+    auto throwParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Throw, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(throwParserResult.has_value()) << throwParserResult.error().message; // Fixed .message()
     std::unique_ptr<ILogParser> throwParser = std::move(throwParserResult.value());
 
     ASSERT_THROW(throwParser->parseLine(logLine, lineNumber, sourceFile), Error); // Should throw Error
 
     // --- Test Ignore action ---
-    auto ignoreParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Ignore);
+    auto ignoreParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Ignore, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(ignoreParserResult.has_value()) << ignoreParserResult.error().message; // Fixed .message()
     std::unique_ptr<ILogParser> ignoreParser = std::move(ignoreParserResult.value());
 
@@ -69,7 +69,7 @@ TEST(LogParserTest, InvalidMainRegexPattern) {
     std::string invalidPattern = R"([)"; // Invalid regex pattern
     std::vector<FieldMapping> mappings = {};
 
-    auto parserResult = DefaultLogParser::create(invalidPattern, mappings);
+    auto parserResult = DefaultLogParser::create(invalidPattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_FALSE(parserResult.has_value());
     ASSERT_EQ(parserResult.error().code, Code::InvalidRegex); // Fixed: .code() -> .code
     ASSERT_NE(parserResult.error().message.find("Invalid log pattern"), std::string::npos);
@@ -81,7 +81,7 @@ TEST(LogParserTest, InvalidLogEntryStartRegexPattern) {
     std::vector<FieldMapping> mappings = {};
     std::string invalidLogEntryStartPattern = R"([)"; // Invalid regex
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, invalidLogEntryStartPattern);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, invalidLogEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_FALSE(parserResult.has_value());
     ASSERT_EQ(parserResult.error().code, Code::InvalidRegex); // Fixed: .code() -> .code
     ASSERT_NE(parserResult.error().message.find("Invalid log entry start pattern"), std::string::npos);
@@ -94,7 +94,7 @@ TEST(LogParserTest, StructuredFieldCustomDelimiters) {
         FieldMapping(LogEntryField::STRUCTURED_FIELD, 1, std::vector<std::string>{":"}), // Colon delimiter
     };
     // FIX: Declare and initialize parserResult, and ensure parser is declared.
-    auto parserResult = DefaultLogParser::create(pattern, mappings); // Empty mappings for this test
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE); // Empty mappings for this test
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -115,7 +115,7 @@ TEST(LogParserTest, StructuredFieldQuotedValuesAndSpecialChars) {
     };
 
     // FIX: Declare and initialize parserResult, and ensure parser is declared.
-    auto parserResult = DefaultLogParser::create(pattern, mappings);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Throw, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -147,8 +147,7 @@ TEST(LogParserTest, MultiLineSingleEntryFile) {
         {LogEntryField::MESSAGE, 3}
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})";
-
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -179,7 +178,7 @@ TEST(LogParserTest, MultiLineWithBlankAndAmbiguousLines) {
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:)"; // More specific start pattern
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -230,7 +229,7 @@ TEST(LogParserTest, MultiLineInterleaving) {
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:)";
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -306,10 +305,14 @@ TEST(LogParserTest, BufferLimitExceeded) {
     ASSERT_TRUE(res2.has_value());
     ASSERT_TRUE(res2.value().has_value()); // It returns a LogEntry, but with parsing errors
     
-    LogEntry errorEntry = res2.value().value();
-    ASSERT_TRUE(errorEntry.hasParsingErrors());
-    ASSERT_EQ(errorEntry.parsingErrors[0].code, Code::BufferLimitExceeded);
-    ASSERT_EQ(errorEntry.sourceLineNumber, 1); // Error refers to the start of the buffered entry
+    LogEntry emittedEntry = res2.value().value();
+    ASSERT_TRUE(emittedEntry.hasParsingErrors());
+    ASSERT_EQ(emittedEntry.parsingErrors.size(), 1);
+    ASSERT_EQ(emittedEntry.parsingErrors[0].code, Code::BufferLimitExceeded);
+    ASSERT_NE(emittedEntry.parsingErrors[0].message.find("Multi-line log entry truncated due to buffer limit (20 bytes). This line was not appended."), std::string::npos);
+    ASSERT_EQ(emittedEntry.sourceLineNumber, 1); // Error refers to the start of the buffered entry
+    ASSERT_EQ(emittedEntry.level, LogLevel::WARNING); // Should be WARNING as the buffer could be parsed
+    ASSERT_TRUE(emittedEntry.message.empty()); // No message captured by regex for "2023-01-01" alone
 
     // Verify recovery: parser should now have the second line buffered
     ASSERT_EQ(parser->getCurrentBufferedLineCount(), 1);
@@ -318,11 +321,12 @@ TEST(LogParserTest, BufferLimitExceeded) {
     // Flush remaining
     auto flushed = parser->flushRemaining();
     ASSERT_EQ(flushed.size(), 1);
-    // The flushed entry "Limit Exceed" won't match the pattern (no date), so it will be a parse error (or raw message depending on error action)
-    // In this case, since it's "Limit Exceed" and pattern expects date, it's a regex mismatch.
-    // DefaultLogParser::parseLine returns a default entry with message "Parse failed (warn)..." on mismatch if Warn
+    // The flushed entry "Limit Exceed" won't match the pattern (no date), so it will be a parse error.
+    // applyParserErrorAction will return a default LogEntry with message "Parse failed (warn): Limit Exceed"
     ASSERT_TRUE(flushed[0].has_value());
-    ASSERT_NE(flushed[0].value().message.find("Parse failed"), std::string::npos);
+    ASSERT_EQ(flushed[0].value().message, "Parse failed (warn): Limit Exceed");
+    ASSERT_EQ(flushed[0].value().parsingErrors.size(), 1); 
+    ASSERT_EQ(flushed[0].value().parsingErrors[0].code, Code::MalformedLogEntry);
 }
 
 // Test 6: Stream Processing
@@ -334,7 +338,7 @@ TEST(LogParserTest, StreamProcessing) {
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2})";
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(parserResult.has_value());
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -366,7 +370,7 @@ TEST(LogParserTest, StateIntrospectionDuringMultiLine) {
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2})";
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
     ASSERT_TRUE(parserResult.has_value());
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -394,4 +398,68 @@ TEST(LogParserTest, StateIntrospectionDuringMultiLine) {
     // Check state after processing (now contains new entry)
     ASSERT_EQ(parser->getCurrentBufferedLineCount(), 1);
     ASSERT_EQ(parser->getCurrentBufferedContent(), "2023-01-02 Next Entry");
+}
+
+// Test new: Complete failure where parseLineInternal returns unexpected (regex mismatch)
+TEST(LogParserErrorHandling, CompleteFailureActions) {
+    std::string pattern = R"(^(\d{4}-\d{2}-\d{2})\s+\[(\w+)\]\s+(.*)$)"; // Pattern expecting date, level, message
+    std::vector<FieldMapping> mappings = {
+        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d"},
+        {LogEntryField::LEVEL, 2},
+        {LogEntryField::MESSAGE, 3}
+    };
+    std::string nonMatchingLogLine = "This line does not match the pattern at all.";
+    size_t lineNumber = 100;
+    std::string sourceFile = "non_matching.log";
+
+    // --- Test Warn action for complete failure ---
+    auto warnParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
+    ASSERT_TRUE(warnParserResult.has_value()) << warnParserResult.error().message;
+    std::unique_ptr<ILogParser> warnParser = std::move(warnParserResult.value());
+
+    std::stringstream cerrBufferWarn;
+    std::streambuf* oldCerrWarn = std::cerr.rdbuf(cerrBufferWarn.rdbuf());
+
+    Result<LogEntry> warnEntryResult = warnParser->parseLine(nonMatchingLogLine, lineNumber, sourceFile);
+    ASSERT_TRUE(warnEntryResult.has_value()); // Should return a LogEntry
+    LogEntry warnEntry = warnEntryResult.value();
+    ASSERT_EQ(warnEntry.sourceLineNumber, lineNumber);
+    ASSERT_EQ(warnEntry.sourceFile, sourceFile);
+    ASSERT_EQ(warnEntry.level, LogLevel::UNKNOWN);
+    ASSERT_EQ(warnEntry.message, "Parse failed (warn): " + nonMatchingLogLine);
+    ASSERT_TRUE(warnEntry.hasParsingErrors());
+    ASSERT_EQ(warnEntry.parsingErrors.size(), 1);
+    ASSERT_EQ(warnEntry.parsingErrors[0].code, Code::MalformedLogEntry);
+    ASSERT_NE(cerrBufferWarn.str().find("Warning (LogParser): Line does not match log pattern."), std::string::npos);
+
+    std::cerr.rdbuf(oldCerrWarn); // Restore cerr
+
+    // --- Test Throw action for complete failure ---
+    auto throwParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Throw, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
+    ASSERT_TRUE(throwParserResult.has_value()) << throwParserResult.error().message;
+    std::unique_ptr<ILogParser> throwParser = std::move(throwParserResult.value());
+
+    ASSERT_THROW(throwParser->parseLine(nonMatchingLogLine, lineNumber, sourceFile), Error);
+
+    // --- Test Ignore action for complete failure ---
+    auto ignoreParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Ignore, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE);
+    ASSERT_TRUE(ignoreParserResult.has_value()) << ignoreParserResult.error().message;
+    std::unique_ptr<ILogParser> ignoreParser = std::move(ignoreParserResult.value());
+
+    std::stringstream cerrBufferIgnore;
+    std::streambuf* oldCerrIgnore = std::cerr.rdbuf(cerrBufferIgnore.rdbuf());
+
+    Result<LogEntry> ignoreEntryResult = ignoreParser->parseLine(nonMatchingLogLine, lineNumber, sourceFile);
+    ASSERT_TRUE(ignoreEntryResult.has_value()); // Should return a LogEntry
+    LogEntry ignoreEntry = ignoreEntryResult.value();
+    ASSERT_EQ(ignoreEntry.sourceLineNumber, lineNumber);
+    ASSERT_EQ(ignoreEntry.sourceFile, sourceFile);
+    ASSERT_EQ(ignoreEntry.level, LogLevel::UNKNOWN);
+    ASSERT_EQ(ignoreEntry.message, "Parse ignored: " + nonMatchingLogLine);
+    ASSERT_TRUE(ignoreEntry.hasParsingErrors());
+    ASSERT_EQ(ignoreEntry.parsingErrors.size(), 1);
+    ASSERT_EQ(ignoreEntry.parsingErrors[0].code, Code::MalformedLogEntry);
+    ASSERT_EQ(cerrBufferIgnore.str().find("Warning (LogParser)"), std::string::npos); // No warning logged
+
+    std::cerr.rdbuf(oldCerrIgnore); // Restore cerr
 }

@@ -23,7 +23,7 @@ public:
                                   size_t lineNumber,
                                   const std::string& sourceFile) const = 0; // Added sourceFile and ErrorCode::Result<LogEntry>
     virtual std::unique_ptr<ILogParser> clone() const = 0;
-    virtual std::string getLineFilterRegex() const { return ".*"; }
+    virtual std::string getLineFilterRegex() const { return ".*"; } // Returns the primary regex string used to match log lines, serving as a general line filter.
     // virtual std::regex getLineFilterRegexCompiled() const; // Removed as per design
 
     // New API for multi-line log processing
@@ -73,10 +73,10 @@ public:
     static ErrorCode::Result<std::unique_ptr<DefaultLogParser>> create( // Changed to Result
         std::string pattern,
         std::vector<FieldMapping> fieldMappings,
-        const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings = {},
-        std::optional<std::string> logEntryStartPattern = std::nullopt, // Reverted to string
-        CLIConfig::ParserErrorAction errorAction = CLIConfig::ParserErrorAction::Warn,
-        size_t maxMultiLineBufferSize = DEFAULT_MAX_BUFFER_SIZE); // New parameter
+        const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
+        std::optional<std::string> logEntryStartPattern, // Reverted to string
+        CLIConfig::ParserErrorAction errorAction,
+        size_t maxMultiLineBufferSize); // New parameter
 
     // New constructor with field mappings and level mappings, and optional log entry start pattern
     DefaultLogParser(
@@ -142,5 +142,14 @@ public:
     static const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> DEFAULT_LEVEL_MAPPINGS;
 
     CLIConfig::ParserErrorAction _parserErrorAction; // New: To store the error action
+
+private:
+    static const std::regex& getLegacyKvPattern(); // For legacy structured field parsing
+
+    // Helper to apply _parserErrorAction
+    LogEntry applyParserErrorAction(const ErrorCode::Result<LogEntry>& parseResult,
+                                    std::string_view originalLine,
+                                    size_t lineNumber,
+                                    const std::string& sourceFile) const;
 };
 #endif // LOG_PARSER_H

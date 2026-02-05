@@ -78,6 +78,11 @@ public:
         std::string complexFilterExpression; // New: --expression filter
         std::vector<std::string> jsonFields; // New: Configurable JSON fields
 
+        // New parser options
+        std::optional<std::string> multilineStartPattern;
+        size_t maxMultilineBufferSize = 10 * 1024 * 1024; // Default 10 MiB, avoiding include
+        std::vector<std::string> fieldMaps;
+
         // Stats options (part of IStatisticCollector refactor)
         std::vector<std::string> enabledStatistics; // New: for IStatisticCollector
         std::optional<std::chrono::seconds> statsWindow; // To be integrated into collectors

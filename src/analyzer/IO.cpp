@@ -18,6 +18,7 @@
 #include <functional>
 #include <iterator>
 #include <map>
+#include <filesystem>
 
 void LogAnalyzer::setDefaultFieldMappings(LogAnalyzerSettings& settings) {
     settings.fieldMappings.clear();
@@ -77,6 +78,9 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std
 
 ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
     std::unique_lock<std::shared_mutex> lock(stateMutex_);
+    if (!std::filesystem::exists(filePath)) {
+        return std::unexpected(ErrorCode::Error::fileNotFound(filePath));
+    }
     std::ifstream file(filePath);
     if (!file.is_open()) {
         return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
