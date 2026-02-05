@@ -308,21 +308,14 @@ TEST(ExporterJsonTest, JsonIndentBehavior) {
     std::vector<LogEntry> entries;
     entries.push_back(createLogEntry(1, LogLevel::INFO, "Test Message"));
 
-    // Test with jsonIndent = 0 (no indent)
+    // Test with jsonIndent = 0 (no indent, but pretty-printed with newlines)
     std::stringstream ss0;
     ExportSettings settings0;
     settings0.format = ExportFormat::JSON;
     settings0.jsonIndent = 0;
     exporter.exportLogEntries(ss0, entries, settings0);
-    json j0 = json::parse(ss0.str());
-    ASSERT_EQ(ss0.str().back(), '\n'); // Should still end with newline
-    // For nlohmann::json, dump(0) produces pretty-printed output with newlines and indents, but with 0 spaces of indent *within* each level.
-    // For truly compact output, dump() (no args) or dump(-1) should be used.
-    // The previous expected_compact_json_no_indent was incorrect for dump(0).
-    // Let's change the test to use dump() for compact form.
-    std::string expected_compact_json_no_indent = "{\"entries\":[{\"ID\":1,\"Level\":\"INFO\",\"Message\":\"Test Message\",\"Timestamp\":null}],\"summary\":{\"count\":1}}";
-    ASSERT_EQ(j0.dump(), expected_compact_json_no_indent);
-
+    std::string expected_pretty_json_no_indent = "{\n\"entries\": [\n{\n\"ID\": 1,\n\"Level\": \"INFO\",\n\"Message\": \"Test Message\",\n\"Timestamp\": null\n}\n],\n\"summary\": {\n\"count\": 1\n}\n}\n";
+    ASSERT_EQ(ss0.str(), expected_pretty_json_no_indent);
 
     // Test with jsonIndent = 4
     std::stringstream ss4;
@@ -334,15 +327,14 @@ TEST(ExporterJsonTest, JsonIndentBehavior) {
     ASSERT_TRUE(ss4.str().find("    \"entries\"") != std::string::npos); // Check for 4 spaces indent
     ASSERT_TRUE(ss4.str().find('\n') != std::string::npos); // Should have newlines
     
-    // Test with jsonIndent = negative (should result in no indent)
+    // Test with jsonIndent = negative (should result in compact output with no newlines)
     std::stringstream ssNeg;
     ExportSettings settingsNeg;
     settingsNeg.format = ExportFormat::JSON;
     settingsNeg.jsonIndent = -1; // Any negative value
     exporter.exportLogEntries(ssNeg, entries, settingsNeg);
-    json jNeg = json::parse(ssNeg.str());
-    // Should be equivalent to jsonIndent = 0 (compact output)
-    ASSERT_EQ(jNeg.dump(), expected_compact_json_no_indent);
+    std::string expected_compact_json = "{\"entries\":[{\"ID\":1,\"Level\":\"INFO\",\"Message\":\"Test Message\",\"Timestamp\":null}],\"summary\":{\"count\":1}}\n"; // Added newline as per Exporter.cpp
+    ASSERT_EQ(ssNeg.str(), expected_compact_json);
 }
 
 TEST(ExporterJsonTest, DefaultFieldDiscoveryLogic) {
@@ -820,7 +812,7 @@ TEST(ExporterErrorHandlingTest, UnknownFormatThrowsException) {
     ASSERT_THROW(exporter.exportLogEntries(ss_out, entries, settings), ExportException);
 }
 
-TEST(ExporterErrorHandlingTest, XmlFormatThrowsException) {
+TEST(ExporterErrorHandlingTest, XmlFormatDoesNotThrowExceptionAndExports) {
     Exporter exporter;
     std::vector<LogEntry> entries;
     entries.push_back(createLogEntry(1, LogLevel::INFO, "Message"));
@@ -829,5 +821,12 @@ TEST(ExporterErrorHandlingTest, XmlFormatThrowsException) {
     ExportSettings settings;
     settings.format = ExportFormat::XML;
 
-    ASSERT_THROW(exporter.exportLogEntries(ss_out, entries, settings), ExportException);
+    ASSERT_NO_THROW(exporter.exportLogEntries(ss_out, entries, settings));
+    std::string output = ss_out.str();
+    ASSERT_FALSE(output.empty());
+    ASSERT_TRUE(output.rfind("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", 0) == 0);
+    ASSERT_TRUE(output.find("<log>") != std::string::npos);
+    ASSERT_TRUE(output.find("<entry>") != std::string::npos);
+    ASSERT_TRUE(output.find("</entry>") != std::string::npos);
+    ASSERT_TRUE(output.find("</log>") != std::string::npos);
 }

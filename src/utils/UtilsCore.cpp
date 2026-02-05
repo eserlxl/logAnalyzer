@@ -119,7 +119,7 @@ std::optional<ExportFormat> stringToExportFormat(const std::string& formatStr) {
     std::string upperFormatStr = formatStr;
     std::transform(upperFormatStr.begin(), upperFormatStr.end(), upperFormatStr.begin(), ::toupper);
 
-    if (upperFormatStr == "PLAINTEXT") return ExportFormat::PLAINTEXT;
+    if (upperFormatStr == "PLAINTEXT" || upperFormatStr == "TEXT") return ExportFormat::PLAINTEXT;
     if (upperFormatStr == "JSON") return ExportFormat::JSON;
     if (upperFormatStr == "CSV") return ExportFormat::CSV;
     if (upperFormatStr == "XML") return ExportFormat::XML;

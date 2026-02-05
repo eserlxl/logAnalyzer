@@ -12,7 +12,7 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, c
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     
     // CSV Header
-    out << "Timestamp" << delimiter << "Level" << delimiter << "Message" << delimiter << "File\n";
+    out << "ID" << delimiter << "Timestamp" << delimiter << "Level" << delimiter << "Message" << delimiter << "SourceFile\n";
     
     auto filtered_expected = getFilteredEntries_NoLock(filter); // Use non-locking version as we already hold the lock
     if (!filtered_expected) {
@@ -22,6 +22,13 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, c
     const auto& filtered = filtered_expected.value();
     
     for (const auto& entry : filtered) {
+        // Output ID
+        if (entry.id.has_value()) {
+            out << *entry.id << delimiter;
+        } else {
+            out << "" << delimiter;
+        }
+
         std::string timestampStr;
         if (entry.timestamp.has_value()) {
             timestampStr = Utils::formatTimestamp(entry.timestamp.value(), timestampFormat);
@@ -81,45 +88,45 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
         nlohmann::json entryJson;
 
         if (entry.id.has_value()) {
-            entryJson["ID"] = entry.id.value();
+            entryJson["Id"] = entry.id.value();
         } else {
-            entryJson["ID"] = nullptr;
+            entryJson["Id"] = nullptr;
         }
 
         std::string timestampStr;
         if (entry.timestamp.has_value()) {
             timestampStr = Utils::formatTimestamp(entry.timestamp.value(), timestampFormat);
-            entryJson["TIMESTAMP"] = timestampStr;
+            entryJson["Timestamp"] = timestampStr;
         } else {
-            entryJson["TIMESTAMP"] = nullptr;
+            entryJson["Timestamp"] = nullptr;
         }
         
-        entryJson["LEVEL"] = Utils::logLevelToString(entry.level);
-        entryJson["MESSAGE"] = entry.message;
-        entryJson["SOURCE_FILE"] = entry.sourceFile;
+        entryJson["Level"] = Utils::logLevelToString(entry.level);
+        entryJson["Message"] = entry.message;
+        entryJson["SourceFile"] = entry.sourceFile;
         
         if (entry.sourceLineNumber.has_value()) {
-            entryJson["LINE_NUMBER"] = entry.sourceLineNumber.value();
+            entryJson["LineNumber"] = entry.sourceLineNumber.value();
         } else {
-            entryJson["LINE_NUMBER"] = nullptr;
+            entryJson["LineNumber"] = nullptr;
         }
 
         if (entry.threadId.has_value()) {
-            entryJson["THREAD_ID"] = entry.threadId.value();
+            entryJson["ThreadId"] = entry.threadId.value();
         } else {
-            entryJson["THREAD_ID"] = nullptr;
+            entryJson["ThreadId"] = nullptr;
         }
 
         if (entry.module.has_value()) {
-            entryJson["MODULE"] = entry.module.value();
+            entryJson["Module"] = entry.module.value();
         } else {
-            entryJson["MODULE"] = nullptr;
+            entryJson["Module"] = nullptr;
         }
 
         if (entry.host.has_value()) {
-            entryJson["HOST"] = entry.host.value();
+            entryJson["Host"] = entry.host.value();
         } else {
-            entryJson["HOST"] = nullptr;
+            entryJson["Host"] = nullptr;
         }
 
         // Export custom fields
@@ -128,7 +135,7 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
             for (const auto& pair : entry.customFields) {
                 customFieldsJson[Utils::escapeJsonString(pair.first)] = Utils::escapeJsonString(pair.second);
             }
-            entryJson["CUSTOM_FIELDS"] = customFieldsJson;
+            entryJson["CustomFields"] = customFieldsJson;
         }
 
         // Output the constructed JSON object

@@ -95,7 +95,7 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     file(MAKE_DIRECTORY "${TEST_EXECUTION_DIR}")
 
     add_test(NAME ${TEST_NAME}
-        COMMAND ${CMAKE_COMMAND} -E exec $<TARGET_FILE:${TEST_NAME}> # Use CMAKE_COMMAND -E exec to run the executable
+        COMMAND $<TARGET_FILE:${TEST_NAME}>
         # Removed WORKING_DIRECTORY argument
     )
 

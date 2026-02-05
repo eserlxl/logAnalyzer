@@ -549,16 +549,10 @@ std::vector<ExportFieldMapping> Exporter::getEffectiveExportFieldMappings(
 
     if (effectiveFields.empty()) {
         // Default to standard fields
-        effectiveFields.emplace_back(LogEntryField::ID, "id");
-        effectiveFields.emplace_back(LogEntryField::TIMESTAMP, "timestamp");
-        effectiveFields.emplace_back(LogEntryField::LEVEL, "level");
-        effectiveFields.emplace_back(LogEntryField::MESSAGE, "message");
-        effectiveFields.emplace_back(LogEntryField::SOURCE_FILE, "sourceFile");
-        effectiveFields.emplace_back(LogEntryField::LINE_NUMBER, "lineNumber");
-        effectiveFields.emplace_back(LogEntryField::THREAD_ID, "threadId");
-        effectiveFields.emplace_back(LogEntryField::MODULE, "module");
-        effectiveFields.emplace_back(LogEntryField::HOST, "host");
-        effectiveFields.emplace_back(LogEntryField::STRUCTURED_FIELD, "structuredField");
+        effectiveFields.emplace_back(LogEntryField::ID, "ID");
+        effectiveFields.emplace_back(LogEntryField::TIMESTAMP, "TIMESTAMP");
+        effectiveFields.emplace_back(LogEntryField::LEVEL, "LEVEL");
+        effectiveFields.emplace_back(LogEntryField::MESSAGE, "MESSAGE");
 
         // Discover unique custom fields across all log entries
         std::set<std::string> uniqueCustomFieldNames;

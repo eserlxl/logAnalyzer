@@ -59,7 +59,9 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    # Use -j to specify the number of parallel jobs, e.g., -j4
+    # Use -j to specify the number of parallel jobs.
+    # For Linux, use -j$(nproc). For macOS, use -j$(sysctl -n hw.ncpu).
+    # For Windows, you can typically omit -j to let Visual Studio manage parallelism.
     cmake --build . -- -j$(nproc) 
     ```
 
@@ -346,8 +348,8 @@ Run `LogAnalyzer --help` for a full list of commands.
 | Option                          | Description                                                                                                          | Default   |
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------- | :-------- |
 | `--pattern REGEX`               | Overrides the log line parsing regular expression defined in the configuration.                                      | (builtin) |
-| `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry.                                                               |           |
-| `--max-multiline-buffer SIZE`   | Max buffer size for multi-line entries (e.g. 10MB, 50KB, 1048576).                                                    | `10MB`    |
+| `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry. For example, `^\[\d{4}-\d{2}-\d{2}` to match a timestamp at the start of a new log entry.                                       |           |
+| `--max-multiline-buffer SIZE`   | Max buffer size for multi-line entries. Supports units like `10MB`, `50KB`, or raw bytes (e.g., `1048576`).           | `10MB`    |
 | `--field-map MAPPING`           | Map regex capture group to a field (e.g., '1=timestamp:%Y-%m-%d %H:%M:%S'). Can be used multiple times.               |           |
 | `--on-parse-error OPT`          | Action on parse error. Options are `skip` (ignore the line), `log` (print a warning to stderr), or `fail` (exit).     | `log`     |
 
@@ -510,6 +512,17 @@ Here is an example demonstrating a more advanced configuration:
 ```
 
 ### Key Configuration Sections
+
+### `fieldMappings`
+An array of objects that map regular expression capture groups from `lineParsePattern` to internal log fields. Each object requires:
+-   `field`: The name of the target log field (e.g., `timestamp`, `level`, `message`).
+-   `groupIndex`: The 1-based index of the capture group from `lineParsePattern` to map to this field.
+-   `customFieldKey` (optional): If `field` is set to `"customFields"`, this specifies a key under which the captured value will be stored within a map of custom fields. This is useful for extracting structured data that doesn't fit standard fields.
+
+**Example:**
+If `lineParsePattern` extracts a JSON string into `groupIndex 5`, and you want to parse a specific key `session` from that JSON, you would use:
+`{ "field": "customFields", "groupIndex": 5, "customFieldKey": "session" }`
+This would make the `session` value accessible for filtering and export via `customFields.session`.
 
 #### `filterRules`
 An array of rule objects that define how to filter log entries. Each rule is an object with:
