@@ -1,5 +1,5 @@
 #include "config/CLIConfig.h"
-#include "utils/Utils.h"
+#include "utils/Core.h"
 #include "core/Error.h" // Add this include
 #include <CLI/CLI.hpp>
 #include <algorithm> // For std::transform
@@ -17,8 +17,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     app.set_config("--config", "", "Read options from a configuration file", false);
 
     // Positional Arguments
-    app.add_option("log_files", appOptions.filePaths, "Path to log files or '-' for stdin")
-       ->check(CLI::ExistingFile | CLI::IsMember({"-"}));
+    app.add_option("log_files", appOptions.filePaths, "Path to log files or '-' for stdin");
 
     // Filters
     app.add_option("--level", appOptions.filterLevels, "Filter by log levels (e.g., ERROR,WARNING)")

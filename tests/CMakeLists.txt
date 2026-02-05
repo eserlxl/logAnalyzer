@@ -102,24 +102,24 @@ endif()
 
 # Find all test source files ending with _test.cpp
 set(TEST_SOURCES
-    "analyzer/Analyzer_test.cpp"
-    "config/CLIConfig_test.cpp"
-    "config/Config_Basic_test.cpp"
-    "config/Config_Json_test.cpp"
-    "config/Config_Validation_test.cpp"
-    "core/LogParser_test.cpp"
-    "export/Exporter_test.cpp"
-    "filter/Filter_Expression_test.cpp"
-    "filter/Filter_Json_Basic_test.cpp"
-    "filter/Filter_Json_Condition_test.cpp"
-    "filter/Filter_Json_Expression_test.cpp"
-    "filter/Filter_Json_Rule_test.cpp"
-    "filter/Filter_Unit_Advanced_test.cpp"
-    "filter/Filter_Unit_Basic_test.cpp"
-    "filter/Filter_Unit_Field_test.cpp"
-    "stats/Statistics_test.cpp"
-    "utils/UtilsTime_test.cpp"
-    "utils/Utils_Enum_test.cpp"
+    "analyzer/Core.cpp"
+    "config/CLIConfig.cpp"
+    "config/CoreBasic.cpp"
+    "config/CoreJson.cpp"
+    "config/CoreValidation.cpp"
+    "core/LogParser.cpp"
+    "export/Exporter.cpp"
+    "filter/Expression.cpp"
+    "filter/CoreJsonBasic.cpp"
+    "filter/CoreJsonCondition.cpp"
+    "filter/CoreJsonExpression.cpp"
+    "filter/CoreJsonRule.cpp"
+    "filter/CoreUnitAdvanced.cpp"
+    "filter/CoreUnitBasic.cpp"
+    "filter/CoreUnitField.cpp"
+    "stats/Statistics.cpp"
+    "utils/Time.cpp"
+    "utils/Enum.cpp"
 )
 
 # Loop through each test source file
@@ -129,6 +129,8 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
 
     # Create an executable for each test file
     add_executable(${TEST_NAME} ${TEST_SOURCE})
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
         message(STATUS "Including test-specific options for ${TEST_NAME} from ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
         include("${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
     endif()
@@ -165,6 +167,4 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     loganalyzer_gtest_discover_tests(${TEST_NAME}
         LABELS "${TEST_LABEL}"
     )
-endmacro() # <-- Added endmacro() here
-
-foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
+endforeach()

@@ -1,6 +1,6 @@
 #include "export/Exporter.h"
-#include "analyzer/Analyzer.h"
-#include "utils/Utils.h"
+#include "analyzer/Core.h"
+#include "utils/Core.h"
 #include <nlohmann/json.hpp>
 #include <iomanip>
 

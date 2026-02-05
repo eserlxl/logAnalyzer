@@ -2,7 +2,7 @@
 #define LOG_ANALYZER_SETTINGS_H
 
 #include "core/LogTypes.h"
-#include "filter/Filter.h"
+#include "filter/Core.h"
 #include "export/Exporter.h"
 #include "stats/Statistics.h"
 #include <string>
