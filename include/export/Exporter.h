@@ -20,6 +20,20 @@ enum class ExportFormat {
     UNKNOWN // Default for unrecognized formats
 };
 
+// New: Enum for export operation results
+enum class ExportResult {
+    SUCCESS,
+    ERROR_UNSUPPORTED_FORMAT,
+    ERROR_UNKNOWN
+    // Add more specific error types as needed
+};
+
+// New: Custom exception for export errors
+class ExportException : public std::runtime_error {
+public:
+    explicit ExportException(const std::string& message) : std::runtime_error(message) {}
+};
+
 // New: Struct to define a mapping from a LogEntryField to an exported column header
 struct ExportFieldMapping {
     LogEntryField field = LogEntryField::UNKNOWN; // The field from LogEntry to export
@@ -182,7 +196,7 @@ class LogAnalyzer;
 class Exporter {
 public:
     // New unified export method that takes ExportSettings
-    void exportLogEntries(
+    ExportResult exportLogEntries( // Changed return type to ExportResult
         std::ostream& os, 
         const std::vector<LogEntry>& entries, 
         const ExportSettings& settings);
@@ -214,3 +228,4 @@ private:
 };
 
 #endif // EXPORTER_H
+

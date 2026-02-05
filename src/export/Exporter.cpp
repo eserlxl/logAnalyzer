@@ -3,11 +3,13 @@
 #include "utils/Core.h"
 #include <nlohmann/json.hpp>
 #include <iomanip>
+// No longer need <iostream> for std::cerr (it was removed in the header fix)
+#include <set> // Required for std::set in field discovery
 
 using json = nlohmann::json;
 
 
-void Exporter::exportLogEntries(
+ExportResult Exporter::exportLogEntries( // Changed return type
     std::ostream& os,
     const std::vector<LogEntry>& entries,
     const ExportSettings& settings) {
@@ -24,13 +26,14 @@ void Exporter::exportLogEntries(
             break;
         case ExportFormat::XML:
             // TODO: Implement XML export
-            std::cerr << "Warning: XML export not yet implemented." << std::endl;
-            break;
+            // Throw an exception for unimplemented XML export
+            throw ExportException("XML export not yet implemented.");
         case ExportFormat::UNKNOWN:
         default:
-            std::cerr << "Error: Unknown export format." << std::endl;
-            break;
+            // Throw an exception for unknown export format
+            throw ExportException("Unknown export format.");
     }
+    return ExportResult::SUCCESS;
 }
 
 void Exporter::exportAsJson(
@@ -84,55 +87,50 @@ void Exporter::exportAsJson(
                 // For standard fields, use customHeader if provided, otherwise use string representation of field.
                 key = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(fieldMapping.field) : fieldMapping.customHeader;
 
-                // Only assign standard field value to entryJson if a valid key was determined AND its value is not empty (for string types)
-                if (!key.empty()) {
-                    switch (fieldMapping.field) {
-                        case LogEntryField::ID:
-                            entryJson[key] = entry.id; // Assign as integer
-                            break;
-                        case LogEntryField::TIMESTAMP: {
+                // Always assign standard field value to entryJson if a valid key was determined.
+                // The key should always be valid here.
+                switch (fieldMapping.field) {
+                    case LogEntryField::ID:
+                        entryJson[key] = entry.id; // Assign as integer
+                        break;
+                    case LogEntryField::TIMESTAMP: {
+                        if (entry.timestamp.has_value()) {
                             std::string timestampValue;
-                            if (entry.timestamp.has_value()) {
-                                if (fieldMapping.datetimeFormat.has_value()) {
-                                    timestampValue = Utils::formatTimestamp(entry.timestamp.value(), fieldMapping.datetimeFormat.value());
-                                } else {
-                                    timestampValue = Utils::formatTimestamp(entry.timestamp.value());
-                                }
+                            if (fieldMapping.datetimeFormat.has_value()) {
+                                timestampValue = Utils::formatTimestamp(entry.timestamp.value(), fieldMapping.datetimeFormat.value());
+                            } else {
+                                timestampValue = Utils::formatTimestamp(entry.timestamp.value());
                             }
-                            // Only add timestamp field if its value is not empty
-                            if (!timestampValue.empty()) {
-                                entryJson[key] = timestampValue;
-                            }
-                            break;
+                            entryJson[key] = timestampValue;
+                        } else {
+                            entryJson[key] = json::value_t::null; // Explicitly null if timestamp is absent
                         }
-                        case LogEntryField::LEVEL:
-                            entryJson[key] = Utils::logLevelToString(entry.level);
-                            break;
-                        case LogEntryField::MESSAGE:
-                            entryJson[key] = entry.message;
-                            break;
-                        case LogEntryField::SOURCE_FILE:
-                            // Only add sourceFile field if its value is not empty
-                            if (!entry.sourceFile.empty()) {
-                                entryJson[key] = entry.sourceFile;
-                            }
-                            break;
-                        case LogEntryField::LINE_NUMBER:
-                            entryJson[key] = entry.sourceLineNumber; // Assign as integer
-                            break;
-                        // Add other standard fields here if they exist and should be exported
-                        case LogEntryField::UNKNOWN:
-                        case LogEntryField::THREAD_ID:
-                        case LogEntryField::MODULE:
-                        case LogEntryField::HOST:
-                        case LogEntryField::STRUCTURED_FIELD:
-                        default:
-                            // For UNKNOWN or unhandled standard fields, if value is empty, don't add.
-                            // If it's a field that could have an empty string value, it will be added as empty.
-                            // For simplicity, we assume other fields like LEVEL, MESSAGE will always have a non-empty string representation.
-                            // For SOURCE_FILE, if empty, we explicitly don't add it.
-                            break;
+                        break;
                     }
+                    case LogEntryField::LEVEL:
+                        entryJson[key] = Utils::logLevelToString(entry.level);
+                        break;
+                    case LogEntryField::MESSAGE:
+                        entryJson[key] = entry.message;
+                        break;
+                    case LogEntryField::SOURCE_FILE:
+                        entryJson[key] = entry.sourceFile;
+                        break;
+                    case LogEntryField::LINE_NUMBER:
+                        entryJson[key] = entry.sourceLineNumber; // Assign as integer
+                        break;
+                    // Add other standard fields here if they exist and should be exported
+                    case LogEntryField::UNKNOWN:
+                    case LogEntryField::THREAD_ID:
+                    case LogEntryField::MODULE:
+                    case LogEntryField::HOST:
+                    case LogEntryField::STRUCTURED_FIELD:
+                    default:
+                        // For UNKNOWN or unhandled standard fields, if value is empty, don't add.
+                        // If it's a field that could have an empty string value, it will be added as empty.
+                        // For simplicity, we assume other fields like LEVEL, MESSAGE will always have a non-empty string representation.
+                        // For SOURCE_FILE, if empty, we explicitly don't add it.
+                        break;
                 }
             }
         }
@@ -144,6 +142,9 @@ void Exporter::exportAsJson(
     j["summary"] = {
         {"count", entries.size()}
     };
+
+    // Temporary debug print to inspect the JSON object before dumping
+    // std::cerr << "DEBUG: JSON object before dump: " << j.dump(2) << std::endl;
 
     if (settings.jsonIndent.has_value() && settings.jsonIndent.value() >= 0) {
         os << j.dump(settings.jsonIndent.value()) << std::endl;

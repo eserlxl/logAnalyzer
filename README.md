@@ -53,7 +53,7 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 | **Set-Based Filtering**      | Check if a field's value belongs to a specific set of values.                        |
 | **Complex Filtering Expressions** | Build sophisticated filter logic using parenthesized, nested AND/OR conditions.      |
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).            |
-| **Flexible Export**          | Save results in Text, JSON, or CSV formats.                                          |
+| **Flexible Export** | Save results in Text, JSON, CSV, or YAML formats. |
 | **Statistical Analysis**     | Generate statistics on your log data, such as entry rates and top messages.          |
 
 ## Building from Source
