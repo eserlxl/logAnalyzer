@@ -86,7 +86,7 @@ inline bool caseInsensitiveSearch(std::string_view text, std::string_view keywor
 
 // --- Time Utilities (from UtilsTime.cpp) ---
 std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format = "%Y-%m-%d %H:%M:%S");
-std::expected<std::chrono::seconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits = false);
+std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits);
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr);
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbsoluteTime(const std::string& timeStr);
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8601(const std::string& timeStr);

@@ -21,12 +21,40 @@ A high-performance C++ command-line utility for advanced log analysis, filtering
 In a world of ever-growing log files, traditional tools like `grep`, `awk`, and `sed` can become cumbersome and slow. `logAnalyzer` was built to address these challenges by providing:
 
 -   **Performance**: A C++ core that processes large volumes of data quickly.
--   **Structured Filtering**: Go beyond simple text matching with filters for log levels, timestamps, and structured data.
+-   -   **Structured Filtering**: Go beyond simple text matching with filters for log levels, timestamps, and structured data.
 -   **Ease of Use**: A single, powerful CLI that combines the functionality of multiple tools.
 -   **Low Memory Usage**: Stream processing for analyzing files that are too large to fit in memory.
 
+## Quick Start
+
+Get `logAnalyzer` up and running on your system with these simple steps:
+
+1.  **Clone the Repository**:
+    ```bash
+    git clone https://github.com/eserlxl/logAnalyzer.git
+    cd logAnalyzer
+    ```
+
+2.  **Build from Source**:
+    Ensure you have a C++23 compatible compiler (e.g., GCC 13+, Clang 16+) and CMake 3.20+ installed.
+    ```bash
+    mkdir build && cd build
+    cmake .. -DCMAKE_BUILD_TYPE=Release
+    cmake --build .
+    ```
+
+3.  **Run a Basic Analysis**:
+    After building, the executable will be in `build/bin`.
+    ```bash
+    ./bin/logAnalyzer /var/log/syslog --level ERROR
+    ```
+    *(Replace `/var/log/syslog` with a path to one of your log files.)*
+
+For detailed build instructions, installation options, and more usage examples, please refer to the respective sections below.
+
 ## Table of Contents
 
+-   [Quick Start](#quick-start)
 -   [Features](#features)
 -   [Building from Source](#building-from-source)
 -   [Installation](#installation)

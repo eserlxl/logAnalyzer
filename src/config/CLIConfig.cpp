@@ -153,7 +153,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     // Post-processing options
     if (!durationStr.empty()) {
-        auto parsedDuration = Utils::parseDuration(durationStr);
+        auto parsedDuration = Utils::parseDuration(durationStr, false);
         if (parsedDuration.has_value()) {
             appOptions.duration = parsedDuration.value();
         } else {

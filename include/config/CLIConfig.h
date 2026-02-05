@@ -62,7 +62,7 @@ public:
         std::optional<CompositeFilter::Logic> filterLogic;
         std::optional<std::chrono::system_clock::time_point> startTime;
         std::optional<std::chrono::system_clock::time_point> endTime;
-        std::optional<std::chrono::seconds> duration; // Store as seconds after parsing
+        std::optional<std::chrono::microseconds> duration;
         std::optional<SortBy> sortBy;
         std::optional<SortOrder> sortOrder;
         std::string outputFormat = "text";
