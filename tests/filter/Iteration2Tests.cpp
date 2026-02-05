@@ -26,28 +26,23 @@ TEST_F(FilterIteration2Test, AutoTypeInference) {
     LogEntry entry = createEntry("test message", {{"version", "1.2.3"}, {"ip", "192.168.1.1"}, {"count", "42"}, {"price", "19.99"}, {"active", "true"}});
 
     // Version
-    auto condVer = FilterCondition::createTyped(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.0.0", FilterValueType::AUTO).value();
-    condVer.customField = "version";
+    auto condVer = FilterCondition::createCustomTyped("version", FilterOperator::GREATER_THAN, "1.0.0", FilterValueType::AUTO).value();
     EXPECT_TRUE(FilterExpression(condVer).evaluate(entry).value());
 
     // IP Address
-    auto condIp = FilterCondition::createTyped(LogEntryField::CUSTOM, FilterOperator::EQUALS, "192.168.1.1", FilterValueType::AUTO).value();
-    condIp.customField = "ip";
+    auto condIp = FilterCondition::createCustomTyped("ip", FilterOperator::EQUALS, "192.168.1.1", FilterValueType::AUTO).value();
     EXPECT_TRUE(FilterExpression(condIp).evaluate(entry).value());
 
     // INT
-    auto condInt = FilterCondition::createTyped(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "40", FilterValueType::AUTO).value();
-    condInt.customField = "count";
+    auto condInt = FilterCondition::createCustomTyped("count", FilterOperator::GREATER_THAN, "40", FilterValueType::AUTO).value();
     EXPECT_TRUE(FilterExpression(condInt).evaluate(entry).value());
 
     // DOUBLE
-    auto condDouble = FilterCondition::createTyped(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "20.0", FilterValueType::AUTO).value();
-    condDouble.customField = "price";
+    auto condDouble = FilterCondition::createCustomTyped("price", FilterOperator::LESS_THAN, "20.0", FilterValueType::AUTO).value();
     EXPECT_TRUE(FilterExpression(condDouble).evaluate(entry).value());
 
     // BOOL
-    auto condBool = FilterCondition::createTyped(LogEntryField::CUSTOM, FilterOperator::EQUALS, "true", FilterValueType::AUTO).value();
-    condBool.customField = "active";
+    auto condBool = FilterCondition::createCustomTyped("active", FilterOperator::EQUALS, "true", FilterValueType::AUTO).value();
     EXPECT_TRUE(FilterExpression(condBool).evaluate(entry).value());
 }
 
@@ -56,16 +51,16 @@ TEST_F(FilterIteration2Test, InNotInTypedArrays) {
     LogEntry entry = createEntry("msg", {{"val", "42"}, {"flag", "false"}});
 
     // INT array
-    auto condIntIn = FilterCondition(LogEntryField::CUSTOM, FilterOperator::IN, "[40, 41, 42, 43]", FilterValueType::INT);
+    auto condIntIn = FilterCondition::createCustomTyped("CUSTOM", FilterOperator::IN, "[40, 41, 42, 43]", FilterValueType::INT).value();
     condIntIn.customField = "val";
     EXPECT_TRUE(FilterExpression(condIntIn).evaluate(entry).value());
 
-    auto condIntNotIn = FilterCondition(LogEntryField::CUSTOM, FilterOperator::NOT_IN, "[1, 2, 3]", FilterValueType::INT);
+    auto condIntNotIn = FilterCondition::createCustomTyped("CUSTOM", FilterOperator::NOT_IN, "[1, 2, 3]", FilterValueType::INT).value();
     condIntNotIn.customField = "val";
     EXPECT_TRUE(FilterExpression(condIntNotIn).evaluate(entry).value());
 
     // BOOL array
-    auto condBoolIn = FilterCondition(LogEntryField::CUSTOM, FilterOperator::IN, "[false, 0, \"no\"]", FilterValueType::BOOL);
+    auto condBoolIn = FilterCondition::createCustomTyped("CUSTOM", FilterOperator::IN, "[false, 0, \"no\"]", FilterValueType::BOOL).value();
     condBoolIn.customField = "flag";
     EXPECT_TRUE(FilterExpression(condBoolIn).evaluate(entry).value());
 }
@@ -74,7 +69,7 @@ TEST_F(FilterIteration2Test, InNotInTypedArrays) {
 TEST_F(FilterIteration2Test, ErrorPropagation) {
     LogEntry entry = createEntry("msg", {{"bad_int", "not_a_number"}});
 
-    auto cond = FilterCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "42", FilterValueType::INT);
+    auto cond = FilterCondition::createCustomTyped("CUSTOM", FilterOperator::EQUALS, "42", FilterValueType::INT).value();
     cond.customField = "bad_int";
 
     auto result = FilterExpression(cond).evaluate(entry);

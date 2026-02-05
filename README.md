@@ -90,8 +90,7 @@ For detailed build instructions, installation options, and more usage examples, 
 | **Time-based Filtering**     | Filter by absolute time range, relative time (`5m ago`), or for a specific day (`yesterday`, `2023-10-20`). |
 | **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
 | **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
-| **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).                               |
-| **Flexible Export**          | Save results in Text, JSON, CSV, or XML formats with customizable and aliasable output fields.            |
+| **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable and aliasable output fields.                 |
 | **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, log level counts, and unique value counts for any field. |
 
 ## Building from Source
@@ -276,21 +275,11 @@ LogAnalyzer system.log --level ERROR --stats top_messages:5
 LogAnalyzer system.log --stats "type=TOP_MESSAGES,top_n=10"
 ```
 
-### Example 7: Tailing a File
-
-```bash
-# Monitor a log file in real-time for new entries containing "critical"
-LogAnalyzer /var/log/app.log --tail --keyword "critical"
-```
-
-### Example 8: Custom Export
+### Example 7: Custom Export
 
 ```bash
 # Export specific fields to a CSV, with a custom header for the timestamp field
 LogAnalyzer application.log --format csv --csv-fields "timestamp as Time, level, message" --output report.csv
-
-# Export error logs to an XML file
-LogAnalyzer application.log --level ERROR --format xml --output errors.xml
 ```
 
 
@@ -384,8 +373,7 @@ Run `LogAnalyzer --help` for a full list of commands.
 
 | Option                  | Shorthand | Description                                                                                                                             | Default                         |
 | :---------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------ |
-| `--format [text|json|csv|xml]` | `-f`      | Sets the output format for filtered log entries.                                                                                        | `text`                          |
-| `--xml-structured-json` |           | When exporting to `xml`, attempts to convert `structured_field` content (if it's valid JSON) into nested XML elements. Otherwise, wraps it in CDATA.                                                                            | `true`                          |
+| `--format [text|json|csv]` | `-f`      | Sets the output format for filtered log entries.                                                                                        | `text`                          |
 | `--text-format FORMAT_STRING` |           | Custom format string for `text` output. Placeholders: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
 | `--csv-sep CHAR`        |           | Specifies the separator character for `csv` output.                                                                                     | `,`                             |
 | `--csv-fields "FIELDS"` |           | Comma-separated list of fields to include in `csv` output (e.g., `timestamp,level,message,file`).                                       | `timestamp,level,message,file`  |
@@ -402,16 +390,6 @@ Run `LogAnalyzer --help` for a full list of commands.
 | `--top-n N`        | Sets the number of top items to display for statistics like `top_messages` if not specified directly (e.g., `top_messages:10`). | `10`    |
 | `--stats-window SEC` | Shows log frequency distribution over a time window in seconds.                                                   |         |
 | `--find-gaps MS`   | Detects and reports time gaps in logs longer than the specified milliseconds.                                     |         |
-
-
-### Tailing (Live Mode)
-
-Monitor files for new lines, similar to `tail -f`. Not compatible with `--stdin` or `--stream`.
-
-| Option             | Description                                          | Default |
-| :----------------- | :--------------------------------------------------- | :------ |
-| `--tail`           | Enables tail mode to watch files for new entries in real-time. | `false` |
-| `--tail-interval MS` | Polling interval in milliseconds for tail mode.      | `1000`  |
 
 ## Configuration
 
@@ -549,9 +527,23 @@ logAnalyzer/
 ├── cmake/                   # Custom CMake modules and scripts.
 ├── docs/                    # Doxygen configuration and generated documentation.
 ├── examples/                # Example log files and configuration examples.
-├── include/                 # Public header files for core logic, configuration, filters, and utilities.
+├── include/                 # Public header files.
+│   ├── analyzer/            # Core analyzer logic (LogReader, LogWriter, AnalyzerCore).
+│   ├── config/              # Configuration management and CLI parsing.
+│   ├── core/                # Core types and interfaces (LogParser, LogTypes).
+│   ├── export/              # Export logic (Exporter).
+│   ├── filter/              # Filtering logic and conditions.
+│   ├── stats/               # Statistical analysis collectors.
+│   └── utils/               # Utility functions (Time, String, IP).
 ├── lib/                     # Compiled libraries (static/shared).
-├── src/                     # Source code (.cpp files) implementing header functionalities.
+├── src/                     # Source code implementing headers.
+│   ├── analyzer/            
+│   ├── config/              
+│   ├── core/                
+│   ├── export/              
+│   ├── filter/              
+│   ├── stats/               
+│   └── utils/               
 ├── tests/                   # Unit and integration tests.
 ├── tools/                   # Development scripts and utilities.
 ├── .gitignore               # Files/directories ignored by Git.

@@ -67,57 +67,59 @@ TEST(ExportSettingsTest, FromJsonValid) {
     ASSERT_EQ(es.textFormatString, "{message}");
     ASSERT_TRUE(es.useAnsiColors);
     ASSERT_EQ(es.fieldsToExport.size(), 2);
-    ASSERT_EQ(es.fieldsToExport[0].field, LogEntryField::ID);
+    ASSERT_TRUE(std::holds_alternative<LogEntryField>(es.fieldsToExport[0].field));
+    ASSERT_EQ(std::get<LogEntryField>(es.fieldsToExport[0].field), LogEntryField::ID);
     ASSERT_EQ(es.fieldsToExport[0].customHeader, "EntryID");
-    ASSERT_EQ(es.fieldsToExport[1].field, LogEntryField::MESSAGE);
+    ASSERT_TRUE(std::holds_alternative<LogEntryField>(es.fieldsToExport[1].field));
+    ASSERT_EQ(std::get<LogEntryField>(es.fieldsToExport[1].field), LogEntryField::MESSAGE);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidOutputPathType) {
     json j = {{"outputPath", 123}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidFormatType) {
     json j = {{"format", 123}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidFormatValue) {
     json j = {{"format", "UNKNOWN_FORMAT"}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidFieldsToExportType) {
     json j = {{"fieldsToExport", "not_an_array"}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidIncludeHeaderType) {
     json j = {{"includeHeader", "not_a_boolean"}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidJsonIndentType) {
     json j = {{"jsonIndent", "not_an_int"}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidSeparatorType) {
     json j = {{"separator", 123}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidSeparatorLength) {
     json j = {{"separator", "ab"}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidTextFormatStringType) {
     json j = {{"textFormatString", 123}};
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidUseAnsiColorsType) {
     json j = {{"useAnsiColors", "false"}}; // String "false" is not boolean false
-    ASSERT_THROW(j.get<ExportSettings>(), std::runtime_error);
+    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }

@@ -375,8 +375,8 @@ TEST_F(LogAnalyzerConfigTest, ToJsonComprehensive) {
     settings.rootFilterExpression = FilterExpression{
         FilterLogicalOperator::OR,
         {
-            FilterExpression{FilterCondition{LogEntryField::LEVEL, FilterOperator::GREATER_THAN, "WARN"}},
-            FilterExpression{FilterCondition{LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error"}}
+            FilterExpression{FilterCondition::createString(LogEntryField::LEVEL, FilterOperator::GREATER_THAN, "WARN").value()},
+            FilterExpression{FilterCondition::createString(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error").value()}
         }
     };
 

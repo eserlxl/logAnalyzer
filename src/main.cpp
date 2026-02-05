@@ -116,14 +116,15 @@ int main(int argc, char *argv[]) {
              if (!analyzerSettings.exportSettings.csvFields.empty()) {
                 for (const auto& fieldPair : analyzerSettings.exportSettings.csvFields) {
                     ExportFieldMapping mapping;
-                    mapping.field = Utils::stringToLogEntryField(fieldPair.first);
-                    if (mapping.field == LogEntryField::UNKNOWN) {
-                        mapping.field = LogEntryField::CUSTOM;
-                        mapping.customHeader = fieldPair.first;
+                    LogEntryField fieldEnum = Utils::stringToLogEntryField(fieldPair.first);
+                    if (fieldEnum != LogEntryField::UNKNOWN) {
+                        mapping.field = fieldEnum;
                     } else {
-                         if (fieldPair.first != fieldPair.second) {
-                            mapping.customHeader = fieldPair.second;
-                        }
+                        mapping.field = fieldPair.first; // It's a custom field
+                    }
+                    
+                    if (fieldPair.first != fieldPair.second) {
+                        mapping.customHeader = fieldPair.second;
                     }
                     csvFieldsToExport.push_back(mapping);
                 }
@@ -138,7 +139,16 @@ int main(int argc, char *argv[]) {
             // Print Header
             for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
                 std::string header = csvFieldsToExport[i].customHeader;
-                if (header.empty()) header = Utils::logEntryFieldToString(csvFieldsToExport[i].field);
+                if (header.empty()) {
+                    std::visit([&header](auto&& arg) {
+                        using T = std::decay_t<decltype(arg)>;
+                        if constexpr (std::is_same_v<T, LogEntryField>) {
+                            header = Utils::logEntryFieldToString(arg);
+                        } else if constexpr (std::is_same_v<T, std::string>) {
+                            header = arg;
+                        }
+                    }, csvFieldsToExport[i].field);
+                }
                 
                 // Escape header
                  bool needsQuotes = header.find(cliOptions.csvSeparator) != std::string::npos || header.find('"') != std::string::npos;
@@ -166,41 +176,28 @@ int main(int argc, char *argv[]) {
                     for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
                         const auto& fieldMapping = csvFieldsToExport[i];
                         std::string value;
-                         switch (fieldMapping.field) {
-                            case LogEntryField::ID:
-                                if (entry.id.has_value()) value = std::to_string(entry.id.value());
-                                break;
-                            case LogEntryField::TIMESTAMP:
-                                if (entry.timestamp.has_value()) value = Utils::formatTimestamp(entry.timestamp.value());
-                                break;
-                            case LogEntryField::LEVEL:
-                                value = Utils::logLevelToString(entry.level);
-                                break;
-                            case LogEntryField::MESSAGE:
-                                value = entry.message;
-                                break;
-                            case LogEntryField::SOURCE_FILE:
-                                value = entry.sourceFile;
-                                break;
-                            case LogEntryField::LINE_NUMBER:
-                                if (entry.sourceLineNumber.has_value()) value = std::to_string(entry.sourceLineNumber.value());
-                                break;
-                            case LogEntryField::THREAD_ID:
-                                if (entry.threadId.has_value()) value = entry.threadId.value();
-                                break;
-                            case LogEntryField::MODULE:
-                                if (entry.module.has_value()) value = entry.module.value();
-                                break;
-                            case LogEntryField::HOST:
-                                if (entry.host.has_value()) value = entry.host.value();
-                                break;
-                            case LogEntryField::CUSTOM:
-                                if (!fieldMapping.customHeader.empty() && entry.customFields.count(fieldMapping.customHeader)) {
-                                    value = entry.customFields.at(fieldMapping.customHeader);
+                        
+                        std::visit([&](auto&& arg) {
+                            using T = std::decay_t<decltype(arg)>;
+                            if constexpr (std::is_same_v<T, LogEntryField>) {
+                                switch (arg) {
+                                    case LogEntryField::ID: if (entry.id.has_value()) value = std::to_string(entry.id.value()); break;
+                                    case LogEntryField::TIMESTAMP: if (entry.timestamp.has_value()) value = Utils::formatTimestamp(entry.timestamp.value()); break;
+                                    case LogEntryField::LEVEL: value = Utils::logLevelToString(entry.level); break;
+                                    case LogEntryField::MESSAGE: value = entry.message; break;
+                                    case LogEntryField::SOURCE_FILE: value = entry.sourceFile; break;
+                                    case LogEntryField::LINE_NUMBER: if (entry.sourceLineNumber.has_value()) value = std::to_string(entry.sourceLineNumber.value()); break;
+                                    case LogEntryField::THREAD_ID: if (entry.threadId.has_value()) value = entry.threadId.value(); break;
+                                    case LogEntryField::MODULE: if (entry.module.has_value()) value = entry.module.value(); break;
+                                    case LogEntryField::HOST: if (entry.host.has_value()) value = entry.host.value(); break;
+                                    default: break;
                                 }
-                                break;
-                            default: break;
-                        }
+                            } else if constexpr (std::is_same_v<T, std::string>) {
+                                if (entry.customFields.count(arg)) {
+                                    value = entry.customFields.at(arg);
+                                }
+                            }
+                        }, fieldMapping.field);
 
                         bool needsQuotes = value.find(cliOptions.csvSeparator) != std::string::npos || value.find('"') != std::string::npos || value.find('\n') != std::string::npos;
                         if (needsQuotes) {
@@ -260,16 +257,15 @@ int main(int argc, char *argv[]) {
             std::vector<ExportFieldMapping> mappings;
             for (const auto& fieldPair : cliFields) {
                 ExportFieldMapping mapping;
-                mapping.field = Utils::stringToLogEntryField(fieldPair.first);
-                if (mapping.field == LogEntryField::UNKNOWN) {
-                    // If not a standard field, assume it's a custom field.
-                    mapping.field = LogEntryField::CUSTOM;
-                    mapping.customHeader = fieldPair.first; // The actual name of the custom field
+                LogEntryField fieldEnum = Utils::stringToLogEntryField(fieldPair.first);
+                if (fieldEnum != LogEntryField::UNKNOWN) {
+                    mapping.field = fieldEnum;
                 } else {
-                    // If it's a standard field, use the alias as customHeader if provided.
-                    if (fieldPair.first != fieldPair.second) {
-                        mapping.customHeader = fieldPair.second;
-                    }
+                    mapping.field = fieldPair.first;
+                }
+
+                if (fieldPair.first != fieldPair.second) {
+                    mapping.customHeader = fieldPair.second;
                 }
                 mappings.push_back(mapping);
             }
@@ -289,9 +285,6 @@ int main(int argc, char *argv[]) {
             exportSettings.fieldsToExport = convertCliFieldsToExportMappings(analyzerSettings.exportSettings.jsonFields);
         } else if (cliOptions.outputFormat == "xml") {
             exportSettings.format = ExportFormat::XML;
-            // For XML, if specific fields are not requested, the Exporter will use its default logic.
-            // If cliOptions.jsonFields (used as a generic field specification) contained data for XML,
-            // we could convert it similarly, but for now, rely on Exporter's default.
         } else {
              std::cerr << "Error: Unknown output format: " << cliOptions.outputFormat << std::endl;
              return 1;

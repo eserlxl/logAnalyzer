@@ -1,0 +1,36 @@
+# CMake generated Testfile for 
+# Source directory: /opt/lxl/c++/logAnalyzer/tests
+# Build directory: /opt/lxl/c++/logAnalyzer/tests
+# 
+# This file includes the relevant testing commands required for 
+# testing this directory and lists subdirectories to be tested as well.
+include("/opt/lxl/c++/logAnalyzer/tests/CLIConfig_InputOutput[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CLIConfig_Filtering[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CLIConfig_Formatting[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CLIConfig_Analysis[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CLIConfig_Errors[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CLIConfig_Defaults[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreBasic[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreJson[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreValidation[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreFeatures[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/LogParser[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/Exporter[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/ExportFieldMappingTest[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/ExportSettingsTest[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/ExportTestUtils_test[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/Core[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/Expression[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreJsonBasic[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreJsonCondition[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreJsonExpression[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreJsonRule[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreUnitAdvanced[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreUnitBasic[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/CoreUnitField[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/Expression_Advanced[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/Iteration2Tests[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/Statistics[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/Time[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/Enum[1]_include.cmake")
+include("/opt/lxl/c++/logAnalyzer/tests/String[1]_include.cmake")
