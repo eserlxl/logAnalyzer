@@ -7,7 +7,7 @@
 #include <nlohmann/json.hpp>
 #include "core/Error.h"
 #include "core/LogTypes.h"
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include "filter/Types.h" // Include the enums
 #include "filter/EnumStringConversions.h" // For enum to string conversions
 
@@ -91,6 +91,10 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         fc.customField = fieldStr;
     } else {
         fc.field = standardField;
+    }
+    
+    if (fc.field == LogEntryField::CUSTOM && !fc.customField.has_value() && !j.contains("customField")) {
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition with field 'CUSTOM' requires a 'customField' key.", "customField"));
     }
 
     if (fc.field == LogEntryField::CUSTOM && j.contains("customField")) {

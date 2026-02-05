@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "export/Exporter.h"
 #include "analyzer/Core.h"
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include <nlohmann/json.hpp>
 #include <iomanip>
 // No longer need <iostream> for std::cerr (it was removed in the header fix)

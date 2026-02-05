@@ -1,11 +1,6 @@
-#ifndef FILTER_H
-#define FILTER_H
+#ifndef FILTER_CORE_WRAPPER_H
+#define FILTER_CORE_WRAPPER_H
 
-#include "filter/Types.h"
-#include "filter/Condition.h"
-#include "filter/Expression.h"
-#include "filter/Legacy.h"
-#include "filter/IFilter.h"
-#include "filter/ConcreteFilters.h"
+#include "filter/FilterCore.h"
 
-#endif // FILTER_H
+#endif // FILTER_CORE_WRAPPER_H

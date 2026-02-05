@@ -188,9 +188,10 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidField) {
 
     FilterCondition fc;
     auto result = from_json(j, fc);
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("unrecognized 'field' string"), std::string::npos);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
+    ASSERT_TRUE(fc.customField.has_value());
+    EXPECT_EQ(*fc.customField, "bad_field");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonMissingOp) {
@@ -339,7 +340,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonLegacyValueTypeInt) {
         {"field", "thread_id"},
         {"op", "EQUALS"},
         {"value", "42"},
-        {"value_type", 1}, // Legacy integer for NUMERIC
+        {"value_type", 2}, // Legacy integer for NUMERIC (INT)
     };
     FilterCondition fc;
     auto result = from_json(j, fc);

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include "core/LogTypes.h"
 #include "filter/Types.h"
 #include "export/Exporter.h"

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "utils/Version.h"
 #include "utils/String.h" // For Utils::split
 #include <regex>

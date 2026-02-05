@@ -1,5 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "config/CLIConfig.h"
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include "core/Error.h" // Add this include
 #include "core/CiLess.h" // For ci_less
 #include <CLI/CLI.hpp>

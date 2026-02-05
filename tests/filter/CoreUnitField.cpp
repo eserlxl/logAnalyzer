@@ -61,7 +61,7 @@ TEST_F(FilterTest, FieldValueFilterWildcardSubstringMatch) {
     EXPECT_TRUE(filter.matches(entry1));
     EXPECT_FALSE(filter.matches(entry2));
     EXPECT_FALSE(filter.matches(entry3));
-    EXPECT_TRUE(filter.matches(entry4));
+    EXPECT_FALSE(filter.matches(entry4)); // "system-admin" does not start with "admin"
 }
 
 TEST_F(FilterTest, ValueSetFilter) {

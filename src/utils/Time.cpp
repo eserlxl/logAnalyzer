@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "utils/Time.h" // Include the new header
 #include <chrono> // Added for std::chrono
 #include <sstream>
@@ -460,7 +463,9 @@ parseDayRange(const std::string& dateString) {
             std::time_t start_time = std::mktime(&tm);
             if (start_time != -1) {
                 auto start_tp = std::chrono::system_clock::from_time_t(start_time);
-                auto end_tp = start_tp + std::chrono::days(1) - std::chrono::seconds(1);
+                // Fix: Ensure the end time covers the entire day by setting it to the start of the next day.
+                // The TimeRangeFilter uses [start, end) semantics, so this includes all times up to 23:59:59.999...
+                auto end_tp = start_tp + std::chrono::days(1);
                 return std::make_pair(start_tp, end_tp);
             }
         }

@@ -1,4 +1,4 @@
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include <gtest/gtest.h>
 
 // Test suite for string utility functions
@@ -125,8 +125,8 @@ TEST_F(StringUtilsTest, EscapeJsonString) {
 }
 
 TEST_F(StringUtilsTest, GlobToRegex) {
-    EXPECT_EQ(Utils::globToRegex("file*.txt"), "file.*\\.txt");
-    EXPECT_EQ(Utils::globToRegex("file?.log"), "file.\\.log");
-    EXPECT_EQ(Utils::globToRegex("config.json"), "config\\.json");
-    EXPECT_EQ(Utils::globToRegex("special_chars-^$()[]{}|\\"), "special_chars\\-\\^\\$\\(\\)\\[\\]\\{\\}\\|\\\\");
+    EXPECT_EQ(Utils::globToRegex("file*.txt"), "^file.*\\.txt$");
+    EXPECT_EQ(Utils::globToRegex("file?.log"), "^file.\\.log$");
+    EXPECT_EQ(Utils::globToRegex("config.json"), "^config\\.json$");
+    EXPECT_EQ(Utils::globToRegex("special_chars-^$()[]{}|\\"), "^special_chars\\-\\^\\$\\(\\)\\[\\]\\{\\}\\|\\\\$");
 }

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "filter/Expression.h"
 #include "filter/EnumStringConversions.h" // For new enum to string conversions
 #include "utils/Core.h"
@@ -165,7 +168,8 @@ bool evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
             auto condVersion = Utils::parseSemanticVersion(condValue);
 
             if (!fieldVersion.has_value() || !condVersion.has_value()) {
-                throw std::runtime_error("Filter error: Failed to parse VERSION field value '" + fieldValue + "' or condition value '" + condValue + "'.");
+                std::cerr << "Warning: Failed to parse VERSION field value '" << fieldValue << "' or condition value '" << condValue << "'." << std::endl;
+                return false;
             }
             
             switch (cond.op) {
@@ -183,7 +187,8 @@ bool evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
             auto condIp = Utils::parseIpAddress(condValue);
 
             if (!fieldIp.has_value() || !condIp.has_value()) {
-                throw std::runtime_error("Filter error: Failed to parse IP_ADDRESS field value \'" + fieldValue + "\' or condition value \'" + condValue + "\'.");
+                std::cerr << "Warning: Failed to parse IP_ADDRESS field value '" << fieldValue << "' or condition value '" << condValue << "'." << std::endl;
+                return false;
             }
 
             switch (cond.op) {
@@ -303,7 +308,7 @@ bool evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
 } // Unnamed namespace
 
 bool FilterExpression::evaluate(const LogEntry& entry) const {
-    bool result;
+    bool result = false;
     switch (type_) {
         case ExpressionType::EMPTY:
             result = true; // An empty filter matches everything

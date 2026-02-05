@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "utils/String.h" // Explicitly include String.h
 #include "utils/Core.h" // Includes all necessary declarations for Utils namespace
 #include <algorithm>
@@ -135,7 +138,7 @@ std::string escapeJsonString(const std::string& input) {
 }
 
 std::string globToRegex(const std::string& globPattern) {
-    std::string regexPattern;
+    std::string regexPattern = "^"; // Start anchor
     for (char c : globPattern) {
         switch (c) {
             case '*':
@@ -165,6 +168,7 @@ std::string globToRegex(const std::string& globPattern) {
                 break;
         }
     }
+    regexPattern += "$"; // End anchor
     return regexPattern;
 }
 

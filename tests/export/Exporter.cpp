@@ -4,7 +4,7 @@
 #include <nlohmann/json.hpp>
 #include "export/Exporter.h"
 #include "core/LogTypes.h"
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include <limits> // Required for std::numeric_limits
 
 using json = nlohmann::json;
@@ -405,13 +405,13 @@ TEST(ExporterJsonTest, EmptySourceFileAndMessage) {
     ASSERT_TRUE(j["entries"][0].contains("ID")); // This one works, keep it.
     ASSERT_EQ(j["entries"][0]["ID"], 1);
 
-    ASSERT_NO_THROW(j["entries"][0].at("Message"));
-    ASSERT_TRUE(j["entries"][0].at("Message").is_string()); // Ensure it's a string
-    ASSERT_EQ(j["entries"][0].at("Message").get<std::string>(), ""); // Empty message should be included
+    ASSERT_NO_THROW(j["entries"][0].at("MESSAGE"));
+    ASSERT_TRUE(j["entries"][0].at("MESSAGE").is_string()); // Ensure it's a string
+    ASSERT_EQ(j["entries"][0].at("MESSAGE").get<std::string>(), ""); // Empty message should be included
 
-    ASSERT_NO_THROW(j["entries"][0].at("SourceFile"));
-    ASSERT_TRUE(j["entries"][0].at("SourceFile").is_string()); // Ensure it's a string
-    ASSERT_EQ(j["entries"][0].at("SourceFile").get<std::string>(), "");
+    ASSERT_NO_THROW(j["entries"][0].at("SOURCE_FILE"));
+    ASSERT_TRUE(j["entries"][0].at("SOURCE_FILE").is_string()); // Ensure it's a string
+    ASSERT_EQ(j["entries"][0].at("SOURCE_FILE").get<std::string>(), "");
 }
 
 TEST(ExporterJsonTest, BoundaryValuesForIdAndLineNumber) {
@@ -439,16 +439,16 @@ TEST(ExporterJsonTest, BoundaryValuesForIdAndLineNumber) {
     ASSERT_TRUE(j["entries"][0].contains("ID"));
     ASSERT_EQ(j["entries"][0]["ID"], 0);
     
-    ASSERT_NO_THROW(j["entries"][0].at("LineNumber"));
-    ASSERT_TRUE(j["entries"][0].at("LineNumber").is_number_integer()); // Ensure it's an integer
-    ASSERT_EQ(j["entries"][0].at("LineNumber").get<size_t>(), 0);
+    ASSERT_NO_THROW(j["entries"][0].at("LINE_NUMBER"));
+    ASSERT_TRUE(j["entries"][0].at("LINE_NUMBER").is_number_integer()); // Ensure it's an integer
+    ASSERT_EQ(j["entries"][0].at("LINE_NUMBER").get<size_t>(), 0);
     // Entry 2
     ASSERT_TRUE(j["entries"][1].contains("ID"));
     ASSERT_EQ(j["entries"][1]["ID"], std::numeric_limits<size_t>::max());
     
-    ASSERT_NO_THROW(j["entries"][1].at("LineNumber"));
-    ASSERT_TRUE(j["entries"][1].at("LineNumber").is_number_integer()); // Ensure it's an integer
-    ASSERT_EQ(j["entries"][1].at("LineNumber").get<size_t>(), std::numeric_limits<size_t>::max());
+    ASSERT_NO_THROW(j["entries"][1].at("LINE_NUMBER"));
+    ASSERT_TRUE(j["entries"][1].at("LINE_NUMBER").is_number_integer()); // Ensure it's an integer
+    ASSERT_EQ(j["entries"][1].at("LINE_NUMBER").get<size_t>(), std::numeric_limits<size_t>::max());
 }
 
 // =============================================================================================================

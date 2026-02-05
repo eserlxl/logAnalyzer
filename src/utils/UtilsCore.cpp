@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "utils/Core.h" // Includes all necessary declarations for Utils namespace
 #include "export/Exporter.h"
 #include "filter/Types.h" // Include FilterTypes.h for SortBy, SortOrder

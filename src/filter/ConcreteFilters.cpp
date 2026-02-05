@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "filter/ConcreteFilters.h"
 #include "utils/Core.h"
 #include <charconv>
@@ -29,9 +32,8 @@ namespace {
     }
 
     std::optional<bool> tryParseBool(std::string_view str) {
-        std::string lowerStr;
-        std::transform(str.begin(), str.end(), std::back_inserter(lowerStr),
-                       [](unsigned char c){ return std::tolower(c); });
+        std::string trimmedStr = Utils::trim(std::string(str), " \t\n\r\f\v");
+        std::string lowerStr = Utils::toLower(trimmedStr);
 
         if (lowerStr == "true" || lowerStr == "1" || lowerStr == "t" || lowerStr == "yes") {
             return true;

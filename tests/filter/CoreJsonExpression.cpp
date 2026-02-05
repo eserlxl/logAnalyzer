@@ -49,7 +49,7 @@ TEST_F(FilterExpressionJsonTest, SingleConditionExpressionFromJson) {
 TEST_F(FilterExpressionJsonTest, AndExpressionFromJson) {
     nlohmann::json j = {
         {"operator", "AND"},
-        {"operands", [
+        {"operands", {
             {{"condition", {
                 {"field", "LEVEL"},
                 {"op", "EQUALS"},
@@ -62,7 +62,7 @@ TEST_F(FilterExpressionJsonTest, AndExpressionFromJson) {
                 {"value", "database"},
                 {"value_type", "STRING"}
             }}}
-        ]}
+        }}
     };
 
     FilterExpression expr;
@@ -77,7 +77,7 @@ TEST_F(FilterExpressionJsonTest, AndExpressionFromJson) {
 TEST_F(FilterExpressionJsonTest, NestedExpressionFromJson) {
     nlohmann::json j = {
         {"operator", "OR"},
-        {"operands", [
+        {"operands", {
             {{"condition", {
                 {"field", "LEVEL"},
                 {"op", "EQUALS"},
@@ -85,27 +85,25 @@ TEST_F(FilterExpressionJsonTest, NestedExpressionFromJson) {
                 {"value_type", "STRING"}
             }}},
             {{"operator", "AND"},
-             {"operands", [
+             {"operands", {
                 {{"condition", {
                     {"field", "MESSAGE"},
                     {"op", "CONTAINS"},
                     {"value", "timeout"},
                     {"value_type", "STRING"}
                 }}},
-                {{"expression", {
-                    {"operator", "NOT"},
-                    {"operands", [
-                        {{"condition", {
-                            {"field", "SOURCE"},
-                            {"op", "EQUALS"},
-                            {"value", "test_suite"},
-                            {"value_type", "STRING"}
-                        }}}
-                    ]}
-                }}}
-             ]}
+                {
+                    {"condition", {
+                        {"field", "SOURCE_FILE"},
+                        {"op", "EQUALS"},
+                        {"value", "test_suite"},
+                        {"value_type", "STRING"}
+                    }},
+                    {"negated", true}
+                }
+             }}
             }
-        ]}
+        }}
     };
 
     FilterExpression expr;
@@ -167,7 +165,7 @@ TEST_F(FilterExpressionJsonTest, NotExpressionToJson) {
 TEST_F(FilterExpressionJsonTest, NestedExpressionToJson) {
     FilterExpression nestedAnd(FilterLogicalOperator::AND, {
         FilterExpression(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "timeout")),
-        FilterExpression(createCondition(LogEntryField::SOURCE, FilterOperator::EQUALS, "backend"), true) // Negated
+        FilterExpression(createCondition(LogEntryField::SOURCE_FILE, FilterOperator::EQUALS, "backend"), true) // Negated
     });
 
     FilterExpression expr(FilterLogicalOperator::OR, {
@@ -186,13 +184,13 @@ TEST_F(FilterExpressionJsonTest, NestedExpressionToJson) {
     ASSERT_EQ(nested["operands"].size(), 2);
     EXPECT_EQ(nested["operands"][0]["condition"]["value"], "timeout");
     EXPECT_TRUE(nested["operands"][1].contains("negated"));
-    EXPECT_TRUE(nested["operpans"][1]["negated"].get<bool>());
+    EXPECT_TRUE(nested["operands"][1]["negated"].get<bool>());
 }
 
 TEST_F(FilterExpressionJsonTest, FromJsonInvalidOperator) {
     nlohmann::json j = {
         {"operator", "XOR"},
-        {"operands", []}
+        {"operands", nlohmann::json::array()}
     };
 
     FilterExpression expr;
@@ -219,7 +217,7 @@ TEST_F(FilterExpressionJsonTest, FromJsonMissingOperands) {
 TEST_F(FilterExpressionJsonTest, FromJsonNestedErrorPath) {
     nlohmann::json j = {
         {"operator", "AND"},
-        {"operands", [
+        {"operands", {
             {{"condition", {
                 {"field", "LEVEL"},
                 {"op", "EQUALS"},
@@ -227,16 +225,16 @@ TEST_F(FilterExpressionJsonTest, FromJsonNestedErrorPath) {
                 {"value_type", "STRING"}
             }}},
             {{"operator", "OR"},
-             {"operands", [
+             {"operands", {
                 {{"condition", {
                     {"field", "MESSAGE"},
                     {"op", "INVALID_OP"},
                     {"value", "timeout"},
                     {"value_type", "STRING"}
                 }}}
-             ]}
+             }}
             }
-        ]}
+        }}
     };
 
     FilterExpression expr;

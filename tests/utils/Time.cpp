@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include <string>
 #include <chrono>
 #include <optional>
@@ -156,7 +156,7 @@ TEST(UtilsTime, ParseDayRange) {
     // Test with YYYY-MM-DD
     auto range1 = parseDayRange("2023-10-27").value();
     auto start1 = createTimePoint(2023, 10, 27, 0, 0, 0);
-    auto end1 = start1 + std::chrono::days(1) - std::chrono::seconds(1);
+    auto end1 = start1 + std::chrono::days(1);
     EXPECT_EQ(range1.first, start1);
     EXPECT_EQ(range1.second, end1);
 
@@ -184,13 +184,13 @@ TEST(UtilsTime, ParseDayRange) {
     auto start_before_dst = createTimePoint(2023, 3, 11, 0, 0, 0);
     auto range_before_dst = parseDayRange("2023-03-11").value();
     EXPECT_EQ(range_before_dst.first, start_before_dst);
-    EXPECT_EQ(range_before_dst.second, start_before_dst + std::chrono::days(1) - std::chrono::seconds(1));
+    EXPECT_EQ(range_before_dst.second, start_before_dst + std::chrono::days(1));
 
     // Test DST transition (Fall Back - day is 25 hours)
     auto start_during_dst_end = createTimePoint(2023, 11, 5, 0, 0, 0);
     auto range_during_dst_end = parseDayRange("2023-11-05").value();
     EXPECT_EQ(range_during_dst_end.first, start_during_dst_end);
-    EXPECT_EQ(range_during_dst_end.second, start_during_dst_end + std::chrono::days(1) - std::chrono::seconds(1));
+    EXPECT_EQ(range_during_dst_end.second, start_during_dst_end + std::chrono::days(1));
 }
 
 TEST(UtilsTime, FormatTimestamp) {

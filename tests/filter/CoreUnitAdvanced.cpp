@@ -1,32 +1,17 @@
 #include <gtest/gtest.h>
 #include "filter/Core.h"
 #include "core/LogTypes.h"
+#include "../TestUtils.h" // Use shared createLogEntry
 #include <chrono>
 #include <map>
-#include <sstream> // Required for std::stringstream and std::get_time
-#include <nlohmann/json.hpp> // New include for JSON testing (might be needed for some types)
+#include <sstream>
+#include <cmath>
 
-// Test fixture for creating LogEntry objects
+// Define epsilon for floating point comparisons if not already available
+constexpr double EPSILON = 1e-9;
+
 class FilterTest : public ::testing::Test {
 protected:
-    LogEntry createLogEntry(
-        size_t id,
-        const std::string& sourceFile,
-        std::chrono::system_clock::time_point timestamp,
-        LogLevel level,
-        const std::string& message,
-        const std::map<std::string, std::string>& customFields = {}
-    ) {
-        LogEntry entry;
-        entry.id = id;
-        entry.sourceFile = sourceFile;
-        entry.timestamp = timestamp;
-        entry.level = level;
-        entry.message = message;
-        entry.customFields = customFields;
-        return entry;
-    }
-
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 };
 
@@ -42,6 +27,15 @@ TEST_F(FilterTest, SourceFileFilterRegex) {
     SourceFileFilter filter_icase("SERVER.*\\.LOG", PatternType::Regex, false);
     auto entry4 = createLogEntry(4, "Server-Alpha.log", now, LogLevel::INFO, "Server started");
     EXPECT_TRUE(filter_icase.matches(entry4));
+}
+
+TEST_F(FilterTest, SourceFileFilterWildcard) {
+    // New test for standardized wildcard behavior (anchored)
+    SourceFileFilter filter("server*.log", PatternType::Wildcard);
+    auto entry1 = createLogEntry(1, "server-alpha.log", now, LogLevel::INFO, "Match");
+    auto entry2 = createLogEntry(2, "production.server.log", now, LogLevel::INFO, "No Match");
+    EXPECT_TRUE(filter.matches(entry1));
+    EXPECT_FALSE(filter.matches(entry2)); // Should not match because of anchored regex
 }
 
 TEST_F(FilterTest, FieldValueFilterRegex) {
@@ -260,12 +254,15 @@ TEST_F(FilterTest, NestedFieldValueFilterWildcardSubstringMatch) {
     auto entry1 = createLogEntry(1, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v1/users"}});
     auto entry2 = createLogEntry(2, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v2/admin/users"}});
     auto entry3 = createLogEntry(3, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v1/data"}});
-    auto entry4 = createLogEntry(4, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/internal/api/v1/users"}}); // Should match "/api/v1/users" as substring
+    
+    // NOTE: Wildcards are now anchored to match the full string (standard glob behavior).
+    // "/internal/api/v1/users" should NOT match "/api/*/users" because of the prefix.
+    auto entry4 = createLogEntry(4, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/internal/api/v1/users"}}); 
 
     EXPECT_TRUE(filter.matches(entry1));
     EXPECT_TRUE(filter.matches(entry2));
     EXPECT_FALSE(filter.matches(entry3));
-    EXPECT_TRUE(filter.matches(entry4));
+    EXPECT_FALSE(filter.matches(entry4)); // Changed expectation to FALSE
 }
 
 TEST_F(FilterTest, TimeRangeFilterFromStrings) {
@@ -326,12 +323,18 @@ TEST_F(FilterTest, TimeRangeFilterForDay) {
     ss_day_after >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
     auto day_after = std::chrono::system_clock::from_time_t(std::mktime(&tm));
     EXPECT_FALSE(filter_ymd.matches(createLogEntry(4, "day.log", day_after, LogLevel::INFO, "Day after")));
+    
+    // Test end of day boundary (fixed bug)
+    std::stringstream ss_day_end("2023-03-10 23:59:59");
+    ss_day_end >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
+    auto day_end = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+    EXPECT_TRUE(filter_ymd.matches(createLogEntry(5, "day.log", day_end, LogLevel::INFO, "End of day")));
 
     // Valid case MM/DD/YYYY
     auto filter_res_mdy = TimeRangeFilter::forDay("03/10/2023");
     ASSERT_TRUE(filter_res_mdy.has_value()) << filter_res_mdy.error();
     auto filter_mdy = filter_res_mdy.value();
-    EXPECT_TRUE(filter_mdy.matches(createLogEntry(5, "day.log", day_in_morning, LogLevel::INFO, "Morning log MM/DD/YYYY")));
+    EXPECT_TRUE(filter_mdy.matches(createLogEntry(6, "day.log", day_in_morning, LogLevel::INFO, "Morning log MM/DD/YYYY")));
 
     // Invalid date format
     auto invalid_date_res = TimeRangeFilter::forDay("not-a-date");
@@ -344,8 +347,12 @@ TEST_F(FilterTest, TimeRangeFilterSince) {
     ASSERT_TRUE(filter_res.has_value()) << filter_res.error();
     auto filter = filter_res.value();
     
+    // Robustness fix: Use a wider gap to avoid race conditions with multiple now() calls.
+    // "5m ago" puts the start time at roughly T - 5m.
+    // We test with T - 2m (should be safely inside) and T - 20m (should be safely outside).
+    // Even if execution stalls for a few seconds/minutes, the gap is large enough.
     auto time_in = std::chrono::system_clock::now() - std::chrono::minutes(2);
-    auto time_out = std::chrono::system_clock::now() - std::chrono::minutes(10);
+    auto time_out = std::chrono::system_clock::now() - std::chrono::minutes(20);
 
     auto entry1 = createLogEntry(1, "time.log", time_in, LogLevel::INFO, "In time");
     auto entry2 = createLogEntry(2, "time.log", time_out, LogLevel::INFO, "Out of time");

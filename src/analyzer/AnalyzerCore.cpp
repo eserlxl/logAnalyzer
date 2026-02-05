@@ -1,9 +1,14 @@
-#include "analyzer/Core.h"
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
+#include "analyzer/AnalyzerCore.h"
+#include "analyzer/LogReader.h"
+#include "analyzer/LogWriter.h"
 #include "core/LogParser.h"
 #include "filter/Core.h"
 #include "stats/Statistics.h"
 #include "export/Exporter.h"
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include "core/Error.h"
 #include <fstream>
 #include <iostream>
@@ -23,14 +28,16 @@
 #include <string_view>
 #include <span>
 
-#include "config/Core.h" // Renamed from LogAnalyzerConfig.h
+#include "config/ConfigCore.h" // Renamed from config/Core.h
 #include "config/CLIConfig.h"
 
 
 LogAnalyzer::LogAnalyzer()
     : currentSettings_(),
       customLogLevelMapping_(currentSettings_.customLogLevelMappings), // Initialize with settings' mappings
-      currentParser_(nullptr) // Initialize to nullptr, then assign in body
+      currentParser_(nullptr), // Initialize to nullptr, then assign in body
+      logReader_(std::make_unique<LogReader>(*this)),
+      logWriter_(std::make_unique<LogWriter>(*this))
 {
     // Need to explicitly construct parser using the factory method
     auto parser_or_error = DefaultLogParser::create(
@@ -61,7 +68,9 @@ LogAnalyzer::LogAnalyzer()
 LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
     : currentSettings_(settings), // Initialize currentSettings_ with provided settings
       customLogLevelMapping_(settings.customLogLevelMappings), // Initialize customLogLevelMapping_ from settings
-      currentParser_(nullptr) // Initialize to nullptr, then assign in body
+      currentParser_(nullptr), // Initialize to nullptr, then assign in body
+      logReader_(std::make_unique<LogReader>(*this)),
+      logWriter_(std::make_unique<LogWriter>(*this))
 {
     // Need to explicitly construct parser using the factory method
     auto parser_or_error = DefaultLogParser::create(

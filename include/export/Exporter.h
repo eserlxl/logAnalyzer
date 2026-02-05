@@ -3,7 +3,7 @@
 
 #include <nlohmann/json.hpp>
 #include "core/LogTypes.h"
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -133,6 +133,14 @@ inline void from_json(const nlohmann::json& j, ExportSettings& es) {
     // if no specific fieldsToExport are provided in JSON.
     es = ExportSettings(); 
 
+    if (j.contains("outputPath")) {
+        if (j.at("outputPath").is_string()) {
+            es.outputPath = j.at("outputPath").get<std::string>();
+        } else {
+             throw std::runtime_error("ExportSettings: 'outputPath' has invalid type. Expected string.");
+        }
+    }
+
     if (j.contains("fieldsToExport")) {
         if (j.at("fieldsToExport").is_array()) {
             es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
@@ -193,13 +201,6 @@ inline void from_json(const nlohmann::json& j, ExportSettings& es) {
             es.useAnsiColors = j.at("useAnsiColors").get<bool>();
         } else {
             throw std::runtime_error("ExportSettings: 'useAnsiColors' has invalid type. Expected boolean.");
-        }
-    }
-    if (j.contains("fieldsToExport")) {
-        if (j.at("fieldsToExport").is_array()) {
-            es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
-        } else {
-            throw std::runtime_error("ExportSettings: 'fieldsToExport' has invalid type. Expected array.");
         }
     }
 }

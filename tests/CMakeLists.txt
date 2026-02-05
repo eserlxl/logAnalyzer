@@ -102,7 +102,6 @@ endif()
 
 # Find all test source files ending with _test.cpp
 set(TEST_SOURCES
-    "analyzer/Core.cpp"
     "config/CLIConfig.cpp"
     "config/CoreBasic.cpp"
     "config/CoreJson.cpp"

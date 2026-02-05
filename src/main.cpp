@@ -1,5 +1,8 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "analyzer/Core.h"
-#include "utils/Core.h"
+#include "utils/UtilsCore.h"
 #include "config/Settings.h"
 #include "config/CLIConfig.h" // Added for CLIConfig
 #include "core/Error.h" // New: For Error struct and Result alias

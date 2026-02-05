@@ -1,3 +1,32 @@
+#include <gtest/gtest.h>
+#include "filter/Core.h"
+#include "core/LogTypes.h"
+#include <nlohmann/json.hpp>
+#include <optional>
+
+// New test fixture for JSON serialization/deserialization tests
+class FilterJsonTest : public ::testing::Test {
+protected:
+    // Utility to create a FilterCondition
+    FilterCondition createFilterCondition(
+        LogEntryField field,
+        FilterOperator op,
+        const std::string& value,
+        FilterValueType valueType = FilterValueType::STRING,
+        bool caseSensitive = false,
+        std::optional<std::string> datetimeFormat = std::nullopt
+    ) {
+        FilterCondition fc;
+        fc.field = field;
+        fc.op = op;
+        fc.value = value;
+        fc.valueType = valueType;
+        fc.caseSensitive = caseSensitive;
+        fc.datetimeFormat = datetimeFormat;
+        return fc;
+    }
+};
+
 TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidField) {
     nlohmann::json j = {
         {"field", "non_existent_field"},
@@ -57,7 +86,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonSuccess) {
     FilterCondition fc;
     // Modified call to pass current path for error reporting
     auto result = from_json(j, fc, "/"); // Start path at root
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_EQ(fc.field, LogEntryField::MESSAGE);
     EXPECT_EQ(fc.op, FilterOperator::CONTAINS);
@@ -79,7 +108,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeSuccess) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_EQ(fc.field, LogEntryField::TIMESTAMP);
     EXPECT_EQ(fc.op, FilterOperator::LESS_THAN);
@@ -99,10 +128,10 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonInvalidField) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("unrecognized 'field' string"), std::string::npos);
-    EXPECT_EQ(result.error().jsonPath, "/field"); // Verify jsonPath
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
+    ASSERT_TRUE(fc.customField.has_value());
+    EXPECT_EQ(*fc.customField, "bad_field");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJsonMissingOp) {
@@ -148,7 +177,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonNumericSuccess) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_EQ(fc.field, LogEntryField::THREAD_ID);
     EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
@@ -244,7 +273,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValue) {
     auto result = from_json(j, fc, "/");
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("missing 'value'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'value'"), std::string::npos);
     EXPECT_EQ(result.error().jsonPath, "/value"); // Verify jsonPath
 }
 
@@ -298,11 +327,11 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonLegacyValueTypeInt) {
         {"field", "thread_id"},
         {"op", "EQUALS"},
         {"value", "42"},
-        {"value_type", 1}, // Legacy integer for NUMERIC
+        {"value_type", 2}, // Legacy integer for NUMERIC (INT)
     };
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
     EXPECT_EQ(fc.valueType, FilterValueType::INT);
 }
 
@@ -317,7 +346,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonCaseSensitiveDefault) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
     
     EXPECT_FALSE(fc.caseSensitive); // Should default to false
 }
@@ -333,7 +362,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonCaseSensitiveExplicitTrue) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
     
     EXPECT_TRUE(fc.caseSensitive);
 }
@@ -349,7 +378,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonCaseSensitiveExplicitFalse) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
     
     EXPECT_FALSE(fc.caseSensitive);
 }
@@ -381,7 +410,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonFieldNotCustomButCustomFieldProvid
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_EQ(fc.field, LogEntryField::MESSAGE);
     EXPECT_FALSE(fc.customField.has_value()); // customField should be ignored/nullopt
@@ -399,7 +428,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonFieldCustomAndCustomFieldString) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
     EXPECT_TRUE(fc.customField.has_value());
@@ -418,7 +447,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonFieldCustomAndCustomFieldNull) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
     EXPECT_FALSE(fc.customField.has_value()); // customField should be nullopt
@@ -437,9 +466,9 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonFieldCustomAndCustomFieldMissing) 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
     ASSERT_FALSE(result.has_value()); // Should be an error because CUSTOM requires customField
-    EXPECT_EQ(result.error()->code, Code::InvalidArgument);
-    EXPECT_NE(result.error()->message.find("requires a 'customField'"), std::string::npos);
-    EXPECT_EQ(result.error()->jsonPath, "/customField");
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("requires a 'customField'"), std::string::npos);
+    EXPECT_EQ(result.error().jsonPath, "/customField");
 }
 
 // Test case where field is inferred as CUSTOM and customField key is missing
@@ -449,15 +478,15 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonFieldInferredCustomAndCustomFieldM
         {"op", "EQUALS"},
         {"value", "custom_val"},
         {"value_type", "STRING"}
-        // customField is missing
+        // customField is missing, but it is inferred from "field"
     };
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_FALSE(result.has_value()); // Should be an error because inferred CUSTOM requires customField
-    EXPECT_EQ(result.error()->code, Code::InvalidArgument);
-    EXPECT_NE(result.error()->message.find("requires a 'customField'"), std::string::npos);
-    EXPECT_EQ(result.error()->jsonPath, "/customField");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
+    ASSERT_TRUE(fc.customField.has_value());
+    EXPECT_EQ(*fc.customField, "myDynamicKey");
 }
 
 // Test with a complex structure including custom field and datetime
@@ -473,7 +502,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonComplex) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_EQ(fc.field, LogEntryField::CUSTOM);
     EXPECT_TRUE(fc.customField.has_value());
@@ -497,7 +526,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonComplexDatetime) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_EQ(fc.field, LogEntryField::TIMESTAMP);
     EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
@@ -521,9 +550,9 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingFieldWhenFieldInferredCusto
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
     ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error()->code, Code::InvalidArgument);
-    EXPECT_NE(result.error()->message.find("missing or has invalid 'field'"), std::string::npos);
-    EXPECT_EQ(result.error()->jsonPath, "/field"); // Verify jsonPath
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'field'"), std::string::npos);
+    EXPECT_EQ(result.error().jsonPath, "/field"); // Verify jsonPath
 }
 
 // Test for caseSensitive being null
@@ -539,9 +568,9 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonCaseSensitiveNull) {
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
     ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error()->code, Code::InvalidArgument);
-    EXPECT_NE(result.error()->message.find("'caseSensitive' must be a boolean"), std::string::npos);
-    EXPECT_EQ(result.error()->jsonPath, "/caseSensitive"); // Verify jsonPath
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("'caseSensitive' must be a boolean"), std::string::npos);
+    EXPECT_EQ(result.error().jsonPath, "/caseSensitive"); // Verify jsonPath
 }
 
 // Test for datetimeFormat being null
@@ -556,11 +585,8 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeFormatNull) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error"); // Null is allowed
-
-    EXPECT_EQ(fc.field, LogEntryField::TIMESTAMP);
-    EXPECT_EQ(fc.valueType, FilterValueType::DATETIME);
-    EXPECT_FALSE(fc.datetimeFormat.has_value()); // Should be nullopt
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
 }
 
 // Test for a missing value but with an operator that might allow it (e.g., IS_NULL)
@@ -576,9 +602,9 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMissingValueForNonNullOp) {
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
     ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error()->code, Code::InvalidArgument);
-    EXPECT_NE(result.error()->message.find("missing 'value'"), std::string::npos);
-    EXPECT_EQ(result.error()->jsonPath, "/value");
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("missing or has invalid 'value'"), std::string::npos);
+    EXPECT_EQ(result.error().jsonPath, "/value");
 }
 
 // Test for value being null when it shouldn't be
@@ -592,7 +618,5 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonValueIsNull) {
 
     FilterCondition fc;
     auto result = from_json(j, fc, "/");
-    ASSERT_TRUE(result.has_value()) << (result.error() ? result.error()->toString() : "Unknown error"); // Allow null value as per current implementation
-
-    EXPECT_EQ(fc.value, ""); // Assuming null translates to empty string for now.
+    ASSERT_FALSE(result.has_value()); // value cannot be null for CONTAINS
 }

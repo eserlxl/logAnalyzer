@@ -2,8 +2,8 @@
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
-[![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake.yml/badge.svg?branch=ai)](https://github.com/eserlxl/logAnalyzer/actions)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/eserlxl/logAnalyzer/actions)
+[![License: GPL v3](https.img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
 [![Code style: clang-format](https://img.shields.io/badge/code%20style-clang--format-blue.svg)](https://clang.llvm.org/docs/ClangFormat.html)
 [![Doxygen Documentation](https://img.shields.io/badge/docs-Doxygen-blue.svg)](https://eserlxl.github.io/logAnalyzer/)
@@ -57,13 +57,13 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
     ```bash
     mkdir build && cd build
     cmake .. -DCMAKE_BUILD_TYPE=Release
-    cmake --build . -- -j$(nproc) # Use -j<number_of_cores> to speed up compilation
+    cmake --build . -- -j$(nproc)
     ```
 
 3.  **Run a Basic Analysis**:
-    After building, the executable will be in `build/bin`.
+    After building, the executable will be in the `build` directory.
     ```bash
-    ./bin/LogAnalyzer /var/log/syslog --level ERROR
+    ./build/LogAnalyzer /var/log/syslog --level ERROR
     ```
     *(Replace `/var/log/syslog` with a path to one of your log files.)*
 
@@ -71,21 +71,42 @@ For detailed build instructions, installation options, and more usage examples, 
 
 ## Features
 
+
+
 | Feature                      | Description                                                                                             |
+
 | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
+
 | **Memory-Efficient Processing** | Handles massive files with minimal memory usage using the `--stream` mode.                              |
+
 | **Multi-File Support**       | Parses and analyzes multiple log files in a single run.                                                 |
+
 | **Sorting**                  | Sort results by timestamp, log level, message, or other fields in ascending or descending order.        |
+
 | **Structured Field Parsing** | Automatically parses log messages into fields, including structured data, using custom patterns and intelligent detection.                         |
-| **Advanced Filtering**       | Filter by log level, time range, keywords, glob patterns, and regular expressions.                      |
+
+| **Keyword & Regex Filtering**| Filter by log level, keywords, glob patterns (anchored), and case-sensitive/insensitive regular expressions. |
+
 | **Field-Value Matching**     | Match field values with case-sensitive/insensitive text, regex, and glob patterns.                      |
+
+| **Nested Field Filtering**   | Target nested fields within structured data (e.g., `user.id` in a JSON log).                            |
+
 | **Advanced Data Types**      | Compare fields as `version` numbers (semantic versioning) or `IP addresses`.                            |
-| **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on fields.                     |
-| **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                    |
+
+| **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on flat and nested fields.     |
+
+| **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                   |
+
+| **Time-based Filtering**     | Filter by absolute time range, relative time (`5m ago`), or for a specific day (`yesterday`, `2023-10-20`). |
+
 | **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
+
 | **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
+
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).                               |
+
 | **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable output fields.                             |
+
 | **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, and time-gap detection.             |
 
 ## Building from Source
@@ -144,64 +165,124 @@ cd logAnalyzer
 
 Next, use CMake to configure and build the project. We recommend an out-of-source build.
 
+
+
 ```bash
+
 mkdir build
+
 cd build
+
 cmake .. -DCMAKE_BUILD_TYPE=Release
+
 cmake --build . -- -j$(nproc) # Use -j<number_of_cores> to speed up compilation
+
 ```
 
-The compiled `LogAnalyzer` executable will be available in the `build/bin` directory.
+
+
+The compiled `LogAnalyzer` executable will be available in the `build` directory.
+
+
 
 #### Build Options
 
+
+
 You can customize the build with the following CMake options:
 
+
+
 | Option                       | Description                                                     | Default    |
+
 | :--------------------------- | :-------------------------------------------------------------- | :--------- |
+
 | `-DBUILD_TESTING=ON/OFF`     | Enable or disable the compilation of tests.                     | `ON`       |
+
 | `-DLOGANALYZER_BUILD_SHARED=ON/OFF` | Build `LogAnalyzer` as a shared library.                        | `OFF`      |
+
 | `-DLOGANALYZER_USE_SANITIZER=...` | Enable sanitizers for debugging (`Address`, `Undefined`).       | `None`     |
+
 | `-DENABLE_COVERAGE=ON/OFF`   | Enable code coverage instrumentation for tests.                 | `OFF`      |
+
 | `-DENABLE_ASAN=ON/OFF`       | Enable AddressSanitizer for tests.                              | `OFF`      |
+
 | `-DENABLE_UBSAN=ON/OFF`      | Enable UndefinedBehaviorSanitizer for tests.                    | `OFF`      |
+
 | `-DENABLE_GMOCK=ON/OFF`      | Enable Google Mock for tests.                                   | `OFF`      |
+
+
 
 To use an option, add it to the `cmake` command:
 
+
+
 ```bash
+
 cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+
 ```
+
+
 
 **Note:** To build the documentation, use `cmake --build . --target doc` from the `build` directory.
 
+
+
 ## Installation
+
+
 
 To install the `LogAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from the `build` directory. This allows you to run `LogAnalyzer` from any directory.
 
+
+
 ```bash
+
 # Use sudo for system-wide installation
+
 sudo cmake --install . --prefix /usr/local
+
 ```
+
+
 
 For a local installation, you can specify a different prefix. This is useful if you don't have administrative privileges.
 
+
+
 ```bash
+
 # Install to a 'dist' directory inside the project folder
+
 cmake --install . --prefix ../dist
+
 ```
 
-Alternatively, you can manually add the `build/bin` directory (from your build directory) to your system's `PATH` environment variable or copy the `LogAnalyzer` executable from `build/bin` to any directory already in your `PATH`. For example, after building from the `logAnalyzer` root directory:
+
+
+Alternatively, you can manually add the `build` directory (from your build directory) to your system's `PATH` environment variable or copy the `LogAnalyzer` executable from `build` to any directory already in your `PATH`. For example, after building from the `logAnalyzer` root directory:
+
+
 
 ```bash
+
 # Navigate into the build directory
+
 cd build
 
+
+
 # Add to PATH temporarily (for the current session)
-export PATH=$(pwd)/bin:$PATH
+
+export PATH=$(pwd):$PATH
+
+
 
 # Or copy the executable to a user-local bin directory (make sure ~/.local/bin is in your PATH)
-cp ./bin/LogAnalyzer ~/.local/bin/
+
+cp ./LogAnalyzer ~/.local/bin/
+
 ```
 
 ## Usage
