@@ -72,6 +72,10 @@ struct Error : public std::runtime_error {
         return Error(Code::Unexpected, "Unexpected error: " + details, path);
     }
 
+    bool operator==(const Error& other) const {
+        return code == other.code && message == other.message && jsonPath == other.jsonPath;
+    }
+
 
     // Convert to string for logging or display
     std::string toString() const {

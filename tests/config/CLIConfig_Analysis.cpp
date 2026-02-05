@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "tests/config/CLIConfigTest.h"
+#include "tests/config/CLI.h"
 
 TEST_F(CLIConfigTest, EnabledStatistics) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "unique_messages", "--stats", "top_messages:5"});

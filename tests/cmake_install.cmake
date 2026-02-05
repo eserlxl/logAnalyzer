@@ -1,6 +1,3 @@
-# SPDX-License-Identifier: GPL-3.0-only
-# Copyright (c) 2026 Eser KUBALI
-
 # Install script for directory: /opt/lxl/c++/logAnalyzer/tests
 
 # Set the install prefix

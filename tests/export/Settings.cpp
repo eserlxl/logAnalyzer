@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "tests/export/ExportTestUtils.h"
+#include "tests/export/TestUtils.h"
 
 using json = nlohmann::json;
 

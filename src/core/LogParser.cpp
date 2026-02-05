@@ -24,9 +24,9 @@ const std::regex& DefaultLogParser::getLegacyKvPattern() {
 
 std::vector<FieldMapping> getDefaultFieldMappings() {
     std::vector<FieldMapping> inferredMappings;
-    inferredMappings.push_back(FieldMapping(LogEntryField::TIMESTAMP, 1, std::string("%Y-%m-%d %H:%M:%S")));
-    inferredMappings.push_back(FieldMapping(LogEntryField::LEVEL, 2));
-    inferredMappings.push_back(FieldMapping(LogEntryField::MESSAGE, 3));
+    inferredMappings.push_back(FieldMapping(LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), {"%Y-%m-%d %H:%M:%S"}));
+    inferredMappings.push_back(FieldMapping(LogEntryField::LEVEL, std::make_optional<size_t>(2)));
+    inferredMappings.push_back(FieldMapping(LogEntryField::MESSAGE, std::make_optional<size_t>(3)));
     return inferredMappings;
 }
 
@@ -64,7 +64,7 @@ ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
             std::get<LogEntryField>(mapping.field) == LogEntryField::STRUCTURED_FIELD &&
             !mapping.formats.empty()) { // Check if formats has a delimiter pattern
             try {
-                mapping.compiledKvPattern = std::regex(mapping.formats[0]); // Use the first format as the delimiter pattern
+                mapping.compiledKvPattern = std::make_shared<const std::regex>(mapping.formats[0]); // Use the first format as the delimiter pattern
             } catch (const std::regex_error& e) {
                 return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid structured field delimiter pattern: " + std::string(e.what())));
             }
@@ -222,8 +222,8 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view
                         break;
                     }
                     case LogEntryField::STRUCTURED_FIELD: {
-                        if (mapping.compiledKvPattern.has_value()) {
-                            const std::regex& kvPattern = mapping.compiledKvPattern.value();
+                        if (mapping.compiledKvPattern) {
+                            const std::regex& kvPattern = *mapping.compiledKvPattern;
                             auto kv_begin = std::sregex_iterator(capturedValue.begin(), capturedValue.end(), kvPattern);
                             auto kv_end = std::sregex_iterator();
                             for (std::sregex_iterator i = kv_begin; i != kv_end; ++i) {

@@ -389,9 +389,9 @@ LogAnalyzerSettings LogAnalyzerSettings::createDefault() {
     LogAnalyzerSettings defaults;
     defaults.lineParsePattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$)";
     defaults.fieldMappings.clear();
-    defaults.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
-    defaults.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
-    defaults.fieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
+    defaults.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), std::vector<std::string>{"%Y-%m-%d %H:%M:%S"});
+    defaults.fieldMappings.emplace_back(LogEntryField::LEVEL, std::make_optional<size_t>(2));
+    defaults.fieldMappings.emplace_back(LogEntryField::MESSAGE, std::make_optional<size_t>(3));
     defaults.caseSensitiveParsing = false;
     
     // Default export settings

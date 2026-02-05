@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (c) 2026 Eser KUBALI
+
 include(CTest)
 
 # Default C++ standard for tests if not explicitly set
@@ -24,12 +27,23 @@ set(TEST_SOURCES
     "config/CoreValidation.cpp"
     "config/CoreFeatures.cpp"
     "core/LogParser.cpp"
-    "export/Exporter.cpp"
-    "export/ExportFieldMappingTest.cpp"
-    "export/ExportSettingsTest.cpp"
-    "export/ExportTestUtils_test.cpp"
+    "core/LogTypes.cpp"
+    "export/Core.cpp"
+    "export/Json.cpp"
+
+    "export/Csv.cpp"
+    "export/Text.cpp"
+    "export/FieldMapping.cpp"
+    "export/Settings.cpp"
+    "export/TestUtils.cpp"
     "analyzer/Core.cpp"
-    "filter/Expression.cpp"
+    "filter/LegacyFilterTests.cpp"
+    "filter/FluentApiTests.cpp"
+    "filter/EvaluationTests.cpp"
+    "filter/LogicalNegationTests.cpp"
+    "filter/Advanced.cpp"
+    "filter/Version.cpp"
+    "filter/IpAddress.cpp"
     "filter/CoreJsonBasic.cpp"
     "filter/CoreJsonCondition.cpp"
     "filter/CoreJsonExpression.cpp"
@@ -37,7 +51,6 @@ set(TEST_SOURCES
     "filter/CoreUnitAdvanced.cpp"
     "filter/CoreUnitBasic.cpp"
     "filter/CoreUnitField.cpp"
-    "filter/Expression_Advanced.cpp"
     "filter/Iteration2Tests.cpp"
     "stats/Statistics.cpp"
     "utils/Time.cpp"
@@ -47,8 +60,12 @@ set(TEST_SOURCES
 
 # Loop through each test source file
 foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
-    get_filename_component(TEST_NAME "${TEST_SOURCE}" NAME_WE) # e.g., LogAnalyzer_test
-    string(REPLACE "_test" "" TEST_LABEL "${TEST_NAME}")       # e.g., LogAnalyzer
+    # Generate a unique test name based on the path to avoid collisions (e.g. export/Core.cpp vs filter/Core.cpp)
+    # "export/Core.cpp" -> "export_Core"
+    string(REPLACE "/" "_" TEST_NAME_FULL "${TEST_SOURCE}")
+    string(REPLACE ".cpp" "" TEST_NAME "${TEST_NAME_FULL}")
+    
+    set(TEST_LABEL "${TEST_NAME}")
 
     # Create an executable for each test file
     add_executable(${TEST_NAME} ${TEST_SOURCE})

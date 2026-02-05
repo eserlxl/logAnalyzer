@@ -59,7 +59,7 @@ struct FieldMapping {
   std::optional<size_t> groupIndex; // Use std::optional to represent unset index
   std::vector<std::string> formats; // Replaces 'format' for TIMESTAMP, used for kv delimiter for STRUCTURED_FIELD
   std::optional<std::string> customFieldType; // New: for custom fields, explicitly state the type if known (e.g., "int", "string", "datetime")
-  std::optional<std::regex> compiledKvPattern; // New: for structured fields, pre-compiled regex for key-value parsing
+  std::shared_ptr<const std::regex> compiledKvPattern; // Use shared_ptr for efficient copying and thread-safety
 
   // Default constructor
   FieldMapping() : field(LogEntryField::UNKNOWN) {}
@@ -69,6 +69,7 @@ struct FieldMapping {
       : field(f), groupIndex(groupIdx), formats(fmts) {}
 
   // Constructor for enum fields with int groupIndex (for backward compatibility with old API)
+  [[deprecated("Use constructor with std::optional<size_t> for groupIndex")]]
   FieldMapping(LogEntryField f, int gi, const std::string& fmt = "")
       : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))) {
     if (!fmt.empty()) {
@@ -77,6 +78,7 @@ struct FieldMapping {
   }
 
   // Constructor for enum fields with int groupIndex and const char* format (for backward compatibility)
+  [[deprecated("Use constructor with std::optional<size_t> for groupIndex and std::vector<std::string> for formats")]]
   FieldMapping(LogEntryField f, int gi, const char* fmt)
       : field(f), groupIndex(gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))) {
     if (fmt != nullptr) {
@@ -114,7 +116,7 @@ inline void to_json(nlohmann::json& j, const FieldMapping& fm) {
         j["groupIndex"] = nullptr;
     }
     j["formats"] = fm.formats;
-    
+
     // Handle the variant for field
     if (std::holds_alternative<LogEntryField>(fm.field)) {
         j["field"] = Utils::logEntryFieldToString(std::get<LogEntryField>(fm.field));
@@ -124,54 +126,58 @@ inline void to_json(nlohmann::json& j, const FieldMapping& fm) {
             j["customFieldType"] = *fm.customFieldType;
         }
     }
+
+    // Note: compiledKvPattern is not serialized to JSON as it's a runtime object.
+    // It will be re-compiled during deserialization if a pattern is provided via 'formats'.
 }
 
 inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
-    std::vector<std::string> errors;
-    
-    // Required fields
-    if (j.contains("groupIndex")) {
-        if (j.at("groupIndex").is_number_integer()) {
-            fm.groupIndex = j.at("groupIndex").get<size_t>();
-        } else if (j.at("groupIndex").is_null()) {
-            fm.groupIndex = std::nullopt;
-        } else {
-            errors.push_back("FieldMapping has invalid 'groupIndex'.");
-        }
+    // Required fields check
+    if (!j.contains("groupIndex")) {
+         throw nlohmann::json::parse_error::create(101, 0, "FieldMapping must contain 'groupIndex'", &j);
+    }
+
+    if (j.at("groupIndex").is_number_integer()) {
+        fm.groupIndex = j.at("groupIndex").get<size_t>();
+    } else if (j.at("groupIndex").is_null()) {
+        fm.groupIndex = std::nullopt;
     } else {
-        errors.push_back("FieldMapping is missing 'groupIndex'.");
+        throw nlohmann::json::type_error::create(302, "FieldMapping 'groupIndex' must be an integer or null", &j);
     }
 
     if (j.contains("formats") && j.at("formats").is_array()) {
         fm.formats = j.at("formats").get<std::vector<std::string>>();
-    } // 'formats' is optional, so no error if missing
+    } // 'formats' is optional
 
     // Field identifier (enum or string)
-    if (j.contains("field")) {
-        if (j.at("field").is_string()) {
-            std::string fieldStr = j.at("field").get<std::string>();
-            // Try to convert to standard LogEntryField first
-            LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
-            if (standardField != LogEntryField::UNKNOWN) {
-                fm.field = standardField;
-            } else {
-                // It's not a standard field, assume it's a custom field name
-                fm.field = fieldStr;
-                // Check for customFieldType if it's a custom field
-                if (j.contains("customFieldType") && j.at("customFieldType").is_string()) {
-                    fm.customFieldType = j.at("customFieldType").get<std::string>();
-                }
-            }
-        } else {
-            errors.push_back("FieldMapping 'field' must be a string.");
-        }
-    }
-    else {
-        errors.push_back("FieldMapping is missing the required 'field' key.");
+    if (!j.contains("field")) {
+        throw nlohmann::json::parse_error::create(101, 0, "FieldMapping must contain 'field'", &j);
     }
 
-    if (!errors.empty()) {
-        throw std::runtime_error(errors[0]); // Throw standard exception
+    if (j.at("field").is_string()) {
+        std::string fieldStr = j.at("field").get<std::string>();
+        LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
+        if (standardField != LogEntryField::UNKNOWN && standardField != LogEntryField::CUSTOM) {
+             fm.field = standardField;
+        } else {
+            fm.field = fieldStr; // It's a custom field name
+            if (j.contains("customFieldType") && j.at("customFieldType").is_string()) {
+                fm.customFieldType = j.at("customFieldType").get<std::string>();
+            }
+        }
+    } else {
+        throw nlohmann::json::type_error::create(302, "FieldMapping 'field' must be a string", &j);
+    }
+
+    // Handle regex compilation for structured fields
+    if (std::holds_alternative<LogEntryField>(fm.field) && std::get<LogEntryField>(fm.field) == LogEntryField::STRUCTURED_FIELD) {
+        if (!fm.formats.empty() && !fm.formats[0].empty()) {
+            try {
+                fm.compiledKvPattern = std::make_shared<const std::regex>(fm.formats[0], std::regex::optimize);
+            } catch (const std::regex_error& e) {
+                throw nlohmann::json::parse_error::create(101, 0, "Invalid regex pattern for STRUCTURED_FIELD: " + std::string(e.what()), &j);
+            }
+        }
     }
 }
 
@@ -228,31 +234,31 @@ struct LogEntry {
   std::map<std::string, std::string> customFields;
   std::optional<std::string> structuredData; // New: Raw structured data string
   std::vector<ErrorCode::Error> parsingErrors; // Added to store parsing errors
-          
+
   // Helper to check if any parsing errors occurred
   bool hasParsingErrors() const {
       return !parsingErrors.empty();
   }
-          
+
   // Helper to get all error messages concatenated
   std::string getParsingErrorsAsString() const {
-      std::string all_errors;
-      for (const auto& err : parsingErrors) {
-          if (!all_errors.empty()) {
-              all_errors += "; ";
-          }
-          all_errors += err.message;
+      if (parsingErrors.empty()) {
+          return "";
       }
-      return all_errors;
+      std::stringstream ss;
+      for (size_t i = 0; i < parsingErrors.size(); ++i) {
+          ss << parsingErrors[i].message;
+          if (i < parsingErrors.size() - 1) {
+              ss << "; ";
+          }
+      }
+      return ss.str();
   }
-  bool operator==(const LogEntry &other) const {
-    return id == other.id && timestamp == other.timestamp &&
-           level == other.level && message == other.message &&
-           threadId == other.threadId && // Compare new members
-           module == other.module &&     // Compare new members
-           host == other.host &&         // Compare new members
-           customFields == other.customFields;
-  }
+
+  // Auto-generate C++20 default comparison
+  // This is the simplest and most robust way to ensure all members are compared.
+  // The compiler will do the right thing.
+  bool operator==(const LogEntry &other) const = default;
 };
 
 

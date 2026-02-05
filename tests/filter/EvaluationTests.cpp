@@ -1,193 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include <gtest/gtest.h>
-#include "filter/Core.h"
-#include "core/LogTypes.h"
-#include "filter/Expression.h" // For FilterValueType, FilterOperator, FilterCondition, FilterExpression
-#include "utils/Version.h" // For Utils::parseSemanticVersion
-#include "utils/IpAddress.h" // For Utils::parseIpAddress
-#include <chrono>
-#include <map>
-#include <optional>
-#include <regex> // For regex tests
-#include <nlohmann/json.hpp> // For IN/NOT_IN tests
-
-// Consolidated test fixture for FilterExpression tests
-class FilterExpressionTest : public ::testing::Test {
-protected:
-    // Helper to create a LogEntry with common fields
-    LogEntry createLogEntry(
-        LogLevel level,
-        const std::string& message,
-        const std::string& sourceFile = "test.log",
-        const std::map<std::string, std::string>& customFields = {},
-        std::optional<size_t> id = std::nullopt,
-        std::optional<std::chrono::system_clock::time_point> timestamp = std::nullopt,
-        std::optional<unsigned int> sourceLineNumber = std::nullopt,
-        std::optional<std::string> threadId = std::nullopt,
-        std::optional<std::string> module = std::nullopt,
-        std::optional<std::string> host = std::nullopt
-    ) {
-        LogEntry entry;
-        entry.id = id.value_or(nextId++); // Use provided ID or generate new one
-        entry.sourceFile = sourceFile;
-        entry.timestamp = timestamp.value_or(std::chrono::system_clock::now());
-        entry.level = level;
-        entry.message = message;
-        entry.customFields = customFields;
-        entry.sourceLineNumber = sourceLineNumber;
-        entry.threadId = threadId;
-        entry.module = module;
-        entry.host = host;
-        return entry;
-    }
-
-    // Helper to create a FilterCondition
-    FilterCondition createCondition(
-        LogEntryField field,
-        FilterOperator op,
-        const std::string& value,
-        FilterValueType valueType = FilterValueType::STRING,
-        bool caseSensitive = true,
-        std::optional<std::string> customField = std::nullopt
-    ) {
-        FilterCondition fc;
-        fc.field = field;
-        fc.op = op;
-        fc.value = value;
-        fc.valueType = valueType;
-        fc.caseSensitive = caseSensitive;
-        fc.customField = customField;
-        return fc;
-    }
-
-    // Helper to create a FilterExpression from a Condition
-    FilterExpression createExpr(
-        LogEntryField field,
-        FilterOperator op,
-        const std::string& value,
-        FilterValueType valueType = FilterValueType::STRING,
-        bool caseSensitive = true,
-        std::optional<std::string> customField = std::nullopt
-    ) {
-        return FilterExpression::create(createCondition(field, op, value, valueType, caseSensitive, customField));
-    }
-
-private:
-    size_t nextId = 1; // Simple counter for unique IDs
-};
-
-// --- Legacy Filter Tests (maintained for backward compatibility) ---
-// (Keeping these as they were, not modifying them yet)
-class LegacyFilterTest : public ::testing::Test {
-protected:
-    LogEntry createLogEntry(
-        size_t id,
-        const std::string& sourceFile,
-        std::chrono::system_clock::time_point timestamp,
-        LogLevel level,
-        const std::string& message,
-        const std::map<std::string, std::string>& customFields = {}
-    ) {
-        LogEntry entry;
-        entry.id = id;
-        entry.sourceFile = sourceFile;
-        entry.timestamp = timestamp;
-        entry.level = level;
-        entry.message = message;
-        entry.customFields = customFields;
-        return entry;
-    }
-
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-};
-
-
-TEST_F(LegacyFilterTest, CompositeFilterEmptyListAND) {
-    CompositeFilter filter(CompositeFilter::Logic::AND);
-    auto entry = createLogEntry(1, "web.log", now, LogLevel::INFO, "Any message");
-    EXPECT_TRUE(filter.matches(entry)); // Empty AND should always return true
-}
-
-TEST_F(LegacyFilterTest, CompositeFilterEmptyListOR) {
-    CompositeFilter filter(CompositeFilter::Logic::OR);
-    auto entry = createLogEntry(1, "web.log", now, LogLevel::INFO, "Any message");
-    EXPECT_FALSE(filter.matches(entry)); // Empty OR should always return false
-}
-
-TEST_F(LegacyFilterTest, ExclusionFilter) {
-    auto base_filter = std::make_shared<FieldExistsFilter>("error_code");
-    ExclusionFilter filter(base_filter);
-
-    auto entry1 = createLogEntry(1, "app.log", now, LogLevel::ERROR, "An error occurred", {{"error_code", "E101"}});
-    auto entry2 = createLogEntry(2, "app.log", now, LogLevel::INFO, "Operation successful", {{"status", "OK"}});
-
-    EXPECT_FALSE(filter.matches(entry1)); // error_code exists, so exclusion filter should return false
-    EXPECT_TRUE(filter.matches(entry2));  // error_code does not exist, so exclusion filter should return true
-}
-
-
-// --- FilterExpression Fluent API & Optimization Tests ---
-
-TEST_F(FilterExpressionTest, FluentApiAndOptimization) {
-    // cond1 AND cond2
-    FilterExpression cond1 = createExpr(LogEntryField::LEVEL, FilterOperator::EQUALS, "INFO");
-    FilterExpression cond2 = createExpr(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "user");
-    FilterExpression expr1 = cond1.And(cond2);
-
-    ASSERT_TRUE(expr1.isLogical());
-    EXPECT_EQ(*expr1.getLogicalOperator(), FilterLogicalOperator::AND);
-    ASSERT_EQ(expr1.getExpressions().size(), 2);
-
-    // (cond1 AND cond2) AND cond3 -> should be flattened to AND [cond1, cond2, cond3]
-    FilterExpression cond3 = createExpr(LogEntryField::SOURCE_FILE, FilterOperator::ENDS_WITH, ".log");
-    FilterExpression expr2 = expr1.And(cond3);
-
-    ASSERT_TRUE(expr2.isLogical());
-    EXPECT_EQ(*expr2.getLogicalOperator(), FilterLogicalOperator::AND);
-    ASSERT_EQ(expr2.getExpressions().size(), 3);
-}
-
-TEST_F(FilterExpressionTest, FluentApiOrOptimization) {
-    // cond1 OR cond2
-    FilterExpression cond1 = createExpr(LogEntryField::LEVEL, FilterOperator::EQUALS, "ERROR");
-    FilterExpression cond2 = createExpr(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "database");
-    FilterExpression expr1 = cond1.Or(cond2);
-
-    ASSERT_TRUE(expr1.isLogical());
-    EXPECT_EQ(*expr1.getLogicalOperator(), FilterLogicalOperator::OR);
-    ASSERT_EQ(expr1.getExpressions().size(), 2);
-
-    // (cond1 OR cond2) OR cond3 -> should be flattened to OR [cond1, cond2, cond3]
-    FilterExpression cond3 = createExpr(LogEntryField::SOURCE_FILE, FilterOperator::STARTS_WITH, "app");
-    FilterExpression expr2 = expr1.Or(cond3);
-
-    ASSERT_TRUE(expr2.isLogical());
-    EXPECT_EQ(*expr2.getLogicalOperator(), FilterLogicalOperator::OR);
-    ASSERT_EQ(expr2.getExpressions().size(), 3);
-}
-
-TEST_F(FilterExpressionTest, FluentApiNot) {
-    FilterExpression cond = createExpr(LogEntryField::LEVEL, FilterOperator::EQUALS, "DEBUG");
-    FilterExpression not_cond = cond.Not();
-
-    // The 'not_cond' should now be a copy of 'cond' but with 'negated_' flag set to true.
-    ASSERT_TRUE(not_cond.isCondition()); // It's still a condition, but negated
-    EXPECT_TRUE(not_cond.isNegated());   // Check the new negated flag
-    EXPECT_EQ(not_cond.getCondition()->field, LogEntryField::LEVEL); // Verify it's the original condition
-    EXPECT_EQ(not_cond.getCondition()->value, "DEBUG");
-    
-    // NOT(NOT(cond)) should simplify back to the original cond (not negated)
-    FilterExpression not_not_cond = not_cond.Not();
-    ASSERT_TRUE(not_not_cond.isCondition());
-    EXPECT_FALSE(not_not_cond.isNegated()); // Should no longer be negated
-    EXPECT_EQ(not_not_cond.getCondition()->value, "DEBUG");
-}
+#include "tests/filter/TestUtils.h"
 
 // --- FilterExpression Evaluation Tests ---
 
-TEST_F(FilterExpressionTest, EvaluateStringEquals) {
+TEST_F(FilterTestFixture, EvaluateStringEquals) {
     auto entry = createLogEntry(LogLevel::INFO, "User logged in", "auth.log");
     
     // Case-sensitive match
@@ -206,7 +24,7 @@ TEST_F(FilterExpressionTest, EvaluateStringEquals) {
     EXPECT_TRUE(expr_ci_match.evaluate(entry).value_or(false));
 }
 
-TEST_F(FilterExpressionTest, EvaluateStringContains) {
+TEST_F(FilterTestFixture, EvaluateStringContains) {
     auto entry = createLogEntry(LogLevel::DEBUG, "Processing user_id:123", "worker.log");
 
     // Case-sensitive contains
@@ -225,7 +43,7 @@ TEST_F(FilterExpressionTest, EvaluateStringContains) {
     EXPECT_TRUE(expr_ci_match.evaluate(entry).value_or(false));
 }
 
-TEST_F(FilterExpressionTest, EvaluateNumericComparison) {
+TEST_F(FilterTestFixture, EvaluateNumericComparison) {
     auto entry = createLogEntry(LogLevel::WARNING, "Response time high", "perf.log", {{"response_time_ms", "550"}});
 
     auto expr_gt = createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "500", FilterValueType::INT, true, "response_time_ms");
@@ -251,7 +69,7 @@ TEST_F(FilterExpressionTest, EvaluateNumericComparison) {
     ASSERT_FALSE(expr_bad_num.evaluate(entry_bad_num).has_value()); // Expecting failure due to conversion
 }
 
-TEST_F(FilterExpressionTest, EvaluateDoubleComparison) {
+TEST_F(FilterTestFixture, EvaluateDoubleComparison) {
     auto entry = createLogEntry(LogLevel::INFO, "Calculation result", "calc.log", {{"result", "123.456789"}});
     
     // Exact match (within epsilon)
@@ -281,7 +99,7 @@ TEST_F(FilterExpressionTest, EvaluateDoubleComparison) {
 }
 
 
-TEST_F(FilterExpressionTest, EvaluateBoolComparison) {
+TEST_F(FilterTestFixture, EvaluateBoolComparison) {
     auto entry_true = createLogEntry(LogLevel::INFO, "Status is true", "status.log", {{"is_active", "true"}});
     auto entry_false = createLogEntry(LogLevel::INFO, "Status is false", "status.log", {{"is_active", "false"}});
     auto entry_zero = createLogEntry(LogLevel::INFO, "Status is zero", "status.log", {{"is_active", "0"}});
@@ -311,7 +129,7 @@ TEST_F(FilterExpressionTest, EvaluateBoolComparison) {
     ASSERT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "false", FilterValueType::BOOL, true, "is_active").evaluate(entry_invalid).has_value());
 }
 
-TEST_F(FilterExpressionTest, EvaluateDateTimeComparison) {
+TEST_F(FilterTestFixture, EvaluateDateTimeComparison) {
     auto entry_past = createLogEntry(LogLevel::INFO, "Event in the past", "time.log", {}, std::nullopt, std::chrono::system_clock::now() - std::chrono::hours(1));
     auto entry_future = createLogEntry(LogLevel::INFO, "Event in the future", "time.log", {}, std::nullopt, std::chrono::system_clock::now() + std::chrono::hours(1));
     auto entry_now = createLogEntry(LogLevel::INFO, "Event now", "time.log", {}, std::nullopt, std::chrono::system_clock::now());
@@ -340,64 +158,7 @@ TEST_F(FilterExpressionTest, EvaluateDateTimeComparison) {
     ASSERT_FALSE(expr_invalid_dt.evaluate(entry_now).has_value());
 }
 
-// --- Tests for VERSION and IP_ADDRESS types ---
-
-TEST_F(FilterExpressionTest, EvaluateVersionComparison) {
-    auto entry_v100 = createLogEntry(LogLevel::INFO, "Version 1.0.0", "ver.log", {{"app_version", "1.0.0"}});
-    auto entry_v110 = createLogEntry(LogLevel::INFO, "Version 1.1.0", "ver.log", {{"app_version", "1.1.0"}});
-    auto entry_v110_patch = createLogEntry(LogLevel::INFO, "Version 1.1.0-patch", "ver.log", {{"app_version", "1.1.0-patch"}});
-    auto entry_v200 = createLogEntry(LogLevel::INFO, "Version 2.0.0", "ver.log", {{"app_version", "2.0.0"}});
-    auto entry_v_invalid = createLogEntry(LogLevel::INFO, "Invalid version", "ver.log", {{"app_version", "invalid-version"}});
-
-    // EQUALS
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.0.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v100).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.1.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v100).value_or(true));
-
-    // GREATER_THAN
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.0.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v110).value_or(false));
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.1.0-patch", FilterValueType::VERSION, true, "app_version").evaluate(entry_v110).value_or(false)); // 1.1.0 is greater than 1.1.0-patch
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.1.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v200).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "2.0.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v200).value_or(true));
-
-    // LESS_THAN_OR_EQUAL
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "1.1.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v100).value_or(false));
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "1.1.0-patch", FilterValueType::VERSION, true, "app_version").evaluate(entry_v110_patch).value_or(false));
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "2.0.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v200).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "1.0.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v110).value_or(true));
-
-    // Test with invalid version strings (should fail comparison)
-    ASSERT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.0.0", FilterValueType::VERSION, true, "app_version").evaluate(entry_v_invalid).has_value());
-    ASSERT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "invalid-version", FilterValueType::VERSION, true, "app_version").evaluate(entry_v100).has_value());
-}
-
-TEST_F(FilterExpressionTest, EvaluateIpAddressComparison) {
-    auto entry_ip1 = createLogEntry(LogLevel::INFO, "IP address 1", "ip.log", {{"client_ip", "192.168.1.100"}});
-    auto entry_ip2 = createLogEntry(LogLevel::INFO, "IP address 2", "ip.log", {{"client_ip", "192.168.1.200"}});
-    auto entry_ip_ipv6 = createLogEntry(LogLevel::INFO, "IP address IPv6", "ip.log", {{"client_ip", "2001:0db8:85a3:0000:0000:8a2e:0370:7334"}});
-    auto entry_ip_invalid = createLogEntry(LogLevel::INFO, "Invalid IP", "ip.log", {{"client_ip", "invalid-ip"}});
-
-    // EQUALS
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "192.168.1.100", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip1).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "192.168.1.200", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip1).value_or(true));
-
-    // GREATER_THAN
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "192.168.1.100", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip2).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "192.168.1.200", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip2).value_or(true));
-
-    // LESS_THAN_OR_EQUAL
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "192.168.1.200", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip2).value_or(false));
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "192.168.1.200", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip1).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "192.168.1.100", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip2).value_or(true));
-
-    // Test with IPv6 address
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "2001:0db8:85a3:0000:0000:8a2e:0370:7334", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip_ipv6).value_or(false));
-
-    // Test with invalid IP strings (should fail comparison)
-    ASSERT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "192.168.1.100", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip_invalid).has_value());
-    ASSERT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "invalid-ip", FilterValueType::IP_ADDRESS, true, "client_ip").evaluate(entry_ip1).has_value());
-}
-
-TEST_F(FilterExpressionTest, EvaluateInOperator) {
+TEST_F(FilterTestFixture, EvaluateInOperator) {
     auto entry_apple = createLogEntry(LogLevel::INFO, "Fruit: Apple", "fruit.log", {{"item", "Apple"}});
     auto entry_banana = createLogEntry(LogLevel::INFO, "Fruit: Banana", "fruit.log", {{"item", "Banana"}});
     auto entry_cherry = createLogEntry(LogLevel::INFO, "Fruit: Cherry", "fruit.log", {{"item", "Cherry"}});
@@ -446,7 +207,7 @@ TEST_F(FilterExpressionTest, EvaluateInOperator) {
     EXPECT_TRUE(expr_not_in_no_match.evaluate(entry_date).value_or(false));
 }
 
-TEST_F(FilterExpressionTest, EvaluateRegexMatch) {
+TEST_F(FilterTestFixture, EvaluateRegexMatch) {
     auto entry_email = createLogEntry(LogLevel::INFO, "Contact: test@example.com", "contact.log");
     auto entry_phone = createLogEntry(LogLevel::INFO, "Call: +1-555-123-4567", "contact.log");
 
@@ -469,7 +230,7 @@ TEST_F(FilterExpressionTest, EvaluateRegexMatch) {
     ASSERT_FALSE(expr_invalid_regex.evaluate(entry_email).has_value()); // Invalid regex should return error
 }
 
-TEST_F(FilterExpressionTest, EvaluateIsPresentAndIsAbsent) {
+TEST_F(FilterTestFixture, EvaluateIsPresentAndIsAbsent) {
     auto entry_with_id = createLogEntry(LogLevel::INFO, "Message with ID", "log.log", {{"custom_field", "value"}}, 123, std::nullopt, 45);
     
     // Manually create entry without ID to bypass helper's auto-ID generation
@@ -505,7 +266,7 @@ TEST_F(FilterExpressionTest, EvaluateIsPresentAndIsAbsent) {
     EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::IS_ABSENT, "", FilterValueType::STRING, true, "non_existent_custom").evaluate(entry_with_custom).value_or(false));
 }
 
-TEST_F(FilterExpressionTest, EvaluateStringOperatorsEdgeCases) {
+TEST_F(FilterTestFixture, EvaluateStringOperatorsEdgeCases) {
     auto entry = createLogEntry(LogLevel::INFO, "  leading and trailing spaces  ", "spaces.log");
 
     // STARTS_WITH
@@ -532,7 +293,7 @@ TEST_F(FilterExpressionTest, EvaluateStringOperatorsEdgeCases) {
     EXPECT_FALSE(createExpr(LogEntryField::MESSAGE, FilterOperator::EQUALS, "a", FilterValueType::STRING, true).evaluate(entry_empty_msg).value_or(true));
 }
 
-TEST_F(FilterExpressionTest, EvaluateNumericBoundaryTests) {
+TEST_F(FilterTestFixture, EvaluateNumericBoundaryTests) {
     auto entry = createLogEntry(LogLevel::INFO, "Value is 100", "boundary.log", {{"count", "100"}});
 
     // GREATER_THAN_OR_EQUAL
@@ -546,7 +307,7 @@ TEST_F(FilterExpressionTest, EvaluateNumericBoundaryTests) {
     EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "99", FilterValueType::INT, true, "count").evaluate(entry).value_or(true)); // Greater
 }
 
-TEST_F(FilterExpressionTest, EvaluateEmptyExpression) {
+TEST_F(FilterTestFixture, EvaluateEmptyExpression) {
     auto entry = createLogEntry(LogLevel::INFO, "Any message", "any.log");
     // An empty FilterExpression is created via default construction.
     FilterExpression empty_expr; 
@@ -558,7 +319,7 @@ TEST_F(FilterExpressionTest, EvaluateEmptyExpression) {
     EXPECT_FALSE(empty_expr.isLogical());   
 }
 
-TEST_F(FilterExpressionTest, EvaluateStringConversionsForNonStringTypes) {
+TEST_F(FilterTestFixture, EvaluateStringConversionsForNonStringTypes) {
     // Ensure that string comparison logic in the default/auto/unknown handler is robust
     // when passed to types that are not STRING, AUTO, or UNKNOWN.
     // The refactored code should ensure these are handled by their specific types (INT, DOUBLE, etc.)
@@ -577,16 +338,7 @@ TEST_F(FilterExpressionTest, EvaluateStringConversionsForNonStringTypes) {
     // This test indirectly verifies that INT, DOUBLE, etc. are handled before the default.
 }
 
-// --- Tests for helper functions (stringToBool, etc.) ---
-// These are implicitly tested by EvaluateBoolComparison and other tests,
-// but explicit tests can be added if needed for deeper coverage.
-
-// TEST_F(FilterExpressionTest, StringToBoolHelper) { ... }
-
-
-// --- Test for custom fields and specific LogEntryFields ---
-
-TEST_F(FilterExpressionTest, CustomFieldAccess) {
+TEST_F(FilterTestFixture, CustomFieldAccess) {
     auto entry = createLogEntry(LogLevel::INFO, "Log entry", "custom.log", {{"user_id", "abc123"}, {"tenant_id", "xyz789"}});
 
     EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "abc123", FilterValueType::STRING, true, "user_id").evaluate(entry).value_or(false));
@@ -595,7 +347,7 @@ TEST_F(FilterExpressionTest, CustomFieldAccess) {
     EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "XYZ789", FilterValueType::STRING, true, "tenant_id").evaluate(entry).value_or(true)); // Case-sensitive mismatch
 }
 
-TEST_F(FilterExpressionTest, BuiltInFieldsAccess) {
+TEST_F(FilterTestFixture, BuiltInFieldsAccess) {
     auto entry = createLogEntry(
         LogLevel::DEBUG,
         "Application heartbeat",
@@ -621,49 +373,4 @@ TEST_F(FilterExpressionTest, BuiltInFieldsAccess) {
     
     // Test custom field when it also exists
     EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "custom_value", FilterValueType::STRING, true, "custom_field").evaluate(entry).value_or(false));
-}
-
-// --- Test for expression negation on logical operators ---
-TEST_F(FilterExpressionTest, NegationOfLogicalExpressions) {
-    auto entry_a_and_b = createLogEntry(LogLevel::INFO, "A and B", "logic.log"); // Assume A and B are true
-    auto entry_a_not_b = createLogEntry(LogLevel::INFO, "A not B", "logic.log"); // Assume A is true, B is false
-    auto entry_not_a_b = createLogEntry(LogLevel::INFO, "A not B", "logic.log"); // Assume A is false, B is true (matched by cond_c)
-
-    // Create conditions that will be true for specific entries (simplified for this test)
-    auto cond_a = FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::EQUALS, "A and B")); // True for entry_a_and_b
-    auto cond_b = FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::EQUALS, "A and B")); // True for entry_a_and_b
-    auto cond_c = FilterExpression::create(createCondition(LogEntryField::MESSAGE, FilterOperator::EQUALS, "A not B")); // True for entry_a_not_b
-    
-    // De Morgan's Law: NOT (A AND B) == (NOT A) OR (NOT B)
-    FilterExpression original_and = cond_a.And(cond_b);
-    FilterExpression negated_and = original_and.Not();
-
-    // With entry_a_and_b: original_and is TRUE. negated_and should be FALSE.
-    EXPECT_TRUE(original_and.evaluate(entry_a_and_b).value_or(false));
-    EXPECT_FALSE(negated_and.evaluate(entry_a_and_b).value_or(true));
-
-    // With entry_a_not_b (A true, B false): original_and is FALSE. negated_and should be TRUE.
-    EXPECT_FALSE(original_and.evaluate(entry_a_not_b).value_or(true));
-    EXPECT_TRUE(negated_and.evaluate(entry_a_not_b).value_or(false));
-    
-    // With entry_not_a_b (A false, B true): original_and is FALSE. negated_and should be TRUE.
-    EXPECT_FALSE(original_and.evaluate(entry_not_a_b).value_or(true));
-    EXPECT_TRUE(negated_and.evaluate(entry_not_a_b).value_or(false));
-
-
-    // De Morgan's Law: NOT (A OR B) == (NOT A) AND (NOT B)
-    FilterExpression original_or = cond_a.Or(cond_c); // Using cond_c for "A not B" scenario
-    FilterExpression negated_or = original_or.Not();
-
-    // With entry_a_and_b (A true, B false): original_or is TRUE. negated_or should be FALSE.
-    EXPECT_TRUE(original_or.evaluate(entry_a_and_b).value_or(false));
-    EXPECT_FALSE(negated_or.evaluate(entry_a_and_b).value_or(true));
-    
-    // With entry_a_not_b (A true, B false): original_or is TRUE. negated_or should be FALSE.
-    EXPECT_TRUE(original_or.evaluate(entry_a_not_b).value_or(false));
-    EXPECT_FALSE(negated_or.evaluate(entry_a_not_b).value_or(true));
-
-    // With entry_not_a_b (A false, B true): original_or is TRUE. negated_or should be FALSE.
-    EXPECT_TRUE(original_or.evaluate(entry_not_a_b).value_or(false));
-    EXPECT_FALSE(negated_or.evaluate(entry_not_a_b).value_or(true));
 }

@@ -96,6 +96,8 @@ struct LogAnalyzerSettings {
         return *this;
     }
     LogAnalyzerSettings& addFieldMapping(LogEntryField f, int gi, const std::string& fmt = "") { 
+        if (gi <= 0) return *this; // Validation: groupIndex must be positive
+
         // Overwrite if exists
         auto it = std::find_if(fieldMappings.begin(), fieldMappings.end(),
                                [&](const FieldMapping& m) {
@@ -103,17 +105,20 @@ struct LogAnalyzerSettings {
                                           std::get<LogEntryField>(m.field) == f;
                                });
         if (it != fieldMappings.end()) {
-            it->groupIndex = (gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi)));
+            it->groupIndex = std::make_optional(static_cast<size_t>(gi));
             it->formats.clear();
             if (!fmt.empty()) {
                 it->formats.push_back(fmt);
             }
         } else {
-            fieldMappings.emplace_back(f, gi, fmt);
+            fieldMappings.emplace_back(f, std::make_optional(static_cast<size_t>(gi)), fmt.empty() ? std::vector<std::string>{} : std::vector<std::string>{fmt});
         }
         return *this;
     }
     LogAnalyzerSettings& addFieldMapping(const std::string& customFieldName, int gi, const std::string& fmt = "") {
+        if (customFieldName.empty()) return *this; // Validation: customFieldName cannot be empty
+        if (gi <= 0) return *this; // Validation: groupIndex must be positive
+
         // Overwrite if exists
         auto it = std::find_if(fieldMappings.begin(), fieldMappings.end(),
                                [&](const FieldMapping& m) {
@@ -121,13 +126,13 @@ struct LogAnalyzerSettings {
                                           std::get<std::string>(m.field) == customFieldName;
                                });
         if (it != fieldMappings.end()) {
-            it->groupIndex = (gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi)));
+            it->groupIndex = std::make_optional(static_cast<size_t>(gi));
             it->formats.clear();
             if (!fmt.empty()) {
                 it->formats.push_back(fmt);
             }
         } else {
-            fieldMappings.emplace_back(customFieldName, (gi == -1 ? std::nullopt : std::make_optional(static_cast<size_t>(gi))), std::vector<std::string>{fmt});
+            fieldMappings.emplace_back(customFieldName, std::make_optional(static_cast<size_t>(gi)), fmt.empty() ? std::vector<std::string>{} : std::vector<std::string>{fmt});
         }
         return *this;
     }
@@ -148,9 +153,9 @@ struct LogAnalyzerSettings {
 private: // Helper for consistency
     // Helper to initialize default field mappings.
     void initializeDefaultFieldMappings() {
-        fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
-        fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
-        fieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
+        fieldMappings.emplace_back(LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), std::vector<std::string>{"%Y-%m-%d %H:%M:%S"});
+        fieldMappings.emplace_back(LogEntryField::LEVEL, std::make_optional<size_t>(2));
+        fieldMappings.emplace_back(LogEntryField::MESSAGE, std::make_optional<size_t>(3));
     }
 
 public:
