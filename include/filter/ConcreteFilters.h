@@ -19,6 +19,23 @@
 // For PatternType::Wildcard (after glob-to-regex conversion) and PatternType::Regex,
 // std::regex_search is used, meaning patterns can match any substring of the input.
 // This provides consistent substring matching behavior across these pattern types.
+/**
+ * @brief Filters log entries based on their source file name.
+ *
+ * Supports literal, wildcard (glob-like), and regex patterns.
+ *
+ * For PatternType::Wildcard, glob patterns (e.g., "*.log", "server*") are converted
+ * into regular expressions. The matching is then performed using `std::regex_search`,
+ * which inherently looks for a substring match. For example, a wildcard pattern
+ * "server*" will be converted to `server.*` regex, and `std::regex_search` will
+ * match this regex if it appears anywhere in the source file string.
+ * This effectively makes "server*" match "my-server.log", "server.log",
+ * and "log-from-server.log" if the `server.*` regex is found as a substring.
+ *
+ * For PatternType::Regex, the provided pattern is used directly with `std::regex_search`.
+ *
+ * Case sensitivity can be configured.
+ */
 class SourceFileFilter : public IFilter {
 public:
     explicit SourceFileFilter(std::string pattern,

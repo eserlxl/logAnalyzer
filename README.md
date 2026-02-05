@@ -83,7 +83,7 @@ For detailed build instructions, installation options, and more usage examples, 
 | **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on fields.                     |
 | **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                    |
 | **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
-| **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR` conditions.                     |
+| **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
 | **Live Tailing**             | Monitor log files for new entries in real-time (`tail -f` like behavior).                               |
 | **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable output fields.                             |
 | **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, and time-gap detection.             |
@@ -344,7 +344,7 @@ Run `LogAnalyzer --help` for a full list of commands.
 | `--start TIME`           |           | Filters logs appearing after the specified timestamp. Supports absolute, relative, ISO 8601, and Unix timestamp formats.                                                                                                                                                                                                                                            |           |
 | `--end TIME`             |           | Filters logs appearing before the specified timestamp. Supports the same formats as `--start`.                                                                                                                                                                                                                                                                      |           |
 | `--duration DURATION`    |           | Specifies a time window when used with `--start` or `--end`. Accepts units like `s` (seconds), `m` (minutes), `h` (hours), or `d` (days).                                                                                                                                                                                                                           |           |
-| `--expression "EXPR"`    | `-e`      | A powerful filter using a logical expression language. Supports fields, nested `and`/`or` logic, and rich operators like `contains_i` (case-insensitive), `in` (set), `> ` (numeric), `startswith`, `is present`, and type casting (e.g., `ip(client_ip)`) for advanced filtering. Example: `(level=ERROR and msg contains_i "database") or status_code in [500, 503]` |           |
+| `--expression "EXPR"`    | `-e`      | A powerful filter using a logical expression language. Supports fields, nested `and`/`or`/`not` logic, and rich operators like `contains_i` (case-insensitive), `in` (set), `>` (numeric), `startswith`, `is present`, and type casting (e.g., `ip(client_ip)`) for advanced filtering. Example: `(level=ERROR and msg contains_i "database") or not status_code in [200, 304]` |           |
 
 ### Sorting
 
