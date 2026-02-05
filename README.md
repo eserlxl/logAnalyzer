@@ -335,7 +335,7 @@ Run `LogAnalyzer --help` for a full list of commands.
 | `--output FILE`        |           | Redirects all output (filtered logs, statistics) to the specified file instead of standard output.                                                                                      | `(stdout)` |
 | `--color OPT`          |           | Controls colorized output. Options are `always`, `auto` (default, colors if stdout is a TTY and not redirected), or `never`.                                                              | `auto`     |
 | `--stream`             |           | Enables memory-efficient stream processing mode for very large files. Not all features are available in stream mode (e.g., sorting).                                                    | `false`    |
-| `--stdin`              | `-`       | Reads log entries from standard input (e.g., from a pipe). Automatically enabled if `-` is used as a log file path. See Example 5 for details.                                           | `false`    |
+| `--stdin` |           | Reads log entries from standard input (e.g., from a pipe). This mode is automatically enabled if `-` is used as a log file path. See Example 5 for details.                                           | `false`    |
 
 
 ### Parsing
@@ -464,7 +464,7 @@ Here is an example demonstrating a more advanced configuration:
     { "field": "level", "groupIndex": 2 },
     { "field": "threadId", "groupIndex": 3 },
     { "field": "message", "groupIndex": 4 },
-    { "field": "customFields", "groupIndex": 5, "key": "session" }
+    { "field": "customFields", "groupIndex": 5, "customFieldKey": "session" }
   ],
   "customLogLevelMappings": {
     "db_trace": "TRACE",
