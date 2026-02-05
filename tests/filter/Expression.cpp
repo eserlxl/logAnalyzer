@@ -188,23 +188,23 @@ TEST_F(FilterExpressionTest, EvaluateStringContains) {
 TEST_F(FilterExpressionTest, EvaluateNumericComparison) {
     auto entry = createLogEntry(LogLevel::WARNING, "Response time high", "perf.log", {{"response_time_ms", "550"}});
 
-    auto cond_gt = createCondition(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "500", FilterValueType::NUMERIC);
+    auto cond_gt = createCondition(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "500", FilterValueType::INT);
     cond_gt.customField = "response_time_ms";
     auto expr_gt = FilterExpression::create(cond_gt);
     EXPECT_TRUE(expr_gt.evaluate(entry));
     
-    auto cond_lt = createCondition(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "600", FilterValueType::NUMERIC);
+    auto cond_lt = createCondition(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "600", FilterValueType::INT);
     cond_lt.customField = "response_time_ms";
     auto expr_lt = FilterExpression::create(cond_lt);
     EXPECT_TRUE(expr_lt.evaluate(entry));
 
-    auto cond_gt_fail = createCondition(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "600", FilterValueType::NUMERIC);
+    auto cond_gt_fail = createCondition(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "600", FilterValueType::INT);
     cond_gt_fail.customField = "response_time_ms";
     auto expr_gt_fail = FilterExpression::create(cond_gt_fail);
     EXPECT_FALSE(expr_gt_fail.evaluate(entry));
     
     // Test with a field that doesn't exist
-    auto cond_missing = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "100", FilterValueType::NUMERIC);
+    auto cond_missing = createCondition(LogEntryField::CUSTOM, FilterOperator::EQUALS, "100", FilterValueType::INT);
     cond_missing.customField = "non_existent";
     auto expr_missing_field = FilterExpression::create(cond_missing);
     EXPECT_FALSE(expr_missing_field.evaluate(entry));

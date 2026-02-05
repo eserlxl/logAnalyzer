@@ -58,56 +58,6 @@ TEST(UtilsEnumConversionTest, StringToLogEntryField) {
     EXPECT_EQ(Utils::stringToLogEntryField("INVALID"), LogEntryField::UNKNOWN);
 }
 
-// --- FilterOperator Enum Conversions ---
-TEST(UtilsEnumConversionTest, FilterOperatorToString) {
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::EQUALS), "EQUALS");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::NOT_EQUALS), "NOT_EQUALS");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::CONTAINS), "CONTAINS");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::NOT_CONTAINS), "NOT_CONTAINS");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::STARTS_WITH), "STARTS_WITH");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::ENDS_WITH), "ENDS_WITH");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::REGEX_MATCH), "REGEX_MATCH");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::LESS_THAN), "LESS_THAN");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::GREATER_THAN), "GREATER_THAN");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::LESS_THAN_OR_EQUAL), "LESS_THAN_OR_EQUAL");
-    EXPECT_EQ(Utils::filterOperatorToString(FilterOperator::GREATER_THAN_OR_EQUAL), "GREATER_THAN_OR_EQUAL");
-}
-
-TEST(UtilsEnumConversionTest, StringToFilterOperator) {
-    EXPECT_EQ(Utils::stringToFilterOperator("EQUALS").value(), FilterOperator::EQUALS);
-    EXPECT_EQ(Utils::stringToFilterOperator("not_equals").value(), FilterOperator::NOT_EQUALS);
-    EXPECT_EQ(Utils::stringToFilterOperator("Contains").value(), FilterOperator::CONTAINS);
-    EXPECT_EQ(Utils::stringToFilterOperator("regex_match").value(), FilterOperator::REGEX_MATCH);
-    EXPECT_FALSE(Utils::stringToFilterOperator("INVALID").has_value());
-}
-
-// --- FilterLogicalOperator Enum Conversions ---
-TEST(UtilsEnumConversionTest, FilterLogicalOperatorToString) {
-    EXPECT_EQ(Utils::filterLogicalOperatorToString(FilterLogicalOperator::AND), "AND");
-    EXPECT_EQ(Utils::filterLogicalOperatorToString(FilterLogicalOperator::OR), "OR");
-}
-
-TEST(UtilsEnumConversionTest, StringToFilterLogicalOperator) {
-    EXPECT_EQ(Utils::stringToFilterLogicalOperator("AND").value(), FilterLogicalOperator::AND);
-    EXPECT_EQ(Utils::stringToFilterLogicalOperator("or").value(), FilterLogicalOperator::OR);
-    EXPECT_FALSE(Utils::stringToFilterLogicalOperator("XOR").has_value());
-    EXPECT_FALSE(Utils::stringToFilterLogicalOperator("NOT").has_value()); // Now "NOT" should return nullopt
-}
-
-// --- FilterValueType Enum Conversions ---
-TEST(UtilsEnumConversionTest, FilterValueTypeToString) {
-    EXPECT_EQ(Utils::filterValueTypeToString(FilterValueType::STRING), "STRING");
-    EXPECT_EQ(Utils::filterValueTypeToString(FilterValueType::NUMERIC), "NUMERIC");
-    EXPECT_EQ(Utils::filterValueTypeToString(FilterValueType::DATETIME), "DATETIME");
-}
-
-TEST(UtilsEnumConversionTest, StringToFilterValueType) {
-    EXPECT_EQ(Utils::stringToFilterValueType("STRING").value(), FilterValueType::STRING);
-    EXPECT_EQ(Utils::stringToFilterValueType("numeric").value(), FilterValueType::NUMERIC);
-    EXPECT_EQ(Utils::stringToFilterValueType("DateTime").value(), FilterValueType::DATETIME);
-    EXPECT_FALSE(Utils::stringToFilterValueType("BOOLEAN").has_value());
-}
-
 // --- ExportFormat Enum Conversions ---
 TEST(UtilsEnumConversionTest, ExportFormatToString) {
     EXPECT_EQ(Utils::exportFormatToString(ExportFormat::PLAINTEXT), "PLAINTEXT");

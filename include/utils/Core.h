@@ -21,9 +21,6 @@
 
 // Forward declarations to break include cycles
 // Full definitions are in Filter.h, Exporter.h, Statistics.h
-enum class FilterOperator : uint8_t;
-enum class FilterLogicalOperator : uint8_t;
-enum class FilterValueType : uint8_t;
 enum class ExportFormat;
 enum class StatisticType;
 enum class SortBy : uint8_t;
@@ -101,15 +98,6 @@ std::string logEntryFieldToString(LogEntryField field);
 LogEntryField stringToLogEntryField(const std::string& fieldStr);
 
 // LogLevel functions are declared in LogTypes.h inside namespace Utils
-
-std::string filterOperatorToString(FilterOperator op);
-std::optional<FilterOperator> stringToFilterOperator(const std::string& opStr);
-
-std::string filterLogicalOperatorToString(FilterLogicalOperator op);
-std::optional<FilterLogicalOperator> stringToFilterLogicalOperator(const std::string& opStr);
-
-std::string filterValueTypeToString(FilterValueType type);
-std::optional<FilterValueType> stringToFilterValueType(const std::string& typeStr);
 
 std::string exportFormatToString(ExportFormat format);
 std::optional<ExportFormat> stringToExportFormat(const std::string& formatStr);

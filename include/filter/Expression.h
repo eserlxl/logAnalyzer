@@ -10,6 +10,7 @@
 #include "core/LogTypes.h" // For LogEntry
 #include "filter/Condition.h" // For FilterCondition
 #include "filter/Types.h"     // For FilterLogicalOperator
+#include "filter/EnumStringConversions.h" // New: For enum to string conversions
 
 // New: Represents a composite filter expression (tree-like structure)
 class FilterExpression {
@@ -87,7 +88,7 @@ inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
     if (fe.getType() == FilterExpression::ExpressionType::CONDITION) {
         j["condition"] = *fe.getCondition();
     } else if (fe.getType() == FilterExpression::ExpressionType::LOGICAL) {
-        j["operator"] = Utils::filterLogicalOperatorToString(*fe.getLogicalOperator());
+        j["operator"] = toString(*fe.getLogicalOperator());
         if (!fe.getExpressions().empty()) {
             j["operands"] = nlohmann::json::array();
             for (const auto& operand : fe.getExpressions()) {
@@ -117,7 +118,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpressi
         fe = FilterExpression(std::move(fc), current_negated); // Pass current_negated
     } else if (j.contains("operator") && j.at("operator").is_string()) {
         auto opStr = j.at("operator").get<std::string>();
-        auto opOpt = Utils::stringToFilterLogicalOperator(opStr);
+        auto opOpt = fromStringToFilterLogicalOperator(opStr);
         if (!opOpt) {
             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unknown filter logical operator: " + opStr));
         }

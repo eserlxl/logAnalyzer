@@ -86,8 +86,7 @@ std::string logEntryFieldToString(LogEntryField field) {
 }
 
 LogEntryField stringToLogEntryField(const std::string& fieldStr) {
-    std::string upperFieldStr = fieldStr;
-    std::transform(upperFieldStr.begin(), upperFieldStr.end(), upperFieldStr.begin(), ::toupper);
+    std::string upperFieldStr = toUpper(fieldStr);
 
     if (upperFieldStr == "ID") return LogEntryField::ID;
     if (upperFieldStr == "TIMESTAMP") return LogEntryField::TIMESTAMP;
@@ -102,82 +101,6 @@ LogEntryField stringToLogEntryField(const std::string& fieldStr) {
     if (upperFieldStr == "STRUCTURED_FIELD") return LogEntryField::STRUCTURED_FIELD;
     return LogEntryField::UNKNOWN;
 }
-
-// FilterOperator
-std::string filterOperatorToString(FilterOperator op) {
-    switch (op) {
-        case FilterOperator::EQUALS: return "EQUALS";
-        case FilterOperator::NOT_EQUALS: return "NOT_EQUALS";
-        case FilterOperator::CONTAINS: return "CONTAINS";
-        case FilterOperator::NOT_CONTAINS: return "NOT_CONTAINS";
-        case FilterOperator::STARTS_WITH: return "STARTS_WITH";
-        case FilterOperator::ENDS_WITH: return "ENDS_WITH";
-        case FilterOperator::REGEX_MATCH: return "REGEX_MATCH";
-        case FilterOperator::LESS_THAN: return "LESS_THAN";
-        case FilterOperator::GREATER_THAN: return "GREATER_THAN";
-        case FilterOperator::LESS_THAN_OR_EQUAL: return "LESS_THAN_OR_EQUAL";
-        case FilterOperator::GREATER_THAN_OR_EQUAL: return "GREATER_THAN_OR_EQUAL";
-        default: return "UNKNOWN";
-    }
-}
-
-std::optional<FilterOperator> stringToFilterOperator(const std::string& opStr) {
-    std::string upperOpStr = opStr;
-    std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
-
-    if (upperOpStr == "EQUALS") return FilterOperator::EQUALS;
-    if (upperOpStr == "NOT_EQUALS") return FilterOperator::NOT_EQUALS;
-    if (upperOpStr == "CONTAINS") return FilterOperator::CONTAINS;
-    if (upperOpStr == "NOT_CONTAINS") return FilterOperator::NOT_CONTAINS;
-    if (upperOpStr == "STARTS_WITH") return FilterOperator::STARTS_WITH;
-    if (upperOpStr == "ENDS_WITH") return FilterOperator::ENDS_WITH;
-    if (upperOpStr == "GREATER_THAN") return FilterOperator::GREATER_THAN;
-    if (upperOpStr == "LESS_THAN") return FilterOperator::LESS_THAN;
-    if (upperOpStr == "GREATER_THAN_OR_EQUAL") return FilterOperator::GREATER_THAN_OR_EQUAL;
-    if (upperOpStr == "LESS_THAN_OR_EQUAL") return FilterOperator::LESS_THAN_OR_EQUAL;
-    if (upperOpStr == "REGEX_MATCH") return FilterOperator::REGEX_MATCH;
-    return std::nullopt;
-}
-
-// FilterLogicalOperator
-std::string filterLogicalOperatorToString(FilterLogicalOperator op) {
-    switch (op) {
-        case FilterLogicalOperator::AND: return "AND";
-        case FilterLogicalOperator::OR: return "OR";
-    }
-    return "UNKNOWN_LOGICAL_OPERATOR"; // Fallback for safety, though technically unreachable.
-}
-
-std::optional<FilterLogicalOperator> stringToFilterLogicalOperator(const std::string& opStr) {
-    std::string upperOpStr = opStr;
-    std::transform(upperOpStr.begin(), upperOpStr.end(), upperOpStr.begin(), ::toupper);
-
-    if (upperOpStr == "AND") return FilterLogicalOperator::AND;
-    if (upperOpStr == "OR") return FilterLogicalOperator::OR;
-    return std::nullopt;
-}
-
-// FilterValueType
-std::string filterValueTypeToString(FilterValueType type) {
-    switch (type) {
-        case FilterValueType::STRING: return "STRING";
-        case FilterValueType::NUMERIC: return "NUMERIC";
-        case FilterValueType::DATETIME: return "DATETIME";
-        default: return "UNKNOWN";
-    }
-}
-
-std::optional<FilterValueType> stringToFilterValueType(const std::string& typeStr) {
-    std::string upperTypeStr = typeStr;
-    std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
-
-    if (upperTypeStr == "STRING") return FilterValueType::STRING;
-    if (upperTypeStr == "NUMERIC") return FilterValueType::NUMERIC;
-    if (upperTypeStr == "DATETIME") return FilterValueType::DATETIME;
-    return std::nullopt;
-}
-
-// ExportFormat
 std::string exportFormatToString(ExportFormat format) {
     switch (format) {
         case ExportFormat::PLAINTEXT: return "PLAINTEXT";

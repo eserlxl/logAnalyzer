@@ -383,7 +383,7 @@ An example `config.json`:
 
 ```json
 {
-  "lineParsePattern": "^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$",
+  "lineParsePattern": "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) ([A-Z]+): (.*)$",
   "fieldMappings": [
     { "field": "timestamp", "groupIndex": 1 },
     { "field": "level", "groupIndex": 2 },
@@ -394,7 +394,7 @@ An example `config.json`:
     "WARN": "WARNING",
     "ERROR": "ERROR"
   },
-  "logEntryStartPattern": "^\d{4}-\d{2}-\d{2}",
+  "logEntryStartPattern": "^\\d{4}-\\d{2}-\\d{2}",
   "caseSensitiveParsing": false,
   "filterRules": [
     { "field": "level", "operator": "EQ", "value": "ERROR" }

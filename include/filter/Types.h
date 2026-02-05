@@ -28,7 +28,9 @@ enum class FilterOperator : uint8_t {
     LESS_THAN,          // Checks if a field's numeric or datetime value is less than the filter value. (e.g., <)
     GREATER_THAN,       // Checks if a field's numeric or datetime value is greater than the filter value. (e.g., >)
     LESS_THAN_OR_EQUAL, // Checks if a field's numeric or datetime value is less than or equal to the filter value. (e.g., <=)
-    GREATER_THAN_OR_EQUAL // Checks if a field's numeric or datetime value is greater than or equal to the filter value. (e.g., >=)
+    GREATER_THAN_OR_EQUAL, // Checks if a field's numeric or datetime value is greater than or equal to the filter value. (e.g., >=)
+    IS_PRESENT,         // Checks if a field exists and has a non-null/non-empty value.
+    IS_ABSENT           // Checks if a field does not exist or has a null/empty value.
     // TODO: Removed UNKNOWN. Implement explicit error handling or std::optional for parsing invalid operator strings.
 };
 
@@ -43,7 +45,9 @@ enum class FilterLogicalOperator : uint8_t {
 // Enum to indicate how a filter value should be interpreted (e.g., for type conversion and comparison).
 enum class FilterValueType : uint8_t {
     STRING,   // The filter value should be treated as a string.
-    NUMERIC,  // The filter value should be treated as a numeric type (integer or float).
+    INT,      // The filter value should be treated as an integer.
+    DOUBLE,   // The filter value should be treated as a double-precision floating-point number.
+    BOOL,     // The filter value should be treated as a boolean.
     DATETIME  // The filter value should be treated as a date and/or time.
     // TODO: Removed UNKNOWN. Implement explicit error handling or std::optional for parsing invalid value type strings.
 };

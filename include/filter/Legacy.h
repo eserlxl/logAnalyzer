@@ -10,6 +10,7 @@
 
 #include "core/Error.h" // For ErrorCode::Result
 #include "filter/Types.h" // For FilterOperator, LogEntryField
+#include "filter/EnumStringConversions.h" // For enum to string conversions
 
 // Transitional: Represents a simplified filter rule for legacy JSON formats.
 // This is part of a transitional phase and should not be used for new development.
@@ -45,12 +46,10 @@ struct FilterCriteria {
 
 // JSON conversion for FilterRule
 inline void to_json(nlohmann::json& j, const FilterRule& fr) {
-    j = nlohmann::json{
-        {"field", Utils::logEntryFieldToString(fr.field)},
-        {"op", Utils::filterOperatorToString(fr.op)},
-        {"value", fr.value},
-        {"caseSensitive", fr.caseSensitive}
-    };
+    j["field"] = Utils::logEntryFieldToString(fr.field);
+    j["op"] = toString(fr.op);
+    j["value"] = fr.value;
+    j["caseSensitive"] = fr.caseSensitive;
 }
 
 inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr) {
@@ -65,7 +64,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr
     if (!j.contains("op") || !j.at("op").is_string()) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'op'."));
     }
-    auto opOpt = Utils::stringToFilterOperator(j.at("op").get<std::string>());
+    auto opOpt = fromStringToFilterOperator(j.at("op").get<std::string>());
     if (!opOpt) {
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule has an unrecognized 'op' string: " + j.at("op").get<std::string>()));
     }

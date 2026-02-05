@@ -80,10 +80,30 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
 
         out << entryIndent; // Always use entryIndent for log entries
         out << "{";
-        out << "\"timestamp\":\"" << timestampStr << "\",";
-        out << "\"level\":\"" << Utils::logLevelToString(entry.level) << "\",";
-        out << "\"message\":\"" << Utils::escapeJsonString(entry.message) << "\",";
-        out << "\"file\":\"" << Utils::escapeJsonString(entry.sourceFile) << "\"";
+        out << "\"ID\":\"" << entry.id << "\","; // Export ID
+        if (entry.timestamp.has_value()) {
+            out << "\"TIMESTAMP\":\"" << timestampStr << "\",";
+        } else {
+            out << "\"TIMESTAMP\":\"" << "\","; // Export empty string if no timestamp
+        }
+        out << "\"LEVEL\":\"" << Utils::logLevelToString(entry.level) << "\",";
+        out << "\"MESSAGE\":\"" << Utils::escapeJsonString(entry.message) << "\",";
+        out << "\"SOURCE_FILE\":\"" << Utils::escapeJsonString(entry.sourceFile) << "\","; // Changed key to SOURCE_FILE
+        out << "\"LINE_NUMBER\":\"" << entry.sourceLineNumber << "\""; // Export LINE_NUMBER
+
+        // Export custom fields
+        if (!entry.customFields.empty()) {
+            out << ", \"CUSTOM_FIELDS\": {";
+            bool firstCustomField = true;
+            for (const auto& pair : entry.customFields) {
+                if (!firstCustomField) {
+                    out << ",";
+                }
+                out << "\"" << Utils::escapeJsonString(pair.first) << "\":\"" << Utils::escapeJsonString(pair.second) << "\"";
+                firstCustomField = false;
+            }
+            out << "}";
+        }
         out << "}";
         if (i < filtered.size() - 1) {
             out << ",";

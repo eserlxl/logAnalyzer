@@ -199,7 +199,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonNumericSuccess) {
         {"field", "thread_id"},
         {"op", "GREATER_THAN"},
         {"value", "100"},
-        {"value_type", "NUMERIC"},
+        {"value_type", "INT"},
         {"caseSensitive", false}
     };
 
@@ -210,7 +210,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonNumericSuccess) {
     EXPECT_EQ(fc.field, LogEntryField::THREAD_ID);
     EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
     EXPECT_EQ(fc.value, "100");
-    EXPECT_EQ(fc.valueType, FilterValueType::NUMERIC);
+    EXPECT_EQ(fc.valueType, FilterValueType::INT);
     EXPECT_FALSE(fc.datetimeFormat.has_value());
 }
 
@@ -355,5 +355,5 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonLegacyValueTypeInt) {
     FilterCondition fc;
     auto result = from_json(j, fc);
     ASSERT_TRUE(result.has_value()) << result.error().message;
-    EXPECT_EQ(fc.valueType, FilterValueType::NUMERIC);
+    EXPECT_EQ(fc.valueType, FilterValueType::INT);
 }
