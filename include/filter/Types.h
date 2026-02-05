@@ -70,7 +70,8 @@ enum class FilterValueType : uint8_t {
     DATETIME = 5,
     AUTO = 6,     // Infer the type from the value's syntax (New).
     VERSION = 7,  // Treat value as a semantic version string (New).
-    IP_ADDRESS = 8 // Treat value as an IPv4/IPv6 address (New).
+    IP_ADDRESS = 8, // Treat value as an IPv4/IPv6 address (New).
+    REGEX = 9     // Treat value as a regular expression pattern.
 };
 
 #endif // FILTER_TYPES_H

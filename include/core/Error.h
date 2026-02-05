@@ -27,48 +27,51 @@ namespace ErrorCode {
 struct Error : public std::runtime_error {
     Code code;
     std::string message;
+    std::string jsonPath; // Added jsonPath for enhanced error reporting
 
-    // Constructor
-    Error(Code c, std::string msg) : std::runtime_error(msg), code(c), message(std::move(msg)) {}
+    // Constructor with message and jsonPath
+    Error(Code c, std::string msg, std::string path) : std::runtime_error(msg), code(c), message(std::move(msg)), jsonPath(std::move(path)) {}
 
-    // Default constructor for cases where only code is needed
-    Error(Code c) : std::runtime_error("Unknown Error"), code(c), message("") {}
+    // Constructor with message (jsonPath defaults to empty)
+    Error(Code c, std::string msg) : Error(c, std::move(msg), "") {}
+
+    // Default constructor for cases where only code is needed (jsonPath defaults to empty)
+    Error(Code c) : Error(c, "Unknown Error", "") {}
 
     // Override what() method from std::runtime_error
     const char* what() const noexcept override {
         return message.c_str();
     }
 
-    // Static factory for common errors
-    static Error invalidArgument(const std::string& argName) {
-        return Error(Code::InvalidArgument, "Invalid argument: " + argName);
+    // Static factory for common errors, updated to include jsonPath
+    static Error invalidArgument(const std::string& argName, const std::string& path = "") {
+        return Error(Code::InvalidArgument, "Invalid argument: " + argName, path);
     }
-    static Error fileNotFound(const std::string& filePath) {
-        return Error(Code::FileNotFound, "File not found: " + filePath);
+    static Error fileNotFound(const std::string& filePath, const std::string& path = "") {
+        return Error(Code::FileNotFound, "File not found: " + filePath, path);
     }
-    static Error fileNotReadable(const std::string& filePath) {
-        return Error(Code::FileNotReadable, "File not readable: " + filePath);
+    static Error fileNotReadable(const std::string& filePath, const std::string& path = "") {
+        return Error(Code::FileNotReadable, "File not readable: " + filePath, path);
     }
-     static Error invalidCLIOption(const std::string& option) {
-        return Error(Code::InvalidCLIOption, "Invalid CLI option: " + option);
+     static Error invalidCLIOption(const std::string& option, const std::string& path = "") {
+        return Error(Code::InvalidCLIOption, "Invalid CLI option: " + option, path);
     }
-    static Error statisticNotFound(const std::string& statName) {
-        return Error(Code::StatisticNotFound, "Statistic collector not found: " + statName);
+    static Error statisticNotFound(const std::string& statName, const std::string& path = "") {
+        return Error(Code::StatisticNotFound, "Statistic collector not found: " + statName, path);
     }
-    static Error timestampParsingFailed(const std::string& details) {
-        return Error(Code::TimestampParsingFailed, "Timestamp parsing failed: " + details);
+    static Error timestampParsingFailed(const std::string& details, const std::string& path = "") {
+        return Error(Code::TimestampParsingFailed, "Timestamp parsing failed: " + details, path);
     }
-    static Error settingsRestoreFailed(const std::string& details) {
-        return Error(Code::SettingsRestoreFailed, "Settings restore failed: " + details);
+    static Error settingsRestoreFailed(const std::string& details, const std::string& path = "") {
+        return Error(Code::SettingsRestoreFailed, "Settings restore failed: " + details, path);
     }
-    static Error unexpected(const std::string& details) {
-        return Error(Code::Unexpected, "Unexpected error: " + details);
+    static Error unexpected(const std::string& details, const std::string& path = "") {
+        return Error(Code::Unexpected, "Unexpected error: " + details, path);
     }
 
 
     // Convert to string for logging or display
     std::string toString() const {
-        // This could be expanded to map enum values to human-readable strings
         std::string codeStr;
         switch (code) {
             case Code::Unknown: codeStr = "Unknown"; break;
@@ -85,10 +88,14 @@ struct Error : public std::runtime_error {
             case Code::Unexpected: codeStr = "Unexpected"; break;
             default: codeStr = "UnknownCode"; break;
         }
+        std::string fullMessage = codeStr;
         if (!message.empty()) {
-            return codeStr + ": " + message;
+            fullMessage += ": " + message;
         }
-        return codeStr;
+        if (!jsonPath.empty()) {
+            fullMessage += " at JSON path: " + jsonPath;
+        }
+        return fullMessage;
     }
 };
 

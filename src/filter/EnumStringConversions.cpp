@@ -99,6 +99,7 @@ std::string toString(FilterValueType type) {
         case FilterValueType::DATETIME: return "DATETIME";
         case FilterValueType::VERSION: return "VERSION";
         case FilterValueType::IP_ADDRESS: return "IP_ADDRESS";
+        case FilterValueType::REGEX: return "REGEX";
         default: return "UNKNOWN_VALUE_TYPE";
     }
 }
@@ -114,6 +115,7 @@ std::optional<FilterValueType> fromStringToFilterValueType(const std::string& ty
     if (upperTypeStr == "DATETIME") return FilterValueType::DATETIME;
     if (upperTypeStr == "VERSION") return FilterValueType::VERSION;
     if (upperTypeStr == "IP_ADDRESS") return FilterValueType::IP_ADDRESS;
+    if (upperTypeStr == "REGEX") return FilterValueType::REGEX;
     return std::nullopt;
 }
 

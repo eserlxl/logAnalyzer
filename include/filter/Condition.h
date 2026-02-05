@@ -74,54 +74,57 @@ inline void to_json(nlohmann::json& j, const FilterCondition& fc) {
 }
 
 // Helper to convert JSON to FilterCondition
-inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterCondition& fc) {
+inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterCondition& fc, const std::string& current_path = "/") {
+    auto make_error = [&](Code c, const std::string& msg, const std::string& field_name) {
+        std::string path = current_path.empty() || current_path == "/" ? "/" + field_name : current_path + "/" + field_name;
+        return ErrorCode::Error(c, msg, path);
+    };
+
+    if (!j.contains("field") || !j.at("field").is_string()) {
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'field'.", "field"));
+    }
     std::string fieldStr = j.at("field").get<std::string>();
     LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
     
     if (standardField == LogEntryField::UNKNOWN) {
-        // If fieldStr is not a standard enum value, treat it as a custom field name
         fc.field = LogEntryField::CUSTOM;
-        fc.customField = fieldStr; // The field string itself is the custom key
+        fc.customField = fieldStr;
     } else {
         fc.field = standardField;
     }
 
-    // If fc.field is CUSTOM (either explicitly "CUSTOM" or an unrecognized string),
-    // and a "customField" key exists in JSON, it overrides the inferred customField.
-    // This allows for {"field": "custom_key"} OR {"field": "CUSTOM", "customField": "custom_key"}
     if (fc.field == LogEntryField::CUSTOM && j.contains("customField")) {
         if (j.at("customField").is_string()) {
             fc.customField = j.at("customField").get<std::string>();
         } else if (j.at("customField").is_null()) {
             fc.customField = std::nullopt;
         } else {
-            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'customField' must be a string or null."));
+            return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition 'customField' must be a string or null.", "customField"));
         }
     }
 
-
     if (!j.contains("op") || !j.at("op").is_string()) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'op'."));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'op'.", "op"));
     }
     auto opOpt = fromStringToFilterOperator(j.at("op").get<std::string>());
     if (!opOpt) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'op' string: " + j.at("op").get<std::string>()));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition has an unrecognized 'op' string: " + j.at("op").get<std::string>(), "op"));
     }
     fc.op = *opOpt;
 
     if (!j.contains("value") || !j.at("value").is_string()) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'value'."));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition is missing or has invalid 'value'.", "value"));
     }
     fc.value = j.at("value").get<std::string>();
 
     if (!j.contains("value_type")) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition is missing 'value_type'."));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition is missing 'value_type'.", "value_type"));
     }
 
     if (j.at("value_type").is_string()) {
         auto typeOpt = fromStringToFilterValueType(j.at("value_type").get<std::string>());
         if (!typeOpt) {
-            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an unrecognized 'value_type' string: " + j.at("value_type").get<std::string>()));
+            return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition has an unrecognized 'value_type' string: " + j.at("value_type").get<std::string>(), "value_type"));
         }
         fc.valueType = *typeOpt;
     } else if (j.at("value_type").is_number_integer()) {
@@ -129,35 +132,31 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
             if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::IP_ADDRESS)) {
                 fc.valueType = static_cast<FilterValueType>(vt_int);
             } else {
-                return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition has an invalid integer for 'value_type'. Must be between " + std::to_string(static_cast<int>(FilterValueType::STRING)) + " and " + std::to_string(static_cast<int>(FilterValueType::IP_ADDRESS)) + "."));
+                return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition has an invalid integer for 'value_type'. Must be between " + std::to_string(static_cast<int>(FilterValueType::STRING)) + " and " + std::to_string(static_cast<int>(FilterValueType::IP_ADDRESS)) + ".", "value_type"));
             }
     } else {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'value_type' must be a string or integer."));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition 'value_type' must be a string or integer.", "value_type"));
     }
 
-    // caseSensitive is always serialized as per to_json, so direct access is fine, with default for safety
-    fc.caseSensitive = j.value("caseSensitive", false);
+    if (j.contains("caseSensitive")) {
+        if (!j.at("caseSensitive").is_boolean()) {
+            return std::unexpected(make_error(Code::InvalidArgument, "'caseSensitive' must be a boolean.", "caseSensitive"));
+        }
+        fc.caseSensitive = j.at("caseSensitive").get<bool>();
+    } else {
+        fc.caseSensitive = false; // Default to false if not present
+    }
 
     if (j.contains("datetimeFormat")) {
         if (j.at("datetimeFormat").is_string()) {
             fc.datetimeFormat = j.at("datetimeFormat").get<std::string>();
         } else if (!j.at("datetimeFormat").is_null()) {
-            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'datetimeFormat' must be a string or null."));
+            return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition 'datetimeFormat' must be a string or null.", "datetimeFormat"));
         }
     }
 
-    // The 'customField' is handled when determining fc.field, no separate setting needed here
-    // if (j.contains("customField")) {
-    //     if (j.at("customField").is_string()) {
-    //         fc.customField = j.at("customField").get<std::string>();
-    //     } else if (!j.at("customField").is_null()) {
-    //         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition 'customField' must be a string or null."));
-    //     }
-    // }
-
-    // Final validation: Enforce that DATETIME valueType requires a datetimeFormat.
     if (fc.valueType == FilterValueType::DATETIME && !fc.datetimeFormat.has_value()) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterCondition with DATETIME 'value_type' requires a 'datetimeFormat'."));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterCondition with DATETIME 'value_type' requires a 'datetimeFormat'.", "datetimeFormat"));
     }
 
     return {}; // Success

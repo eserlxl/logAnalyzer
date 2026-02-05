@@ -52,30 +52,42 @@ inline void to_json(nlohmann::json& j, const FilterRule& fr) {
     j["caseSensitive"] = fr.caseSensitive;
 }
 
-inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr) {
+inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr, const std::string& current_path = "/") {
+    auto make_error = [&](Code c, const std::string& msg, const std::string& field_name) {
+        std::string path = current_path.empty() || current_path == "/" ? "/" + field_name : current_path + "/" + field_name;
+        return ErrorCode::Error(c, msg, path);
+    };
+
     if (!j.contains("field") || !j.at("field").is_string()) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'field'."));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule is missing or has invalid 'field'.", "field"));
     }
     fr.field = Utils::stringToLogEntryField(j.at("field").get<std::string>());
     if (fr.field == LogEntryField::UNKNOWN) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule has an unrecognized field: " + j.at("field").get<std::string>()));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule has an unrecognized field: " + j.at("field").get<std::string>(), "field"));
     }
 
     if (!j.contains("op") || !j.at("op").is_string()) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'op'."));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule is missing or has invalid 'op'.", "op"));
     }
     auto opOpt = fromStringToFilterOperator(j.at("op").get<std::string>());
     if (!opOpt) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule has an unrecognized 'op' string: " + j.at("op").get<std::string>()));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule has an unrecognized 'op' string: " + j.at("op").get<std::string>(), "op"));
     }
     fr.op = *opOpt;
 
     if (!j.contains("value") || !j.at("value").is_string()) {
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "FilterRule is missing or has invalid 'value'."));
+        return std::unexpected(make_error(Code::InvalidArgument, "FilterRule is missing or has invalid 'value'.", "value"));
     }
     fr.value = j.at("value").get<std::string>();
 
-    fr.caseSensitive = j.value("caseSensitive", false);
+    if (j.contains("caseSensitive")) {
+        if (!j.at("caseSensitive").is_boolean()) {
+            return std::unexpected(make_error(Code::InvalidArgument, "'caseSensitive' must be a boolean.", "caseSensitive"));
+        }
+        fr.caseSensitive = j.at("caseSensitive").get<bool>();
+    } else {
+        fr.caseSensitive = false; // Default to false
+    }
 
     return {}; // Success
 }
