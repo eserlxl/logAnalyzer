@@ -1,4 +1,4 @@
-# LogAnalyzer
+# logAnalyzer
 
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
