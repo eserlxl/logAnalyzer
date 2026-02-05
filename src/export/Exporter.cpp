@@ -17,10 +17,18 @@ using json = nlohmann::json;
 
 // JSON conversion for ExportFieldMapping
 void to_json(nlohmann::json& j, const ExportFieldMapping& efm) {
-    j = nlohmann::json{
-        {"field", Utils::logEntryFieldToString(efm.field)},
-        {"customHeader", efm.customHeader}
-    };
+    std::visit([&](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, LogEntryField>) {
+            j["field"] = Utils::logEntryFieldToString(arg);
+        } else if constexpr (std::is_same_v<T, std::string>) {
+            j["field"] = arg;
+        } else {
+            // Should not happen with current variant types
+            j["field"] = nullptr;
+        }
+    }, efm.field);
+    j["customHeader"] = efm.customHeader;
     if (efm.datetimeFormat) {
         j["datetimeFormat"] = *efm.datetimeFormat;
     }
@@ -92,102 +100,90 @@ void Exporter::exportAsJson(
         json entryJson; // Create an empty JSON object for the entry
         
         for (const auto& fieldMapping : fieldsToExport) {
-            std::string value;
             std::string key;
+            json value_json; // Use json type for value to handle different types correctly
 
-            if (fieldMapping.field == LogEntryField::CUSTOM) {
-                key = fieldMapping.customHeader; // Key is the custom field name
-                // Only add custom field to JSON if the key is not empty AND it exists in the log entry
-                if (!key.empty() && entry.customFields.count(key)) {
-                    entryJson[key] = entry.customFields.at(key);
-                } 
-                // If key is empty or custom field not found, we don't add it to entryJson.
-            } else {
-                // For standard fields, use customHeader if provided, otherwise use string representation of field.
-                key = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(fieldMapping.field) : fieldMapping.customHeader;
-
-                // Always assign standard field value to entryJson if a valid key was determined.
-                // The key should always be valid here.
-                switch (fieldMapping.field) {
-                    case LogEntryField::ID:
-                        if (entry.id.has_value()) {
-                            entryJson[key] = entry.id.value();
-                        } else {
-                            entryJson[key] = json::value_t::null;
-                        }
-                        break;
-                    case LogEntryField::TIMESTAMP: {
-                        if (entry.timestamp.has_value()) {
-                            std::string timestampValue;
-                            if (fieldMapping.datetimeFormat.has_value()) {
-                                timestampValue = Utils::formatTimestamp(entry.timestamp.value(), fieldMapping.datetimeFormat.value());
-                            } else {
-                                timestampValue = Utils::formatTimestamp(entry.timestamp.value());
-                            }
-                            entryJson[key] = timestampValue;
-                        } else {
-                            entryJson[key] = json::value_t::null; // Explicitly null if timestamp is absent
-                        }
-                        break;
+            // Use std::visit to handle the std::variant 'field' member
+            std::visit([&](auto&& arg) {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, std::string>) {
+                    // Custom string field
+                    key = arg; // The string itself is the key
+                    if (!key.empty() && entry.customFields.count(key)) {
+                        value_json = entry.customFields.at(key);
+                    } else {
+                        value_json = json::value_t::null; // Null if custom field not found or key is empty
                     }
-                    case LogEntryField::LEVEL:
-                        entryJson[key] = Utils::logLevelToString(entry.level);
-                        break;
-                    case LogEntryField::MESSAGE:
-                        entryJson[key] = entry.message; // Always assign, even if empty
-                        break;
-                    case LogEntryField::SOURCE_FILE:
-                        entryJson[key] = entry.sourceFile; // Always assign, even if empty
-                        break;
-                    case LogEntryField::LINE_NUMBER:
-                        if (entry.sourceLineNumber.has_value()) {
-                            entryJson[key] = entry.sourceLineNumber.value();
-                        } else {
-                            entryJson[key] = json::value_t::null;
-                        }
-                        break;
-                    case LogEntryField::THREAD_ID:
-                        if (entry.threadId.has_value()) {
-                            entryJson[key] = entry.threadId.value();
-                        } else {
-                            entryJson[key] = json::value_t::null;
-                        }
-                        break;
-                    case LogEntryField::MODULE:
-                        if (entry.module.has_value()) {
-                            entryJson[key] = entry.module.value();
-                        } else {
-                            entryJson[key] = json::value_t::null;
-                        }
-                        break;
-                    case LogEntryField::HOST:
-                        if (entry.host.has_value()) {
-                            entryJson[key] = entry.host.value();
-                        } else {
-                            entryJson[key] = json::value_t::null;
-                        }
-                        break;
-                    case LogEntryField::STRUCTURED_FIELD:
-                        if (entry.structuredData.has_value()) {
-                            try {
-                                json structuredJson = json::parse(entry.structuredData.value());
-                                entryJson[key] = structuredJson;
-                            } catch (const json::parse_error& e) {
-                                // If parsing fails, treat it as a plain string
-                                entryJson[key] = entry.structuredData.value();
+                } else if constexpr (std::is_same_v<T, LogEntryField>) {
+                    // Standard LogEntryField
+                    LogEntryField fieldEnum = arg;
+                    key = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(fieldEnum) : fieldMapping.customHeader;
+
+                    switch (fieldEnum) {
+                        case LogEntryField::ID:
+                            value_json = entry.id.has_value() ? json(entry.id.value()) : json::value_t::null;
+                            break;
+                        case LogEntryField::TIMESTAMP: {
+                            if (entry.timestamp.has_value()) {
+                                std::string timestampValue;
+                                if (fieldMapping.datetimeFormat.has_value()) {
+                                    timestampValue = Utils::formatTimestamp(entry.timestamp.value(), fieldMapping.datetimeFormat.value());
+                                } else {
+                                    timestampValue = Utils::formatTimestamp(entry.timestamp.value());
+                                }
+                                value_json = timestampValue;
+                            } else {
+                                value_json = json::value_t::null;
                             }
-                        } else {
-                            entryJson[key] = json::value_t::null;
+                            break;
                         }
-                        break;
-                    case LogEntryField::UNKNOWN:
-                    default:
-                        // If UNKNOWN field type is somehow requested, or an unhandled enum,
-                        // it's an error in fieldMapping definition or program logic.
-                        // We will add a null entry to ensure the key exists but with no value.
-                        entryJson[key] = json::value_t::null;
-                        break;
+                        case LogEntryField::LEVEL:
+                            value_json = Utils::logLevelToString(entry.level);
+                            break;
+                        case LogEntryField::MESSAGE:
+                            value_json = entry.message;
+                            break;
+                        case LogEntryField::SOURCE_FILE:
+                            value_str = entry.sourceFile; // Assign to value_str first to check for nullopt
+                            value_json = !entry.sourceFile.empty() ? json(entry.sourceFile) : json::value_t::null;
+                            break;
+                        case LogEntryField::LINE_NUMBER:
+                            value_json = entry.sourceLineNumber.has_value() ? json(entry.sourceLineNumber.value()) : json::value_t::null;
+                            break;
+                        case LogEntryField::THREAD_ID:
+                            value_json = entry.threadId.has_value() ? json(entry.threadId.value()) : json::value_t::null;
+                            break;
+                        case LogEntryField::MODULE:
+                            value_json = entry.module.has_value() ? json(entry.module.value()) : json::value_t::null;
+                            break;
+                        case LogEntryField::HOST:
+                            value_json = entry.host.has_value() ? json(entry.host.value()) : json::value_t::null;
+                            break;
+                        case LogEntryField::STRUCTURED_FIELD:
+                            if (entry.structuredData.has_value()) {
+                                try {
+                                    value_json = json::parse(entry.structuredData.value());
+                                } catch (const json::parse_error& e) {
+                                    value_json = entry.structuredData.value(); // Treat as string if parsing fails
+                                }
+                            } else {
+                                value_json = json::value_t::null;
+                            }
+                            break;
+                        case LogEntryField::UNKNOWN:
+                        default:
+                            value_json = json::value_t::null;
+                            break;
+                    }
                 }
+            } else {
+                 // Fallback for unexpected variant types (should not happen)
+                 key = "unknown_field"; // Or handle appropriately
+                 value_json = json::value_t::null;
+            }
+
+            if (!key.empty()) {
+                entryJson[key] = value_json;
             }
         }
         // Add the populated entryJson to the main entries array
@@ -198,9 +194,6 @@ void Exporter::exportAsJson(
     j["summary"] = {
         {"count", entries.size()}
     };
-
-    // Temporary debug print to inspect the JSON object before dumping
-    // std::cerr << "DEBUG: JSON object before dump: " << j.dump(2) << std::endl;
 
     if (settings.jsonIndent.has_value() && settings.jsonIndent.value() >= 0) {
         os << j.dump(settings.jsonIndent.value()) << std::endl;
@@ -274,25 +267,17 @@ void Exporter::exportAsCsv(
             const auto& fieldMapping = fieldsToConsider[i];
             std::string headerName;
 
-            if (fieldMapping.field == LogEntryField::CUSTOM) {
-                // For CUSTOM fields, the customHeader is the actual field name.
-                // If customHeader is empty, it's an invalid mapping for a custom field.
-                if (!fieldMapping.customHeader.empty()) {
-                    headerName = fieldMapping.customHeader;
-                } else {
-                    // This case should ideally not happen if custom fields are discovered correctly,
-                    // but as a fallback, we could log a warning or use a placeholder.
-                    // For now, let's treat it as an empty header for this specific field.
-                    headerName = ""; 
+            // Determine the header name. This part needs to correctly interpret fieldMapping.field
+            // whether it's a string (custom field name) or LogEntryField enum.
+            std::visit([&](auto&& arg) {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, std::string>) {
+                    headerName = arg; // Custom field name is the header name
+                } else if constexpr (std::is_same_v<T, LogEntryField>) {
+                    headerName = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(arg) : fieldMapping.customHeader;
                 }
-            } else {
-                // For standard fields, use customHeader if provided, otherwise use string representation.
-                if (!fieldMapping.customHeader.empty()) {
-                    headerName = fieldMapping.customHeader;
-                } else {
-                    headerName = Utils::logEntryFieldToString(fieldMapping.field);
-                }
-            }
+            }, fieldMapping.field);
+
             os << formatCsvField(headerName, settings.separator);
             
             if (i < fieldsToConsider.size() - 1) {
@@ -306,82 +291,92 @@ void Exporter::exportAsCsv(
         for (size_t i = 0; i < fieldsToConsider.size(); ++i) {
             const auto& fieldMapping = fieldsToConsider[i];
             std::string value_str; // Declare here
-            switch (fieldMapping.field) {
-                case LogEntryField::ID:
-                    if (entry.id.has_value()) {
-                        value_str = std::to_string(entry.id.value());
+
+            // Use std::visit to handle the std::variant 'field' member and extract the value
+            std::visit([&](auto&& arg) {
+                using T = std::decay_t<decltype(arg)>;
+                
+                if constexpr (std::is_same_v<T, std::string>) {
+                    // It's a custom string field name. Use it to look up in customFields.
+                    const std::string& fieldName = arg;
+                    if (!fieldName.empty() && entry.customFields.count(fieldName)) {
+                        value_str = entry.customFields.at(fieldName);
                     } else {
-                        value_str = "";
+                        value_str = ""; // Empty string if custom field not found or name is empty.
                     }
-                    break;
-                case LogEntryField::TIMESTAMP:
-                    if (entry.timestamp.has_value()) {
-                        if (fieldMapping.datetimeFormat.has_value()) {
-                            value_str = Utils::formatTimestamp(entry.timestamp.value(), fieldMapping.datetimeFormat.value());
-                        } else {
-                            value_str = Utils::formatTimestamp(entry.timestamp.value());
-                        }
-                    } else {
-                        value_str = ""; // Empty string if no timestamp
+                } else if constexpr (std::is_same_v<T, LogEntryField>) {
+                    // It's a standard LogEntryField. Use the switch statement for known fields.
+                    LogEntryField fieldEnum = arg;
+                    switch (fieldEnum) {
+                        case LogEntryField::ID:
+                            if (entry.id.has_value()) {
+                                value_str = std::to_string(entry.id.value());
+                            } else {
+                                value_str = "";
+                            }
+                            break;
+                        case LogEntryField::TIMESTAMP:
+                            if (entry.timestamp.has_value()) {
+                                if (fieldMapping.datetimeFormat.has_value()) {
+                                    value_str = Utils::formatTimestamp(entry.timestamp.value(), fieldMapping.datetimeFormat.value());
+                                } else {
+                                    value_str = Utils::formatTimestamp(entry.timestamp.value());
+                                }
+                            } else {
+                                value_str = ""; // Empty string if no timestamp
+                            }
+                            break;
+                        case LogEntryField::LEVEL:
+                            value_str = Utils::logLevelToString(entry.level);
+                            break;
+                        case LogEntryField::MESSAGE:
+                            value_str = entry.message;
+                            break;
+                        case LogEntryField::SOURCE_FILE:
+                            value_str = entry.sourceFile;
+                            break;
+                        case LogEntryField::LINE_NUMBER:
+                            if (entry.sourceLineNumber.has_value()) {
+                                value_str = std::to_string(entry.sourceLineNumber.value());
+                            } else {
+                                value_str = "";
+                            }
+                            break;
+                        case LogEntryField::THREAD_ID:
+                            if (entry.threadId.has_value()) {
+                                value_str = entry.threadId.value();
+                            } else {
+                                value_str = "";
+                            }
+                            break;
+                        case LogEntryField::MODULE:
+                            if (entry.module.has_value()) {
+                                value_str = entry.module.value();
+                            } else {
+                                value_str = "";
+                            }
+                            break;
+                        case LogEntryField::HOST:
+                            if (entry.host.has_value()) {
+                                value_str = entry.host.value();
+                            } else {
+                                value_str = "";
+                            }
+                            break;
+                        case LogEntryField::STRUCTURED_FIELD:
+                            if (entry.structuredData.has_value()) {
+                                value_str = entry.structuredData.value(); // Export raw structured data as string for CSV
+                            } else {
+                                value_str = "";
+                            }
+                            break;
+                        case LogEntryField::UNKNOWN:
+                        default:
+                            value_str = ""; // For unhandled or unknown fields, export an empty string
+                            break;
                     }
-                    break;
-                case LogEntryField::LEVEL:
-                    value_str = Utils::logLevelToString(entry.level);
-                    break;
-                case LogEntryField::MESSAGE:
-                    value_str = entry.message;
-                    break;
-                case LogEntryField::CUSTOM:
-                    // For CUSTOM fields, use customHeader to find the value in entry.customFields.
-                    if (!fieldMapping.customHeader.empty() && entry.customFields.count(fieldMapping.customHeader)) {
-                        value_str = entry.customFields.at(fieldMapping.customHeader);
-                    } else {
-                        value_str = ""; // If customHeader is empty or the field doesn't exist, output an empty string.
-                    }
-                    break;
-                case LogEntryField::SOURCE_FILE:
-                    value_str = entry.sourceFile;
-                    break;
-                case LogEntryField::LINE_NUMBER:
-                    if (entry.sourceLineNumber.has_value()) {
-                        value_str = std::to_string(entry.sourceLineNumber.value());
-                    } else {
-                        value_str = "";
-                    }
-                    break;
-                case LogEntryField::THREAD_ID:
-                    if (entry.threadId.has_value()) {
-                        value_str = entry.threadId.value();
-                    } else {
-                        value_str = "";
-                    }
-                    break;
-                case LogEntryField::MODULE:
-                    if (entry.module.has_value()) {
-                        value_str = entry.module.value();
-                    } else {
-                        value_str = "";
-                    }
-                    break;
-                case LogEntryField::HOST:
-                    if (entry.host.has_value()) {
-                        value_str = entry.host.value();
-                    } else {
-                        value_str = "";
-                    }
-                    break;
-                case LogEntryField::STRUCTURED_FIELD:
-                    if (entry.structuredData.has_value()) {
-                        value_str = entry.structuredData.value(); // Export raw structured data as string for CSV
-                    } else {
-                        value_str = "";
-                    }
-                    break;
-                case LogEntryField::UNKNOWN:
-                default:
-                    value_str = ""; // For unhandled or unknown fields, export an empty string
-                    break;
-            }
+                }
+            }, fieldMapping.field); // Pass the variant to std::visit
 
             os << formatCsvField(value_str, settings.separator);
             if (i < fieldsToConsider.size() - 1) {

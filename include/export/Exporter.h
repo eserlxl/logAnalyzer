@@ -9,6 +9,7 @@
 #include <string>
 #include <utility>
 #include <optional>
+#include <variant>
 #include <stdexcept>
 
 // New: Enum for different export formats
@@ -30,13 +31,15 @@ public:
 
 // New: Struct to define a mapping from a LogEntryField to an exported column header
 struct ExportFieldMapping {
-    LogEntryField field = LogEntryField::UNKNOWN; // The field from LogEntry to export
+    std::variant<LogEntryField, std::string> field = LogEntryField::UNKNOWN; // The field from LogEntry to export
     std::string customHeader; // Optional: custom header name for the exported field
     std::optional<std::string> datetimeFormat; // Optional: format string for datetime fields
 
     ExportFieldMapping() = default;
     ExportFieldMapping(LogEntryField f, std::string header = "", std::optional<std::string> dtFormat = std::nullopt)
         : field(f), customHeader(std::move(header)), datetimeFormat(std::move(dtFormat)) {}
+    ExportFieldMapping(std::string f, std::string header = "", std::optional<std::string> dtFormat = std::nullopt)
+        : field(std::move(f)), customHeader(std::move(header)), datetimeFormat(std::move(dtFormat)) {}
 };
 
 // JSON conversion for ExportFieldMapping

@@ -347,7 +347,7 @@ Run `LogAnalyzer --help` for a full list of commands.
 | Option                          | Description                                                                                                          | Default   |
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------- | :-------- |
 | `--pattern REGEX`               | Overrides the log line parsing regular expression defined in the configuration.                                      | (builtin) |
-| `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry. For example, `^\[\d{4}-\d{2}-\d{2}` to match a timestamp at the start of a new log entry.                                       |           |
+| `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry. For example, `^[\[]\d{4}-\d{2}-\d{2}` to match a timestamp at the start of a new log entry.                                       |           |
 | `--max-multiline-buffer SIZE`   | Max buffer size for multi-line entries. Supports units like `10MB`, `50KB`, or raw bytes (e.g., `1048576`).           | `10MB`    |
 | `--field-map MAPPING`           | Map regex capture group to a field (e.g., '1=timestamp:%Y-%m-%d %H:%M:%S'). Can be used multiple times.               |           |
 | `--on-parse-error OPT`          | Action on parse error. Options are `skip` (ignore the line), `log` (print a warning to stderr), or `fail` (exit).     | `log`     |
@@ -355,86 +355,52 @@ Run `LogAnalyzer --help` for a full list of commands.
 
 ### Filtering
 
-
 | Option                   | Shorthand | Description                                                                                                                                                                                                                                                                                                                                                         | Default   |
-
 | :----------------------- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------- |
-
 | `--keyword TEXT`         | `-k`      | Filters log messages containing this keyword or phrase. Can be used multiple times, combined by `--logic`.                                                                                                                                                                                                                                                          |           |
-
 | `--exclude-keyword TEXT` |           | Excludes log messages containing this keyword or phrase. Can be used multiple times.                                                                                                                                                                                                                                                                                |           |
-
 | `--regex PATTERN`        | `-r`      | Filters log messages matching this regular expression. Can be used multiple times, combined by `--logic`.                                                                                                                                                                                                                                                           |           |
-
 | `--exclude-regex PATTERN`|           | Excludes log messages matching this regular expression. Can be used multiple times.                                                                                                                                                                                                                                                                                 |           |
-
 | `--logic [AND|OR]`       |           | Specifies the logical operator for combining multiple `--keyword` or `--regex` filters.                                                                                                                                                                                                                                                                             | `AND`     |
-
 | `--case-sensitive`       |           | Makes keyword and regex filtering case-sensitive.                                                                                                                                                                                                                                                                                                                   | `false`   |
-
 | `--level LEVEL`          | `-l`      | Includes log entries of a specific level (e.g., `ERROR`, `INFO`). Can be used multiple times to include multiple levels.                                                                                                                                                                                                                                            |           |
-
 | `--min-level LEVEL`      | `-m`      | Includes log entries with a level equal to or more severe than the specified level (e.g., `WARNING` will include `WARNING`, `ERROR`, `CRITICAL`).                                                                                                                                                                                                                  |           |
-
 | `--map-level KEY=LEVEL`  |           | Maps a custom log level string found in logs (KEY) to a recognized internal level (LEVEL, e.g., `TRC=TRACE`, `WRN=WARNING`). Can be used multiple times.                                                                                                                                                                                                               |           |
-
 | `--start TIME`           |           | Filters logs appearing after the specified timestamp. Supports absolute, relative, ISO 8601, and Unix timestamp formats.                                                                                                                                                                                                                                            |           |
-
 | `--end TIME`             |           | Filters logs appearing before the specified timestamp. Supports the same formats as `--start`.                                                                                                                                                                                                                                                                      |           |
-
 | `--duration DURATION`    |           | Specifies a time window when used with `--start` or `--end`. Accepts units like `s` (seconds), `m` (minutes), `h` (hours), or `d` (days).                                                                                                                                                                                                                           |           |
-
 | `--expression "EXPR"`    | `-e`      | A powerful filter using a logical expression language. Supports fields, nested `and`/`or`/`not` logic, and rich operators like `contains_i` (case-insensitive), `in` (set), `>` (numeric), `startswith`, `is present`, and type casting (e.g., `ip(client_ip)`) for advanced filtering. Example: `(level=ERROR and msg contains_i "database") or not status_code in [200, 304]` |           |
 
 
 ### Sorting
 
-
 | Option                 | Shorthand | Description                                                                                         | Default     |
-
 | :--------------------- | :-------- | :-------------------------------------------------------------------------------------------------- | :---------- |
-
 | `--sort-by FIELD`      |           | Sorts the output by a specific field. Available fields: `timestamp`, `level`, `message`, `source`, `thread_id`. | `timestamp` |
-
 | `--sort-order ORDER`   |           | Sets the sorting order. Available orders: `ascending`, `descending`.                                | `ascending` |
 
 
 ### Output & Export
 
-
 | Option                  | Shorthand | Description                                                                                                                             | Default                         |
-
 | :---------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------ |
-
 | `--format [text|json|csv|xml]` | `-f`      | Sets the output format for filtered log entries.                                                                                        | `text`                          |
 | `--xml-structured-json` |           | When exporting to `xml`, attempts to convert `structured_field` content (if it's valid JSON) into nested XML elements. Otherwise, wraps it in CDATA.                                                                            | `true`                          |
-
 | `--text-format FORMAT_STRING` |           | Custom format string for `text` output. Placeholders: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
-
 | `--csv-sep CHAR`        |           | Specifies the separator character for `csv` output.                                                                                     | `,`                             |
-
 | `--csv-fields "FIELDS"` |           | Comma-separated list of fields to include in `csv` output (e.g., `timestamp,level,message,file`).                                       | `timestamp,level,message,file`  |
-
 | `--json-fields "FIELDS"`|           | Comma-separated list of fields to include in `json` output. If omitted, all standard fields are included.                               | `(all)`                         |
-
 | `--pretty`              | `-p`      | Pretty-prints `json` output with indentation for readability.                                                                           | `false`                         |
-
 | `--include-summary`     |           | Includes a summary section (e.g., total entries) in `json` output.                                                                      | `false`                         |
 
 
 ### Statistics
 
-
 | Option             | Description                                                                                                       | Default |
-
 | :----------------- | :---------------------------------------------------------------------------------------------------------------- | :------ |
-
 | `--stats NAME`     | Enables a statistic collector. Available: `unique_messages`, `top_messages[:N]`, `entry_rate`. Can be used multiple times. |         |
-
 | `--top-n N`        | Sets the number of top items to display for statistics like `top_messages` if not specified directly (e.g., `top_messages:10`). | `10`    |
-
 | `--stats-window SEC` | Shows log frequency distribution over a time window in seconds.                                                   |         |
-
 | `--find-gaps MS`   | Detects and reports time gaps in logs longer than the specified milliseconds.                                     |         |
 
 
@@ -442,13 +408,9 @@ Run `LogAnalyzer --help` for a full list of commands.
 
 Monitor files for new lines, similar to `tail -f`. Not compatible with `--stdin` or `--stream`.
 
-
 | Option             | Description                                          | Default |
-
 | :----------------- | :--------------------------------------------------- | :------ |
-
 | `--tail`           | Enables tail mode to watch files for new entries in real-time. | `false` |
-
 | `--tail-interval MS` | Polling interval in milliseconds for tail mode.      | `1000`  |
 
 ## Configuration
@@ -463,7 +425,7 @@ Here is an example demonstrating a more advanced configuration:
 
 ```json
 {
-  "lineParsePattern": "^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z) \[(\w+)\] \(tid:(\d+)\) (.*) \{ \"session\": \"([a-f0-9-]+)\" \}$",
+  "lineParsePattern": "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}Z) \\s*\[(\\w+)\] \\(tid:(\\d+)\\) (.*) \\{\"session\": \"([a-f0-9-]+)\" \\}"",
   "fieldMappings": [
     { "field": "timestamp", "groupIndex": 1 },
     { "field": "level", "groupIndex": 2 },
@@ -512,7 +474,7 @@ Here is an example demonstrating a more advanced configuration:
 
 ### Key Configuration Sections
 
-### `fieldMappings`
+#### `fieldMappings`
 An array of objects that map regular expression capture groups from `lineParsePattern` to internal log fields. Each object requires:
 -   `field`: The name of the target log field (e.g., `timestamp`, `level`, `message`).
 -   `groupIndex`: The 1-based index of the capture group from `lineParsePattern` to map to this field.
@@ -534,19 +496,12 @@ An array of rule objects that define how to filter log entries. Each rule is an 
 An array of objects to configure which statistics to generate. Each object has a `type` and an optional `params` object.
 
 | Type                 | Description                                       | Required `params`                                                                                                 |
-
-| :-------------------- | :------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
-
+| :------------------- | :------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
 | `LOG_LEVEL_COUNT`    | Counts entries for each log level.                | None                                                                                                              |
-
 | `TOP_MESSAGES`       | Finds the most frequently occurring messages.     | `top_n`: A positive integer (e.g., `"5"`).                                                                        |
-
 | `FIELD_VALUE_COUNT`  | Counts unique values for a given field.           | `target_field`: The field to analyze (e.g., `level`). If `customFields`, `custom_field_key` is also required.      |
-
 | `TOP_N_FIELD_VALUES` | Finds the most frequent values for a given field. | `top_n`: A positive integer.<br>`target_field`: The field to analyze. If `customFields`, `custom_field_key` is also required. |
-
 | `ENTRY_RATE`         | Calculates the rate of log entries per second.    | None                                                                                                              |
-
 | `UNIQUE_MESSAGES`    | Counts the number of unique log messages.         | None                                                                                                              |
 
 
@@ -586,10 +541,10 @@ You can split your configuration into multiple files using the `includes` key. T
 
 Understanding the project's layout can help you navigate the codebase, contribute, or find specific functionalities.
 
-```
+```bash
 logAnalyzer/
 ├── _deps/                   # External dependencies (CLI11, nlohmann/json, GoogleTest) managed by CMake.
-├── bin/                     # Compiled `LogAnalyzer` executable and other binaries.
+├── bin/                     # Compiled LogAnalyzer executable and other binaries.
 ├── build/                   # CMake build artifacts and temporary files.
 ├── cmake/                   # Custom CMake modules and scripts.
 ├── docs/                    # Doxygen configuration and generated documentation.
@@ -644,4 +599,3 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md).
 ## License
 
 This project is licensed under the terms of the [GPL-3.0 license](LICENSE).
-
