@@ -4,7 +4,7 @@ This guide covers the requirements and steps to build and install `logAnalyzer` 
 
 ## Prerequisites
 
-`logAnalyzer` requires a C++23 compatible compiler and CMake 3.20+.
+`logAnalyzer` requires a C++23 compatible compiler and CMake 4.2.3+.
 
 ### Platform-Specific Setup
 

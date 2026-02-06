@@ -45,6 +45,7 @@ Modern applications generate gigabytes of logs daily. While tools like `grep`, `
 - **🛠 Multi-Format Support**: Natively handles JSON and custom text patterns.
 - **📤 Flexible I/O**: Read from files or `stdin` and export to Text, CSV, or JSON.
 - **🔄 Live Monitoring**: Tail files in real-time with live filtering.
+- **📚 C++ API**: Integrate log analysis capabilities directly into your own C++ applications.
 
 For a comprehensive overview of all capabilities, see the [**full feature list**](docs/features.md).
 
@@ -55,7 +56,7 @@ Follow these steps to get `logAnalyzer` running on your system.
 ### Prerequisites
 
 -   **C++ Compiler**: C++23 compatible (GCC 13+ or Clang 16+).
--   **Build System**: CMake (3.16+).
+-   **Build System**: CMake (4.2.3+).
 -   **Version Control**: Git.
 
 ### Installation
@@ -108,6 +109,11 @@ logAnalyzer [input-file] [options]
 ```
 
 ### Examples
+
+- **Display help:**
+  ```bash
+  logAnalyzer --help
+  ```
 
 - **Process a log file from `stdin`:**
   ```bash
