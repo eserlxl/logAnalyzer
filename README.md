@@ -16,10 +16,8 @@
 - [🚀 Getting Started](#-getting-started)
 - [🏃 Quick Start & Basic Usage](#-quick-start--basic-usage)
 - [📚 Documentation](#-documentation)
-- [🤝 Contributing](#-contributing)
 - [📜 Changelog](#-changelog)
 - [📄 License](#-license)
-- [🤝 Code of Conduct](#-code-of-conduct)
 
 
 ---

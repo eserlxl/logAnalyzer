@@ -79,6 +79,7 @@ public:
 //    mechanisms (e.g., mutexes).
 class DefaultLogParser : public ILogParser {
 public:
+    virtual ~DefaultLogParser() override = default;
     static constexpr size_t DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024; // 10 MiB
 
     // Factory function to handle constructor errors

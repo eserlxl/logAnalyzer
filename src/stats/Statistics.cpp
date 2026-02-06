@@ -62,7 +62,7 @@ json EntryRateCollector::generateReport() const {
     if (_timestamps.size() < 2) {
         report["average_rate_per_sec"] = 0;
         report["total_entries"] = _timestamps.size();
-        report["duration_sec"] = 0;
+        report["duration_sec"] = "0";
         return report;
     }
 
@@ -74,8 +74,6 @@ json EntryRateCollector::generateReport() const {
     
     report["average_rate_per_sec"] = rate;
     report["total_entries"] = _timestamps.size();
-    report["duration_sec"] = secs;
-
     return report;
 }
 
@@ -137,7 +135,6 @@ json FieldValueCountCollector::generateReport() const {
     if (!_customFieldKey.empty()) {
         report["custom_field_key"] = _customFieldKey;
     }
-    report["total_unique_values"] = _counts.size();
     report["counts"] = _counts;
     return report;
 }

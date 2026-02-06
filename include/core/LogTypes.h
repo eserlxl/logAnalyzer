@@ -259,6 +259,9 @@ struct LogEntry {
   // This is the simplest and most robust way to ensure all members are compared.
   // The compiler will do the right thing.
   bool operator==(const LogEntry &other) const = default;
+
+  // New: Convert LogEntry to nlohmann::json
+  nlohmann::json toJson() const;
 };
 
 

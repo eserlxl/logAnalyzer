@@ -31,7 +31,13 @@ void LogAnalyzer::setDefaultFieldMappings(LogAnalyzerSettings& settings) {
     settings.fieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
 }
 
-std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
+std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
+    std::istream& is, 
+    const std::string& sourceIdentifier, 
+    CLIConfig::ParserErrorAction errorAction,
+    std::optional<CancellationToken*> cancellationToken,
+    std::optional<ProgressCallback> progressCallback
+) {
     std::vector<LogEntry> parsedEntries;
     AnalysisReport report;
     report.status = ParseError::SUCCESS;
@@ -80,7 +86,12 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(std
     return {parsedEntries, report};
 }
 
-ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(
+    const std::string& filePath, 
+    CLIConfig::ParserErrorAction errorAction,
+    std::optional<CancellationToken*> cancellationToken,
+    std::optional<ProgressCallback> progressCallback
+) {
     std::unique_lock<std::shared_mutex> lock(stateMutex_);
     if (!std::filesystem::exists(filePath)) {
         return std::unexpected(ErrorCode::Error::fileNotFound(filePath));
@@ -91,7 +102,7 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string&
     }
 
     entries_.clear();
-    auto [parsedEntries, report] = parseAndReport(file, filePath, errorAction);
+    auto [parsedEntries, report] = parseAndReport(file, filePath, errorAction, cancellationToken, progressCallback);
     entries_ = std::move(parsedEntries);
     
     // Process statistics for all newly loaded entries
@@ -174,7 +185,12 @@ const AnalysisReport& LogAnalyzer::getLastReport() const {
     return lastReport;
 }
 
-ErrorCode::Result<AnalysisReport> LogAnalyzer::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::load(
+    const std::string& filePath, 
+    CLIConfig::ParserErrorAction errorAction,
+    std::optional<CancellationToken*> cancellationToken,
+    std::optional<ProgressCallback> progressCallback
+) {
     auto reportResult = loadAndReplace(filePath, errorAction);
     if (!reportResult) {
         return std::unexpected(reportResult.error());
@@ -219,7 +235,12 @@ std::expected<void, LogParseError> LogAnalyzer::load(const std::string& filePath
     return {};
 }
 
-std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(
+    const std::string& filePath, 
+    CLIConfig::ParserErrorAction errorAction,
+    std::shared_ptr<CancellationToken> cancellationToken,
+    std::optional<ProgressCallback> progressCallback
+) {
     return std::async(std::launch::async, [this, filePath, errorAction]() {
         return load(filePath, errorAction);
     });
@@ -255,7 +276,13 @@ std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std:
     });
 }
 
-ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
+    std::istream& is, 
+    const std::string& sourceIdentifier, 
+    CLIConfig::ParserErrorAction errorAction,
+    std::optional<CancellationToken*> cancellationToken,
+    std::optional<ProgressCallback> progressCallback
+) {
     auto [newEntries, report] = parseAndReport(is, sourceIdentifier, errorAction);
 
     std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
@@ -394,7 +421,12 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
     return {};
 }
 
-ErrorCode::Result<AnalysisReport> LogAnalyzer::append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogAnalyzer::append(
+    const std::string& filePath, 
+    CLIConfig::ParserErrorAction errorAction,
+    std::optional<CancellationToken*> cancellationToken,
+    std::optional<ProgressCallback> progressCallback
+) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
         return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
