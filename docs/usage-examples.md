@@ -40,6 +40,11 @@ logAnalyzer system.log --level ERROR --start "2023-11-01 00:00:00" --end "2023-1
 logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
 ```
 
+```bash
+# Use a complex expression to find entries that are not at the DEBUG level and contain "session"
+logAnalyzer app.log --expression 'not level=DEBUG and msg contains "session"'
+```
+
 ### Example 4: Stream a Large File
 
 ```bash

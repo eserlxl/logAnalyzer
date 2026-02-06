@@ -14,9 +14,10 @@
 - [🤔 Why logAnalyzer?](#-why-loganalyzer)
 - [✨ Key Features](#-key-features)
 - [🚀 Getting Started](#-getting-started)
+- [Usage](#usage)
 - [📚 Documentation](#-documentation)
-- [📜 Changelog](#-changelog)
 - [🤝 Contributing](#-contributing)
+- [📜 Changelog](#-changelog)
 - [📄 License](#-license)
 - [🤝 Code of Conduct](#-code-of-conduct)
 
@@ -39,7 +40,7 @@ Modern applications generate gigabytes of logs daily. While tools like `grep`, `
 - **🔍 Advanced Filtering**:
     - Filter by **Log Level** (ERROR, WARN, INFO).
     - Filter by **Time Range** (Absolute or Relative).
-    - **Complex Expressions**: `(level=ERROR AND msg contains "timeout") OR duration > 500ms`.
+    - **Complex Expressions**: `(level=ERROR OR level=WARN) AND NOT msg contains "noise"`.
 - **📊 Statistical Analysis**: Generate instant reports on entry rates, top error messages, and more.
 - **📂 Multi-File & Sorting**: Analyze multiple files at once and sort results by any field.
 - **🛠 Structured Support**: Native parsing for JSON logs and customizable text patterns.
@@ -49,77 +50,91 @@ Modern applications generate gigabytes of logs daily. While tools like `grep`, `
 
 ## 🚀 Getting Started
 
-To get `logAnalyzer` up and running, follow these simple steps. For detailed instructions, refer to the [**Installation Guide**](docs/installation.md).
+Follow these steps to get `logAnalyzer` running on your system.
 
-### Installation
+### Prerequisites
 
-1.  **Prerequisites**: Ensure you have a C++23 compatible compiler (e.g., GCC 13+, Clang 16+), CMake (3.16 or higher), and Git installed.
-    For more detailed installation steps, including platform-specific instructions, see [**docs/installation.md**](docs/installation.md).
+- C++23 compatible compiler (GCC 13+, Clang 16+)
+- CMake (3.16+)
+- Git
 
-2.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/eserlxl/logAnalyzer.git
-    cd logAnalyzer
-    ```
+For detailed, platform-specific instructions, please refer to the [**Installation Guide**](docs/installation.md).
 
-3.  **Build the project:**
-    ```bash
-    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-    cmake --build build
-    ```
-    This command prepares the build and compiles the source code into an executable. For more build options and details, see [**docs/build.md**](docs/build.md).
+### Build and Run
 
-### Quick Start
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/eserlxl/logAnalyzer.git
+   cd logAnalyzer
+   ```
 
-Once built, you can immediately start analyzing your logs.
+2. **Configure and build the project:**
+   ```bash
+   cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+   cmake --build build
+   ```
 
-1.  **Run your first analysis:**
-    Execute the compiled binary, pointing it to a log file. Let's find all "ERROR" level messages in your system's log.
-    ```bash
-    ./build/bin/logAnalyzer /var/log/syslog --level ERROR
-    ```
+3. **Run the application:**
+   ```bash
+   ./build/bin/logAnalyzer --help
+   ```
 
-2.  **Filter by time:**
-    Narrow down the search to a specific timeframe.
-    ```bash
-    ./build/bin/logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
-    ```
+## Usage
 
-For more advanced usage scenarios and a complete list of commands, check out our [**Usage Examples**](docs/usage-examples.md) and the comprehensive [**Command Line Reference**](docs/cli-reference.md).
+`logAnalyzer` is a versatile tool. Here’s a quick overview of its command-line interface.
 
+### Basic Syntax
+
+```bash
+./build/bin/logAnalyzer [input-file] [options]
+```
+
+### Examples
+
+- **Analyze a specific log file:**
+  ```bash
+  ./build/bin/logAnalyzer /var/log/syslog
+  ```
+
+- **Filter messages by log level:**
+  ```bash
+  ./build/bin/logAnalyzer app.log --level ERROR
+  ```
+
+- **Filter by time range:**
+  ```bash
+  ./build/bin/logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
+  ```
+
+For a deep dive into all functionalities, including advanced filtering and configuration, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
 
 ## 📚 Documentation
 
-All documentation is located in the [`docs/`](./docs) directory.
+For more in-depth information, explore the documentation in the [`docs/`](./docs) directory.
 
-### Usage
-- [**Features Overview**](docs/features.md): A detailed look at what `logAnalyzer` can do.
-- [**Installation Guide**](docs/installation.md): How to install `logAnalyzer` on your system.
-- [**Command Line Reference**](docs/cli-reference.md): A complete guide to all flags and arguments.
-- [**Configuration Guide**](docs/configuration.md): How to use JSON for advanced setups.
-- [**Usage Examples**](docs/usage-examples.md): Practical examples for common scenarios.
+### User Documentation
+- [**Features Overview**](docs/features.md)
+- [**Installation Guide**](docs/installation.md)
+- [**Command Line Reference**](docs/cli-reference.md)
+- [**Configuration Guide**](docs/configuration.md)
+- [**Usage Examples**](docs/usage-examples.md)
 
-### Development
-- [**Build Guide**](docs/build.md): Instructions for compiling from the source.
-- [**Project Structure**](docs/project-structure.md): An overview of the codebase organization.
-
-### Community
-- [**Contributing Guide**](CONTRIBUTING.md): How to contribute to the project.
-- [**Code of Conduct**](CODE_OF_CONDUCT.md): Our community standards.
-- [**License**](LICENSE): The project's license.
-
-## 📜 Changelog
-
-All notable changes to this project are documented in the [`CHANGELOG.md`](CHANGELOG.md) file.
+### Developer Documentation
+- [**Build Guide**](docs/build.md)
+- [**Project Structure**](docs/project-structure.md)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see the [Contributing Guide](CONTRIBUTING.md) for details on how to get started, report bugs, and suggest features.
+We welcome contributions! If you'd like to help improve `logAnalyzer`, please see our [**Contributing Guide**](CONTRIBUTING.md) for details on how to get started.
 
-## 🤝 Code of Conduct
+## 📜 Changelog
 
-Please review our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the expectations for participation in our community.
+All notable changes are documented in the [`CHANGELOG.md`](CHANGELOG.md) file.
 
 ## 📄 License
 
 This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.
+
+## 🤝 Code of Conduct
+
+To ensure a welcoming and inclusive community, please review and adhere to our [**Code of Conduct**](CODE_OF_CONDUCT.md).

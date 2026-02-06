@@ -20,6 +20,7 @@ enum class Code {
     ConversionError, // New error code for type conversion failures
     JsonParseError, // New error code for JSON parsing failures
     NotImplemented, // New error code for unimplemented features
+    FieldNotFound, // New error code for when a log entry field is not found
     Unexpected, // Added Unexpected error code
     // Add more error codes as needed
 };

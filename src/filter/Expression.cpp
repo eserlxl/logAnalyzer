@@ -302,7 +302,14 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
     }
 
     if (!fieldValueOpt) {
-        return false; // Field not present, so any other comparison is false
+        // If the field is not present and the operator is not IS_PRESENT/IS_ABSENT,
+        // it signifies an inability to evaluate, which should be an error.
+        // We retrieve the field name from the condition for a more informative error message.
+        std::string fieldName = Utils::logEntryFieldToString(cond.field);
+        if (cond.field == LogEntryField::CUSTOM && cond.customField) {
+            fieldName = *cond.customField;
+        }
+        return std::unexpected(ErrorCode::Error(Code::FieldNotFound, "LogEntry field not found: " + fieldName));
     }
     const std::string& fieldValue = *fieldValueOpt;
     const std::string& condValue = cond.value;
@@ -369,7 +376,6 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
             auto fieldBool = stringToBool(fieldValue);
             auto condBool = stringToBool(condValue);
             if (!fieldBool || !condBool) {
-                 std::cerr << "DEBUG: BOOL conversion failed. fieldBool: " << fieldBool.has_value() << ", condBool: " << condBool.has_value() << std::endl;
                  return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to convert value to BOOL. Field: '" + fieldValue + "', Condition: '" + condValue + "'"));
             }
             switch (cond.op) {
@@ -507,16 +513,13 @@ ErrorCode::Result<bool> FilterExpression::evaluate(const LogEntry& entry) const 
             break;
     }
 
-    if (!result) {
-        std::cerr << "DEBUG: FilterExpression::evaluate - Error propagating: " << result.error().message << std::endl;
-        return result; // Propagate error
-    }
-
-    if (negated_) {
-        std::cerr << "DEBUG: FilterExpression::evaluate - Negating " << *result << std::endl;
+        if (negated_) {
+        if (!result) { // If the inner result is an error, propagate it
+            return result;
+        }
+        // Otherwise, negate the valid boolean value
         return !*result;
     }
-    std::cerr << "DEBUG: FilterExpression::evaluate - Final result: " << *result << std::endl;
     return result;
 }
 

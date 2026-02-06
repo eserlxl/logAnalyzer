@@ -32,7 +32,6 @@ public:
         FilterExpression expr;
         expr.type_ = ExpressionType::CONDITION;
         expr.condition_ = cond;
-        std::cerr << "DEBUG: FilterExpression::create - negated_: " << expr.negated_ << std::endl;
         return expr;
     }
 

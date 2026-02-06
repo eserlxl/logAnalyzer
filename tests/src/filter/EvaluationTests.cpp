@@ -60,8 +60,9 @@ TEST_F(FilterTestFixture, EvaluateNumericComparison) {
     
     // Test with a field that doesn't exist
     auto expr_missing_field = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "100", FilterValueType::INT, true, "non_existent");
-    ASSERT_TRUE(expr_missing_field.evaluate(entry).has_value()) << expr_missing_field.evaluate(entry).error().toString();
-    EXPECT_FALSE(expr_missing_field.evaluate(entry).value_or(true));
+    auto result_missing_field = expr_missing_field.evaluate(entry);
+    ASSERT_FALSE(result_missing_field.has_value());
+    EXPECT_EQ(result_missing_field.error().code, Code::FieldNotFound);
 
     // Test with non-numeric value that should fail conversion
     auto entry_bad_num = createLogEntry(LogLevel::ERROR, "Bad data", "data.log", {{"value", "not_a_number"}});
