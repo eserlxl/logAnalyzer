@@ -15,7 +15,8 @@
 - [🤔 Why logAnalyzer?](#-why-loganalyzer)
 - [✨ Key Features](#-key-features)
 - [🚀 Getting Started](#-getting-started)
-- [🏃 Quick Start & Basic Usage](#-quick-start--basic-usage)
+- [⚡ Basic Usage](#-basic-usage)
+- [⚙️ Configuration](#️-configuration)
 - [📚 Documentation](#-documentation)
 - [🏗 Project Structure](#-project-structure)
 - [💬 Support & Community](#-support--community)
@@ -53,13 +54,11 @@ Follow these steps to get `logAnalyzer` running on your system.
 
 ### Prerequisites
 
-- C++23 compatible compiler (GCC 13+, Clang 16+)
-- CMake (3.16+)
-- Git
+-   **C++ Compiler**: C++23 compatible (GCC 13+ or Clang 16+).
+-   **Build System**: CMake (3.16+).
+-   **Version Control**: Git.
 
-For detailed, platform-specific instructions, please refer to the [**Installation Guide**](docs/installation.md).
-
-### Quick Start (Build & Run)
+### Installation
 
 1.  **Clone the repository:**
     ```bash
@@ -70,60 +69,91 @@ For detailed, platform-specific instructions, please refer to the [**Installatio
 2.  **Build the project:**
     ```bash
     cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-    cmake --build build
+    cmake --build build --parallel
     ```
 
-3.  **Run the application:**
+    The executable will be located at `build/bin/logAnalyzer`.
+
+3.  **Install (Optional):**
+    To install `logAnalyzer` to your system path:
     ```bash
-    ./build/bin/logAnalyzer --help
+    sudo cmake --install build
     ```
 
-4.  **Run Tests (Optional):**
+4.  **Verify Installation:**
     ```bash
-    cd build
-    ctest
-    cd ..
+    logAnalyzer --version
     ```
+
+For detailed, platform-specific instructions, refer to the [**Installation Guide**](docs/installation.md).
+
+### Running Tests
+
+To ensure everything is working correctly:
+
+```bash
+cd build && ctest
+```
+
 For more comprehensive build instructions, including platform-specific details and advanced configurations, please see the [**Build Guide**](docs/build.md).
 
-## 🏃 Quick Start & Basic Usage
+## ⚡ Basic Usage
 
 `logAnalyzer` is a versatile tool. Here’s a quick overview of its command-line interface.
 
 ### Basic Syntax
 
 ```bash
-./build/bin/logAnalyzer [input-file] [options]
+logAnalyzer [input-file] [options]
 ```
 
 ### Examples
 
 - **Process a log file from `stdin`:**
   ```bash
-  echo "INFO 2023-10-27 12:30:00 This is a test log message." | ./build/bin/logAnalyzer
+  echo "INFO 2023-10-27 12:30:00 This is a test log message." | logAnalyzer
   ```
 
 - **Analyze a specific log file:**
   ```bash
-  ./build/bin/logAnalyzer /var/log/syslog
+  logAnalyzer /var/log/syslog
   ```
 
 - **Use a complex expression to find database errors OR any message containing "timeout":**
   ```bash
-  ./build/bin/logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
+  logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
   ```
 
 - **Generate statistics on the top 5 most common error messages:**
   ```bash
-  ./build/bin/logAnalyzer system.log --level ERROR --stats "type=TOP_MESSAGES,top_n=5"
+  logAnalyzer system.log --level ERROR --stats "type=TOP_MESSAGES,top_n=5"
   ```
 
 - **Export errors from the last 2 hours to a JSON file:**
   ```bash
-  ./build/bin/logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
+  logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
   ```
 
-For a deep dive into all functionalities, including advanced filtering and configuration, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
+For a deep dive into all functionalities, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
+
+## ⚙️ Configuration
+
+`logAnalyzer` supports extensive configuration via command-line arguments or a JSON configuration file.
+
+-   **Command Line**: Overrides config file settings.
+-   **Config File**: Use `--config path/to/config.json` for persistent settings.
+
+Example `config.json` snippet:
+```json
+{
+  "filterRules": [
+    { "field": "level", "operator": "EQUALS", "value": "ERROR" }
+  ],
+  "exportSettings": { "format": "json", "prettyPrint": true }
+}
+```
+
+For full details on configuration options, see the [**Configuration Guide**](docs/configuration.md).
 
 ## 📚 Documentation
 

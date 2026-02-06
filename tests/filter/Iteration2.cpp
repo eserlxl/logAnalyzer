@@ -14,6 +14,8 @@
 #include <chrono>
 #include <map>
 
+using namespace filter;
+
 class FilterIteration2Test : public ::testing::Test {
 protected:
     LogEntry createEntry(const std::string& msg, const std::map<std::string, std::string>& custom = {}) {

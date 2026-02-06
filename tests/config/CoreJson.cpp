@@ -7,7 +7,7 @@
 #include "core/LogTypes.h"
 #include "filter/Core.h"
 #include "export/Exporter.h"
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -178,12 +178,11 @@ TEST_F(LogAnalyzerConfigTest, FromJsonMalformedInternalStructures) {
     ASSERT_FALSE(result4.has_value());
     ASSERT_THAT(result4.error()[0], testing::HasSubstr("Error parsing 'statisticConfigs':"));
 
-    // Malformed rootFilterExpression (missing 'type')
+    // Malformed rootFilterExpression (invalid operator)
     std::string jsonContent5 = R"({
         "lineParsePattern": ".*",
         "rootFilterExpression": {
-            "field": "LEVEL",
-            "value": "ERROR"
+            "operator": "INVALID_OP"
         },
         "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
     })";

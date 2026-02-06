@@ -6,7 +6,7 @@
 #include "utils/Core.h"
 #include "filter/Core.h" 
 #include "export/Exporter.h"
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include <fstream>
 #include <regex>
 #include <nlohmann/json.hpp>

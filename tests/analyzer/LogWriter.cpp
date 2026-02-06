@@ -14,6 +14,8 @@
 #include <chrono>
 #include <expected>
 
+using namespace filter;
+
 // Test fixture for LogWriter tests
 class LogWriterTest : public ::testing::Test {
 protected:

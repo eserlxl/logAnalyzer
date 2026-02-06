@@ -3,6 +3,8 @@
 
 #include "TestUtils.h"
 
+using namespace filter;
+
 // --- FilterExpression Fluent API & Optimization Tests ---
 
 TEST_F(FilterTestFixture, FluentApiAndOptimization) {

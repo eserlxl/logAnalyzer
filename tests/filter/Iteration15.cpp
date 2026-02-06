@@ -11,6 +11,8 @@
 #include <vector>
 #include <string>
 
+using namespace filter;
+
 class FilterIteration15Test : public ::testing::Test {
 protected:
     LogEntry createEntry(LogLevel level, const std::string& message, const std::map<std::string, std::string>& customFields = {}) {

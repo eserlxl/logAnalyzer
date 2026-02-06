@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 #include <vector>

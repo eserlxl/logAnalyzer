@@ -89,6 +89,54 @@ An array of objects to configure which statistics to generate. Each object has a
 | `ENTRY_RATE`         | Calculates the rate of log entries per second.    | None                                                                                                              |
 | `UNIQUE_MESSAGES`    | Counts the number of unique log messages.         | None                                                                                                              |
 
+#### `rootFilterExpression`
+Allows defining a single, complex filter expression tree using nested `AND`, `OR`, and `NOT` logic. This serves as an alternative or addition to the simpler `filterRules` list.
+
+**Structure:**
+The expression object can represent a **Condition**, a **Logical Operation**, or be **Negated**.
+
+- **Condition:**
+  ```json
+  {
+    "condition": {
+      "field": "LEVEL",
+      "op": "EQUALS",
+      "value": "ERROR"
+    }
+  }
+  ```
+- **Logical Operation:**
+  ```json
+  {
+    "operator": "OR",
+    "operands": [
+      { "condition": { ... } },
+      { "condition": { ... } }
+    ]
+  }
+  ```
+- **Negation:**
+  Any expression can be negated by adding `"negated": true`.
+
+**Example:**
+```json
+"rootFilterExpression": {
+  "operator": "OR",
+  "operands": [
+    {
+      "condition": { "field": "LEVEL", "op": "EQUALS", "value": "FATAL" }
+    },
+    {
+      "operator": "AND",
+      "operands": [
+        { "condition": { "field": "MESSAGE", "op": "CONTAINS", "value": "database" } },
+        { "condition": { "field": "LEVEL", "op": "EQUALS", "value": "ERROR" } }
+      ]
+    }
+  ]
+}
+```
+
 
 ### Advanced Configuration Features
 

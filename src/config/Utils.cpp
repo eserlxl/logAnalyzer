@@ -3,55 +3,66 @@
 
 #include "config/Utils.h"
 #include "utils/Core.h"
-#include <sstream>
-#include <regex>
 #include <algorithm>
+#include <charconv>
+#include <string>
+#include <format>
 
 namespace ConfigUtils {
 
     ErrorCode::Result<FieldMapping> parseFieldMappingString(std::string_view fieldMapStr) {
         // Expected format: "1=timestamp:%Y-%m-%d %H:%M:%S" or "2=level" or "3=customField"
-        // Regex: ^(\d+)=([^:]+)(?::(.*))?$
         
-        static const std::regex mapRegex(R"(^(\d+)=([^:]+)(?::(.*))?$)");
-        std::cmatch match;
-        std::string str(fieldMapStr); // Regex requires std::string or const char*
-
-        if (std::regex_match(str.c_str(), match, mapRegex)) {
-            try {
-                size_t groupIndex = std::stoul(match[1].str());
-                std::string fieldName = match[2].str();
-                std::string format = match[3].matched ? match[3].str() : "";
-
-                // Trim whitespace from fieldName? Probably safer not to, user might want it.
-                // But normally keys don't have spaces. Let's assume strict format for now.
-
-                LogEntryField field = Utils::stringToLogEntryField(fieldName);
-                
-                if (field != LogEntryField::UNKNOWN) {
-                    return FieldMapping(field, std::make_optional(groupIndex), {format});
-                } else {
-                    // Custom field
-                    std::vector<std::string> formats;
-                    if (!format.empty()) formats.push_back(format);
-                    return FieldMapping(fieldName, std::make_optional(groupIndex), formats);
-                }
-            } catch (...) {
-                return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid group index in field map: " + str));
-            }
+        size_t eqPos = fieldMapStr.find('=');
+        if (eqPos == std::string_view::npos) {
+             return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, std::format("Invalid field map format. Expected 'INDEX=FIELD[:FORMAT]', got: {}", fieldMapStr)));
         }
 
-        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid field map format. Expected 'INDEX=FIELD[:FORMAT]', got: " + str));
+        size_t groupIndex = 0;
+        auto result = std::from_chars(fieldMapStr.data(), fieldMapStr.data() + eqPos, groupIndex);
+        if (result.ec != std::errc() || result.ptr != fieldMapStr.data() + eqPos) {
+             return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, std::format("Invalid group index in field map: {}", fieldMapStr)));
+        }
+
+        std::string_view remainder = fieldMapStr.substr(eqPos + 1);
+        size_t colonPos = remainder.find(':');
+        
+        std::string_view fieldNameView = (colonPos == std::string_view::npos) ? remainder : remainder.substr(0, colonPos);
+        
+        if (fieldNameView.empty()) {
+             return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, std::format("Invalid field map format. Field name cannot be empty: {}", fieldMapStr)));
+        }
+
+        std::string fieldName(fieldNameView);
+        std::string format;
+        if (colonPos != std::string_view::npos) {
+            format = std::string(remainder.substr(colonPos + 1));
+        }
+
+        LogEntryField field = Utils::stringToLogEntryField(fieldName);
+        
+        if (field != LogEntryField::UNKNOWN) {
+            std::vector<std::string> formats;
+            if (!format.empty()) {
+                formats.push_back(std::move(format));
+            }
+            return FieldMapping(field, std::make_optional(groupIndex), formats);
+        }             // Custom field
+            std::vector<std::string> formats;
+            if (!format.empty()) formats.push_back(std::move(format));
+            return FieldMapping(std::move(fieldName), std::make_optional(groupIndex), std::move(formats));
+       
     }
 
     ErrorCode::Result<std::vector<FieldMapping>> parseFieldMappingStrings(const std::vector<std::string>& fieldMapStrings) {
         std::vector<FieldMapping> mappings;
+        mappings.reserve(fieldMapStrings.size());
         for (const auto& s : fieldMapStrings) {
             auto res = parseFieldMappingString(s);
             if (!res) {
                 return std::unexpected(res.error());
             }
-            mappings.push_back(*res);
+            mappings.push_back(std::move(*res));
         }
         return mappings;
     }

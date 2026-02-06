@@ -7,7 +7,7 @@
 #include "core/LogTypes.h"
 #include "filter/Core.h"
 #include "export/Exporter.h"
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include <string>
 #include <vector>
 #include <map>

@@ -12,6 +12,8 @@
 #include <sstream> // Required for std::stringstream for general string manipulation if needed
 #include <nlohmann/json.hpp> // New include for JSON testing (might be needed for some types)
 
+using namespace filter;
+
 // Test fixture for creating LogEntry objects
 class FilterTest : public ::testing::Test {
 protected:

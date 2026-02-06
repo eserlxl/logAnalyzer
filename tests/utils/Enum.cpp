@@ -8,8 +8,10 @@
 #include "filter/Condition.h" // Added as a common header that might transitively include sort-related enums
 #include "filter/Expression.h" // Added for similar reasons
 #include "export/Exporter.h"
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include <optional>
+
+using namespace filter;
 
 // --- LogLevel Enum Conversions ---
 TEST(UtilsEnumConversionTest, LogLevelToString) {

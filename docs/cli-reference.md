@@ -9,6 +9,7 @@ Run `logAnalyzer --help` for a full list of commands.
 | Option                 | Shorthand | Description                                                                                                                                                                             | Default    |
 | :--------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- |
 | `--help`               | `-h`      | Displays the help message and exits.                                                                                                                                                    |            |
+| `--version`            | `-v`      | Displays the version information and exits.                                                                                                                                             |            |
 | `--config FILE`        |           | Specifies a JSON configuration file to load. Command-line arguments will override settings defined in the file.                                                                           |            |
 | `--output FILE`        |           | Redirects all output (filtered logs, statistics) to the specified file instead of standard output.                                                                                      | `(stdout)` |
 | `--color OPT`          |           | Controls colorized output. Options are `always`, `auto` (default, colors if stdout is a TTY and not redirected), or `never`.                                                              | `auto`     |
@@ -20,10 +21,11 @@ Run `logAnalyzer --help` for a full list of commands.
 
 | Option                          | Description                                                                                                          | Default   |
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------- | :-------- |
+| `--parser-type TYPE`            | Specifies the log parser to use. Options are `regex` (default) for pattern-based parsing or `json` for native JSON parsing. | `regex`   |
 | `--pattern REGEX`               | Overrides the log line parsing regular expression defined in the configuration.                                      | (builtin) |
 | `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry. For example, `^[\[]\d{4}-\d{2}-\d{2}` to match a timestamp at the start of a new log entry.                                       |           |
 | `--max-multiline-buffer SIZE`   | Max buffer size for multi-line entries. Supports units like `10MB`, `50KB`, or raw bytes (e.g., `1048576`).           | `10MB`    |
-| `--field-map MAPPING`           | Map regex capture group to a field (e.g., '1=timestamp:%Y-%m-%d %H:%M:%S'). Can be used multiple times.               |           |
+| `--field-map MAPPING`           | Map regex capture group to a field. Format: `INDEX=FIELD[:FORMAT]`. If `FIELD` is a standard field (e.g., `timestamp`), it maps to that property. If `FIELD` is unknown, it is treated as a custom field name and stored in `customFields`. Example: `1=timestamp:%Y-%m-%d`, `2=request_id`. |           |
 | `--on-parse-error OPT`          | Action on parse error. Options are `skip` (ignore the line), `log` (print a warning to stderr), or `fail` (exit).     | `log`     |
 
 

@@ -8,6 +8,8 @@
 #include "core/LogTypes.h"
 #include <nlohmann/json.hpp>
 
+using namespace filter;
+
 // Test fixture for FilterRule JSON serialization/deserialization tests
 class FilterRuleJsonTest : public ::testing::Test {};
 

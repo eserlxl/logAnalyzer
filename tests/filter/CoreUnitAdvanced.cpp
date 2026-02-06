@@ -13,6 +13,8 @@
 #include <sstream>
 #include <cmath>
 
+using namespace filter;
+
 // Define epsilon for floating point comparisons if not already available
 constexpr double EPSILON = 1e-9;
 

@@ -5,7 +5,7 @@
 #include "utils/String.h"
 #include "export/Exporter.h"
 #include "filter/Types.h" // Include FilterTypes.h for SortBy, SortOrder
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include <algorithm>
 #include <map>
 #include <filesystem>

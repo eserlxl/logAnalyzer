@@ -8,6 +8,8 @@
 #include "filter/ConcreteFilters.h" // Added for filter types used in createExpr
 #include "core/LogTypes.h" // Added for LogEntry and LogLevel
 
+using namespace filter;
+
 // --- Tests for VERSION type ---
 
 TEST_F(FilterTestFixture, EvaluateVersionComparison) {

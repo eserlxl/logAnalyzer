@@ -55,12 +55,11 @@ cd logAnalyzer
 Next, use CMake to configure and build the project. We recommend an out-of-source build.
 
 ```bash
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . -- -j$(nproc)
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
 ```
 
-The compiled `LogAnalyzer` executable will be available in the `build/bin` directory.
+The compiled `logAnalyzer` executable will be available in the `build/bin` directory.
 
 #### Build Options
 
@@ -69,17 +68,9 @@ You can customize the build with the following CMake options:
 | Option                       | Description                                                     | Default    |
 | :--------------------------- | :-------------------------------------------------------------- | :--------- |
 | `-DBUILD_TESTING=ON/OFF`     | Enable or disable the compilation of tests.                     | `ON`       |
-| `-DLOGANALYZER_BUILD_SHARED=ON/OFF` | Build `LogAnalyzer` as a shared library.                        | `OFF`      |
-| `-DLOGANALYZER_USE_SANITIZER=...` | Enable sanitizers for debugging (`Address`, `Undefined`).       | `None`     |
-| `-DENABLE_COVERAGE=ON/OFF`   | Enable code coverage instrumentation for tests.                 | `OFF`      |
-| `-DENABLE_ASAN=ON/OFF`       | Enable AddressSanitizer for tests.                              | `OFF`      |
-| `-DENABLE_UBSAN=ON/OFF`      | Enable UndefinedBehaviorSanitizer for tests.                    | `OFF`      |
-| `-DENABLE_GMOCK=ON/OFF`      | Enable Google Mock for tests.                                   | `OFF`      |
 
 To use an option, add it to the `cmake` command:
 
 ```bash
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 ```
-
-**Note:** To build the documentation, use `cmake --build . --target doc` from the `build` directory.

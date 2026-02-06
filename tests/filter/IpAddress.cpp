@@ -3,7 +3,9 @@
 
 #include "TestUtils.h"
 
-// --- Tests for IP_ADDRESS type ---
+using namespace filter;
+
+// --- IP Address Filtering Tests ---
 
 TEST_F(FilterTestFixture, EvaluateIpAddressComparison) {
     auto entry_ip1 = createLogEntry(LogLevel::INFO, "IP address 1", "ip.log", {{"client_ip", "192.168.1.100"}});

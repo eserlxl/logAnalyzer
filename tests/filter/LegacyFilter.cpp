@@ -4,6 +4,8 @@
 #include "TestUtils.h"
 #include "filter/ConcreteFilters.h"
 
+using namespace filter;
+
 // --- Legacy Filter Tests (maintained for backward compatibility) ---
 class LegacyFilterTest : public ::testing::Test {
 protected:

@@ -6,9 +6,11 @@
 #include "core/LogTypes.h"
 #include <nlohmann/json.hpp>
 
+using namespace filter;
+
 class FilterExpressionJsonTest : public ::testing::Test {
 protected:
-    FilterCondition createCondition(LogEntryField field, FilterOperator op, const std::string& value) {
+    static FilterCondition createCondition(LogEntryField field, FilterOperator op, const std::string& value) {
         FilterCondition cond;
         cond.field = field;
         cond.op = op;
@@ -245,4 +247,71 @@ TEST_F(FilterExpressionJsonTest, FromJsonNestedErrorPath) {
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_EQ(result.error().jsonPath, "/operands[1]/operands[0]/condition/op");
+}
+
+TEST_F(FilterExpressionJsonTest, EmptyExpressionRoundTrip) {
+    FilterExpression original = FilterExpression::makeEmpty();
+    nlohmann::json j;
+    to_json(j, original);
+    
+    // Should be empty object or just have negated:false (which is default so empty)
+    // Actually, to_json adds nothing for EMPTY if not negated.
+    EXPECT_TRUE(j.empty() || (j.contains("negated") && !j["negated"].get<bool>()));
+
+    FilterExpression deserialized;
+    auto result = from_json(j, deserialized);
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    EXPECT_EQ(deserialized.getType(), FilterExpression::ExpressionType::EMPTY);
+    EXPECT_FALSE(deserialized.isNegated());
+
+    // Test negated empty
+    FilterExpression originalNegated = FilterExpression::makeEmpty(true);
+    j.clear();
+    to_json(j, originalNegated);
+    EXPECT_TRUE(j.contains("negated"));
+    EXPECT_TRUE(j["negated"].get<bool>());
+
+    FilterExpression deserializedNegated;
+    result = from_json(j, deserializedNegated);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(deserializedNegated.getType(), FilterExpression::ExpressionType::EMPTY);
+    EXPECT_TRUE(deserializedNegated.isNegated());
+}
+
+TEST_F(FilterExpressionJsonTest, MaxRecursionDepthExceeded) {
+    // Create a deeply nested JSON that exceeds limit (50)
+    nlohmann::json j;
+    nlohmann::json* current = &j;
+    for (int i = 0; i < 60; ++i) {
+        (*current)["operator"] = "AND";
+        (*current)["operands"] = nlohmann::json::array();
+        (*current)["operands"].push_back(nlohmann::json::object());
+        current = &((*current)["operands"][0]);
+    }
+    (*current)["condition"] = {
+        {"field", "MESSAGE"},
+        {"op", "CONTAINS"},
+        {"value", "test"},
+        {"value_type", "STRING"}
+    };
+
+    FilterExpression expr;
+    auto result = from_json(j, expr);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("Maximum recursion depth exceeded"), std::string::npos);
+}
+
+TEST_F(FilterExpressionJsonTest, EmptyOperandsArray) {
+    nlohmann::json j = {
+        {"operator", "AND"},
+        {"operands", nlohmann::json::array()}
+    };
+    
+    FilterExpression expr;
+    auto result = from_json(j, expr);
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    EXPECT_EQ(expr.getType(), FilterExpression::ExpressionType::LOGICAL);
+    EXPECT_EQ(*expr.getLogicalOperator(), FilterLogicalOperator::AND);
+    EXPECT_TRUE(expr.getExpressions().empty());
 }

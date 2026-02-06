@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "analyzer/Core.h"
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include <iostream>
 #include <memory>
 #include <vector>

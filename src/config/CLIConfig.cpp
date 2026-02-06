@@ -7,7 +7,7 @@
 #include "utils/Core.h"
 #include "core/Error.h" // Add this include
 #include "core/CiLess.h" // For ci_less
-#include "stats/Statistics.h" // For StatisticType, StatisticConfig
+#include "stats/Core.h" // For StatisticType, StatisticConfig
 #include "utils/Version.h"
 #include <CLI/CLI.hpp>
 #include <algorithm> // For std::transform

@@ -5,11 +5,9 @@ Understanding the project's layout can help you navigate the codebase, contribut
 ```bash
 logAnalyzer/
 ├── _deps/                   # External dependencies (CLI11, nlohmann/json, GoogleTest) managed by CMake.
-├── bin/                     # Compiled LogAnalyzer executable and other binaries.
+├── bin/                     # Compiled LogAnalyzer executable and other binaries (if configured).
 ├── build/                   # CMake build artifacts and temporary files.
-├── cmake/                   # Custom CMake modules and scripts.
-├── docs/                    # Doxygen configuration and generated documentation.
-├── examples/                # Example log files and configuration examples.
+├── docs/                    # Documentation files (Markdown).
 ├── include/                 # Public header files.
 │   ├── analyzer/            # Core analyzer logic (LogReader, LogWriter, AnalyzerCore).
 │   ├── config/              # Configuration management and CLI parsing.
@@ -28,12 +26,10 @@ logAnalyzer/
 │   ├── stats/               
 │   └── utils/               
 ├── tests/                   # Unit and integration tests.
-├── tools/                   # Development scripts and utilities.
 ├── .gitignore               # Files/directories ignored by Git.
 ├── CMakeLists.txt           # Primary CMake build script.
 ├── CODE_OF_CONDUCT.md       # Guidelines for community behavior.
 ├── CONTRIBUTING.md          # Contribution guidelines.
-├── Doxyfile                 # Doxygen main configuration.
 ├── LICENSE                  # Project license information.
 └── README.md                # Project overview and documentation.
 ```

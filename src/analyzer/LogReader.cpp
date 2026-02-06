@@ -5,34 +5,7 @@
 #include "analyzer/Core.h" // For LogAnalyzer definition which LogReader needs
 #include "core/LogParser.h"
 #include "filter/Core.h"
-#include "stats/Statistics.h"
-#include "export/Exporter.h"
-#include "utils/Core.h"
-#include "core/Error.h"
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-#include <regex>
-#include <iomanip>
-#include <sstream>
-#include <memory> 
-#include <vector>
-#include <utility>
-#include <future>
-#include <functional>
-#include <iterator>
-#include <map>
-#include <filesystem>
-#include <shared_mutex> // Required for stateMutex_
-
-// SPDX-License-Identifier: GPL-3.0-only
-// Copyright (c) 2026 Eser KUBALI
-
-#include "analyzer/LogReader.h"
-#include "analyzer/Core.h" // For LogAnalyzer definition which LogReader needs
-#include "core/LogParser.h"
-#include "filter/Core.h"
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include "export/Exporter.h"
 #include "utils/Core.h"
 #include "core/Error.h"

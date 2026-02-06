@@ -8,7 +8,7 @@
 #include "filter/Core.h"
 #include "core/Error.h"
 #include "config/CLIConfig.h"
-#include "stats/Statistics.h"
+#include "stats/Core.h"
 #include "analyzer/LogReader.h"
 #include "analyzer/LogWriter.h"
 #include "analyzer/Types.h" // Added for FormattingOptions

@@ -9,7 +9,7 @@
 #include "filter/IFilter.h"
 #include "filter/ConcreteFilters.h"
 #include "filter/Types.h"
-#include "stats/Statistics.h" // For statistic collectors
+#include "stats/Core.h" // For statistic collectors
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <chrono>

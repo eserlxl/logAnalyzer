@@ -206,9 +206,15 @@ inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
     }
 }
 
+constexpr size_t MAX_JSON_RECURSION_DEPTH = 50;
+
 // Helper function for recursive from_json calls to manage JSON path
-inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, FilterExpression& fe, const std::string& current_path) {
+inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, FilterExpression& fe, const std::string& current_path, size_t depth = 0) {
     using namespace FilterJsonUtils;
+
+    if (depth > MAX_JSON_RECURSION_DEPTH) {
+        return std::unexpected(makeError(Code::InvalidArgument, "Maximum recursion depth exceeded.", current_path, ""));
+    }
 
     bool current_negated = getOptional<bool>(j, "negated").value_or(false);
 
@@ -237,13 +243,15 @@ inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, Filt
         for (size_t i = 0; i < operands_array.size(); ++i) {
             FilterExpression operand_fe;
             std::string next_path = (current_path == "/" ? "" : current_path) + "/operands[" + std::to_string(i) + "]";
-            auto result = from_json_recursive(operands_array[i], operand_fe, next_path);
+            auto result = from_json_recursive(operands_array[i], operand_fe, next_path, depth + 1);
             if (!result) return std::unexpected(result.error());
             operands.push_back(std::move(operand_fe));
         }
         fe = FilterExpression(op, std::move(operands), current_negated);
     } else {
-        return std::unexpected(makeError(Code::InvalidArgument, "Expression must contain 'condition' or 'operator' with 'operands'.", current_path, ""));
+        // If neither 'condition' nor 'operator' is present, treat as EMPTY expression.
+        // This allows correct round-trip serialization of default-constructed FilterExpression.
+        fe = FilterExpression::makeEmpty(current_negated);
     }
     
     return {}; // Success
@@ -252,7 +260,7 @@ inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, Filt
 // Main from_json entry point for FilterExpression
 inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe) {
     // Start recursive parsing with root path "/"
-    return from_json_recursive(j, fe, "/");
+    return from_json_recursive(j, fe, "/", 0);
 }
 
 } // namespace filter

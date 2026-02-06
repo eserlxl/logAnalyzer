@@ -12,6 +12,8 @@
 #include <map>
 #include <sstream> // Required for std::stringstream for general string manipulation if needed
 
+using namespace filter;
+
 // Test fixture for creating LogEntry objects
 class FilterTest : public ::testing::Test {
 protected:

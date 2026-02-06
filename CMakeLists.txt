@@ -58,7 +58,7 @@ set(LIB_SOURCES
     src/filter/Expression.cpp
     src/filter/ConcreteFilters.cpp
     src/filter/Parser.cpp
-    src/stats/Statistics.cpp
+    src/stats/Core.cpp
     src/utils/IpAddress.cpp
     src/utils/Version.cpp
     src/utils/Time.cpp

@@ -3,6 +3,8 @@
 
 #include "TestUtils.h"
 
+using namespace filter;
+
 // --- FilterExpression Evaluation Tests ---
 
 TEST_F(FilterTestFixture, EvaluateStringEquals) {

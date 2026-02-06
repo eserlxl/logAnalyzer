@@ -3,6 +3,8 @@
 
 #include "TestUtils.h"
 
+using namespace filter;
+
 // --- FilterOperator::IN and FilterOperator::NOT_IN Edge Cases ---
 TEST_F(FilterTestFixture, EvaluateInOperatorInvalidJson) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Message");
