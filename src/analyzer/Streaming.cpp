@@ -1,0 +1,171 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
+#include "analyzer/Core.h"
+#include "analyzer/LogReader.h"
+#include "utils/String.h"
+#include "core/LogParser.h"
+#include "filter/Core.h"
+#include "stats/Core.h"
+#include "export/Exporter.h"
+#include "utils/Core.h"
+#include "core/Error.h"
+#include <fstream>
+#include <iostream>
+#include <algorithm>
+#include <regex>
+#include <iomanip>
+#include <sstream>
+#include <memory> 
+#include <vector>
+#include <utility>
+#include <future>
+#include <functional>
+#include <iterator>
+#include <map>
+#include <filesystem>
+
+ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
+    std::istream& is, 
+    const std::string& sourceIdentifier, 
+    CLIConfig::ParserErrorAction errorAction,
+    std::optional<CancellationToken*> cancellationToken,
+    std::optional<ProgressCallback> progressCallback
+) {
+    auto [newEntries, report] = parseAndReport(is, sourceIdentifier, errorAction, cancellationToken, progressCallback);
+
+    std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
+        return a.timestamp < b.timestamp;
+    });
+
+    // H1: Check if newEntries is empty AFTER sorting, before acquiring locks.
+    if (newEntries.empty()) {
+        return report;
+    }
+
+    std::vector<LogEntry> mergedEntries;
+    mergedEntries.reserve(entries_.size() + newEntries.size());
+
+    { // Scope for shared_lock to read entries_
+        std::shared_lock<std::shared_mutex> sharedLock(stateMutex_);
+        std::merge(entries_.begin(), entries_.end(),
+                   newEntries.begin(), newEntries.end(),
+                   std::back_inserter(mergedEntries),
+                   [](const LogEntry& a, const LogEntry& b) {
+                       return a.timestamp < b.timestamp;
+                   });
+    } // shared_lock is released here
+
+    { // Scope for unique_lock to modify entries_ and process stats
+        std::unique_lock<std::shared_mutex> uniqueLock(stateMutex_);
+        entries_.swap(mergedEntries); // Modify entries_ under unique lock
+        
+        // Process statistics for the newly added entries. This modifies statistics_,
+        // so it must be within the unique lock scope.
+        for (const auto& entry : newEntries) {
+            processEntryForStatistics(entry);
+        }
+    } // unique_lock is released here
+
+    return report;
+}
+
+ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
+    for (const auto& filePath : filePaths) {
+        std::istream* input;
+        std::ifstream file;
+        if (filePath == Utils::STDIN_FILE_PATH) {
+            input = &std::cin;
+        } else {
+            file.open(filePath);
+            if (!file.is_open()) {
+                 return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
+            }
+            input = &file;
+        }
+
+        std::string line;
+        size_t lineNumber = 0;
+        bool shouldContinue = true;
+        while (std::getline(*input, line)) {
+            lineNumber++;
+            auto parseResultOpt = currentParser_->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
+            if (parseResultOpt.has_value()) {
+                const auto& result = parseResultOpt.value();
+                if (result.has_value()) {
+                    LogEntry entry = result.value();
+                    entry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
+                    if (!entryCallback(entry)) {
+                        shouldContinue = false;
+                        break;
+                    }
+                } else {
+                    if(errorAction == CLIConfig::ParserErrorAction::Warn) {
+                        std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.error().message << std::endl;
+                    }
+                     if(errorAction != CLIConfig::ParserErrorAction::Ignore) {
+                        LogEntry partialEntry;
+                        partialEntry.level = LogLevel::UNKNOWN;
+                        partialEntry.message = line;
+                        partialEntry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
+                        partialEntry.id = lineNumber;
+                        if (!entryCallback(partialEntry)) {
+                            shouldContinue = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!shouldContinue) break;
+        }
+        
+        auto flushResults = currentParser_->flushRemaining();
+        for (const auto& result : flushResults) {
+            if (result.has_value()) {
+                LogEntry entry = result.value();
+                entry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
+                if (!entryCallback(entry)) {
+                    shouldContinue = false;
+                    break;
+                }
+            } else {
+                 if(errorAction == CLIConfig::ParserErrorAction::Warn) {
+                    std::cerr << "Warning: Failed to parse remaining buffer for " << filePath << ": " << result.error().message << std::endl;
+                }
+            }
+            if (!shouldContinue) break;
+        }
+
+        if (!shouldContinue) break;
+    }
+    return {};
+}
+
+std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern) {
+    LogAnalyzerSettings oldSettings = getSettings();
+    LogAnalyzerSettings tempSettings = oldSettings;
+    tempSettings.lineParsePattern = pattern;
+    if (pattern == DEFAULT_LOG_REGEX_PATTERN_SV) {
+        tempSettings.fieldMappings.clear();
+        tempSettings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
+        tempSettings.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
+        tempSettings.fieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
+    } else {
+        tempSettings.fieldMappings.clear();
+    }
+    
+    if (auto res = setSettings(tempSettings); !res) {
+        return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
+    }
+
+    auto result = analyzeStream(filePaths, entryCallback, CLIConfig::ParserErrorAction::Warn);
+
+    if (auto res = setSettings(oldSettings); !res) {
+        std::cerr << "Error restoring settings: " << res.error().message << std::endl;
+    }
+    
+    if(!result) {
+        return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, result.error().message, 0});
+    }
+    return {};
+}

@@ -19,7 +19,7 @@ nlohmann::json LogEntry::toJson() const {
         for (const auto& [key, value] : customFields) {
             // Attempt to parse value as JSON if it looks like one, otherwise keep as string
             try {
-                if (value.length() > 1 && (value.front() == '{' && value.back() == '}' || value.front() == '[' && value.back() == ']')) {
+                if (value.length() > 1 && ((value.front() == '{' && value.back() == '}') || (value.front() == '[' && value.back() == ']'))) {
                     custom_json[key] = nlohmann::json::parse(value);
                 } else {
                     custom_json[key] = value;
@@ -34,7 +34,7 @@ nlohmann::json LogEntry::toJson() const {
     if (structuredData) {
         // Attempt to parse structuredData as JSON if it looks like one
         try {
-            if (structuredData->length() > 1 && (structuredData->front() == '{' && structuredData->back() == '}' || structuredData->front() == '[' && structuredData->back() == ']')) {
+            if (structuredData->length() > 1 && ((structuredData->front() == '{' && structuredData->back() == '}') || (structuredData->front() == '[' && structuredData->back() == ']'))) {
                 j["structuredData"] = nlohmann::json::parse(*structuredData);
             } else {
                 j["structuredData"] = *structuredData;

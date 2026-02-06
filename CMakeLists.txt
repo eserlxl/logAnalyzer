@@ -18,7 +18,7 @@ FetchContent_MakeAvailable(nlohmann_json)
 FetchContent_Declare(
     cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-    GIT_TAG v2.3.2
+    GIT_TAG v2.4.2
 )
 FetchContent_MakeAvailable(cli11)
 
@@ -47,7 +47,11 @@ set(LIB_SOURCES
     src/analyzer/IO.cpp
     src/analyzer/Export.cpp
     src/analyzer/Filter.cpp
+    src/analyzer/LogLoader.cpp
+    src/analyzer/Streaming.cpp
     src/config/Core.cpp
+    src/config/CoreJson.cpp
+    src/config/CoreValidation.cpp
     src/config/Utils.cpp
     src/config/CLIConfig.cpp
     src/core/LogParser.cpp
@@ -57,6 +61,7 @@ set(LIB_SOURCES
     src/filter/EnumStringConversions.cpp
     src/filter/Expression.cpp
     src/filter/ConcreteFilters.cpp
+    src/filter/ConditionEvaluation.cpp
     src/filter/Parser.cpp
     src/stats/Core.cpp
     src/utils/IpAddress.cpp
@@ -70,9 +75,21 @@ add_library(LogAnalyzerLib ${LIB_SOURCES})
 target_include_directories(LogAnalyzerLib PUBLIC include)
 target_link_libraries(LogAnalyzerLib PUBLIC nlohmann_json::nlohmann_json CLI11::CLI11)
 
+if(MSVC)
+    target_compile_options(LogAnalyzerLib PRIVATE /W4 /WX)
+else()
+    target_compile_options(LogAnalyzerLib PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 # Main executable
 add_executable(logAnalyzer src/main.cpp)
 target_link_libraries(logAnalyzer PRIVATE LogAnalyzerLib)
+
+if(MSVC)
+    target_compile_options(logAnalyzer PRIVATE /W4 /WX)
+else()
+    target_compile_options(logAnalyzer PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
 
 # Installation
 include(GNUInstallDirs)

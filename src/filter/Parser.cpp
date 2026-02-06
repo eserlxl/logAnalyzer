@@ -5,7 +5,7 @@
 
 namespace filter {
 
-ErrorCode::Result<FilterExpression> parseQuery(const std::string& query) {
+ErrorCode::Result<FilterExpression> parseQuery(const std::string& /*query*/) {
     // TODO: Implement the query parser.
     // This is a complex task that will require a proper parsing strategy
     // (e.g., recursive descent). For now, we return a "Not Implemented" error.

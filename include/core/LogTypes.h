@@ -192,7 +192,8 @@ enum class ParseError {
     UNKNOWN_ERROR,
     INVALID_REGEX_PATTERN,
     FILE_ERROR, // New: For file not found/not readable errors
-    SETTINGS_RESTORE_FAILED // New: For when restoring settings fails
+    SETTINGS_RESTORE_FAILED, // New: For when restoring settings fails
+    CANCELLED // New: For operation cancellation
 };
 
 enum class ParserErrorAction {

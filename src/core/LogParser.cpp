@@ -90,10 +90,10 @@ DefaultLogParser::DefaultLogParser(
     customLevelMappings(levelMappings), // Copy
     logEntryStartRegex(std::move(compiledLogEntryStartRegex)),
     logEntryStartPatternString(std::move(logEntryStartPatternString)),
-    _parserErrorAction(errorAction),
     _maxMultiLineBufferSize(maxMultiLineBufferSize),
     _enableMessageKvParsing(enableMessageKvParsing),
-    _warningLogger(std::move(warningLogger))
+    _warningLogger(std::move(warningLogger)),
+    _parserErrorAction(errorAction)
 {
     // Pre-compile Kv patterns for structured fields
     for (auto& mapping : this->fieldMappings) {
@@ -486,44 +486,4 @@ namespace Utils {
     }
 } // namespace Utils
 
-// LogEntry::toJson() implementation moved here to avoid circular dependency
-nlohmann::json LogEntry::toJson() const {
-    nlohmann::json j;
-    if (id) {
-        j["id"] = *id;
-    }
-    j["sourceFile"] = sourceFile;
-    if (sourceLineNumber) {
-        j["sourceLineNumber"] = *sourceLineNumber;
-    }
-    if (timestamp) {
-        j["timestamp"] = Utils::formatTimestamp(*timestamp);
-    } else {
-        j["timestamp"] = nullptr;
-    }
-    j["level"] = Utils::logLevelToString(level);
-    j["message"] = message;
-    if (threadId) {
-        j["threadId"] = *threadId;
-    }
-    if (module) {
-        j["module"] = *module;
-    }
-    if (host) {
-        j["host"] = *host;
-    }
-    if (!customFields.empty()) {
-        j["customFields"] = customFields;
-    }
-    if (structuredData) {
-        j["structuredData"] = *structuredData;
-    }
-    if (!parsingErrors.empty()) {
-        nlohmann::json errors_json = nlohmann::json::array();
-        for (const auto& err : parsingErrors) {
-            errors_json.push_back(err.toString());
-        }
-        j["parsingErrors"] = errors_json;
-    }
-    return j;
-}
+
