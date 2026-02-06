@@ -7,6 +7,7 @@
 #include "config/CLIConfig.h"
 #include "core/LogTypes.h"
 #include <future>
+#include <future>
 #include <string>
 #include <vector>
 #include <memory> // Required for std::unique_ptr in ScopedLogSettings

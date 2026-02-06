@@ -27,12 +27,14 @@ namespace filter {
  * This class serves as a bridge between the modern, data-driven FilterExpression
  * system and legacy components that operate on the IFilter interface.
  */
+
+
 class ExpressionFilter : public IFilter {
 public:
     /**
      * @brief Constructs an ExpressionFilter from a FilterExpression.
      * @param expression The filter expression tree to evaluate. It is moved into the filter.
-     */
+    
     explicit ExpressionFilter(FilterExpression expression);
 
     /**
@@ -43,7 +45,7 @@ public:
      *
      * @param json_spec The nlohmann::json object representing the filter expression.
      * @return A result containing a shared_ptr to the new ExpressionFilter or an error.
-     */
+    
     static ErrorCode::Result<std::shared_ptr<ExpressionFilter>> create(const nlohmann::json& json_spec);
 
     /**
@@ -54,7 +56,7 @@ public:
      *
      * @param entry The log entry to check.
      * @return True if the entry matches the expression, false otherwise.
-     */
+    
     bool matches(const LogEntry &entry) const override;
 
 private:
@@ -65,6 +67,14 @@ private:
 // For PatternType::Wildcard (after glob-to-regex conversion) and PatternType::Regex,
 // std::regex_search is used, meaning patterns can match any substring of the input.
 // This provides consistent substring matching behavior across these pattern types.
+//
+// Potential Regular Expression Denial of Service (ReDoS) Vulnerability:
+//       If pattern (especially with PatternType::Regex or PatternType::Wildcard) is
+//       derived from untrusted user input, a malicious or poorly constructed regex
+//       could lead to excessive CPU consumption and application unresponsiveness.
+//       Consider rigorous sanitization of user-provided patterns, implementing
+//       timeouts (if the regex engine supports it), or using a ReDoS-resistant
+//       regex library.
 /**
  * @brief Filters log entries based on their source file name.
  *
@@ -72,15 +82,16 @@ private:
  *
  * For PatternType::Wildcard, glob patterns (e.g., "*.log", "server*") are converted
  * into regular expressions. The conversion adds start (^) and end ($) anchors, meaning
- * the pattern must match the *entire* source file name.
+ * the pattern must match the *entire* source file name by default.
  * For example, "server*" becomes `^server.*$`, which matches "server.log" but NOT
- * "log-from-server.log". To match substrings with wildcards, use "*server*".
+ * "log-from-server.log". To match substrings with wildcards, you *must* use
+ * leading and/or trailing wildcards in your pattern, e.g., "*server*".
  * The matching is performed using `std::regex_search` on the anchored regex.
  *
  * For PatternType::Regex, the provided pattern is used directly with `std::regex_search`.
  *
  * Case sensitivity can be configured.
- */
+
 class SourceFileFilter : public IFilter {
 public:
     explicit SourceFileFilter(std::string pattern,
@@ -102,6 +113,14 @@ private:
     std::string fieldKey_;
 };
 
+// Potential Regular Expression Denial of Service (ReDoS) Vulnerability:
+//       If valuePattern (especially with PatternType::Regex or PatternType::Wildcard) is
+//       derived from untrusted user input, a malicious or poorly constructed regex
+//       could lead to excessive CPU consumption and application unresponsiveness.
+//       Consider rigorous sanitization of user-provided patterns, implementing
+//       timeouts (if the regex engine supports it), or using a ReDoS-resistant
+//       regex library.
+
 class FieldValueFilter : public IFilter {
 public:
     explicit FieldValueFilter(std::string fieldKey,
@@ -120,7 +139,15 @@ protected:
 class PredicateFilter : public IFilter {
 public:
     using Predicate = std::function<bool(const LogEntry&)>;
-    explicit PredicateFilter(Predicate predicate);
+    /**
+     * @brief Constructs a PredicateFilter with a given predicate.
+     * @param predicate The predicate function to evaluate. It is moved into the filter.
+     *                  If the predicate captures external variables by reference (`[&]`),
+     *                  ensure those variables outlive this PredicateFilter instance
+     *                  to avoid dangling references and undefined behavior. Value captures (`[=]`)
+     *                  are generally safer for long-lived filters.
+    
+    explicit PredicateFilter(Predicate&& predicate);
     bool matches(const LogEntry &entry) const override;
 private:
     Predicate predicate_;
@@ -156,11 +183,11 @@ private:
 
 class KeywordFilter : public IFilter {
 public:
-    enum class Logic { ANY, ALL };
+    enum class Logic { OR, AND };
 
     explicit KeywordFilter(std::string keyword, bool isCaseSensitive = false);
     explicit KeywordFilter(std::vector<std::string> keywords,
-                           Logic logic = Logic::ANY,
+                           Logic logic = Logic::OR,
                            bool isCaseSensitive = false);
     bool matches(const LogEntry &entry) const override;
 private:
@@ -169,8 +196,14 @@ private:
     bool isCaseSensitive_;
 };
 
-class RegexFilter : public IFilter {
-public:
+// Potential Regular Expression Denial of Service (ReDoS) Vulnerability:
+//       If pattern is derived from untrusted user input, a malicious or poorly
+//       constructed regex could lead to excessive CPU consumption and application
+//       unresponsiveness. Consider rigorous sanitization of user-provided patterns,
+//       implementing timeouts (if the regex engine supports it), or using a
+//       ReDoS-resistant regex library.
+
+class RegexFilter : public IFilter {public:
     static ErrorCode::Result<std::shared_ptr<RegexFilter>> create(std::string pattern, bool caseSensitive = false);
     bool matches(const LogEntry &entry) const override;
 
@@ -185,6 +218,8 @@ public:
     TimeRangeFilter(std::chrono::system_clock::time_point start,
                     std::chrono::system_clock::time_point end);
 
+    // TODO(Audit): Consider using a dedicated error enum/struct instead of std::string
+    // for improved performance and structured error reporting in std::expected.
     static std::expected<TimeRangeFilter, std::string> fromStrings(const std::string& start, const std::string& end);
     static std::expected<TimeRangeFilter, std::string> forDay(const std::string& dateString);
     static std::expected<TimeRangeFilter, std::string> since(const std::string& relativeTime);
@@ -209,7 +244,7 @@ class CompositeFilter : public IFilter {
 public:
     enum class Logic { AND, OR };
     explicit CompositeFilter(Logic logic = Logic::AND) : logic_(logic) {}
-    void add(std::shared_ptr<IFilter> filter) {
+    void add(std::shared_ptr<IFilter>&& filter) {
         filters_.push_back(std::move(filter));
     }
     bool matches(const LogEntry &entry) const override;
@@ -266,7 +301,7 @@ protected:
  * This filter does not perform a true nested lookup into a JSON object. Instead, it treats the
  * `fieldPath` as a single key to be looked up in the `customFields` map. For example, a `fieldPath`
  * of `"a.b.c"` will match the key `"a.b.c"` in the map, not a nested field `c` inside `b` inside `a`.
- */
+
 class DottedKeyFieldValueFilter : public FieldValueFilter {
 public:
     DottedKeyFieldValueFilter(std::string fieldPath,
@@ -279,7 +314,7 @@ public:
  * @brief A filter that performs a numeric comparison on a field from the `customFields` map using a dotted key.
  *
  * This filter does not perform a true nested lookup. It treats `fieldPath` as a single key.
- */
+
 class DottedKeyNumericComparisonFilter : public NumericComparisonFilter {
 public:
     DottedKeyNumericComparisonFilter(std::string fieldPath, double value, NumericComparisonFilter::Operator op);
@@ -289,7 +324,7 @@ public:
  * @brief A filter that performs a boolean check on a field from the `customFields` map using a dotted key.
  *
  * This filter does not perform a true nested lookup. It treats `fieldPath` as a single key.
- */
+
 class DottedKeyBoolFilter : public BoolFilter {
 public:
     explicit DottedKeyBoolFilter(std::string fieldPath, bool value);
@@ -299,7 +334,7 @@ public:
  * @brief A filter that checks if a field's value is in a set, using a dotted key from the `customFields` map.
  *
  * This filter does not perform a true nested lookup. It treats `fieldPath` as a single key.
- */
+
 class DottedKeyValueSetFilter : public ValueSetFilter {
 public:
     DottedKeyValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive = false);

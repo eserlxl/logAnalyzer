@@ -33,7 +33,7 @@ For a comprehensive explanation, see [**docs/why-loganalyzer.md**](docs/why-loga
 
 ## ✨ Key Features
 
-`logAnalyzer` offers a rich set of features for efficient log analysis, including high-performance processing, advanced filtering capabilities, built-in analytics, multi-format support, flexible I/O, and a C++ API.
+`logAnalyzer` offers a rich set of features for efficient log analysis, including high-performance processing, advanced filtering capabilities (e.g., field-based, regex, and logical operators), built-in analytics, multi-format support, flexible I/O, and a C++ API.
 
 For a comprehensive overview of all capabilities, see the [**full feature list**](docs/features.md).
 

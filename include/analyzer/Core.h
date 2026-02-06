@@ -17,6 +17,9 @@
 #include "core/JsonLogParserFactory.h" // New: For JSON parser factory
 #include "utils/Time.h" // For Utils::generateLogEntryId
 
+#include <atomic>
+#include <future>
+#include <generator> // C++23 for std::generator
 #include <shared_mutex>
 #include <vector>
 #include <string>
@@ -24,14 +27,14 @@
 #include <optional>
 #include <chrono>
 #include <memory>
-#include <future>
 #include <functional>
 #include <mutex>
 #include <expected>
 #include <span>
 #include <iosfwd>
 #include <ranges> // C++20 for ranges
-#include <generator> // C++23 for std::generator
+#include <fstream>
+
 
 // Forward declarations
 class LogReader;
