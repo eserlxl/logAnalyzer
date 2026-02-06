@@ -101,8 +101,9 @@ LogEntryField stringToLogEntryField(const std::string& fieldStr) {
     if (upperFieldStr == "THREAD_ID") return LogEntryField::THREAD_ID;
     if (upperFieldStr == "MODULE") return LogEntryField::MODULE;
     if (upperFieldStr == "HOST") return LogEntryField::HOST;
-    if (upperFieldStr == "CUSTOM") return LogEntryField::CUSTOM; // Added handling for CUSTOM
     if (upperFieldStr == "STRUCTURED_FIELD") return LogEntryField::STRUCTURED_FIELD;
+    // Removed explicit handling for "CUSTOM". If fieldStr is "CUSTOM", it will now fall through
+    // to return LogEntryField::UNKNOWN, correctly triggering the custom field logic in from_json.
     return LogEntryField::UNKNOWN;
 }
 std::string exportFormatToString(ExportFormat format) {

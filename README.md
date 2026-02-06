@@ -87,7 +87,7 @@ For more advanced usage scenarios and a complete list of commands, check out our
 
 ## 📚 Documentation
 
-All documentation is located in the [`docs/`](/docs) directory.
+All documentation is located in the [`docs/`](./docs) directory.
 
 ### Usage
 - [**Features Overview**](docs/features.md): A detailed look at what `logAnalyzer` can do.
