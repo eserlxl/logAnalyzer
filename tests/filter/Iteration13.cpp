@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #include <gtest/gtest.h>
 #include "filter/Expression.h"
 #include "filter/Condition.h"
@@ -6,6 +9,8 @@
 #include <chrono>
 #include <map>
 #include <vector> // Added for std::vector
+
+using namespace filter;
 
 // Test suite for new features in Iteration 13 for FilterExpression
 class Iteration13ExpressionTest : public ::testing::Test {
