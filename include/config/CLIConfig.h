@@ -65,6 +65,7 @@ public:
         std::optional<std::chrono::seconds> statsWindow; // To be integrated into collectors
         std::optional<std::chrono::milliseconds> findGapsDuration; // To be integrated into collectors
         bool readFromStdin = false; // New: Input from stdin
+        bool exitAfterParse = false; // New: To handle --help, --version
     };
 
     // CLI parsing function - now returns a pair of LogAnalyzerSettings and CLIOptions

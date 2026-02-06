@@ -66,8 +66,13 @@ public:
     std::string formatEntry(const LogEntry& entry, std::string_view format, const FormattingOptions& options) const;
     std::string formatEntry(const LogEntry& entry, std::string_view format, bool useColor) const;
 
+    [[deprecated("Use printFilteredEntries(std::ostream&, const FilterExpression&, const FormattingOptions&) instead.")]]
     void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const;
+    void printFilteredEntries(std::ostream& out, const FilterExpression& expression, const FormattingOptions& options) const;
+
+    [[deprecated("Use printFilteredEntries(std::ostream&, const FilterExpression&, std::string_view) instead.")]]
     void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const;
+    void printFilteredEntries(std::ostream& out, const FilterExpression& expression, std::string_view formatString) const;
 
     const std::vector<LogEntry>& getEntries() const;
     std::span<const LogEntry> getEntriesView() const;
@@ -75,10 +80,21 @@ public:
     
     void setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel);
     
+    [[deprecated("Use exportAsCsv(std::ostream&, const FilterExpression&, char, std::string_view) instead.")]]
     void exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
+    void exportAsCsv(std::ostream& out, const FilterExpression& expression, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
+    
+    [[deprecated("Use exportAsJson(std::ostream&, const FilterExpression&, bool, std::string_view) instead.")]]
     void exportAsJson(std::ostream& out, const FilterCriteria& filter, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
+    void exportAsJson(std::ostream& out, const FilterExpression& expression, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
+
+    [[deprecated("Use getFilteredEntries(const FilterExpression&) instead.")]]
     ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const FilterCriteria& criteria) const;
+    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const FilterExpression& expression) const;
+
+    [[deprecated("Use getSortedFilteredEntries(const FilterExpression&, SortBy, SortOrder) instead.")]]
     std::vector<LogEntry> getSortedFilteredEntries(const FilterCriteria& criteria, SortBy sortBy, SortOrder sortOrder) const;
+    std::vector<LogEntry> getSortedFilteredEntries(const FilterExpression& expression, SortBy sortBy, SortOrder sortOrder) const;
 
     // Statistics Refactoring
     void addStatisticCollector(std::shared_ptr<IStatisticCollector> collector);
@@ -107,6 +123,7 @@ private:
     std::mutex pendingAsyncTasksMutex_;
 
     ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const FilterCriteria& criteria) const;
+    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const FilterExpression& expression) const;
     
     static std::shared_ptr<IStatisticCollector> createStatisticCollector(const StatisticConfig& config);
     

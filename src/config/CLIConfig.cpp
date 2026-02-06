@@ -8,11 +8,16 @@
 #include "core/Error.h" // Add this include
 #include "core/CiLess.h" // For ci_less
 #include "stats/Statistics.h" // For StatisticType, StatisticConfig
+#include "utils/Version.h"
 #include <CLI/CLI.hpp>
 #include <algorithm> // For std::transform
 #include <iostream> // For std::cerr
 #include <string_view>
 #include <sstream>
+
+#ifndef PROJECT_VERSION
+#define PROJECT_VERSION "0.0.0-dev"
+#endif
 
 using namespace ErrorCode;
 
@@ -115,6 +120,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     LogAnalyzerSettings settings;
     CLIOptions appOptions;
     CLI::App app{"Log Analyzer Tool"};
+    app.set_version_flag("--version", PROJECT_VERSION);
 
     app.set_config("--config", "", "Read options from a configuration file", false);
 
@@ -265,6 +271,14 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     try {
         app.parse(argc, argv);
+    } catch (const CLI::CallForHelp &e) {
+        appOptions.exitAfterParse = true;
+        std::cout << app.help() << std::endl;
+        return std::make_pair(settings, appOptions);
+    } catch (const CLI::CallForVersion &e) {
+        appOptions.exitAfterParse = true;
+        std::cout << app.version() << std::endl;
+        return std::make_pair(settings, appOptions);
     } catch (const CLI::Error &e) {
         // Refined error handling could inspect 'e' more here if needed
         std::stringstream ss;

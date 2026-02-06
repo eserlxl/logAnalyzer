@@ -9,7 +9,8 @@
 #include <nlohmann/json.hpp>
 
 #include "core/Error.h" // For ErrorCode::Result
-#include "filter/Types.h" // For FilterOperator, LogEntryField
+#include "core/LogTypes.h" // For LogLevel, PatternType etc.
+#include "utils/UtilsCore.h"    // For ci_less
 #include "filter/EnumStringConversions.h" // For enum to string conversions
 #include "filter/JsonUtils.h"
 
@@ -53,8 +54,11 @@ inline void to_json(nlohmann::json& j, const FilterRule& fr) {
     j["caseSensitive"] = fr.caseSensitive;
 }
 
-inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr, const std::string& current_path = "/") {
+// The `current_path` parameter is kept for backward compatibility but is unused.
+inline ErrorCode::Result<FilterRule> from_json(const nlohmann::json& j, [[maybe_unused]] const std::string& current_path = "/") {
     using namespace FilterJsonUtils;
+
+    FilterRule fr;
 
     auto fieldRes = getRequired<std::string>(j, "field", current_path);
     if (!fieldRes) return std::unexpected(fieldRes.error());
@@ -79,7 +83,8 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterRule& fr
 
     fr.caseSensitive = getOptional<bool>(j, "caseSensitive").value_or(false);
 
-    return {}; // Success
+    return fr; // Success
 }
+
 
 #endif // FILTER_LEGACY_H

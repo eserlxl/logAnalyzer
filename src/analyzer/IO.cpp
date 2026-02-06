@@ -576,3 +576,22 @@ void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterCriteria& 
     options.dateTimeFormat = std::string(formatString);
     printFilteredEntries(out, criteria, options);
 }
+
+void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterExpression& expression, const FormattingOptions& options) const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    auto filteredEntriesExpected = getFilteredEntries_NoLock(expression);
+    if (filteredEntriesExpected.has_value()) {
+        const auto& filteredEntries = filteredEntriesExpected.value();
+        for (const auto& entry : filteredEntries) {
+            out << formatEntry(entry, "{timestamp} {level}: {message}", options) << std::endl;
+        }
+    } else {
+        out << "Error filtering entries: " << filteredEntriesExpected.error().message << std::endl;
+    }
+}
+
+void LogAnalyzer::printFilteredEntries(std::ostream& out, const FilterExpression& expression, std::string_view formatString) const {
+    FormattingOptions options;
+    options.dateTimeFormat = std::string(formatString);
+    printFilteredEntries(out, expression, options);
+}

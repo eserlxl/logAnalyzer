@@ -1,5 +1,7 @@
 # logAnalyzer
 
+**Unleash the Power of Your Logs: A High-Performance C++ Utility for Advanced Log Analysis.**
+
 A high-performance C++ command-line utility for advanced log analysis, filtering, and statistical insights.
 
 [![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake.yml/badge.svg?branch=main)](https://github.com/eserlxl/logAnalyzer/actions)
@@ -66,6 +68,8 @@ Get `LogAnalyzer` up and running on your system with these simple steps.
     After building, the executable will be in the `build/bin` directory. You can run it directly:
     ```bash
     ./build/bin/LogAnalyzer /var/log/syslog --level ERROR
+    # Note: The actual executable name might be 'logAnalyzer' (lowercase 'l') depending on your build environment or OS.
+    # Please verify the exact name in 'build/bin/' if the above command fails.
     ```
     *(Replace `/var/log/syslog` with a path to one of your log files.)*
 
@@ -253,6 +257,8 @@ LogAnalyzer app.log --expression '(level=ERROR and msg contains "database") or m
 ```bash
 # Process a large log file without loading it all into memory, saving errors to a file
 LogAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
+
+**Note:** When using `--stream`, features that require full log data (like sorting or certain statistics) are not available.
 ```
 
 ### Example 5: Process Logs from Standard Input
@@ -327,7 +333,7 @@ Run `LogAnalyzer --help` for a full list of commands.
 | `--config FILE`        |           | Specifies a JSON configuration file to load. Command-line arguments will override settings defined in the file.                                                                           |            |
 | `--output FILE`        |           | Redirects all output (filtered logs, statistics) to the specified file instead of standard output.                                                                                      | `(stdout)` |
 | `--color OPT`          |           | Controls colorized output. Options are `always`, `auto` (default, colors if stdout is a TTY and not redirected), or `never`.                                                              | `auto`     |
-| `--stream`             |           | Enables memory-efficient stream processing mode for very large files. Not all features are available in stream mode (e.g., sorting).                                                    | `false`    |
+| `--stream`             |           | Enables memory-efficient stream processing for very large files, avoiding full memory load. **Caution:** Some features (e.g., sorting) are incompatible with stream mode.           | `false`    |
 | `--stdin` |           | Reads log entries from standard input (e.g., from a pipe). This mode is automatically enabled if `-` is used as a log file path. See Example 5 for details.                                           | `false`    |
 
 

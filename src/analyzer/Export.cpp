@@ -149,3 +149,137 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
     out << indent << "]" << newline;
     out << "}" << newline;
 }
+
+void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterExpression& expression, char delimiter, std::string_view timestampFormat) const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    
+    // CSV Header
+    out << "ID" << delimiter << "Timestamp" << delimiter << "Level" << delimiter << "Message" << delimiter << "SourceFile\n";
+    
+    auto filtered_expected = getFilteredEntries_NoLock(expression);
+    if (!filtered_expected) {
+        std::cerr << "Error filtering entries for CSV export: " << filtered_expected.error().message << std::endl;
+        return;
+    }
+    const auto& filtered = filtered_expected.value();
+    
+    for (const auto& entry : filtered) {
+        // Output ID
+        if (entry.id.has_value()) {
+            out << *entry.id << delimiter;
+        } else {
+            out << "" << delimiter;
+        }
+
+        std::string timestampStr;
+        if (entry.timestamp.has_value()) {
+            timestampStr = Utils::formatTimestamp(entry.timestamp.value(), timestampFormat);
+        } else {
+            timestampStr = "";
+        }
+        out << timestampStr << delimiter;
+        out << Utils::logLevelToString(entry.level) << delimiter;
+        
+        std::string msg = entry.message;
+        bool needsQuotes = msg.find(delimiter) != std::string::npos || 
+                           msg.find('"') != std::string::npos ||
+                           msg.find('\n') != std::string::npos ||
+                           msg.find('\r') != std::string::npos;
+                           
+        if (needsQuotes) {
+            size_t pos = msg.find('"');
+            while (pos != std::string::npos) {
+                msg.replace(pos, 1, "\"\"");
+                pos = msg.find('"', pos + 2);
+            }
+            out << '"' << msg << '"';
+        } else {
+            out << msg;
+        }
+        
+        out << delimiter << entry.sourceFile << "\n";
+    }
+}
+
+void LogAnalyzer::exportAsJson(std::ostream &out, const FilterExpression &expression, bool prettyPrint, std::string_view timestampFormat) const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    auto filtered_expected = getFilteredEntries_NoLock(expression);
+    if (!filtered_expected) {
+        std::cerr << "Error filtering entries for JSON export: " << filtered_expected.error().message << std::endl;
+        return;
+    }
+    const auto& filtered = filtered_expected.value();
+
+    const std::string indent = prettyPrint ? "  " : "";
+    const std::string newline = prettyPrint ? "\n" : "";
+    const std::string entryIndent = prettyPrint ? "    " : "";
+
+    out << "{" << newline;
+    out << indent << "\"summary\":{\"count\": " << filtered.size() << "}," << newline;
+    out << indent << "\"entries\": [" << newline;
+
+    for (size_t i = 0; i < filtered.size(); ++i) {
+        const auto& entry = filtered[i];
+        
+        nlohmann::json entryJson;
+
+        if (entry.id.has_value()) {
+            entryJson["Id"] = entry.id.value();
+        } else {
+            entryJson["Id"] = nullptr;
+        }
+
+        std::string timestampStr;
+        if (entry.timestamp.has_value()) {
+            timestampStr = Utils::formatTimestamp(entry.timestamp.value(), timestampFormat);
+            entryJson["Timestamp"] = timestampStr;
+        } else {
+            entryJson["Timestamp"] = nullptr;
+        }
+        
+        entryJson["Level"] = Utils::logLevelToString(entry.level);
+        entryJson["Message"] = entry.message;
+        entryJson["SourceFile"] = entry.sourceFile;
+        
+        if (entry.sourceLineNumber.has_value()) {
+            entryJson["LineNumber"] = entry.sourceLineNumber.value();
+        } else {
+            entryJson["LineNumber"] = nullptr;
+        }
+
+        if (entry.threadId.has_value()) {
+            entryJson["ThreadId"] = entry.threadId.value();
+        } else {
+            entryJson["ThreadId"] = nullptr;
+        }
+
+        if (entry.module.has_value()) {
+            entryJson["Module"] = entry.module.value();
+        } else {
+            entryJson["Module"] = nullptr;
+        }
+
+        if (entry.host.has_value()) {
+            entryJson["Host"] = entry.host.value();
+        } else {
+            entryJson["Host"] = nullptr;
+        }
+
+        if (!entry.customFields.empty()) {
+            nlohmann::json customFieldsJson;
+            for (const auto& pair : entry.customFields) {
+                customFieldsJson[Utils::escapeJsonString(pair.first)] = Utils::escapeJsonString(pair.second);
+            }
+            entryJson["CustomFields"] = customFieldsJson;
+        }
+
+        if (prettyPrint) {
+            out << entryJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << (i < filtered.size() - 1 ? "," : "") << newline;
+        } else {
+            out << entryJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << (i < filtered.size() - 1 ? "," : "") << newline;
+        }
+    }
+
+    out << indent << "]" << newline;
+    out << "}" << newline;
+}

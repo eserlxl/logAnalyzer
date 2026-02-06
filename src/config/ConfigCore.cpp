@@ -27,7 +27,7 @@ std::string expandEnvironmentVariables(std::string_view content) {
     // Group 2: The full variable token (${...} or $...)
     // Group 3: Content of ${...}
     // Group 4: Content of $...
-    static const std::regex envVarRegex(R"((\\*)(\$\{([^}]+)\}|\$([A-Za-z0-9_]+)))");
+    static const std::regex envVarRegex(R"(\(*)(\\\$\{([^}]+)\\|\\$([A-Za-z0-9_]+)))");
     
     std::string result;
     std::cregex_iterator it(content.data(), content.data() + content.size(), envVarRegex);
@@ -246,12 +246,11 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
         if (j.contains("filterRules") && j.at("filterRules").is_array()) {
             settings.filterRules.clear();
             for (const auto& ruleJson : j.at("filterRules")) {
-                FilterRule rule;
-                auto result = from_json(ruleJson, rule);
+                auto result = from_json(ruleJson);
                 if (!result.has_value()) {
                     errors.push_back("Error parsing 'filterRules': " + result.error().message);
                 } else {
-                    settings.filterRules.push_back(rule);
+                    settings.filterRules.push_back(result.value());
                 }
             }
         } else if (j.contains("filterRules")) {

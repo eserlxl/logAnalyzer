@@ -16,46 +16,46 @@ endif()
 
 # Find all test source files ending with _test.cpp
 set(TEST_SOURCES
-    "config/CLIConfig_InputOutput.cpp"
-    "config/CLIConfig_Filtering.cpp"
-    "config/CLIConfig_Formatting.cpp"
-    "config/CLIConfig_Analysis.cpp"
-    "config/CLIConfig_Errors.cpp"
-    "config/CLIConfig_Defaults.cpp"
-    "config/CoreBasic.cpp"
-    "config/CoreJson.cpp"
-    "config/CoreValidation.cpp"
-    "config/CoreFeatures.cpp"
-    "core/LogParser.cpp"
-    "core/LogTypes.cpp"
-    "export/Core.cpp"
-    "export/Json.cpp"
+    "src/config/CLIConfig_InputOutput.cpp"
+    "src/config/CLIConfig_Filtering.cpp"
+    "src/config/CLIConfig_Formatting.cpp"
+    "src/config/CLIConfig_Analysis.cpp"
+    "src/config/CLIConfig_Errors.cpp"
+    "src/config/CLIConfig_Defaults.cpp"
+    "src/config/CoreBasic.cpp"
+    "src/config/CoreJson.cpp"
+    "src/config/CoreValidation.cpp"
+    "src/config/CoreFeatures.cpp"
+    "src/core/LogParser.cpp"
+    "src/core/LogTypes.cpp"
+    "src/export/Core.cpp"
+    "src/export/Json.cpp"
 
-    "export/Csv.cpp"
-    "export/Text.cpp"
-    "export/FieldMapping.cpp"
-    "export/Settings.cpp"
-    "export/TestUtils.cpp"
-    "analyzer/Core.cpp"
-    "filter/LegacyFilterTests.cpp"
-    "filter/FluentApiTests.cpp"
-    "filter/EvaluationTests.cpp"
-    "filter/LogicalNegationTests.cpp"
-    "filter/Advanced.cpp"
-    "filter/Version.cpp"
-    "filter/IpAddress.cpp"
-    "filter/CoreJsonBasic.cpp"
-    "filter/CoreJsonCondition.cpp"
-    "filter/CoreJsonExpression.cpp"
-    "filter/CoreJsonRule.cpp"
-    "filter/CoreUnitAdvanced.cpp"
-    "filter/CoreUnitBasic.cpp"
-    "filter/CoreUnitField.cpp"
-    "filter/Iteration2Tests.cpp"
-    "stats/Statistics.cpp"
-    "utils/Time.cpp"
-    "utils/Enum.cpp"
-    "utils/String.cpp"
+    "src/export/Csv.cpp"
+    "src/export/Text.cpp"
+    "src/export/FieldMapping.cpp"
+    "src/export/Settings.cpp"
+    "src/export/TestUtils.cpp"
+    "src/analyzer/Core.cpp"
+    "src/filter/LegacyFilterTests.cpp"
+    "src/filter/FluentApiTests.cpp"
+    "src/filter/EvaluationTests.cpp"
+    "src/filter/LogicalNegationTests.cpp"
+    "src/filter/Advanced.cpp"
+    "src/filter/Version.cpp"
+    "src/filter/IpAddress.cpp"
+    "src/filter/CoreJsonBasic.cpp"
+    "src/filter/CoreJsonCondition.cpp"
+    "src/filter/CoreJsonExpression.cpp"
+    "src/filter/CoreJsonRule.cpp"
+    "src/filter/CoreUnitAdvanced.cpp"
+    "src/filter/CoreUnitBasic.cpp"
+    "src/filter/CoreUnitField.cpp"
+    "src/filter/Iteration2Tests.cpp"
+    "src/stats/Statistics.cpp"
+    "src/utils/Time.cpp"
+    "src/utils/Enum.cpp"
+    "src/utils/String.cpp"
 )
 
 # Loop through each test source file
@@ -70,8 +70,8 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     # Create an executable for each test file
     add_executable(${TEST_NAME} ${TEST_SOURCE})
 
-    # Add project root to include path for 'tests/...' includes
-    target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR})
+    # Add project root and tests/include to include path for 'tests/...' includes
+    target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
         message(STATUS "Including test-specific options for ${TEST_NAME} from ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
