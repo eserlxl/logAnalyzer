@@ -27,24 +27,24 @@ Modern applications generate gigabytes of logs daily. Traditional tools like `gr
     - Filter by **Time Range** (Absolute or Relative).
     - **Complex Expressions**: `(level=ERROR AND msg contains "timeout") OR duration > 500ms`.
 - **📊 Statistical Analysis**: Generate instant reports on entry rates, top error messages, and more.
+- **📂 Multi-File & Sorting**: Analyze multiple files at once and sort results by any field.
 - **🛠 Structured Support**: Native parsing for JSON logs and customizable text patterns.
+- **⚙️ Configurable**: Use JSON configuration files for persistent, complex setups.
 - **📤 Flexible Export**: Output to Text, CSV, JSON, or XML.
 - **🔄 Live Monitoring**: Tail files in real-time with filtering applied (`--tail`).
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### Installation & Building
 
-Before you can build and run `logAnalyzer`, ensure you have the following installed:
+`logAnalyzer` is primarily built from source.
 
-*   **Git**: For cloning the repository.
-*   **CMake**: Version 3.15 or higher, for managing the build process.
-*   **C++23 Compatible Compiler**: Such as GCC (13 or newer), Clang (16 or newer), or MSVC (Visual Studio 2022 v17.8 or newer).
+- **Build Instructions**: See [docs/build.md](docs/build.md) for prerequisites and step-by-step build commands.
+- **Installation**: See [docs/installation.md](docs/installation.md) for installing the binary to your system path.
 
-### Build from Source
+### Quick Start
 
-Follow these steps to clone the repository and build `logAnalyzer`:
-
+**1. Build (if not already done):**
 ```bash
 git clone https://github.com/eserlxl/logAnalyzer.git
 cd logAnalyzer
@@ -52,41 +52,42 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
-For more detailed installation instructions, including platform-specific notes and dependency management, please refer to the [Installation Guide](docs/installation.md).
 
-### Quick Usage Examples
-
-Here are a few common use cases to get you started:
-
-**Basic Filter:** Get all ERROR logs from a file.
+**2. Run a basic analysis:**
 ```bash
-./bin/logAnalyzer /var/log/syslog --level ERROR
+# Navigate to project root
+cd ../
+
+# Analyze a log file for ERRORs
+./build/bin/logAnalyzer /var/log/syslog --level ERROR
+
+# Analyze logs from a specific time range
+./build/bin/logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
 ```
 
-**Time Range & Keyword:** Find "database" errors from the last hour.
+**3. Use a Configuration File:**
+For complex rules, use a JSON config file:
 ```bash
-./bin/logAnalyzer /var/log/app.log --keyword "database" --start "1 hour ago"
+./build/bin/logAnalyzer app.log --config my_config.json
 ```
 
-**Statistical Insight:** See the top occurring log messages.
-```bash
-./bin/logAnalyzer /var/log/app.log --stats top_messages:5
-```
-For a comprehensive list of commands and advanced filtering options, consult the [Command Line Reference](docs/cli-reference.md) and [Usage Examples](docs/usage-examples.md).
+For more examples, see [Usage Examples](docs/usage-examples.md) and the [Command Line Reference](docs/cli-reference.md).
 
 ## 📚 Documentation
 
 Detailed documentation is available in the `docs/` directory:
 
-- [**Installation Guide**](docs/installation.md)
-- [**Command Line Reference**](docs/cli-reference.md)
-- [**Usage Examples**](docs/usage-examples.md)
-- [**Configuration Guide**](docs/configuration.md)
-- [**Project Structure**](docs/project-structure.md)
+- [**Features Overview**](docs/features.md): In-depth look at capabilities.
+- [**Build Guide**](docs/build.md): Compiling from source.
+- [**Installation Guide**](docs/installation.md): System installation.
+- [**Command Line Reference**](docs/cli-reference.md): Flags and arguments.
+- [**Usage Examples**](docs/usage-examples.md): Common use cases.
+- [**Configuration Guide**](docs/configuration.md): JSON configuration format.
+- [**Project Structure**](docs/project-structure.md): Codebase organization.
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Whether it's reporting bugs, suggesting new features, or submitting code, your help is invaluable. Please see our [CONTRIBUTING.md](CONTRIBUTING.md) guide for detailed instructions on how to get started.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started, report bugs, or suggest features.
 
 ## 📄 License
 

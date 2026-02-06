@@ -1,50 +1,50 @@
 ## Usage Examples
 
-After building, you can run `LogAnalyzer` in two ways:
+After building, you can run `logAnalyzer` in two ways:
 
 1.  **From the build directory**:
     ```bash
-    ./build/bin/LogAnalyzer [options] <log_file(s)>
+    ./build/bin/logAnalyzer [options] <log_file(s)>
     ```
 2.  **As an installed command**:
     ```bash
-    LogAnalyzer [options] <log_file(s)>
+    logAnalyzer [options] <log_file(s)>
     ```
 
-**Note**: The following examples assume `LogAnalyzer` is in your `PATH`.
+**Note**: The following examples assume `logAnalyzer` is in your `PATH`.
 
 ### Example 1: Basic Filtering
 
 ```bash
 # Find all errors containing the word "database" in a specific log file
-LogAnalyzer /var/log/app.log --level ERROR --keyword "database"
+logAnalyzer /var/log/app.log --level ERROR --keyword "database"
 
 # Find all entries in two different log files, excluding those containing "DEBUG"
-LogAnalyzer app.log kern.log --exclude-keyword "DEBUG"
+logAnalyzer app.log kern.log --exclude-keyword "DEBUG"
 ```
 
 ### Example 2: Advanced Filtering and Output
 
 ```bash
 # Find entries that are either warnings or errors, and contain "timeout" OR "refused"
-LogAnalyzer access.log --level WARNING --level ERROR --keyword "timeout" --keyword "refused" --logic OR
+logAnalyzer access.log --level WARNING --level ERROR --keyword "timeout" --keyword "refused" --logic OR
 
 # Export errors between two dates to a pretty-printed JSON file
-LogAnalyzer system.log --level ERROR --start "2023-11-01 00:00:00" --end "2023-11-02 00:00:00" --format json --pretty --output errors.json
+logAnalyzer system.log --level ERROR --start "2023-11-01 00:00:00" --end "2023-11-02 00:00:00" --format json --pretty --output errors.json
 ```
 
 ### Example 3: Complex Expression
 
 ```bash
 # Use a complex expression to find database errors or any message containing "timeout"
-LogAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
+logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
 ```
 
 ### Example 4: Stream a Large File
 
 ```bash
 # Process a large log file without loading it all into memory, saving errors to a file
-LogAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
+logAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
 ```
 
 **Note:** When using `--stream`, features that require full log data (like sorting or certain statistics) are not available.
@@ -53,33 +53,33 @@ LogAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
 
 ```bash
 # Pipe logs from another command and filter for errors
-cat /var/log/syslog | LogAnalyzer - --level ERROR
+cat /var/log/syslog | logAnalyzer - --level ERROR
 
 # Tail a file and filter for a keyword
-tail -f /var/log/app.log | LogAnalyzer --stdin --keyword "error"
+tail -f /var/log/app.log | logAnalyzer --stdin --keyword "error"
 ```
 
 ### Example 6: Statistical Analysis
 
 ```bash
 # Get the top 5 most common error messages from a log file (using legacy syntax)
-LogAnalyzer system.log --level ERROR --stats top_messages:5
+logAnalyzer system.log --level ERROR --stats top_messages:5
 
 # Get the top 10 messages using the new, more flexible syntax
-LogAnalyzer system.log --stats "type=TOP_MESSAGES,top_n=10"
+logAnalyzer system.log --stats "type=TOP_MESSAGES,top_n=10"
 ```
 
 ### Example 7: Custom Export
 
 ```bash
 # Export specific fields to a CSV, with a custom header for the timestamp field
-LogAnalyzer application.log --format csv --csv-fields "timestamp as Time, level, message" --output report.csv
+logAnalyzer application.log --format csv --csv-fields "timestamp as Time, level, message" --output report.csv
 ```
 
 
 ### Time-based Filtering
 
-`LogAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.
+`logAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.
 
 You can specify timestamps in several formats:
 *   **Absolute Time**: `"YYYY-MM-DD HH:MM:SS"` (e.g., `"2023-11-20 14:30:00"`)
@@ -95,14 +95,14 @@ The `--duration` flag can be combined with `--start` or `--end` to specify a tim
 
 ```bash
 # Get logs from the last 2 hours
-LogAnalyzer app.log --start "2h ago"
+logAnalyzer app.log --start "2h ago"
 
 # Get logs from yesterday
-LogAnalyzer app.log --start "yesterday" --end "today"
+logAnalyzer app.log --start "yesterday" --end "today"
 
 # Get logs for a 30-minute window starting at a specific time
-LogAnalyzer app.log --start "2023-11-20 10:00:00" --duration "30m"
+logAnalyzer app.log --start "2023-11-20 10:00:00" --duration "30m"
 
 # Get logs from a specific day (using ISO 8601 date)
-LogAnalyzer app.log --start "2023-11-20T00:00:00Z" --end "2023-11-21T00:00:00Z"
+logAnalyzer app.log --start "2023-11-20T00:00:00Z" --end "2023-11-21T00:00:00Z"
 ```

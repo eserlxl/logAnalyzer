@@ -14,6 +14,6 @@
 | **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                   |
 | **Time-based Filtering**     | Filter by absolute time range, relative time (`5m ago`), or for a specific day (`yesterday`, `2023-10-20`). |
 | **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
-| **Complex Filter Expressions** | (Coming Soon) Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
+| **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
 | **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable and aliasable output fields.                 |
 | **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, log level counts, and unique value counts for any field. |

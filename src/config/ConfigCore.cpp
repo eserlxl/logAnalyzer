@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "config/Core.h"
+#include "config/ConfigCore.h"
 #include "config/Settings.h"
 #include "utils/UtilsCore.h"
 #include "filter/Core.h" 
