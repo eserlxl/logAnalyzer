@@ -71,6 +71,11 @@ target_link_libraries(LogAnalyzerLib PUBLIC nlohmann_json::nlohmann_json CLI11::
 add_executable(logAnalyzer src/main.cpp)
 target_link_libraries(logAnalyzer PRIVATE LogAnalyzerLib)
 
+# Installation
+include(GNUInstallDirs)
+install(TARGETS logAnalyzer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS LogAnalyzerLib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 # Enable testing
 enable_testing()
 add_subdirectory(tests)

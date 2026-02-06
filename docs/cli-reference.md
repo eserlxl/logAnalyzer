@@ -1,8 +1,8 @@
 ## Command-Line Interface (CLI)
 
-`LogAnalyzer` provides a rich command-line interface for ad-hoc analysis.
+`logAnalyzer` provides a rich command-line interface for ad-hoc analysis.
 
-Run `LogAnalyzer --help` for a full list of commands.
+Run `logAnalyzer --help` for a full list of commands.
 
 ### General Options
 

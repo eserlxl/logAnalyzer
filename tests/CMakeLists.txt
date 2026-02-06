@@ -56,6 +56,7 @@ set(TEST_SOURCES
     "src/utils/Time.cpp"
     "src/utils/Enum.cpp"
     "src/utils/String.cpp"
+    "src/analyzer/Types_test.cpp"
 )
 
 # Loop through each test source file
