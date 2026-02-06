@@ -16,14 +16,30 @@ A good branch name would be (where issue #123 is the ticket you're working on):
 git checkout -b 123-add-a-new-feature
 ```
 
-### Get the test suite running
+### Running the Test Suite
 
-Make sure you're running the test suite locally.
+To run the test suite, first ensure you have built the project with tests enabled (which is the default). Then, navigate to the `build` directory and execute `ctest`:
 
-```sh
+```bash
 cd build
 ctest --verbose
 ```
+
+### Developer Tools
+
+The following commands can be run from the `build` directory to assist with development and maintenance:
+
+-   **Generate Documentation**:
+    Generates HTML documentation using Doxygen. The output will be in `build/docs/html/`.
+    ```bash
+    cmake --build . --target doc
+    ```
+
+-   **Format Code**:
+    Automatically formats the C++ source code using `clang-format` according to the project's style guidelines. This is a good step to run before committing your changes.
+    ```bash
+    cmake --build . --target format
+    ```
 
 ### Implement your fix or feature
 
