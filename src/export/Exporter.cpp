@@ -134,7 +134,7 @@ void Exporter::exportAsJson(
                             value_json = entry.message;
                             break;
                         case LogEntryField::SOURCE_FILE:
-                            value_json = !entry.sourceFile.empty() ? json(entry.sourceFile) : nullptr;
+                            value_json = entry.sourceFile;
                             break;
                         case LogEntryField::LINE_NUMBER:
                             value_json = entry.sourceLineNumber.has_value() ? json(entry.sourceLineNumber.value()) : nullptr;
@@ -168,7 +168,11 @@ void Exporter::exportAsJson(
             }, fieldMapping.field);
 
             if (!key.empty()) {
-                entryJson[key] = value_json;
+                bool isStandardField = std::holds_alternative<LogEntryField>(fieldMapping.field);
+
+                if (isStandardField || !value_json.is_null()) {
+                    entryJson[key] = value_json;
+                }
             }
         }
         j["entries"].push_back(entryJson);
@@ -464,13 +468,19 @@ void from_json(const nlohmann::json& j, ExportSettings& es) {
     }
     if (j.contains("includeHeader")) es.includeHeader = j.at("includeHeader").get<bool>();
     if (j.contains("jsonIndent")) es.jsonIndent = j.at("jsonIndent").get<int>();
-    if (j.contains("separator")) es.separator = j.at("separator").get<std::string>()[0];
+    if (j.contains("separator")) {
+        std::string sep_str = j.at("separator").get<std::string>();
+        if (sep_str.length() != 1) {
+            throw ExportException("Separator must be a single character string.");
+        }
+        es.separator = sep_str[0];
+    }
     if (j.contains("textFormatString")) es.textFormatString = j.at("textFormatString").get<std::string>();
     if (j.contains("useAnsiColors")) es.useAnsiColors = j.at("useAnsiColors").get<bool>();
 }
 
 std::string Exporter::formatCsvField(const std::string& value, char separator) {
-    bool needsQuotes = value.find(separator) != std::string::npos || value.find('"') != std::string::npos || value.find('\n') != std::string::npos || value.find('\r') != std::string::npos;
+    bool needsQuotes = value.empty() || value.find(separator) != std::string::npos || value.find('"') != std::string::npos || value.find('\n') != std::string::npos || value.find('\r') != std::string::npos;
     if (!needsQuotes) {
         return value;
     }

@@ -56,6 +56,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(std::
         auto parseResult = analyzer_.getCurrentParser()->parseLine(line, lineNumber, sourceIdentifier);
         if (parseResult.has_value()) {
             LogEntry entry = parseResult.value(); 
+            std::cout << "DEBUG: Parsed Entry Level: " << (int)entry.level << ", String: " << Utils::logLevelToString(entry.level) << ", Message: " << entry.message << std::endl; // TEMP DEBUG
             entry.sourceFile = sourceIdentifier;
             parsedEntries.push_back(entry);
             report.successfulParses++;

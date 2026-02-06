@@ -31,9 +31,20 @@ Modern applications generate gigabytes of logs daily. Traditional tools like `gr
 - **📤 Flexible Export**: Output to Text, CSV, JSON, or XML.
 - **🔄 Live Monitoring**: Tail files in real-time with filtering applied (`--tail`).
 
-## 📦 Quick Start
+## 🚀 Getting Started
 
-### 1. Build
+### Prerequisites
+
+Before you can build and run `logAnalyzer`, ensure you have the following installed:
+
+*   **Git**: For cloning the repository.
+*   **CMake**: Version 3.15 or higher, for managing the build process.
+*   **C++23 Compatible Compiler**: Such as GCC (13 or newer), Clang (16 or newer), or MSVC (Visual Studio 2022 v17.8 or newer).
+
+### Build from Source
+
+Follow these steps to clone the repository and build `logAnalyzer`:
+
 ```bash
 git clone https://github.com/eserlxl/logAnalyzer.git
 cd logAnalyzer
@@ -41,8 +52,12 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 ```
+For more detailed installation instructions, including platform-specific notes and dependency management, please refer to the [Installation Guide](docs/installation.md).
 
-### 2. Run
+### Quick Usage Examples
+
+Here are a few common use cases to get you started:
+
 **Basic Filter:** Get all ERROR logs from a file.
 ```bash
 ./bin/logAnalyzer /var/log/syslog --level ERROR
@@ -57,6 +72,7 @@ cmake --build .
 ```bash
 ./bin/logAnalyzer /var/log/app.log --stats top_messages:5
 ```
+For a comprehensive list of commands and advanced filtering options, consult the [Command Line Reference](docs/cli-reference.md) and [Usage Examples](docs/usage-examples.md).
 
 ## 📚 Documentation
 
@@ -70,7 +86,7 @@ Detailed documentation is available in the `docs/` directory:
 
 ## 🤝 Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+We welcome contributions from the community! Whether it's reporting bugs, suggesting new features, or submitting code, your help is invaluable. Please see our [CONTRIBUTING.md](CONTRIBUTING.md) guide for detailed instructions on how to get started.
 
 ## 📄 License
 

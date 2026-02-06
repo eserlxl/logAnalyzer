@@ -27,7 +27,7 @@ std::string expandEnvironmentVariables(std::string_view content) {
     // Group 2: The full variable token (${...} or $...)
     // Group 3: Content of ${...}
     // Group 4: Content of $...
-    static const std::regex envVarRegex(R"(\(*)(\\\$\{([^}]+)\\|\\$([A-Za-z0-9_]+)))");
+    static const std::regex envVarRegex(R"((\\*)(\$\{([^}]+)\}|\$([A-Za-z0-9_]+)))");
     
     std::string result;
     std::cregex_iterator it(content.data(), content.data() + content.size(), envVarRegex);

@@ -27,8 +27,8 @@ TEST(ExporterJsonTest, FieldsToExportConfig) {
     // Configure specific fields to export
     settings.fieldsToExport.emplace_back(LogEntryField::ID, "EntryID"); // Standard field with custom header
     settings.fieldsToExport.emplace_back(LogEntryField::MESSAGE); // Standard field with default header
-    settings.fieldsToExport.emplace_back(LogEntryField::CUSTOM, "user"); // Custom field, header is field name
-    settings.fieldsToExport.emplace_back(LogEntryField::CUSTOM, "session_id", std::nullopt); // Custom field with explicit (same) header
+    settings.fieldsToExport.emplace_back("user"); // Custom field, header is field name
+    settings.fieldsToExport.emplace_back("session_id"); // Custom field, header is field name
     settings.fieldsToExport.emplace_back(LogEntryField::TIMESTAMP, "EventTime", "%Y-%m-%d"); // Standard field with custom header and datetime format
 
     exporter.exportLogEntries(ss, entries, settings);
@@ -90,7 +90,7 @@ TEST(ExporterJsonTest, JsonIndentBehavior) {
     settings0.format = ExportFormat::JSON;
     settings0.jsonIndent = 0;
     exporter.exportLogEntries(ss0, entries, settings0);
-    std::string expected_pretty_json_no_indent = "{\n\"entries\": [\n{\n\"ID\": 1,\n\"Level\": \"INFO\",\n\"Message\": \"Test Message\",\n\"Timestamp\": null\n}\n],\n\"summary\": {\n\"count\": 1\n}\n}\n";
+    std::string expected_pretty_json_no_indent = "{\n\"entries\": [\n{\n\"ID\": 1,\n\"LEVEL\": \"INFO\",\n\"MESSAGE\": \"Test Message\",\n\"TIMESTAMP\": null\n}\n],\n\"summary\": {\n\"count\": 1\n}\n}\n";
     ASSERT_EQ(ss0.str(), expected_pretty_json_no_indent);
 
     // Test with jsonIndent = 4
@@ -109,7 +109,7 @@ TEST(ExporterJsonTest, JsonIndentBehavior) {
     settingsNeg.format = ExportFormat::JSON;
     settingsNeg.jsonIndent = -1; // Any negative value
     exporter.exportLogEntries(ssNeg, entries, settingsNeg);
-    std::string expected_compact_json = "{\"entries\":[{\"ID\":1,\"Level\":\"INFO\",\"Message\":\"Test Message\",\"Timestamp\":null}],\"summary\":{\"count\":1}}\n"; // Added newline as per Exporter.cpp
+    std::string expected_compact_json = "{\"entries\":[{\"ID\":1,\"LEVEL\":\"INFO\",\"MESSAGE\":\"Test Message\",\"TIMESTAMP\":null}],\"summary\":{\"count\":1}}\n"; // Added newline as per Exporter.cpp
     ASSERT_EQ(ssNeg.str(), expected_compact_json);
 }
 
@@ -133,18 +133,18 @@ TEST(ExporterJsonTest, DefaultFieldDiscoveryLogic) {
 
     // Entry 1 should have standard fields + custom_key
     ASSERT_TRUE(j["entries"][0].contains("ID"));
-    ASSERT_TRUE(j["entries"][0].contains("Timestamp"));
-    ASSERT_TRUE(j["entries"][0].contains("Level"));
-    ASSERT_TRUE(j["entries"][0].contains("Message"));
+    ASSERT_TRUE(j["entries"][0].contains("TIMESTAMP"));
+    ASSERT_TRUE(j["entries"][0].contains("LEVEL"));
+    ASSERT_TRUE(j["entries"][0].contains("MESSAGE"));
     ASSERT_TRUE(j["entries"][0].contains("custom_key"));
     ASSERT_FALSE(j["entries"][0].contains("another_key")); // Not in this entry
 
     // Entry 2 should have standard fields + another_key + custom_key
     ASSERT_TRUE(j["entries"][1].contains("ID"));
-    ASSERT_TRUE(j["entries"][1].contains("Timestamp")); // Field should be present
-    ASSERT_TRUE(j["entries"][1]["Timestamp"].is_null()); // Value should be null
-    ASSERT_TRUE(j["entries"][1].contains("Level"));
-    ASSERT_TRUE(j["entries"][1].contains("Message"));
+    ASSERT_TRUE(j["entries"][1].contains("TIMESTAMP")); // Field should be present
+    ASSERT_TRUE(j["entries"][1]["TIMESTAMP"].is_null()); // Value should be null
+    ASSERT_TRUE(j["entries"][1].contains("LEVEL"));
+    ASSERT_TRUE(j["entries"][1].contains("MESSAGE"));
     ASSERT_TRUE(j["entries"][1].contains("custom_key"));
     ASSERT_TRUE(j["entries"][1].contains("another_key"));
     

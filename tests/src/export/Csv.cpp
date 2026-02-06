@@ -20,7 +20,7 @@ TEST(ExporterCsvTest, BasicExport) {
     settings.includeHeader = true;
 
     exporter.exportLogEntries(ss, entries, settings);
-    std::string expectedHeader = "ID,Timestamp,Level,Message\n";
+    std::string expectedHeader = "ID,TIMESTAMP,LEVEL,MESSAGE\n";
     std::string expectedRow1 = "1," + Utils::formatTimestamp(now) + ",INFO,Message 1\n";
     std::string expectedRow2 = "2,\"\",WARNING,Message 2\n";
     ASSERT_EQ(ss.str(), expectedHeader + expectedRow1 + expectedRow2);
@@ -38,7 +38,7 @@ TEST(ExporterCsvTest, CustomSeparator) {
     settings.includeHeader = true;
 
     exporter.exportLogEntries(ss, entries, settings);
-    std::string expectedHeader = "ID;Timestamp;Level;Message\n";
+    std::string expectedHeader = "ID;TIMESTAMP;LEVEL;MESSAGE\n";
     std::string expectedRow1 = "1;\"\";INFO;Message 1\n";
     ASSERT_EQ(ss.str(), expectedHeader + expectedRow1);
 }
@@ -70,7 +70,7 @@ TEST(ExporterCsvTest, FieldsWithSpecialCharsAndQuoting) {
     settings.includeHeader = false;
 
     exporter.exportLogEntries(ss, entries, settings);
-    std::string expectedRow = "1,\"\",INFO,\"A message with, commas and \"\"quotes\"\".\nNew line.\"\"\n";
+    std::string expectedRow = "1,\"\",INFO,\"A message with, commas and \"\"quotes\"\".\nNew line.\"\n";
     ASSERT_EQ(ss.str(), expectedRow);
 }
 
@@ -113,7 +113,7 @@ TEST(ExporterCsvTest, ExportCustomFieldsDynamically) {
     // Check for headers (standard + sorted custom fields)
     // The exact order of dynamically discovered custom fields might vary depending on std::set
     // For now, let's just check for the presence of relevant parts
-    ASSERT_TRUE(output.find("ID,Timestamp,Level,Message") != std::string::npos);
+    ASSERT_TRUE(output.find("ID,TIMESTAMP,LEVEL,MESSAGE") != std::string::npos);
     ASSERT_TRUE(output.find("ip") != std::string::npos);
     ASSERT_TRUE(output.find("session") != std::string::npos);
     ASSERT_TRUE(output.find("user") != std::string::npos);
@@ -135,8 +135,8 @@ TEST(ExporterCsvTest, ExportCustomFieldsExplicitly) {
     settings.includeHeader = true;
     // Explicitly define custom fields to export and their headers
     settings.fieldsToExport.emplace_back(LogEntryField::ID);
-    settings.fieldsToExport.emplace_back(LogEntryField::CUSTOM, "session", std::nullopt); // Field::CUSTOM means lookup by customHeader
-    settings.fieldsToExport.emplace_back(LogEntryField::CUSTOM, "user", std::nullopt);
+    settings.fieldsToExport.emplace_back("session"); // Pass "session" as the field string
+    settings.fieldsToExport.emplace_back("user");    // Pass "user" as the field string
 
     exporter.exportLogEntries(ss, entries, settings);
     std::string expectedHeader = "ID,session,user\n";

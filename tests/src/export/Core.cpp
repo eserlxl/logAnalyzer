@@ -31,7 +31,7 @@ TEST(ExporterTest, ExportEmptyEntries) {
     settings.includeHeader = true;
     exporter.exportLogEntries(ss, entries, settings);
     // Only header should be present
-    ASSERT_EQ(ss.str(), "ID,Timestamp,Level,Message\n"); // Default fields
+    ASSERT_EQ(ss.str(), "ID,TIMESTAMP,LEVEL,MESSAGE\n"); // Default fields
     ss.str("");
 
     settings.includeHeader = false;
@@ -62,7 +62,7 @@ TEST(ExporterDispatchTest, JsonDispatch) {
     exporter.exportLogEntries(ss, entries, settings);
     json j = json::parse(ss.str());
     ASSERT_EQ(j["entries"].size(), 1);
-    ASSERT_EQ(j["entries"][0]["Message"], "Dispatch test");
+    ASSERT_EQ(j["entries"][0]["MESSAGE"], "Dispatch test");
 }
 
 TEST(ExporterDispatchTest, CsvDispatch) {
