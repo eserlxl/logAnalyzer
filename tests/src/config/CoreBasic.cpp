@@ -177,7 +177,7 @@ TEST_F(LogAnalyzerConfigTest, ExtendedFilterOperatorCoverage) {
     settings.addFilterRule({LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "Ending"});
 
     // Test REGEX
-    settings.addFilterRule({LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, ".*(critical|error).*"});
+    settings.addFilterRule({LogEntryField::MESSAGE, FilterOperator::REGEX, ".*(critical|error).*"});
 
     ASSERT_EQ(settings.filterRules.size(), 5); // 2 + 2 + 1
 
@@ -202,7 +202,7 @@ TEST_F(LogAnalyzerConfigTest, ExtendedFilterOperatorCoverage) {
     EXPECT_EQ(it_ends->value, "Ending");
 
     auto it_regex = std::find_if(settings.filterRules.begin(), settings.filterRules.end(),
-        [](const auto& rule) { return rule.field == LogEntryField::MESSAGE && rule.op == FilterOperator::REGEX_MATCH; });
+        [](const auto& rule) { return rule.field == LogEntryField::MESSAGE && rule.op == FilterOperator::REGEX; });
     ASSERT_NE(it_regex, settings.filterRules.end());
     EXPECT_EQ(it_regex->value, ".*(critical|error).*");
 }

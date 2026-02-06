@@ -189,7 +189,7 @@ FilterExpression LogAnalyzer::createFilterExpressionFromCriteria(const FilterCri
 
     // Regex pattern filter
     if (!criteria.regexPattern.empty()) {
-        expressions.emplace_back(FilterCondition::createString(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, criteria.regexPattern).value());
+        expressions.emplace_back(FilterCondition::createString(LogEntryField::MESSAGE, FilterOperator::REGEX, criteria.regexPattern).value());
     }
 
     // Log levels filter (combine with OR if multiple, or single EQUALS)

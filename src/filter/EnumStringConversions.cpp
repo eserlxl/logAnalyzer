@@ -28,20 +28,12 @@ std::string toString(FilterOperator op) {
         case FilterOperator::NOT_CONTAINS: return "NOT_CONTAINS";
         case FilterOperator::STARTS_WITH: return "STARTS_WITH";
         case FilterOperator::ENDS_WITH: return "ENDS_WITH";
-        case FilterOperator::REGEX_MATCH: return "REGEX_MATCH";
-        // Case-Insensitive String
-        case FilterOperator::EQUALS_I: return "EQUALS_I";
-        case FilterOperator::NOT_EQUALS_I: return "NOT_EQUALS_I";
-        case FilterOperator::CONTAINS_I: return "CONTAINS_I";
-        case FilterOperator::NOT_CONTAINS_I: return "NOT_CONTAINS_I";
-        case FilterOperator::STARTS_WITH_I: return "STARTS_WITH_I";
-        case FilterOperator::ENDS_WITH_I: return "ENDS_WITH_I";
-        // Set-based
-        case FilterOperator::IN: return "IN";
-        case FilterOperator::NOT_IN: return "NOT_IN";
+        case FilterOperator::REGEX: return "REGEX";
         // Presence
         case FilterOperator::IS_PRESENT: return "IS_PRESENT";
         case FilterOperator::IS_ABSENT: return "IS_ABSENT";
+        case FilterOperator::IS_NULL: return "IS_NULL";
+        case FilterOperator::IS_NOT_NULL: return "IS_NOT_NULL";
         // Default case should ideally not be reached if all enums are covered
         default: return "UNKNOWN_OPERATOR"; 
     }
@@ -55,7 +47,7 @@ std::optional<FilterOperator> fromStringToFilterOperator(const std::string& opSt
     if (upperOpStr == "NOT_CONTAINS") return FilterOperator::NOT_CONTAINS;
     if (upperOpStr == "STARTS_WITH") return FilterOperator::STARTS_WITH;
     if (upperOpStr == "ENDS_WITH") return FilterOperator::ENDS_WITH;
-    if (upperOpStr == "REGEX_MATCH") return FilterOperator::REGEX_MATCH;
+    if (upperOpStr == "REGEX_MATCH") return FilterOperator::REGEX;
     if (upperOpStr == "LESS_THAN") return FilterOperator::LESS_THAN;
     if (upperOpStr == "GREATER_THAN") return FilterOperator::GREATER_THAN;
     if (upperOpStr == "LESS_THAN_OR_EQUAL" || upperOpStr == "LTE") return FilterOperator::LESS_THAN_OR_EQUAL;

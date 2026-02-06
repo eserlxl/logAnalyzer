@@ -33,7 +33,7 @@ enum class FilterOperator : uint8_t {
     NOT_CONTAINS,
     STARTS_WITH,
     ENDS_WITH,
-    REGEX_MATCH,
+    REGEX,
 
     // Case-Insensitive String (New)
     EQUALS_I,
@@ -49,7 +49,9 @@ enum class FilterOperator : uint8_t {
 
     // Presence
     IS_PRESENT,
-    IS_ABSENT
+    IS_ABSENT,
+    IS_NULL,
+    IS_NOT_NULL
 };
 
 // Enum for logical operators used to combine multiple filter expressions.
@@ -69,7 +71,8 @@ enum class FilterValueType : uint8_t {
     AUTO = 6,     // Infer the type from the value's syntax (New).
     VERSION = 7,  // Treat value as a semantic version string (New).
     IP_ADDRESS = 8, // Treat value as an IPv4/IPv6 address (New).
-    REGEX = 9     // Treat value as a regular expression pattern.
+    REGEX = 9,     // Treat value as a regular expression pattern.
+    FLOAT = 10     // Treat value as a floating-point number.
 };
 
 #endif // FILTER_TYPES_H

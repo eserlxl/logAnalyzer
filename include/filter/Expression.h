@@ -31,7 +31,7 @@ public:
     static FilterExpression create(const FilterCondition& cond) {
         FilterExpression expr;
         expr.type_ = ExpressionType::CONDITION;
-        expr.condition_ = std::make_unique<FilterCondition>(cond);
+        expr.condition_ = cond;
         std::cerr << "DEBUG: FilterExpression::create - negated_: " << expr.negated_ << std::endl;
         return expr;
     }

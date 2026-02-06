@@ -193,7 +193,7 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCount_EmptyCustom
 
 TEST_F(ConfigValidationTest, ValidateFilterRule_InvalidRegex) {
     settings.filterRules = {
-        {LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, "[invalid regex"}
+        {LogEntryField::MESSAGE, FilterOperator::REGEX, "[invalid regex"}
     };
     errors = settings.validate();
     ASSERT_EQ(errors.size(), 1);

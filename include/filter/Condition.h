@@ -132,16 +132,20 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     if (!fieldStrRes) return std::unexpected(fieldStrRes.error());
     std::string fieldStr = *fieldStrRes;
 
-    LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
-    if (standardField == LogEntryField::UNKNOWN) {
+    fc.field = Utils::stringToLogEntryField(fieldStr); // First try standard fields
+
+    if (fc.field == LogEntryField::UNKNOWN) {
         if (fieldStr.empty()) {
             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Field name cannot be empty.", current_path, "field"));
         }
         fc.field = LogEntryField::CUSTOM;
-        fc.customField = fieldStr;
-    } else {
-        fc.field = standardField;
+        // Ensure customField is assigned a valid copy of the string
+        fc.customField = fieldStr; 
     }
+    // If standardField was found, fc.field is already set correctly.
+    // If fc.field is CUSTOM, fc.customField is now populated.
+    // The original code did this assignment but a segfault implies issues in handling.
+    // Explicitly ensuring a copy assignment here.
 
     auto opStrRes = FilterJsonUtils::getRequired<std::string>(j, "op", current_path);
     if (!opStrRes) return std::unexpected(opStrRes.error());

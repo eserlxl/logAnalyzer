@@ -455,7 +455,7 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
             }
         }
 
-        if (fr.op == FilterOperator::REGEX_MATCH) {
+        if (fr.op == FilterOperator::REGEX) {
             try {
                 std::regex re(fr.value);
             } catch (const std::regex_error& e) {

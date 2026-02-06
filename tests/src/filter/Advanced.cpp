@@ -73,7 +73,7 @@ TEST_F(FilterTestFixture, EvaluateDoubleInvalidInput) {
 
 TEST_F(FilterTestFixture, EvaluateRegexInvalidPattern) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Some message");
-    FilterCondition cond = createCondition(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, "[invalid regex", FilterValueType::STRING);
+    FilterCondition cond = createCondition(LogEntryField::MESSAGE, FilterOperator::REGEX, "[invalid regex", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
     EXPECT_FALSE(expr.evaluate(entry).has_value()); // Invalid regex should return error
 }

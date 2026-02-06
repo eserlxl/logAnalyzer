@@ -38,7 +38,7 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {
 }
 
 TEST_F(LogAnalyzerTest, GetFilteredEntriesInvalidRegex) {
-    auto condition = FilterCondition::createTyped(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, "[", FilterValueType::REGEX);
+    auto condition = FilterCondition::createTyped(LogEntryField::MESSAGE, FilterOperator::REGEX, "[", FilterValueType::REGEX);
     ASSERT_TRUE(condition.has_value());
     FilterExpression expression(*condition);
     auto result = analyzer.getFilteredEntries(expression);

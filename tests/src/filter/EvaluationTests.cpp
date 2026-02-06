@@ -212,21 +212,21 @@ TEST_F(FilterTestFixture, EvaluateRegexMatch) {
     auto entry_phone = createLogEntry(LogLevel::INFO, "Call: +1-555-123-4567", "contact.log");
 
     // Regex match (case-sensitive)
-    auto expr_regex_match_cs = createExpr(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, R"(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b)", FilterValueType::STRING, true);
+    auto expr_regex_match_cs = createExpr(LogEntryField::MESSAGE, FilterOperator::REGEX, R"(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b)", FilterValueType::STRING, true);
     EXPECT_TRUE(expr_regex_match_cs.evaluate(entry_email).value_or(false));
     EXPECT_FALSE(expr_regex_match_cs.evaluate(entry_phone).value_or(true));
 
     // Regex match (case-insensitive)
-    auto expr_regex_match_ci = createExpr(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, R"(\b[A-Za-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b)", FilterValueType::STRING, false);
+    auto expr_regex_match_ci = createExpr(LogEntryField::MESSAGE, FilterOperator::REGEX, R"(\b[A-Za-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b)", FilterValueType::STRING, false);
     EXPECT_TRUE(expr_regex_match_ci.evaluate(entry_email).value_or(false));
 
     // Regex mismatch
-    auto expr_regex_mismatch = createExpr(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, R"(\d{3}-\d{3}-\d{4})", FilterValueType::STRING, true);
+    auto expr_regex_mismatch = createExpr(LogEntryField::MESSAGE, FilterOperator::REGEX, R"(\d{3}-\d{3}-\d{4})", FilterValueType::STRING, true);
     EXPECT_TRUE(expr_regex_mismatch.evaluate(entry_phone).value_or(false));
     EXPECT_FALSE(expr_regex_mismatch.evaluate(entry_email).value_or(true));
     
     // Invalid regex pattern
-    auto expr_invalid_regex = createExpr(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, R"([)", FilterValueType::STRING, true);
+    auto expr_invalid_regex = createExpr(LogEntryField::MESSAGE, FilterOperator::REGEX, R"([)", FilterValueType::STRING, true);
     ASSERT_FALSE(expr_invalid_regex.evaluate(entry_email).has_value()); // Invalid regex should return error
 }
 

@@ -440,7 +440,7 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
                 case FilterOperator::ENDS_WITH: return cond.caseSensitive ? fieldValue.ends_with(condValue) : Utils::caseInsensitiveEnds(fieldValue, condValue);
                 case FilterOperator::STARTS_WITH_I: return Utils::caseInsensitiveStarts(fieldValue, condValue);
                 case FilterOperator::ENDS_WITH_I: return Utils::caseInsensitiveEnds(fieldValue, condValue);
-                case FilterOperator::REGEX_MATCH: {
+                case FilterOperator::REGEX: {
                     try {
                         auto flags = cond.caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
                         std::regex re(condValue, flags);
@@ -514,7 +514,7 @@ ErrorCode::Result<void> FilterExpression::validate() const {
         case ExpressionType::EMPTY:
             return {}; // Always valid
         case ExpressionType::CONDITION:
-            if (condition_->op == FilterOperator::REGEX_MATCH) {
+            if (condition_->op == FilterOperator::REGEX) {
                 try {
                     auto flags = condition_->caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
                     std::regex re(condition_->value, flags);
