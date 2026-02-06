@@ -44,10 +44,10 @@ struct LogAnalyzerSettings {
     std::optional<std::string> logEntryStartPattern;
 
     // The maximum buffer size in bytes for a single multi-line log entry.
-    size_t maxMultilineBufferSize = 10 * 1024 * 1024; // 10 MiB default
+    std::optional<size_t> maxMultilineBufferSize;
 
     // Defines whether log parsing should be case-sensitive. Applies to regex patterns.
-    bool caseSensitiveParsing = false; 
+    std::optional<bool> caseSensitiveParsing; 
 
     // Filter rules
     std::vector<filter::FilterRule> filterRules;
@@ -59,7 +59,7 @@ struct LogAnalyzerSettings {
     ExportSettings exportSettings;
 
     // Action on parse error
-    ParserErrorAction parserErrorAction = ParserErrorAction::Warn;
+    std::optional<ParserErrorAction> parserErrorAction;
 
     // Statistics configuration
     std::vector<StatisticConfig> statisticConfigs;

@@ -3,6 +3,7 @@
 
 #include "config/Settings.h"
 #include "config/Utils.h"
+#include "config/CommonTypes.h"
 #include "filter/Core.h"
 #include "export/Exporter.h"
 #include "stats/Core.h"
@@ -129,6 +130,15 @@ nlohmann::json resolveIncludes(
 
     visitedFiles.erase(currentFile);
     return rootJson;
+}
+
+std::string parserErrorActionToString(ParserErrorAction action) {
+    switch (action) {
+        case ParserErrorAction::Ignore: return "ignore";
+        case ParserErrorAction::Warn: return "warn";
+        case ParserErrorAction::Throw: return "throw";
+        default: return "warn";
+    }
 }
 
 } // anonymous namespace
@@ -265,6 +275,30 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
             errors.push_back("Invalid type for 'exportSettings'. Expected object.");
         }
 
+        if (j.contains("parserErrorAction") && j.at("parserErrorAction").is_string()) {
+            std::string actionStr = j.at("parserErrorAction").get<std::string>();
+            if (Config::ParserErrorActionMap.count(actionStr)) {
+                settings.parserErrorAction = Config::ParserErrorActionMap.at(actionStr);
+            } else {
+                errors.push_back("Invalid value for 'parserErrorAction': " + actionStr);
+            }
+        } else if (j.contains("parserErrorAction")) {
+            errors.push_back("Invalid type for 'parserErrorAction'. Expected string.");
+        }
+
+        if (j.contains("maxMultilineBufferSize") && j.at("maxMultilineBufferSize").is_number_unsigned()) {
+            settings.maxMultilineBufferSize = j.at("maxMultilineBufferSize").get<size_t>();
+        } else if (j.contains("maxMultilineBufferSize") && j.at("maxMultilineBufferSize").is_string()) {
+            auto sizeRes = Utils::parseHumanReadableSize(j.at("maxMultilineBufferSize").get<std::string>());
+            if (sizeRes) {
+                settings.maxMultilineBufferSize = *sizeRes;
+            } else {
+                errors.push_back("Invalid human-readable size for 'maxMultilineBufferSize': " + j.at("maxMultilineBufferSize").get<std::string>());
+            }
+        } else if (j.contains("maxMultilineBufferSize")) {
+            errors.push_back("Invalid type for 'maxMultilineBufferSize'. Expected unsigned number or string.");
+        }
+
         if (j.contains("statisticConfigs") && j.at("statisticConfigs").is_array()) {
             settings.statisticConfigs.clear();
             try {
@@ -325,7 +359,18 @@ std::string LogAnalyzerSettings::toJson() const {
     } else {
         j["logEntryStartPattern"] = nullptr;
     }
-    j["caseSensitiveParsing"] = caseSensitiveParsing;
+    
+    if (caseSensitiveParsing.has_value()) {
+        j["caseSensitiveParsing"] = caseSensitiveParsing.value();
+    }
+
+    if (parserErrorAction.has_value()) {
+        j["parserErrorAction"] = parserErrorActionToString(parserErrorAction.value());
+    }
+
+    if (maxMultilineBufferSize.has_value()) {
+        j["maxMultilineBufferSize"] = maxMultilineBufferSize.value();
+    }
 
     if (!filterRules.empty()) {
         j["filterRules"] = filterRules;

@@ -93,7 +93,7 @@ TEST_F(CLIConfigTest, ColorOptionAuto) {
     ASSERT_TRUE(result.has_value());
     auto& [settings, options] = result.value();
     ASSERT_EQ(options.colorOption, CLIConfig::ColorOption::AUTO);
-    ASSERT_FALSE(settings.exportSettings.outputNoColor); // Default behavior for AUTO
+    ASSERT_FALSE(settings.exportSettings.outputNoColor.value_or(false)); // Default behavior for AUTO // Default behavior for AUTO
 }
 
 TEST_F(CLIConfigTest, CsvSeparatorAndFields) {
@@ -146,5 +146,5 @@ TEST_F(CLIConfigTest, ColorOptionCaseInsensitivity) {
     ASSERT_TRUE(result.has_value());
     auto& [settings, options] = result.value();
     ASSERT_EQ(options.colorOption, CLIConfig::ColorOption::ALWAYS);
-    ASSERT_FALSE(settings.exportSettings.outputNoColor); // "always" implies color is not disabled
+    ASSERT_FALSE(settings.exportSettings.outputNoColor.value_or(false)); // Default behavior for AUTO // "always" implies color is not disabled
 }

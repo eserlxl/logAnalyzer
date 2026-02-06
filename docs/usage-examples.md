@@ -13,6 +13,40 @@ After building, you can run `logAnalyzer` in two ways:
 
 **Note**: The following examples assume `logAnalyzer` is in your `PATH`.
 
+### Quick Start Examples (from README)
+
+Here are some basic examples to get you started quickly:
+
+- **Display help:**
+  ```bash
+  logAnalyzer --help
+  ```
+
+- **Process a log file from `stdin`:**
+  ```bash
+  echo "INFO 2023-10-27 12:30:00 This is a test log message." | logAnalyzer
+  ```
+
+- **Analyze a specific log file:**
+  ```bash
+  logAnalyzer /var/log/syslog
+  ```
+
+- **Use a complex expression to find database errors OR any message containing "timeout":**
+  ```bash
+  logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
+  ```
+
+- **Generate statistics on the top 5 most common error messages:**
+  ```bash
+  logAnalyzer system.log --level ERROR --stats "type=TOP_MESSAGES,top_n=5"
+  ```
+
+- **Export errors from the last 2 hours to a JSON file:**
+  ```bash
+  logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
+  ```
+
 ### Example 1: Basic Filtering
 
 ```bash
@@ -138,7 +172,7 @@ The `--expression` flag provides access to a powerful filtering engine. Here are
 
 You can specify timestamps in several formats:
 *   **Absolute Time**: `"YYYY-MM-DD HH:MM:SS"` (e.g., `"2023-11-20 14:30:00"`)
-*   **Relative Time**: Keywords like `yesterday`, `today`, or offsets like `"1h ago"`, `"30m ago"`, `"2d ago"`.
+*   **Relative Time**: Keywords like `yesterday`, `today`, or offsets like `"1h ago"`, `"30m ago"`, `"2h ago"`, or `3d` (days).
 *   **ISO 8601 Format**: `YYYY-MM-DDTHH:MM:SSZ` or `YYYY-MM-DDTHH:MM:SS+HH:MM`.
 *   **Unix Timestamp**: Seconds since the Unix epoch.
 
@@ -173,4 +207,3 @@ Combine multiple filter criteria to narrow down your search results.
 # Combine filters (e.g., critical errors with specific message content):
 logAnalyzer server.log --level CRITICAL --expression 'msg contains "failed to connect"'
 ```
-

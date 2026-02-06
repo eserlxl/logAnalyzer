@@ -91,6 +91,7 @@ public:
         std::vector<FieldMapping> fieldMappings,
         const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
         std::optional<std::string> logEntryStartPattern, // Reverted to string
+        std::optional<bool> caseSensitive, // NEW: Case sensitivity for regex
         CLIConfig::ParserErrorAction errorAction,
         size_t maxMultiLineBufferSize,
         bool enableMessageKvParsing, // New parameter: Explicitly enable legacy KV parsing in MESSAGE field
@@ -105,6 +106,7 @@ public:
         const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
         std::optional<std::regex> compiledLogEntryStartRegex, // The compiled start regex
         std::optional<std::string> logEntryStartPatternString, // The original start regex string
+        std::optional<bool> caseSensitive, // NEW
         CLIConfig::ParserErrorAction errorAction,
         size_t maxMultiLineBufferSize,
         bool enableMessageKvParsing, // New parameter
@@ -142,6 +144,7 @@ private:
     std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLevelMappings;
     std::optional<std::regex> logEntryStartRegex; // Optional regex to identify the start of a log entry
     std::optional<std::string> logEntryStartPatternString; // For cloning
+    std::optional<bool> caseSensitive; // NEW
 
     std::string currentLogEntryBuffer;
     std::string currentLogEntrySourceFile; // New: To store the source file of the first line of a multi-line entry

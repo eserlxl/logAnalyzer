@@ -15,6 +15,33 @@
 
 using json = nlohmann::json;
 
+// Merge implementation for ExportSettings
+void ExportSettings::merge(const ExportSettings& other) {
+    if (other.outputPath.has_value()) outputPath = other.outputPath;
+    if (other.format.has_value()) format = other.format;
+    if (!other.fieldsToExport.empty()) fieldsToExport = other.fieldsToExport; // Replace for now, or append? Usually fields list is a complete set.
+    if (other.includeHeader.has_value()) includeHeader = other.includeHeader;
+    if (other.jsonIndent.has_value()) jsonIndent = other.jsonIndent;
+    if (other.separator.has_value()) separator = other.separator;
+    if (other.textFormatString.has_value()) textFormatString = other.textFormatString;
+    if (other.useAnsiColors.has_value()) useAnsiColors = other.useAnsiColors;
+    if (other.sortBy.has_value()) sortBy = other.sortBy;
+    if (other.sortOrder.has_value()) sortOrder = other.sortOrder;
+    if (other.outputNoColor.has_value()) outputNoColor = other.outputNoColor;
+    if (other.textOutputFormat.has_value()) textOutputFormat = other.textOutputFormat;
+    if (other.includeSummary.has_value()) includeSummary = other.includeSummary;
+    if (other.prettyPrint.has_value()) prettyPrint = other.prettyPrint;
+    if (other.csvSeparator.has_value()) csvSeparator = other.csvSeparator;
+    
+    if (!other.csvFields.empty()) csvFields = other.csvFields;
+    if (!other.jsonFields.empty()) jsonFields = other.jsonFields;
+    
+    if (other.topMessagesCount.has_value()) topMessagesCount = other.topMessagesCount;
+    if (other.streamMode.has_value()) streamMode = other.streamMode;
+    if (other.tailMode.has_value()) tailMode = other.tailMode;
+    if (other.tailInterval.has_value()) tailInterval = other.tailInterval;
+}
+
 // JSON conversion for ExportFieldMapping
 void to_json(nlohmann::json& j, const ExportFieldMapping& efm) {
     std::visit([&](auto&& arg) {
@@ -62,7 +89,10 @@ void Exporter::exportLogEntries(
     const std::vector<LogEntry>& entries,
     const ExportSettings& settings) {
 
-    switch (settings.format) {
+    // Default to PLAINTEXT if not set
+    ExportFormat effectiveFormat = settings.format.value_or(ExportFormat::PLAINTEXT);
+
+    switch (effectiveFormat) {
         case ExportFormat::JSON:
             exportAsJson(os, entries, settings);
             break;
@@ -240,7 +270,7 @@ void Exporter::exportAsCsv(
 
     std::vector<ExportFieldMapping> fieldsToConsider = getEffectiveExportFieldMappings(entries, settings);
 
-    if (settings.includeHeader && !fieldsToConsider.empty()) {
+    if (settings.includeHeader.value_or(true) && !fieldsToConsider.empty()) {
         for (size_t i = 0; i < fieldsToConsider.size(); ++i) {
             const auto& fieldMapping = fieldsToConsider[i];
             std::string headerName;
@@ -253,8 +283,8 @@ void Exporter::exportAsCsv(
                 }
             }, fieldMapping.field);
 
-            os << formatCsvField(headerName, settings.separator);
-            if (i < fieldsToConsider.size() - 1) os << settings.separator;
+            os << formatCsvField(headerName, settings.separator.value_or(','));
+            if (i < fieldsToConsider.size() - 1) os << settings.separator.value_or(',');
         }
         os << std::endl;
     }
@@ -294,8 +324,8 @@ void Exporter::exportAsCsv(
                 }
             }, fieldMapping.field);
 
-            os << formatCsvField(value_str, settings.separator);
-            if (i < fieldsToConsider.size() - 1) os << settings.separator;
+            os << formatCsvField(value_str, settings.separator.value_or(','));
+            if (i < fieldsToConsider.size() - 1) os << settings.separator.value_or(',');
         }
         os << std::endl;
     }
@@ -307,7 +337,7 @@ void Exporter::exportAsText(
     const ExportSettings& settings) {
     
     for (const auto& entry : entries) {
-        os << formatEntryForText(entry, settings.textFormatString, settings.useAnsiColors) << std::endl;
+        os << formatEntryForText(entry, settings.textFormatString.value_or("{timestamp} [{level}] {message}"), settings.useAnsiColors.value_or(false)) << std::endl;
     }
 }
 
@@ -443,15 +473,14 @@ std::vector<ExportFieldMapping> Exporter::getEffectiveExportFieldMappings(
 }
 
 void to_json(nlohmann::json& j, const ExportSettings& es) {
-    j = {
-        {"outputPath", es.outputPath},
-        {"format", Utils::exportFormatToString(es.format)},
-        {"includeHeader", es.includeHeader},
-        {"separator", std::string(1, es.separator)},
-        {"textFormatString", es.textFormatString},
-        {"useAnsiColors", es.useAnsiColors},
-        {"fieldsToExport", es.fieldsToExport}
-    };
+    j = json::object();
+    if (es.outputPath.has_value()) j["outputPath"] = es.outputPath.value();
+    if (es.format.has_value()) j["format"] = Utils::exportFormatToString(es.format.value());
+    if (es.includeHeader.has_value()) j["includeHeader"] = es.includeHeader.value();
+    if (es.separator.has_value()) j["separator"] = std::string(1, es.separator.value());
+    if (es.textFormatString.has_value()) j["textFormatString"] = es.textFormatString.value();
+    if (es.useAnsiColors.has_value()) j["useAnsiColors"] = es.useAnsiColors.value();
+    if (!es.fieldsToExport.empty()) j["fieldsToExport"] = es.fieldsToExport;
     if (es.jsonIndent.has_value()) {
         j["jsonIndent"] = es.jsonIndent.value();
     }

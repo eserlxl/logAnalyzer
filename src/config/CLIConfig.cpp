@@ -395,42 +395,85 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     }
 
     // Sync appOptions to settings
-    settings.lineParsePattern = appOptions.lineParsePattern;
-    settings.exportSettings.outputPath = appOptions.outputPath;
-    if (appOptions.outputFormat == "json") {
-        settings.exportSettings.format = ExportFormat::JSON;
-    } else if (appOptions.outputFormat == "csv") {
-        settings.exportSettings.format = ExportFormat::CSV;
-    } else {
-        settings.exportSettings.format = ExportFormat::PLAINTEXT;
-    }
-    
-    settings.exportSettings.sortBy = appOptions.sortBy;
-    settings.exportSettings.sortOrder = appOptions.sortOrder;
-    settings.exportSettings.outputNoColor = (appOptions.colorOption == CLIConfig::ColorOption::NEVER);
-    settings.exportSettings.textOutputFormat = appOptions.textOutputFormat;
-    settings.exportSettings.includeSummary = appOptions.includeSummary;
-    settings.exportSettings.prettyPrint = appOptions.prettyPrint;
-    settings.exportSettings.csvSeparator = appOptions.csvSeparator;
-    
-    // Convert CSV/JSON fields to aliases
-    settings.exportSettings.csvFields.clear();
-    for (const auto& f : appOptions.csvFields) {
-        settings.exportSettings.csvFields.push_back(parseFieldAlias(f));
-    }
-    
-    settings.exportSettings.jsonFields.clear();
-    for (const auto& f : appOptions.jsonFields) {
-        settings.exportSettings.jsonFields.push_back(parseFieldAlias(f));
+    if (app.count("--pattern")) {
+        settings.lineParsePattern = appOptions.lineParsePattern;
     }
 
-    settings.exportSettings.topMessagesCount = appOptions.topMessagesCount;
-    settings.exportSettings.streamMode = appOptions.streamMode;
-    settings.exportSettings.tailMode = appOptions.tailMode;
-    settings.exportSettings.tailInterval = appOptions.tailInterval;
-    settings.parserErrorAction = appOptions.parserErrorAction;
-    settings.logEntryStartPattern = appOptions.multilineStartPattern;
-    settings.maxMultilineBufferSize = appOptions.maxMultilineBufferSize;
+    if (app.count("--output")) {
+        settings.exportSettings.outputPath = appOptions.outputPath;
+    }
+    
+    if (app.count("--format")) {
+        if (appOptions.outputFormat == "json") {
+            settings.exportSettings.format = ExportFormat::JSON;
+        } else if (appOptions.outputFormat == "csv") {
+            settings.exportSettings.format = ExportFormat::CSV;
+        } else if (appOptions.outputFormat == "text") {
+            settings.exportSettings.format = ExportFormat::PLAINTEXT;
+        }
+    }
+    
+    if (app.count("--sort-by")) {
+        settings.exportSettings.sortBy = appOptions.sortBy;
+    }
+    if (app.count("--order")) {
+        settings.exportSettings.sortOrder = appOptions.sortOrder;
+    }
+    if (app.count("--color")) {
+        settings.exportSettings.outputNoColor = (appOptions.colorOption == CLIConfig::ColorOption::NEVER);
+    }
+    if (app.count("--text-format")) {
+        settings.exportSettings.textOutputFormat = appOptions.textOutputFormat;
+    }
+    if (app.count("--include-summary")) {
+        settings.exportSettings.includeSummary = appOptions.includeSummary;
+    }
+    if (app.count("--pretty")) {
+        settings.exportSettings.prettyPrint = appOptions.prettyPrint;
+    }
+    if (app.count("--csv-sep")) {
+        settings.exportSettings.csvSeparator = appOptions.csvSeparator;
+    }
+    
+    // Convert CSV/JSON fields to aliases
+    if (app.count("--csv-fields")) {
+        settings.exportSettings.csvFields.clear();
+        for (const auto& f : appOptions.csvFields) {
+            settings.exportSettings.csvFields.push_back(parseFieldAlias(f));
+        }
+    }
+    
+    if (app.count("--json-fields")) {
+        settings.exportSettings.jsonFields.clear();
+        for (const auto& f : appOptions.jsonFields) {
+            settings.exportSettings.jsonFields.push_back(parseFieldAlias(f));
+        }
+    }
+
+    if (app.count("--top-n")) {
+        settings.exportSettings.topMessagesCount = appOptions.topMessagesCount;
+    }
+    if (app.count("--stream")) {
+        settings.exportSettings.streamMode = appOptions.streamMode;
+    }
+    if (app.count("--tail")) {
+        settings.exportSettings.tailMode = appOptions.tailMode;
+    }
+    if (app.count("--tail-interval")) {
+        settings.exportSettings.tailInterval = appOptions.tailInterval;
+    }
+
+    if (app.count("--on-parse-error")) {
+        settings.parserErrorAction = appOptions.parserErrorAction;
+    }
+    
+    if (app.count("--multiline-start-pattern")) {
+        settings.logEntryStartPattern = appOptions.multilineStartPattern;
+    }
+    
+    if (app.count("--max-multiline-buffer")) {
+        settings.maxMultilineBufferSize = appOptions.maxMultilineBufferSize;
+    }
 
     return std::make_pair(settings, appOptions);
 }

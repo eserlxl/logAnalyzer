@@ -37,8 +37,8 @@ TEST_F(LogAnalyzerConfigTest, DefaultConstructorInitializesCorrectly) {
     ASSERT_FALSE(settings.logEntryStartPattern.has_value());
     ASSERT_FALSE(settings.caseSensitiveParsing);
     ASSERT_TRUE(settings.filterRules.empty());
-    ASSERT_EQ(settings.exportSettings.outputPath, "output.log");
-    ASSERT_EQ(settings.exportSettings.format, ExportFormat::PLAINTEXT);
+    ASSERT_FALSE(settings.exportSettings.outputPath.has_value());
+    ASSERT_FALSE(settings.exportSettings.format.has_value());
 }
 
 TEST_F(LogAnalyzerConfigTest, CustomPatternConstructorInitializesCorrectly) {

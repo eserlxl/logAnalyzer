@@ -26,8 +26,9 @@ public:
             settings.fieldMappings,
             settings.customLogLevelMappings,
             settings.logEntryStartPattern,
-            settings.parserErrorAction,
-            settings.maxMultilineBufferSize,
+            settings.caseSensitiveParsing, // Pass caseSensitiveParsing
+            settings.parserErrorAction.value_or(ParserErrorAction::Warn),
+            settings.maxMultilineBufferSize.value_or(10 * 1024 * 1024),
             false, // enableKvParsing - assuming false as default
             std::nullopt // onParseError callback
         );

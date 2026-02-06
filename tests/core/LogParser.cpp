@@ -25,7 +25,7 @@ TEST(LogParserErrorHandling, VariousActions) {
     size_t lineNumber = 1;
     std::string sourceFile = "test_timestamp.log";
 
-    auto warnParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto warnParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     std::unique_ptr<ILogParser> warnParser = std::move(warnParserResult.value());
     warnParser->parseLine(logLine, lineNumber, sourceFile);
 }
@@ -35,7 +35,7 @@ TEST(LogParserTest, InvalidMainRegexPattern) {
     std::string invalidPattern = R"([)"; // Invalid regex pattern
     std::vector<FieldMapping> mappings = {};
 
-    auto parserResult = DefaultLogParser::create(invalidPattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(invalidPattern, mappings, {}, std::nullopt, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_FALSE(parserResult.has_value());
     ASSERT_EQ(parserResult.error().code, Code::InvalidRegex); // Fixed: .code() -> .code
     ASSERT_NE(parserResult.error().message.find("Invalid main regex pattern:"), std::string::npos);
@@ -47,7 +47,7 @@ TEST(LogParserTest, InvalidLogEntryStartRegexPattern) {
     std::vector<FieldMapping> mappings = {};
     std::string invalidLogEntryStartPattern = R"([)"; // Invalid regex
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, invalidLogEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, invalidLogEntryStartPattern, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_FALSE(parserResult.has_value());
     ASSERT_EQ(parserResult.error().code, Code::InvalidRegex); // Fixed: .code() -> .code
     ASSERT_NE(parserResult.error().message.find("Invalid log entry start regex pattern:"), std::string::npos);
@@ -59,7 +59,7 @@ TEST(LogParserTest, StructuredFieldCustomDelimiters) {
     std::vector<FieldMapping> mappings = {
         FieldMapping(LogEntryField::STRUCTURED_FIELD, 1, std::vector<std::string>{"([\\w.-]+)\\s*:\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,.]+))"})
     };
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -79,7 +79,7 @@ TEST(LogParserTest, StructuredFieldQuotedValuesAndSpecialChars) {
         FieldMapping(LogEntryField::STRUCTURED_FIELD, 1, std::vector<std::string>{"([\\w.-]+)\\s*=\\s*(?:\"(.*?)\"|'(.*?)'|([^\\s,]+))"})
     };
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Throw, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, std::nullopt, CLIConfig::ParserErrorAction::Throw, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -111,7 +111,7 @@ TEST(LogParserTest, MultiLineSingleEntryFile) {
         FieldMapping{LogEntryField::MESSAGE, std::make_optional(3), {}}
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})";
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -142,7 +142,7 @@ TEST(LogParserTest, MultiLineWithBlankAndAmbiguousLines) {
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:)"; // More specific start pattern
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -193,7 +193,7 @@ TEST(LogParserTest, MultiLineInterleaving) {
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:)";
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -254,6 +254,7 @@ TEST(LogParserTest, BufferLimitExceeded) {
         mappings, 
         {}, 
         logEntryStartPattern, 
+        std::nullopt,
         CLIConfig::ParserErrorAction::Warn, 
         20, // Small buffer size
         false, // threadSafe
@@ -304,7 +305,7 @@ TEST(LogParserTest, StreamProcessing) {
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2})";
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(parserResult.has_value());
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -336,7 +337,7 @@ TEST(LogParserTest, StateIntrospectionDuringMultiLine) {
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2})";
 
-    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(parserResult.has_value());
     std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
 
@@ -379,7 +380,7 @@ TEST(LogParserErrorHandling, CompleteFailureActions) {
     std::string sourceFile = "non_matching.log";
 
     // --- Test Warn action for complete failure ---
-    auto warnParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto warnParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, std::nullopt, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(warnParserResult.has_value()) << warnParserResult.error().message;
     std::unique_ptr<ILogParser> warnParser = std::move(warnParserResult.value());
 
@@ -406,14 +407,14 @@ TEST(LogParserErrorHandling, CompleteFailureActions) {
 
 
     // --- Test Throw action for complete failure ---
-    auto throwParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Throw, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto throwParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, std::nullopt, CLIConfig::ParserErrorAction::Throw, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(throwParserResult.has_value()) << throwParserResult.error().message;
     std::unique_ptr<ILogParser> throwParser = std::move(throwParserResult.value());
 
     ASSERT_THROW(throwParser->parseLine(nonMatchingLogLine, lineNumber, sourceFile), Error);
 
     // --- Test Ignore action for complete failure ---
-    auto ignoreParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, CLIConfig::ParserErrorAction::Ignore, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    auto ignoreParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, std::nullopt, CLIConfig::ParserErrorAction::Ignore, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     ASSERT_TRUE(ignoreParserResult.has_value()) << ignoreParserResult.error().message;
     std::unique_ptr<ILogParser> ignoreParser = std::move(ignoreParserResult.value());
 

@@ -36,6 +36,7 @@ ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     std::vector<FieldMapping> fieldMappings,
     const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
     std::optional<std::string> logEntryStartPattern,
+    std::optional<bool> caseSensitive,
     CLIConfig::ParserErrorAction errorAction,
     size_t maxMultiLineBufferSize,
     bool enableMessageKvParsing,
@@ -43,7 +44,11 @@ ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
 
     std::regex compiledLogPattern;
     try {
-        compiledLogPattern = std::regex(pattern, std::regex::optimize);
+        std::regex::flag_type flags = std::regex::optimize;
+        if (caseSensitive.has_value() && !caseSensitive.value()) {
+            flags |= std::regex::icase;
+        }
+        compiledLogPattern = std::regex(pattern, flags);
     } catch (const std::regex_error& e) {
         return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid main regex pattern: " + std::string(e.what())));
     }
@@ -51,7 +56,11 @@ ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     std::optional<std::regex> compiledLogEntryStartRegex;
     if (logEntryStartPattern) {
         try {
-            compiledLogEntryStartRegex = std::regex(*logEntryStartPattern, std::regex::optimize);
+            std::regex::flag_type startFlags = std::regex::optimize;
+            if (caseSensitive.has_value() && !caseSensitive.value()) {
+                startFlags |= std::regex::icase;
+            }
+            compiledLogEntryStartRegex = std::regex(*logEntryStartPattern, startFlags);
         } catch (const std::regex_error& e) {
             return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid log entry start regex pattern: " + std::string(e.what())));
         }
@@ -64,6 +73,7 @@ ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
         levelMappings,
         std::move(compiledLogEntryStartRegex),
         std::move(logEntryStartPattern),
+        caseSensitive,
         errorAction,
         maxMultiLineBufferSize,
         enableMessageKvParsing,
@@ -79,6 +89,7 @@ DefaultLogParser::DefaultLogParser(
     const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
     std::optional<std::regex> compiledLogEntryStartRegex,
     std::optional<std::string> logEntryStartPatternString,
+    std::optional<bool> caseSensitive,
     CLIConfig::ParserErrorAction errorAction,
     size_t maxMultiLineBufferSize,
     bool enableMessageKvParsing,
@@ -90,6 +101,7 @@ DefaultLogParser::DefaultLogParser(
     customLevelMappings(levelMappings), // Copy
     logEntryStartRegex(std::move(compiledLogEntryStartRegex)),
     logEntryStartPatternString(std::move(logEntryStartPatternString)),
+    caseSensitive(caseSensitive),
     _maxMultiLineBufferSize(maxMultiLineBufferSize),
     _enableMessageKvParsing(enableMessageKvParsing),
     _warningLogger(std::move(warningLogger)),
@@ -124,6 +136,7 @@ std::unique_ptr<ILogParser> DefaultLogParser::clone() const {
         fieldMappings,
         customLevelMappings,
         logEntryStartPatternString, // Pass the original string pattern for start regex
+        caseSensitive,
         _parserErrorAction,
         _maxMultiLineBufferSize,
         _enableMessageKvParsing,

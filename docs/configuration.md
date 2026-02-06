@@ -169,3 +169,21 @@ You can split your configuration into multiple files using the `includes` key. T
 ```
 
 **Note:** Properties in the main file override those in included files. Later includes override earlier ones if there are conflicts.
+
+#### Configuration Merging Strategy
+
+`logAnalyzer` uses a hierarchical merging strategy to combine configuration settings from different sources, ensuring flexibility and predictable behavior. The order of precedence, from highest to lowest, is:
+
+1.  **Command-line Arguments**: Settings provided directly via CLI flags always take precedence.
+2.  **Main Configuration File**: Settings defined in the `--config` file override any settings from included files.
+3.  **Included Configuration Files**: Files specified in the `includes` array are processed in order. Settings from later included files will override those from earlier included files if there are conflicts.
+
+The specific merging behavior depends on the type of setting:
+
+*   **Scalar and Optional Values** (`lineParsePattern`, `caseSensitiveParsing`, `maxMultilineBufferSize`, `parserErrorAction`, `logEntryStartPattern`, `rootFilterExpression`): These settings are directly **overwritten** by the higher-priority source if a value is explicitly provided. If a higher-priority source does not specify a value, the lower-priority value (or the default) is retained.
+
+*   **Mapped Collections** (`fieldMappings`, `customLogLevelMappings`): For these collections, `logAnalyzer` performs an **upsert** operation. If an entry with the same identifier (e.g., the `field` and its specific type for `fieldMappings`, or the key for `customLogLevelMappings`) already exists from a lower-priority source, it will be updated with the values from the higher-priority source. New entries from the higher-priority source are simply added to the collection.
+
+*   **List Collections** (`filterRules`, `statisticConfigs`): Entries from higher-priority sources are **appended** to the existing list of entries from lower-priority sources. This means rules and statistics configurations are additive.
+
+*   **Nested Configuration Objects** (`exportSettings`): Nested configuration objects are merged **recursively** using the same set of merging rules. This allows for fine-grained control over sub-sections of the configuration.

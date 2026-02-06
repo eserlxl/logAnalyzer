@@ -10,14 +10,14 @@ using json = nlohmann::json;
 // =============================================================================================================
 TEST(ExportSettingsTest, DefaultConstructor) {
     ExportSettings settings;
-    ASSERT_EQ(settings.outputPath, "output.log");
-    ASSERT_EQ(settings.format, ExportFormat::PLAINTEXT);
+    EXPECT_FALSE(settings.outputPath.has_value());
+    EXPECT_FALSE(settings.format.has_value());
     ASSERT_TRUE(settings.fieldsToExport.empty()); // Should be empty by default now
-    ASSERT_TRUE(settings.includeHeader);
+    ASSERT_FALSE(settings.includeHeader.has_value());
     ASSERT_FALSE(settings.jsonIndent.has_value());
-    ASSERT_EQ(settings.separator, ',');
-    ASSERT_EQ(settings.textFormatString, "{timestamp} [{level}] {message}");
-    ASSERT_FALSE(settings.useAnsiColors);
+    ASSERT_FALSE(settings.separator.has_value());
+    ASSERT_FALSE(settings.textFormatString.has_value());
+    ASSERT_FALSE(settings.useAnsiColors.has_value());
 }
 
 TEST(ExportSettingsTest, ToJson) {
@@ -60,7 +60,7 @@ TEST(ExportSettingsTest, FromJsonValid) {
     ExportSettings es = j.get<ExportSettings>();
     ASSERT_EQ(es.outputPath, "another.csv");
     ASSERT_EQ(es.format, ExportFormat::CSV);
-    ASSERT_FALSE(es.includeHeader);
+    EXPECT_FALSE(es.includeHeader.value());
     ASSERT_TRUE(es.jsonIndent.has_value());
     ASSERT_EQ(es.jsonIndent.value(), 3);
     ASSERT_EQ(es.separator, '|');

@@ -15,37 +15,25 @@
 - [🤔 Why logAnalyzer?](#-why-loganalyzer)
 - [✨ Key Features](#-key-features)
 - [🚀 Getting Started](#-getting-started)
-- [⚡ Basic Usage](#-basic-usage)
+- [⚡ Quick Start](#-quick-start)
 - [⚙️ Configuration](#️-configuration)
 - [📚 Documentation](#-documentation)
 - [🏗 Project Structure](#-project-structure)
 - [💬 Support & Community](#-support--community)
 - [🤝 Contributing](#-contributing)
 - [📜 Changelog](#-changelog)
-- [📄 License](#-license)
-
+- [📄 License)
 
 ---
 ## 🤔 Why logAnalyzer?
 
-Modern applications generate gigabytes of logs daily. While tools like `grep`, `awk`, or `less` are powerful, they often fall short when dealing with the scale and complexity of today's logging formats. You've likely felt the pain of:
+Modern applications generate gigabytes of logs daily. While tools like `grep`, `awk`, or `less` are powerful, they often fall short when dealing with the scale and complexity of today's logging formats. `logAnalyzer` was built to solve these problems. It treats your logs as a structured data source, allowing you to query them with power and flexibility, right from your terminal. Its stream-based architecture ensures it can handle files of any size with minimal memory usage.
 
--   **Complex Queries**: Trying to filter logs by a specific time range and multiple keywords (`grep "ERROR" | grep "2023-10-27 10:"`) is cumbersome and inefficient.
--   **Lack of Structure**: Parsing structured formats like JSON or key-value pairs requires custom, often brittle, scripting.
--   **Performance Bottlenecks**: Searching multi-gigabyte files can be slow and memory-intensive, bringing your analysis to a crawl.
--   **No Built-in Analytics**: `grep` can find lines, but it can't tell you the rate of errors per minute or the top 10 most common log messages.
-
-`logAnalyzer` was built to solve these problems. It treats your logs as a structured data source, allowing you to query them with power and flexibility, right from your terminal. Its stream-based architecture ensures it can handle files of any size with minimal memory usage.
+For a comprehensive explanation, see [**docs/why-loganalyzer.md**](docs/why-loganalyzer.md).
 
 ## ✨ Key Features
 
-- **⚡ High-Performance C++ Core**: Processes massive log files as streams with minimal memory usage.
-- **🔍 Advanced Filtering**: Build complex queries with `AND`/`OR`/`NOT`, rich operators, and nested JSON field support.
-- **📊 Built-in Analytics**: Generate statistics like entry rates and top messages on the fly.
-- **🛠 Multi-Format Support**: Natively handles JSON and custom text patterns.
-- **📤 Flexible I/O**: Read from files or `stdin` and export to Text, CSV, or JSON.
-- **🔄 Live Monitoring**: Tail files in real-time with live filtering.
-- **📚 C++ API**: Integrate log analysis capabilities directly into your own C++ applications.
+`logAnalyzer` offers a rich set of features for efficient log analysis, including high-performance processing, advanced filtering capabilities, built-in analytics, multi-format support, flexible I/O, and a C++ API.
 
 For a comprehensive overview of all capabilities, see the [**full feature list**](docs/features.md).
 
@@ -86,19 +74,9 @@ Follow these steps to get `logAnalyzer` running on your system.
     logAnalyzer --version
     ```
 
-For detailed, platform-specific instructions, refer to the [**Installation Guide**](docs/installation.md).
+For detailed, platform-specific instructions, refer to the [**Installation Guide**](docs/installation.md) and the [**Build Guide**](docs/build.md) for advanced configurations.
 
-### Running Tests
-
-To ensure everything is working correctly:
-
-```bash
-cd build && ctest
-```
-
-For more comprehensive build instructions, including platform-specific details and advanced configurations, please see the [**Build Guide**](docs/build.md).
-
-## ⚡ Basic Usage
+## ⚡ Quick Start
 
 `logAnalyzer` is a versatile tool. Here’s a quick overview of its command-line interface.
 
@@ -108,64 +86,27 @@ For more comprehensive build instructions, including platform-specific details a
 logAnalyzer [input-file] [options]
 ```
 
-### Examples
+### Example
 
-- **Display help:**
+- **Analyze a specific log file and filter for errors:**
   ```bash
-  logAnalyzer --help
+  logAnalyzer /var/log/syslog --level ERROR
   ```
 
-- **Process a log file from `stdin`:**
-  ```bash
-  echo "INFO 2023-10-27 12:30:00 This is a test log message." | logAnalyzer
-  ```
-
-- **Analyze a specific log file:**
-  ```bash
-  logAnalyzer /var/log/syslog
-  ```
-
-- **Use a complex expression to find database errors OR any message containing "timeout":**
-  ```bash
-  logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
-  ```
-
-- **Generate statistics on the top 5 most common error messages:**
-  ```bash
-  logAnalyzer system.log --level ERROR --stats "type=TOP_MESSAGES,top_n=5"
-  ```
-
-- **Export errors from the last 2 hours to a JSON file:**
-  ```bash
-  logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
-  ```
-
-For a deep dive into all functionalities, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
+For a deep dive into all functionalities and more detailed examples, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
 
 ## ⚙️ Configuration
 
-`logAnalyzer` supports extensive configuration via command-line arguments or a JSON configuration file.
+`logAnalyzer` supports extensive configuration via command-line arguments or a JSON configuration file. Command-line arguments always override settings from a configuration file.
 
--   **Command Line**: Overrides config file settings.
--   **Config File**: Use `--config path/to/config.json` for persistent settings.
-
-Example `config.json` snippet:
-```json
-{
-  "filterRules": [
-    { "field": "level", "operator": "EQUALS", "value": "ERROR" }
-  ],
-  "exportSettings": { "format": "json", "prettyPrint": true }
-}
-```
-
-For full details on configuration options, see the [**Configuration Guide**](docs/configuration.md).
+For full details on all configuration options and merging strategies, see the [**Configuration Guide**](docs/configuration.md).
 
 ## 📚 Documentation
 
 For more in-depth information, explore the documentation in the [`docs/`](./docs) directory.
 
 ### User Documentation
+- [**Why logAnalyzer?**](docs/why-loganalyzer.md)
 - [**Features Overview**](docs/features.md)
 - [**Installation Guide**](docs/installation.md)
 - [**Command Line Reference**](docs/cli-reference.md)

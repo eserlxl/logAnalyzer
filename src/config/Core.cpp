@@ -3,13 +3,11 @@
 
 #include "config/Core.h"
 #include "config/Settings.h"
-#include "utils/Core.h"
 #include <algorithm>
 
 void LogAnalyzerSettings::merge(const LogAnalyzerSettings& other) {
     // Overwrite simple scalar values if the source has them set to a non-default.
-    // This logic can be fine-tuned based on what "default" means for each property.
-    if (!other.lineParsePattern.empty() && other.lineParsePattern != LogAnalyzerSettings::createDefault().lineParsePattern) {
+    if (!other.lineParsePattern.empty() && other.lineParsePattern != DEFAULT_LOG_REGEX_PATTERN_INTERNAL) {
         lineParsePattern = other.lineParsePattern;
     }
     
@@ -18,26 +16,54 @@ void LogAnalyzerSettings::merge(const LogAnalyzerSettings& other) {
         logEntryStartPattern = other.logEntryStartPattern;
     }
     
-    // Simple boolean overwrite
-    caseSensitiveParsing = other.caseSensitiveParsing;
+    if (other.caseSensitiveParsing.has_value()) {
+        caseSensitiveParsing = other.caseSensitiveParsing;
+    }
 
-    // For collections, replace if the 'other' collection is not empty.
-    if (!other.fieldMappings.empty()) {
-        fieldMappings = other.fieldMappings;
+    if (other.maxMultilineBufferSize.has_value()) {
+        maxMultilineBufferSize = other.maxMultilineBufferSize;
     }
+
+    if (other.parserErrorAction.has_value()) {
+        parserErrorAction = other.parserErrorAction;
+    }
+
+    // For fieldMappings, we implement smart merging (upsert).
+    // Audit Requirement: Collection merging is additive.
+    // Strategy: Append fields from 'other'. If a field (LogEntryField or custom name) already exists in 'this', update it.
+    for (const auto& mapping : other.fieldMappings) {
+        auto it = std::ranges::find_if(fieldMappings, [&](const FieldMapping& m) {
+            // Check if same type and value
+            if (m.field.index() != mapping.field.index()) return false;
+            if (std::holds_alternative<LogEntryField>(m.field)) {
+                return std::get<LogEntryField>(m.field) == std::get<LogEntryField>(mapping.field);
+            }                 return std::get<std::string>(m.field) == std::get<std::string>(mapping.field);
+           
+        });
+
+        if (it != fieldMappings.end()) {
+            *it = mapping; // Overwrite existing
+        } else {
+            fieldMappings.push_back(mapping); // Add new
+        }
+    }
+
     if (!other.customLogLevelMappings.empty()) {
-        customLogLevelMappings = other.customLogLevelMappings;
-    }
-    if (!other.filterRules.empty()) {
-        filterRules = other.filterRules;
-    }
-    if (!other.statisticConfigs.empty()) {
-        statisticConfigs = other.statisticConfigs;
+        for (const auto& [key, value] : other.customLogLevelMappings) {
+            customLogLevelMappings[key] = value;
+        }
     }
     
-    // For complex objects, you might need a deeper merge logic, but for now, we replace.
-    // This simple replacement assumes `other` provides a complete replacement.
-    exportSettings = other.exportSettings; // Assumes ExportSettings has its own sane copy/move semantics
+    if (!other.filterRules.empty()) {
+        filterRules.insert(filterRules.end(), other.filterRules.begin(), other.filterRules.end());
+    }
+    
+    if (!other.statisticConfigs.empty()) {
+        statisticConfigs.insert(statisticConfigs.end(), other.statisticConfigs.begin(), other.statisticConfigs.end());
+    }
+    
+    // Use ExportSettings::merge
+    exportSettings.merge(other.exportSettings);
 
     if (other.rootFilterExpression.has_value()) {
         rootFilterExpression = other.rootFilterExpression;
@@ -46,20 +72,8 @@ void LogAnalyzerSettings::merge(const LogAnalyzerSettings& other) {
 
 
 LogAnalyzerSettings LogAnalyzerSettings::createDefault() {
-    LogAnalyzerSettings defaults;
-    defaults.lineParsePattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$)";
-    defaults.fieldMappings.clear();
-    defaults.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), std::vector<std::string>{"%Y-%m-%d %H:%M:%S"});
-    defaults.fieldMappings.emplace_back(LogEntryField::LEVEL, std::make_optional<size_t>(2));
-    defaults.fieldMappings.emplace_back(LogEntryField::MESSAGE, std::make_optional<size_t>(3));
-    defaults.caseSensitiveParsing = false;
-    
-    // Default export settings
-    defaults.exportSettings.fieldsToExport = {
-        LogEntryField::TIMESTAMP,
-        LogEntryField::LEVEL,
-        LogEntryField::MESSAGE
-    };
-    
-    return defaults;
+    // The constructor already initializes with default values.
+    // Return a default-constructed object.
+    return {};
 }
+

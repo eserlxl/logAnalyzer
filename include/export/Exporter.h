@@ -54,32 +54,35 @@ void to_json(nlohmann::json& j, const ExportFieldMapping& efm);
 void from_json(const nlohmann::json& j, ExportFieldMapping& efm);
 
 struct ExportSettings {
-    std::string outputPath = "output.log"; // Default output file
-    ExportFormat format = ExportFormat::PLAINTEXT;
-    std::vector<ExportFieldMapping> fieldsToExport; // If empty, export all available fields
-    bool includeHeader = true; // For CSV/table formats
-    std::optional<int> jsonIndent; // For JSON pretty printing (e.g., 4 for 4 spaces)
-    char separator = ','; // For CSV files
-    std::string textFormatString = "{timestamp} [{level}] {message}"; // For PLAINTEXT format
-    bool useAnsiColors = false; // For PLAINTEXT format
+    std::optional<std::string> outputPath; 
+    std::optional<ExportFormat> format;
+    std::vector<ExportFieldMapping> fieldsToExport; // If empty, export all available fields (or specific logic)
+    std::optional<bool> includeHeader; 
+    std::optional<int> jsonIndent; 
+    std::optional<char> separator; 
+    std::optional<std::string> textFormatString; 
+    std::optional<bool> useAnsiColors; 
     
     // Missing fields identified from tests
     std::optional<filter::SortBy> sortBy;
     std::optional<filter::SortOrder> sortOrder;
-    bool outputNoColor = false;
-    std::string textOutputFormat = "{timestamp} {level}: {message}";
-    bool includeSummary = false;
-    bool prettyPrint = false;
-    char csvSeparator = ',';
+    std::optional<bool> outputNoColor;
+    std::optional<std::string> textOutputFormat;
+    std::optional<bool> includeSummary;
+    std::optional<bool> prettyPrint;
+    std::optional<char> csvSeparator;
     std::vector<std::pair<std::string, std::string>> csvFields;
     std::vector<std::pair<std::string, std::string>> jsonFields;
-    int topMessagesCount = 10;
-    bool streamMode = false;
-    bool tailMode = false;
-    std::chrono::milliseconds tailInterval = std::chrono::milliseconds(1000);
+    std::optional<int> topMessagesCount;
+    std::optional<bool> streamMode;
+    std::optional<bool> tailMode;
+    std::optional<std::chrono::milliseconds> tailInterval;
 
     // Constructor to provide sane defaults for common use cases.
-    ExportSettings() = default; // Leave fieldsToExport empty to signal "export all standard fields"
+    ExportSettings() = default; 
+
+    // Merge another settings object into this one
+    void merge(const ExportSettings& other);
 };
 
 // --- JSON Conversion for ExportSettings ---

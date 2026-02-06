@@ -46,20 +46,20 @@ TEST_F(CLIConfigTest, DefaultValues) {
     ASSERT_EQ(settings.lineParsePattern, DEFAULT_LOG_REGEX_PATTERN_INTERNAL);
     ASSERT_TRUE(settings.filterRules.empty()); // No filters by default
     ASSERT_FALSE(settings.rootFilterExpression.has_value());
-    ASSERT_EQ(settings.exportSettings.outputPath, "");
-    ASSERT_EQ(settings.exportSettings.format, ExportFormat::PLAINTEXT);
-    ASSERT_EQ(settings.exportSettings.textOutputFormat, "{timestamp} {level}: {message}");
-    ASSERT_FALSE(settings.exportSettings.includeSummary);
-    ASSERT_FALSE(settings.exportSettings.prettyPrint);
-    ASSERT_FALSE(settings.exportSettings.outputNoColor); // AUTO implies not explicitly no-color
-    ASSERT_EQ(settings.exportSettings.csvSeparator, ',');
+    ASSERT_FALSE(settings.exportSettings.outputPath.has_value());
+    ASSERT_FALSE(settings.exportSettings.format.has_value());
+    ASSERT_FALSE(settings.exportSettings.textOutputFormat.has_value());
+    ASSERT_FALSE(settings.exportSettings.includeSummary.has_value());
+    ASSERT_FALSE(settings.exportSettings.prettyPrint.has_value());
+    ASSERT_FALSE(settings.exportSettings.outputNoColor.has_value()); // AUTO implies not explicitly no-color
+    ASSERT_FALSE(settings.exportSettings.csvSeparator.has_value());
     ASSERT_TRUE(settings.exportSettings.csvFields.empty());
     ASSERT_TRUE(settings.exportSettings.jsonFields.empty());
-    ASSERT_EQ(settings.exportSettings.topMessagesCount, 10); // Default for ExportSettings
-    ASSERT_FALSE(settings.exportSettings.streamMode);
-    ASSERT_FALSE(settings.exportSettings.tailMode);
-    ASSERT_EQ(settings.exportSettings.tailInterval, std::chrono::milliseconds(1000));
-    ASSERT_EQ(settings.parserErrorAction, CLIConfig::ParserErrorAction::Warn);
+    ASSERT_FALSE(settings.exportSettings.topMessagesCount.has_value()); // Default for ExportSettings
+    ASSERT_FALSE(settings.exportSettings.streamMode.has_value());
+    ASSERT_FALSE(settings.exportSettings.tailMode.has_value());
+    ASSERT_FALSE(settings.exportSettings.tailInterval.has_value());
+    ASSERT_FALSE(settings.parserErrorAction.has_value());
     ASSERT_TRUE(settings.customLogLevelMappings.empty());
     ASSERT_TRUE(settings.statisticConfigs.empty());
 }

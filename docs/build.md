@@ -74,3 +74,15 @@ To use an option, add it to the `cmake` command:
 ```bash
 cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 ```
+
+---
+
+## Running Tests
+
+To ensure everything is working correctly after building:
+
+```bash
+cd build && ctest
+```
+
+For more comprehensive test instructions, including advanced testing configurations, please see this guide's full documentation.

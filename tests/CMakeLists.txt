@@ -26,6 +26,7 @@ set(TEST_SOURCES
     "config/CoreJson.cpp"
     "config/CoreValidation.cpp"
     "config/CoreFeatures.cpp"
+    "config/MergeTest.cpp"
     "config/Utils.cpp"
     "core/LogParser.cpp"
     "core/LogTypes.cpp"

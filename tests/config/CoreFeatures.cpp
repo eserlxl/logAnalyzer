@@ -44,7 +44,7 @@ TEST_F(ConfigCoreTest, CreateDefault) {
     ASSERT_EQ(std::get<LogEntryField>(settings.fieldMappings[1].field), LogEntryField::LEVEL);
     ASSERT_TRUE(std::holds_alternative<LogEntryField>(settings.fieldMappings[2].field));
     ASSERT_EQ(std::get<LogEntryField>(settings.fieldMappings[2].field), LogEntryField::MESSAGE);
-    ASSERT_FALSE(settings.caseSensitiveParsing);
+    ASSERT_FALSE(settings.caseSensitiveParsing.value_or(false));
 }
 
 TEST_F(ConfigCoreTest, Merge) {
@@ -123,7 +123,51 @@ TEST_F(ConfigCoreTest, IncludeOverridesRoot) {
     // Root value should override included value
     ASSERT_EQ(settings.lineParsePattern, "root_pattern");
     // Value from base should persist if not in root
-    ASSERT_FALSE(settings.caseSensitiveParsing);
+    ASSERT_FALSE(settings.caseSensitiveParsing.value_or(false));
+}
+
+TEST_F(ConfigCoreTest, PartialMergePreservesValues) {
+    LogAnalyzerSettings base = LogAnalyzerSettings::createDefault();
+    base.setCaseSensitiveParsing(true);
+    base.setLineParsePattern("base_pattern");
+    
+    LogAnalyzerSettings overlay;
+    // overlay has default values for caseSensitiveParsing (std::nullopt) and lineParsePattern (DEFAULT)
+    
+    base.merge(overlay);
+    
+    // Values should be preserved if overlay doesn't specify them
+    EXPECT_TRUE(base.caseSensitiveParsing.value_or(false));
+    EXPECT_EQ(base.lineParsePattern, "base_pattern");
+}
+
+TEST_F(ConfigCoreTest, ExportSettingsMerge) {
+    LogAnalyzerSettings base = LogAnalyzerSettings::createDefault();
+    base.exportSettings.outputPath = "base_output.log";
+    base.exportSettings.format = ExportFormat::JSON;
+    
+    LogAnalyzerSettings overlay;
+    overlay.exportSettings.outputPath = "overlay_output.log";
+    // overlay.exportSettings.format is nullopt
+    
+    base.merge(overlay);
+    
+    EXPECT_EQ(base.exportSettings.outputPath, "overlay_output.log");
+    EXPECT_EQ(base.exportSettings.format, ExportFormat::JSON);
+}
+
+TEST_F(ConfigCoreTest, AdditiveCollectionMerge) {
+    LogAnalyzerSettings base = LogAnalyzerSettings::createDefault();
+    base.filterRules.push_back({LogEntryField::LEVEL, FilterOperator::EQUALS, "ERROR"});
+    
+    LogAnalyzerSettings overlay;
+    overlay.filterRules.push_back({LogEntryField::MESSAGE, FilterOperator::CONTAINS, "critical"});
+    
+    base.merge(overlay);
+    
+    ASSERT_EQ(base.filterRules.size(), 2);
+    EXPECT_EQ(base.filterRules[0].value, "ERROR");
+    EXPECT_EQ(base.filterRules[1].value, "critical");
 }
 
 TEST_F(ConfigCoreTest, CircularIncludeDetection) {

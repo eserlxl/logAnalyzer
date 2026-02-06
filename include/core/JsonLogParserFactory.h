@@ -13,7 +13,7 @@ public:
         // JsonLogParser doesn't use all settings, primarily customLogLevelMapping and parserErrorAction
         return std::make_unique<JsonLogParser>(
             settings.customLogLevelMappings,
-            settings.parserErrorAction
+            settings.parserErrorAction.value_or(ParserErrorAction::Warn)
         );
     }
 
