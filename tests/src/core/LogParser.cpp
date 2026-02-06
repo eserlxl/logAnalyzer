@@ -17,9 +17,9 @@ using namespace ErrorCode;
 TEST(LogParserErrorHandling, VariousActions) {
     std::string pattern = R"(^(\d{4}-\d{2}-\d{2})\s+\[(\w+)\]\s+(.*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S"},
-        {LogEntryField::LEVEL, 2},
-        {LogEntryField::MESSAGE, 3}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(3), {}}
     };
     std::string logLine = "2023-10-27 [INFO] This log has a bad timestamp format.";
     size_t lineNumber = 1;
@@ -106,9 +106,9 @@ TEST(LogParserTest, StructuredFieldQuotedValuesAndSpecialChars) {
 TEST(LogParserTest, MultiLineSingleEntryFile) {
     std::string pattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): ([\s\S]*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S"},
-        {LogEntryField::LEVEL, 2},
-        {LogEntryField::MESSAGE, 3}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(3), {}}
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})";
     auto parserResult = DefaultLogParser::create(pattern, mappings, {}, logEntryStartPattern, CLIConfig::ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
@@ -136,9 +136,9 @@ TEST(LogParserTest, MultiLineSingleEntryFile) {
 TEST(LogParserTest, MultiLineWithBlankAndAmbiguousLines) {
     std::string pattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): ([\s\S]*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S"},
-        {LogEntryField::LEVEL, 2},
-        {LogEntryField::MESSAGE, 3}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(3), {}}
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:)"; // More specific start pattern
 
@@ -187,9 +187,9 @@ TEST(LogParserTest, MultiLineWithBlankAndAmbiguousLines) {
 TEST(LogParserTest, MultiLineInterleaving) {
     std::string pattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): ([\s\S]*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S"},
-        {LogEntryField::LEVEL, 2},
-        {LogEntryField::MESSAGE, 3}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(3), {}}
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:)";
 
@@ -243,8 +243,8 @@ TEST(LogParserTest, MultiLineInterleaving) {
 TEST(LogParserTest, BufferLimitExceeded) {
     std::string pattern = R"(^(\d{4}-\d{2}-\d{2}) (.*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d"},
-        {LogEntryField::MESSAGE, 2}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d"}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(2), {}}
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2})";
 
@@ -299,8 +299,8 @@ TEST(LogParserTest, BufferLimitExceeded) {
 TEST(LogParserTest, StreamProcessing) {
     std::string pattern = R"(^(\d{4}-\d{2}-\d{2}) ([\s\S]*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d"},
-        {LogEntryField::MESSAGE, 2}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d"}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(2), {}}
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2})";
 
@@ -331,8 +331,8 @@ TEST(LogParserTest, StreamProcessing) {
 TEST(LogParserTest, StateIntrospectionDuringMultiLine) {
     std::string pattern = R"(^(\d{4}-\d{2}-\d{2}) (.*)$)";
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d"},
-        {LogEntryField::MESSAGE, 2}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d"}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(2), {}}
     };
     std::optional<std::string> logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2})";
 
@@ -370,9 +370,9 @@ TEST(LogParserTest, StateIntrospectionDuringMultiLine) {
 TEST(LogParserErrorHandling, CompleteFailureActions) {
     std::string pattern = R"(^(\d{4}-\d{2}-\d{2})\s+\[(\w+)\]\s+(.*)$)"; // Pattern expecting date, level, message
     std::vector<FieldMapping> mappings = {
-        {LogEntryField::TIMESTAMP, 1, "%Y-%m-%d"},
-        {LogEntryField::LEVEL, 2},
-        {LogEntryField::MESSAGE, 3}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(3), {}}
     };
     std::string nonMatchingLogLine = "This line does not match the pattern at all.";
     size_t lineNumber = 100;

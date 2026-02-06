@@ -87,6 +87,9 @@ std::optional<ParsedValue> inferTypeAndParse(const std::string& s) {
     return ParsedValue{FilterValueType::STRING, s};
 }
 
+} // Unnamed namespace
+
+
 // Helper to evaluate IN and NOT_IN operators
 ErrorCode::Result<bool> evaluateInNotIn(const std::string& fieldValue, const std::string& condValue, FilterValueType type, bool caseSensitive, FilterOperator op) {
     try {
@@ -197,9 +200,27 @@ ErrorCode::Result<bool> evaluateInNotIn(const std::string& fieldValue, const std
                 }
                 break;
             }
+            case FilterValueType::REGEX: {
+                for (const auto& item : jsonArray) {
+                    if (item.is_string()) {
+                        std::string pattern = item.get<std::string>();
+                        try {
+                            auto flags = caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
+                            std::regex re(pattern, flags);
+                            if (std::regex_search(fieldValue, re)) {
+                                found = true;
+                                break;
+                            }
+                        } catch (const std::regex_error& e) {
+                            std::cerr << "Warning: Invalid regex pattern in IN/NOT_IN list: " << pattern << " - " << e.what() << std::endl;
+                        }
+                    }
+                }
+                break;
+            }
             case FilterValueType::STRING:
             case FilterValueType::UNKNOWN:
-            case FilterValueType::AUTO: {
+            case FilterValueType::AUTO: { // AUTO falls back to STRING
                  for (const auto& item : jsonArray) {
                     if (item.is_string()) {
                         std::string s = item.get<std::string>();
@@ -219,6 +240,7 @@ ErrorCode::Result<bool> evaluateInNotIn(const std::string& fieldValue, const std
         return std::unexpected(ErrorCode::Error(Code::JsonParseError, "Failed to parse JSON for IN/NOT_IN operator: " + std::string(e.what())));
     }
 }
+
 
 // --- Evaluation helpers for FilterExpression ---
 
@@ -436,8 +458,7 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
     }
 }
 
-} // Unnamed namespace
-
+// FilterExpression::evaluate and FilterExpression::validate definitions
 ErrorCode::Result<bool> FilterExpression::evaluate(const LogEntry& entry) const {
     ErrorCode::Result<bool> result = false;
     switch (type_) {

@@ -73,7 +73,9 @@ std::string LogWriter::formatEntry(const LogEntry& entry, std::string_view dateT
 }
 
 void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
-    auto filteredEntriesExpected = analyzer_.getFilteredEntries(criteria);
+    FilterExpression combinedExpression = analyzer_.createFilterExpressionFromCriteria(criteria);
+    // Now call the non-deprecated getFilteredEntries with the new expression
+    auto filteredEntriesExpected = analyzer_.getFilteredEntries(combinedExpression);
     if (filteredEntriesExpected.has_value()) {
         const auto& filteredEntries = filteredEntriesExpected.value();
         for (const auto& entry : filteredEntries) {
@@ -87,5 +89,5 @@ void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& cr
 void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const {
     FormattingOptions options;
     options.dateTimeFormat = std::string(formatString);
-    printFilteredEntries(out, criteria, options);
+    analyzer_.printFilteredEntries(out, analyzer_.createFilterExpressionFromCriteria(criteria), options);
 }

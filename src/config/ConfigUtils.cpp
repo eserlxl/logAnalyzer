@@ -29,7 +29,7 @@ namespace ConfigUtils {
                 LogEntryField field = Utils::stringToLogEntryField(fieldName);
                 
                 if (field != LogEntryField::UNKNOWN) {
-                    return FieldMapping(field, groupIndex, format);
+                    return FieldMapping(field, std::make_optional(groupIndex), {format});
                 } else {
                     // Custom field
                     std::vector<std::string> formats;

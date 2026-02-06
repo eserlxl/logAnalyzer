@@ -106,6 +106,7 @@ public:
     // Helper methods used by IO.cpp
     void setDefaultFieldMappings(LogAnalyzerSettings& settings);
     std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
+    FilterExpression createFilterExpressionFromCriteria(const FilterCriteria& criteria) const;
 
 private:
     mutable std::shared_mutex stateMutex_;

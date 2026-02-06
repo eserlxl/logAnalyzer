@@ -178,4 +178,48 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
     }
 }
 
+FilterExpression LogAnalyzer::createFilterExpressionFromCriteria(const FilterCriteria& criteria) const {
+    std::vector<FilterExpression> expressions;
 
+    // Keyword filter
+    if (!criteria.keyword.empty()) {
+        FilterOperator op = criteria.keywordCaseSensitive ? FilterOperator::CONTAINS : FilterOperator::CONTAINS_I;
+        expressions.emplace_back(FilterCondition::createString(LogEntryField::MESSAGE, op, criteria.keyword).value());
+    }
+
+    // Regex pattern filter
+    if (!criteria.regexPattern.empty()) {
+        expressions.emplace_back(FilterCondition::createString(LogEntryField::MESSAGE, FilterOperator::REGEX_MATCH, criteria.regexPattern).value());
+    }
+
+    // Log levels filter (combine with OR if multiple, or single EQUALS)
+    if (!criteria.levels.empty()) {
+        if (criteria.levels.size() == 1) {
+            expressions.emplace_back(FilterCondition::createString(LogEntryField::LEVEL, FilterOperator::EQUALS, Utils::logLevelToString(criteria.levels[0])).value());
+        } else {
+            std::vector<FilterExpression> levelExpressions;
+            for (LogLevel level : criteria.levels) {
+                levelExpressions.emplace_back(FilterCondition::createString(LogEntryField::LEVEL, FilterOperator::EQUALS, Utils::logLevelToString(level)).value());
+            }
+            expressions.emplace_back(FilterLogicalOperator::OR, levelExpressions);
+        }
+    }
+
+    // Time range filters
+    if (criteria.startTime.has_value()) {
+        std::string dtFormat = "%Y-%m-%d %H:%M:%S"; // Example default
+        expressions.emplace_back(FilterCondition::createDatetime(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN_OR_EQUAL, Utils::formatTimestamp(criteria.startTime.value(), dtFormat), dtFormat).value());
+    }
+    if (criteria.endTime.has_value()) {
+        std::string dtFormat = "%Y-%m-%d %H:%M:%S"; // Example default
+        expressions.emplace_back(FilterCondition::createDatetime(LogEntryField::TIMESTAMP, FilterOperator::LESS_THAN_OR_EQUAL, Utils::formatTimestamp(criteria.endTime.value(), dtFormat), dtFormat).value());
+    }
+
+    if (expressions.empty()) {
+        return FilterExpression(); // Empty expression means always true
+    } else if (expressions.size() == 1) {
+        return expressions[0];
+    } else {
+        return FilterExpression(FilterLogicalOperator::AND, expressions);
+    }
+}

@@ -354,8 +354,8 @@ TEST_F(LogAnalyzerConfigTest, ToJsonComprehensive) {
     LogAnalyzerSettings settings;
     settings.lineParsePattern = "^TEST REGEX (.*)";
     settings.fieldMappings = {
-        FieldMapping{LogEntryField::TIMESTAMP, 1},
-        FieldMapping{LogEntryField::MESSAGE, 2}
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(2), {}}
     };
     settings.customLogLevelMappings["VERB"] = LogLevel::TRACE;
     settings.setLogEntryStartPattern("^START LOG"); // Added this line
