@@ -385,6 +385,8 @@ data/
 ci-gpg-out/
 .last_prompt
 install/
+logAnalyzer
+logAnalyzer.*
 
 ###############################################################################
 # AI AGENTS / IDE AUTOMATION
