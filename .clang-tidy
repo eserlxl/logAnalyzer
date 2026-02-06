@@ -1,0 +1,118 @@
+Checks: |
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  clang-analyzer-*,
+  performance-*,
+  -performance-avoid-endl,
+  modernize-*,
+  -modernize-pass-by-value,
+  -modernize-use-trailing-return-type,
+  readability-*,
+  -readability-identifier-length,
+  -readability-function-cognitive-complexity,
+  -readability-qualified-auto,
+  -readability-braces-around-statements,
+  -readability-simplify-boolean-expr,
+  -readability-implicit-bool-conversion,
+  portability-*,
+  hicpp-use-auto,
+  # These cppcoreguidelines disables are only relevant if you later enable cppcoreguidelines-*
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-const-cast,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-special-member-functions,
+  -cppcoreguidelines-virtual-class-destructor
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '^(src|include|examples|test)/.*'
+FormatStyle: none
+
+CheckOptions:
+  # ----- Types / namespaces -----
+  - key: readability-identifier-naming.NamespaceCase
+    value: lower_case        # e.g. lxl, core, util
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase         # e.g. OrderRouter
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase         # e.g. OrderInfo
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase         # e.g. OrderSide
+  - key: readability-identifier-naming.TypedefCase
+    value: CamelCase
+  - key: readability-identifier-naming.TypeAliasCase
+    value: CamelCase
+  - key: readability-identifier-naming.TemplateParameterCase
+    value: CamelCase         # e.g. T, PriceType
+
+  # ----- Functions / parameters -----
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack         # e.g. placeOrder, computePnl
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack         # e.g. orderId, priceLimit
+
+  # ----- Variables -----
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack         # local variables
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.StaticVariableCase
+    value: camelBack
+
+  # ----- Members -----
+  - key: readability-identifier-naming.MemberCase
+    value: camelBack         # e.g. currentPrice, orderBook
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.PublicMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.MemberSuffix
+    value: ''
+
+  # ----- Constants -----
+  - key: readability-identifier-naming.ConstantCase
+    value: camelBack         # e.g. maxRetries
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.StaticConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.ClassConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.ConstantMemberPrefix
+    value: ''
+  - key: readability-identifier-naming.ConstantMemberSuffix
+    value: ''
+
+  # ----- Enum constants -----
+  - key: readability-identifier-naming.EnumConstantCase
+    value: camelBack         # e.g. buy, sell
+  - key: readability-identifier-naming.EnumConstantIgnoredRegexp
+    value: '^[a-z0-9]+_[A-Za-z0-9]+$'
+  - key: readability-identifier-naming.EnumConstantPrefix
+    value: ''
+  - key: readability-identifier-naming.EnumConstantSuffix
+    value: ''
+
+  # ----- Macros -----
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE        # e.g. C_ASSERT
+  - key: readability-identifier-naming.MacroDefinitionIgnoredRegexp
+    value: '^(lxl_[A-Z0-9_]+|lxl_[A-Za-z0-9_]+)$'
+
+  # ----- Misc behaviour -----
+  - key: readability-identifier-naming.IgnoreMainLikeFunctions
+    value: 1
+  - key: readability-identifier-naming.IgnoreFailedSplit
+    value: 1
