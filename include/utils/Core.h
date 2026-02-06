@@ -26,8 +26,8 @@
 // Full definitions are in Filter.h, Exporter.h, Statistics.h
 enum class ExportFormat;
 enum class StatisticType;
-enum class SortBy : uint8_t;
-enum class SortOrder : uint8_t;
+namespace filter { enum class SortBy : uint8_t; }
+namespace filter { enum class SortOrder : uint8_t; }
 
 
 namespace Utils {
@@ -92,11 +92,11 @@ std::optional<PatternType> stringToPatternType(const std::string& typeStr);
 std::string parseErrorToString(ParseError error);
 std::optional<ParseError> stringToParseError(const std::string& errorStr);
 
-std::string sortByToString(SortBy sort);
-std::optional<SortBy> stringToSortBy(const std::string& sortStr);
+std::string sortByToString(filter::SortBy sort);
+std::optional<filter::SortBy> stringToSortBy(const std::string& sortStr);
 
-std::string sortOrderToString(SortOrder order);
-std::optional<SortOrder> stringToSortOrder(const std::string& orderStr);
+std::string sortOrderToString(filter::SortOrder order);
+std::optional<filter::SortOrder> stringToSortOrder(const std::string& orderStr);
 
 } // namespace Utils
 

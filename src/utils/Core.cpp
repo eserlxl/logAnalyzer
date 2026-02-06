@@ -196,44 +196,44 @@ std::optional<ParseError> stringToParseError(const std::string& errorStr) {
 }
 
 // SortBy
-std::string sortByToString(SortBy sort) {
+std::string sortByToString(filter::SortBy sort) {
     switch (sort) {
-        case SortBy::TIMESTAMP: return "TIMESTAMP";
-        case SortBy::LEVEL: return "LEVEL";
-        case SortBy::MESSAGE: return "MESSAGE";
-        case SortBy::SOURCE: return "SOURCE";
-        case SortBy::THREAD_ID: return "THREAD_ID";
+        case filter::SortBy::TIMESTAMP: return "TIMESTAMP";
+        case filter::SortBy::LEVEL: return "LEVEL";
+        case filter::SortBy::MESSAGE: return "MESSAGE";
+        case filter::SortBy::SOURCE: return "SOURCE";
+        case filter::SortBy::THREAD_ID: return "THREAD_ID";
         default: return "UNKNOWN";
     }
 }
 
-std::optional<SortBy> stringToSortBy(const std::string& sortStr) {
+std::optional<filter::SortBy> stringToSortBy(const std::string& sortStr) {
     std::string upperSortStr = sortStr;
     std::transform(upperSortStr.begin(), upperSortStr.end(), upperSortStr.begin(), ::toupper);
 
-    if (upperSortStr == "TIMESTAMP" || upperSortStr == "TIME") return SortBy::TIMESTAMP;
-    if (upperSortStr == "LEVEL") return SortBy::LEVEL;
-    if (upperSortStr == "MESSAGE" || upperSortStr == "MSG") return SortBy::MESSAGE;
-    if (upperSortStr == "SOURCE") return SortBy::SOURCE;
-    if (upperSortStr == "THREAD_ID" || upperSortStr == "THREAD") return SortBy::THREAD_ID;
+    if (upperSortStr == "TIMESTAMP" || upperSortStr == "TIME") return filter::SortBy::TIMESTAMP;
+    if (upperSortStr == "LEVEL") return filter::SortBy::LEVEL;
+    if (upperSortStr == "MESSAGE" || upperSortStr == "MSG") return filter::SortBy::MESSAGE;
+    if (upperSortStr == "SOURCE") return filter::SortBy::SOURCE;
+    if (upperSortStr == "THREAD_ID" || upperSortStr == "THREAD") return filter::SortBy::THREAD_ID;
     return std::nullopt;
 }
 
 // SortOrder
-std::string sortOrderToString(SortOrder order) {
+std::string sortOrderToString(filter::SortOrder order) {
     switch (order) {
-        case SortOrder::ASCENDING: return "ASCENDING";
-        case SortOrder::DESCENDING: return "DESCENDING";
+        case filter::SortOrder::ASCENDING: return "ASCENDING";
+        case filter::SortOrder::DESCENDING: return "DESCENDING";
         default: return "UNKNOWN";
     }
 }
 
-std::optional<SortOrder> stringToSortOrder(const std::string& orderStr) {
+std::optional<filter::SortOrder> stringToSortOrder(const std::string& orderStr) {
     std::string upperOrderStr = orderStr;
     std::transform(upperOrderStr.begin(), upperOrderStr.end(), upperOrderStr.begin(), ::toupper);
 
-    if (upperOrderStr == "ASCENDING" || upperOrderStr == "ASC") return SortOrder::ASCENDING;
-    if (upperOrderStr == "DESCENDING" || upperOrderStr == "DESC") return SortOrder::DESCENDING;
+    if (upperOrderStr == "ASCENDING" || upperOrderStr == "ASC") return filter::SortOrder::ASCENDING;
+    if (upperOrderStr == "DESCENDING" || upperOrderStr == "DESC") return filter::SortOrder::DESCENDING;
     return std::nullopt;
 }
 

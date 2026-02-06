@@ -6,8 +6,11 @@
 #include "config/CLIConfig.h"
 #include "filter/Expression.h"
 #include "filter/Condition.h"
+#include "filter/Types.h"
 #include <fstream>
 #include <filesystem>
+
+using namespace filter;
 
 class LogAnalyzerTest : public ::testing::Test {
 protected:

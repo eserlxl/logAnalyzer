@@ -5,9 +5,12 @@
 #include "config/Settings.h"
 #include "core/LogTypes.h"
 #include "export/Exporter.h" // For ExportFieldMapping
+#include "filter/Types.h"
 #include <string>
 #include <algorithm> // For std::find_if
 #include <vector>
+
+using namespace filter;
 
 // Define constants for magic numbers used in tests
 // NOTE: These should ideally be defined in a common header or within the test fixture scope

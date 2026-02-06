@@ -16,6 +16,8 @@
 #include <filesystem>
 #include <nlohmann/json.hpp>
 
+using namespace filter;
+
 struct LogAnalyzerConfigTest : public ::testing::Test {};
 
 TEST_F(LogAnalyzerConfigTest, FromJsonValid) {

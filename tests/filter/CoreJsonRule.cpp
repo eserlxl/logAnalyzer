@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "filter/Legacy.h"
+#include "filter/Types.h" // Added
 #include "core/LogTypes.h"
 #include <nlohmann/json.hpp>
 

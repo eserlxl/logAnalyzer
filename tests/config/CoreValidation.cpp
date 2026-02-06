@@ -5,11 +5,15 @@
 #include <gmock/gmock.h>
 #include "config/Settings.h" // Use direct include
 #include "core/LogTypes.h"
+#include "filter/Types.h"
+#include "filter/Legacy.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <optional>
 #include <regex> // For std::regex
+
+using namespace filter;
 
 // Consolidated test fixture for all validation tests
 struct ConfigValidationTest : public ::testing::Test {

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef FILTER_LEGACY_H
-#define FILTER_LEGACY_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -16,6 +15,8 @@
 #include "utils/Core.h"    // For ci_less
 #include "filter/EnumStringConversions.h" // For enum to string conversions
 #include "filter/JsonUtils.h"
+
+namespace filter {
 
 // Transitional: Represents a simplified filter rule for legacy JSON formats.
 // This is part of a transitional phase and should not be used for new development.
@@ -89,5 +90,4 @@ inline ErrorCode::Result<FilterRule> from_json(const nlohmann::json& j, [[maybe_
     return fr; // Success
 }
 
-
-#endif // FILTER_LEGACY_H
+} // namespace filter

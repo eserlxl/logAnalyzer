@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef FILTER_EXPRESSION_H
-#define FILTER_EXPRESSION_H
+#pragma once
 
 #include <vector>
 #include <optional>
@@ -15,6 +14,8 @@
 #include "filter/Types.h"     // For FilterLogicalOperator
 #include "filter/EnumStringConversions.h" // New: For enum to string conversions
 #include "filter/JsonUtils.h"
+
+namespace filter {
 
 // New: Represents a composite filter expression (tree-like structure)
 class FilterExpression {
@@ -254,5 +255,4 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpressi
     return from_json_recursive(j, fe, "/");
 }
 
-
-#endif // FILTER_EXPRESSION_H
+} // namespace filter

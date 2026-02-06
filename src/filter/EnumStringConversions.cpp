@@ -13,6 +13,8 @@ namespace { // Anonymous namespace for helper function
     }
 }
 
+namespace filter {
+
 // FilterOperator conversions
 std::string toString(FilterOperator op) {
     switch (op) {
@@ -157,4 +159,6 @@ std::optional<SortOrder> fromStringToSortOrder(const std::string& sortOrderStr) 
     if (upperSortOrderStr == "DESCENDING" || upperSortOrderStr == "DESC") return SortOrder::DESCENDING;
     return std::nullopt;
 }
+
+} // namespace filter
 

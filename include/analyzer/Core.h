@@ -146,13 +146,13 @@ public:
     std::expected<void, LogParseError> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern);
     
     // New: Stream filtered entries using std::generator
-    std::generator<const LogEntry&> streamFilteredEntries(const FilterExpression& expression) const;
+    std::generator<const LogEntry&> streamFilteredEntries(const filter::FilterExpression& expression) const;
 
     // New: Stream sorted and filtered entries using std::generator
     std::generator<const LogEntry&> streamSortedFilteredEntries(
-        const FilterExpression& expression, 
-        SortBy sortBy, 
-        SortOrder sortOrder
+        const filter::FilterExpression& expression, 
+        filter::SortBy sortBy, 
+        filter::SortOrder sortOrder
     ) const;
 
     // New: General-purpose streaming analysis pipeline
@@ -160,7 +160,7 @@ public:
         std::istream& is, 
         std::string_view sourceIdentifier,
         CLIConfig::ParserErrorAction errorAction,
-        std::optional<FilterExpression> filter = std::nullopt,
+        std::optional<filter::FilterExpression> filter = std::nullopt,
         std::optional<std::function<LogEntry(LogEntry)>> transform = std::nullopt,
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
@@ -172,9 +172,9 @@ public:
     
     void setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel);
     
-    [[deprecated("Use exportAsCsv(std::ostream&, const FilterExpression&, char, std::string_view) instead.")]]
-    void exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
-    void exportAsCsv(std::ostream& out, const FilterExpression& expression, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
+    [[deprecated("Use exportAsCsv(std::ostream&, const filter::FilterExpression&, char, std::string_view) instead.")]]
+    void exportAsCsv(std::ostream& out, const filter::FilterCriteria& filter, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
+    void exportAsCsv(std::ostream& out, const filter::FilterExpression& expression, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
 
     // New: Export to CSV from a projected view (e.g., from project() method)
     void exportAsCsv(
@@ -184,9 +184,9 @@ public:
         std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ"
     ) const;
     
-    [[deprecated("Use exportAsJson(std::ostream&, const FilterExpression&, bool, std::string_view) instead.")]]
-    void exportAsJson(std::ostream& out, const FilterCriteria& filter, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
-    void exportAsJson(std::ostream& out, const FilterExpression& expression, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
+    [[deprecated("Use exportAsJson(std::ostream&, const filter::FilterExpression&, bool, std::string_view) instead.")]]
+    void exportAsJson(std::ostream& out, const filter::FilterCriteria& filter, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
+    void exportAsJson(std::ostream& out, const filter::FilterExpression& expression, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
 
     // New: Export to custom text format
     void exportAsText(
@@ -195,16 +195,16 @@ public:
         const TextOutputFormat& format
     ) const;
 
-    [[deprecated("Use getFilteredEntries(const FilterExpression&) instead.")]]
-    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const FilterCriteria& criteria) const;
-    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const FilterExpression& expression) const;
+    [[deprecated("Use getFilteredEntries(const filter::FilterExpression&) instead.")]]
+    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterCriteria& criteria) const;
+    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterExpression& expression) const;
 
-    [[deprecated("Use getSortedFilteredEntries(const FilterExpression&, SortBy, SortOrder) instead.")]]
-    std::vector<LogEntry> getSortedFilteredEntries(const FilterCriteria& criteria, SortBy sortBy, SortOrder sortOrder) const;
-    std::vector<LogEntry> getSortedFilteredEntries(const FilterExpression& expression, SortBy sortBy, SortOrder sortOrder) const;
+    [[deprecated("Use getSortedFilteredEntries(const filter::FilterExpression&, filter::SortBy, filter::SortOrder) instead.")]]
+    std::vector<LogEntry> getSortedFilteredEntries(const filter::FilterCriteria& criteria, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
+    std::vector<LogEntry> getSortedFilteredEntries(const filter::FilterExpression& expression, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
 
     // New: Apply a filter, returning a new view (generator)
-    std::generator<const LogEntry&> filter(std::generator<const LogEntry&> input, const FilterExpression& expression) const;
+    std::generator<const LogEntry&> filter(std::generator<const LogEntry&> input, const filter::FilterExpression& expression) const;
 
     // New: Apply a transformation, returning a new view (generator)
     std::generator<LogEntry> transform(std::generator<const LogEntry&> input, std::function<LogEntry(LogEntry)> transformer) const; 
@@ -237,12 +237,12 @@ public:
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
-    FilterExpression createFilterExpressionFromCriteria(const FilterCriteria& criteria) const;
+    filter::FilterExpression createFilterExpressionFromCriteria(const filter::FilterCriteria& criteria) const;
 
 private:
     // Internal helper methods that generators would call
-    std::generator<const LogEntry&> filterEntriesInternal(const FilterExpression& expression) const;
-    std::generator<const LogEntry&> sortEntriesInternal(std::generator<const LogEntry&> input, SortBy sortBy, SortOrder sortOrder) const;
+    std::generator<const LogEntry&> filterEntriesInternal(const filter::FilterExpression& expression) const;
+    std::generator<const LogEntry&> sortEntriesInternal(std::generator<const LogEntry&> input, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
 
     // Internal (re)factory method for currentParser_ based on currentParserIdentifier_ and settings
     void updateCurrentParser();
@@ -266,8 +266,8 @@ private:
     // The currently active parser factory identifier
     std::string currentParserIdentifier_;
 
-    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const FilterCriteria& criteria) const;
-    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const FilterExpression& expression) const;
+    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const filter::FilterCriteria& criteria) const;
+    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const filter::FilterExpression& expression) const;
     
     static std::shared_ptr<IStatisticCollector> createStatisticCollector(const StatisticConfig& config);
     

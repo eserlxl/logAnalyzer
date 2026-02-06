@@ -3,6 +3,9 @@
 
 #include <gtest/gtest.h>
 #include "filter/Core.h"
+#include "filter/Condition.h" // Added
+#include "filter/Types.h" // Added
+#include "filter/ConcreteFilters.h" // Added
 #include "core/LogTypes.h"
 #include "TestUtils.h"
 #include <chrono>
@@ -260,7 +263,7 @@ TEST_F(FilterTest, DottedKeyFieldValueFilterWildcardSubstringMatch) {
     
     // NOTE: Wildcards are now anchored to match the full string (standard glob behavior).
     // "/internal/api/v1/users" should NOT match "/api/*/users" because of the prefix.
-    auto entry4 = createLogEntry(4, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/internal/api/v1/users"}}); 
+    auto entry4 = createLogEntry(4, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/internal/api/v1/users"}});
 
     EXPECT_TRUE(filter.matches(entry1));
     EXPECT_TRUE(filter.matches(entry2));

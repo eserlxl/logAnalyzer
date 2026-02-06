@@ -82,15 +82,15 @@ protected:
 
 
     // Helper to create a FilterCondition
-    FilterCondition createCondition(
+    filter::FilterCondition createCondition(
         LogEntryField field,
-        FilterOperator op,
+        filter::FilterOperator op,
         const std::string& value,
-        FilterValueType valueType = FilterValueType::STRING,
+        filter::FilterValueType valueType = filter::FilterValueType::STRING,
         bool caseSensitive = true,
         std::optional<std::string> customField = std::nullopt
     ) {
-        FilterCondition fc;
+        filter::FilterCondition fc;
         fc.field = field;
         fc.op = op;
         fc.value = value;
@@ -101,56 +101,56 @@ protected:
     }
 
     // Helper to create a FilterExpression from a Condition
-    FilterExpression createExpr(
+    filter::FilterExpression createExpr(
         LogEntryField field,
-        FilterOperator op,
+        filter::FilterOperator op,
         const std::string& value,
-        FilterValueType valueType = FilterValueType::STRING,
+        filter::FilterValueType valueType = filter::FilterValueType::STRING,
         bool caseSensitive = true,
         std::optional<std::string> customField = std::nullopt,
         std::optional<std::string> datetimeFormat = std::nullopt
     ) {
         auto fc = createCondition(field, op, value, valueType, caseSensitive, customField);
         fc.datetimeFormat = datetimeFormat;
-        return FilterExpression::create(fc);
+        return filter::FilterExpression::create(fc);
     }
 
-    FilterExpression createVectorExpr(
+    filter::FilterExpression createVectorExpr(
         LogEntryField field,
-        FilterOperator op,
+        filter::FilterOperator op,
         const std::vector<std::string>& value,
-        FilterValueType valueType = FilterValueType::STRING,
+        filter::FilterValueType valueType = filter::FilterValueType::STRING,
         bool caseSensitive = true,
         std::optional<std::string> customField = std::nullopt
     ) {
-        FilterCondition fc;
+        filter::FilterCondition fc;
         fc.field = field;
         fc.op = op;
         fc.value = value;
         fc.valueType = valueType;
         fc.caseSensitive = caseSensitive;
         fc.customField = customField;
-        return FilterExpression::create(fc);
+        return filter::FilterExpression::create(fc);
     }
 
     // Helper for testing version comparisons
-    void testVersionComparison(const std::string& v1, const std::string& v2, FilterOperator op, bool expected) {
+    void testVersionComparison(const std::string& v1, const std::string& v2, filter::FilterOperator op, bool expected) {
         LogEntry entry = createLogEntryInternal(1, "ver.log", std::chrono::system_clock::now(), LogLevel::INFO, "Version test", {{"version_field", v1}});
-        FilterCondition cond = createCondition(LogEntryField::CUSTOM, op, v2, FilterValueType::VERSION, true, "version_field");
-        FilterExpression expr = FilterExpression::create(cond);
+        filter::FilterCondition cond = createCondition(LogEntryField::CUSTOM, op, v2, filter::FilterValueType::VERSION, true, "version_field");
+        filter::FilterExpression expr = filter::FilterExpression::create(cond);
         auto res = expr.evaluate(entry);
-        ASSERT_TRUE(res.has_value()) << "Comparison: '" << v1 << "' " << toString(op) << " '" << v2 << "' failed with error: " << res.error().toString();
-        EXPECT_EQ(*res, expected) << "Comparison: '" << v1 << "' " << toString(op) << " '" << v2 << "'";
+        ASSERT_TRUE(res.has_value()) << "Comparison: '" << v1 << "' " << filter::toString(op) << " '" << v2 << "' failed with error: " << res.error().toString();
+        EXPECT_EQ(*res, expected) << "Comparison: '" << v1 << "' " << filter::toString(op) << " '" << v2 << "'";
     }
 
     // Helper for testing IP address comparisons
-    void testIpComparison(const std::string& ip1, const std::string& ip2, FilterOperator op, bool expected) {
+    void testIpComparison(const std::string& ip1, const std::string& ip2, filter::FilterOperator op, bool expected) {
         LogEntry entry = createLogEntryInternal(1, "ip.log", std::chrono::system_clock::now(), LogLevel::INFO, "IP test", {{"ip_field", ip1}});
-        FilterCondition cond = createCondition(LogEntryField::CUSTOM, op, ip2, FilterValueType::IP_ADDRESS, true, "ip_field");
-        FilterExpression expr = FilterExpression::create(cond);
+        filter::FilterCondition cond = createCondition(LogEntryField::CUSTOM, op, ip2, filter::FilterValueType::IP_ADDRESS, true, "ip_field");
+        filter::FilterExpression expr = filter::FilterExpression::create(cond);
         auto res = expr.evaluate(entry);
-        ASSERT_TRUE(res.has_value()) << "Comparison: '" << ip1 << "' " << toString(op) << " '" << ip2 << "' failed with error: " << res.error().toString();
-        EXPECT_EQ(*res, expected) << "Comparison: '" << ip1 << "' " << toString(op) << " '" << ip2 << "'";
+        ASSERT_TRUE(res.has_value()) << "Comparison: '" << ip1 << "' " << filter::toString(op) << " '" << ip2 << "' failed with error: " << res.error().toString();
+        EXPECT_EQ(*res, expected) << "Comparison: '" << ip1 << "' " << filter::toString(op) << " '" << ip2 << "'";
     }
 };
 

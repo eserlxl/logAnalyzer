@@ -3,6 +3,8 @@
 
 #include "TestUtils.h"
 
+using namespace filter;
+
 // --- Test for expression negation on logical operators ---
 TEST_F(FilterTestFixture, NegationOfLogicalExpressions) {
     // Log entries with distinct messages to represent different logical states for conditions A, B, and C.

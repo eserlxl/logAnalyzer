@@ -1,14 +1,14 @@
-# logAnalyzer
+# LogAnalyzer
 
 > **Unleash the Power of Your Logs: A High-Performance C++ Utility for Advanced Log Analysis.**
 
 `logAnalyzer` is a blazing fast, command-line utility for parsing, filtering, and extracting insights from massive log files. Built with C++23, it leverages stream processing to handle datasets larger than available memory.
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
-[![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake-ci.yml/badge.svg)](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake-ci.yml)
-![Platform: Linux | macOS | Windows](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue)
-[![Project Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)](https://github.com/eserlxl/logAnalyzer)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0)
+[![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg?style=for-the-badge)](https://en.cppreference.com/w/cpp/23)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/eserlxl/logAnalyzer/cmake-ci.yml?branch=main&style=for-the-badge)](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake-ci.yml)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue.svg?style=for-the-badge)](https://cmake.org)
+[![Project Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer)
 
 ---
 ## 📚 Table of Contents
@@ -17,6 +17,7 @@
 - [🚀 Getting Started](#-getting-started)
 - [🏃 Quick Start & Basic Usage](#-quick-start--basic-usage)
 - [📚 Documentation](#-documentation)
+- [🏗 Project Structure](#-project-structure)
 - [💬 Support & Community](#-support--community)
 - [🤝 Contributing](#-contributing)
 - [📜 Changelog](#-changelog)
@@ -37,20 +38,14 @@ Modern applications generate gigabytes of logs daily. While tools like `grep`, `
 
 ## ✨ Key Features
 
-- **⚡ High Performance**: Written in C++23. Processes logs as streams with minimal memory footprint.
-- **🔍 Advanced Filtering Engine**:
-    - **Complex Logical Expressions**: Combine filters with nested `AND`, `OR`, and `NOT` operators, e.g., `(level=ERROR OR level=WARN) AND NOT msg contains "noise"`.
-    - **Rich Set of Operators**: Use a wide array of operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `starts_with`, `ends_with`, `regex`, `in`, `not in`, `is present`, `is null`.
-    - **Case-Insensitive Matching**: Use operators like `contains_i` or `equals_i` for case-insensitive searches.
-    - **Typed Comparisons**: Explicitly compare fields as `string`, `int`, `double`, `bool`, `ip_address`, `version`, or `datetime`.
-    - **Auto-Typed Values**: The engine automatically detects types like numbers, booleans, IPs, and versions for simpler queries.
-    - **JSON & Nested Fields**: Filter on nested fields within JSON logs, e.g., `custom.user.id = 123`.
-- **📊 Statistical Analysis**: Generate instant reports on entry rates, top error messages, and more.
-- **📂 Multi-File & Sorting**: Analyze multiple files at once and sort results by any field.
-- **🛠 Structured Support**: Native parsing for JSON logs and customizable text patterns, with the ability to apply different patterns to different files.
-- **⚙️ Configurable**: Use JSON configuration files for persistent, complex setups.
-- **📤 Flexible Export**: Output to Text, CSV, JSON, or XML.
-- **🔄 Live Monitoring**: Tail files in real-time with filtering applied (`--tail`).
+- **⚡ High-Performance C++ Core**: Processes massive log files as streams with minimal memory usage.
+- **🔍 Advanced Filtering**: Build complex queries with `AND`/`OR`/`NOT`, rich operators, and nested JSON field support.
+- **📊 Built-in Analytics**: Generate statistics like entry rates and top messages on the fly.
+- **🛠 Multi-Format Support**: Natively handles JSON and custom text patterns.
+- **📤 Flexible I/O**: Read from files or `stdin` and export to Text, CSV, or JSON.
+- **🔄 Live Monitoring**: Tail files in real-time with live filtering.
+
+For a comprehensive overview of all capabilities, see the [**full feature list**](docs/features.md).
 
 ## 🚀 Getting Started
 
@@ -143,10 +138,12 @@ For more in-depth information, explore the documentation in the [`docs/`](./docs
 
 ### Developer Documentation
 - [**Build Guide**](docs/build.md)
-- [**Project Structure**](docs/project-structure.md)
 - [**API Reference**](docs/api-reference.md)
 - [**Contributing Guide**](CONTRIBUTING.md)
-- [**Code of Conduct**](CODE_OF_CONDUCT.md)
+
+## 🏗 Project Structure
+
+An overview of the project's directory and code structure is available in the [**Project Structure Guide**](docs/project-structure.md).
 
 ## 💬 Support & Community
 
@@ -159,6 +156,8 @@ Have a question, found a bug, or have a feature request? We'd love to hear from 
 
 We welcome contributions! If you'd like to help improve `logAnalyzer`, please see our [**Contributing Guide**](CONTRIBUTING.md) for details on how to get started.
 
+To ensure a welcoming and inclusive community, please review and adhere to our [**Code of Conduct**](CODE_OF_CONDUCT.md).
+
 ## 📜 Changelog
 
 All notable changes are documented in the [`CHANGELOG.md`](CHANGELOG.md) file.
@@ -166,7 +165,3 @@ All notable changes are documented in the [`CHANGELOG.md`](CHANGELOG.md) file.
 ## 📄 License
 
 This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.
-
-## 🤝 Code of Conduct
-
-To ensure a welcoming and inclusive community, please review and adhere to our [**Code of Conduct**](CODE_OF_CONDUCT.md).

@@ -17,6 +17,8 @@
 #include <numeric>
 #include <set>
 
+namespace filter {
+
 namespace { // Unnamed namespace for internal helper functions
 
 // Helper to convert string to bool
@@ -416,7 +418,7 @@ ErrorCode::Result<void> FilterExpression::validate() const {
 FilterExpression FilterExpression::simplify() const {
     if (isLogical()) {
         std::vector<FilterExpression> newExpressions;
-        new_expressions.reserve(expressions_.size());
+        newExpressions.reserve(expressions_.size());
 for (const auto& child : expressions_) {
             newExpressions.push_back(child.simplify());
         }
@@ -459,7 +461,7 @@ std::string FilterExpression::toString() const {
             if (expressions_.empty()) {
                 coreStr = "EMPTY";
             } else {
-                std::string opStr = " " + ::toString(*logicalOperator_) + " ";
+                std::string opStr = " " + filter::toString(*logicalOperator_) + " ";
                 std::vector<std::string> parts;
                 parts.reserve(expressions_.size());
 for (const auto& expr : expressions_) {
@@ -481,7 +483,7 @@ for (const auto& expr : expressions_) {
 
 std::string FilterExpression::conditionToString(const FilterCondition& cond) {
     std::string fieldStr = cond.customField ? *cond.customField : Utils::logEntryFieldToString(cond.field);
-    std::string opStr = ::toString(cond.op);
+    std::string opStr = filter::toString(cond.op);
     
     if (cond.op == FilterOperator::IS_PRESENT || cond.op == FilterOperator::IS_ABSENT || cond.op == FilterOperator::IS_NULL || cond.op == FilterOperator::IS_NOT_NULL) {
         return fieldStr + " " + opStr;
@@ -516,3 +518,5 @@ FilterExpression FilterExpression::makeOr(std::vector<FilterExpression> expressi
     return FilterExpression(FilterLogicalOperator::OR, std::move(expressions), negated).simplify(); 
 }
 FilterExpression FilterExpression::makeNot(FilterExpression expr) { expr.negated_ = !expr.negated_; return expr; }
+
+} // namespace filter

@@ -1,6 +1,11 @@
 #include <gtest/gtest.h>
 #include "filter/Expression.h"
 #include "filter/Condition.h"
+#include "filter/Types.h" // Added
+#include "core/LogTypes.h"
+#include <chrono>
+#include <map>
+#include <vector> // Added for std::vector
 
 // Test suite for new features in Iteration 13 for FilterExpression
 class Iteration13ExpressionTest : public ::testing::Test {

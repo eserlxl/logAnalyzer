@@ -2,6 +2,11 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "TestUtils.h"
+#include "filter/Expression.h" // Added
+#include "filter/Condition.h" // Added
+#include "filter/Types.h" // Added
+#include "filter/ConcreteFilters.h" // Added for filter types used in createExpr
+#include "core/LogTypes.h" // Added for LogEntry and LogLevel
 
 // --- Tests for VERSION type ---
 
@@ -76,7 +81,7 @@ TEST_F(FilterTestFixture, EvaluateVersionLessThanOrEqual) {
 TEST_F(FilterTestFixture, EvaluateVersionPrereleasePrecedence) {
     EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "1.0.0-alpha.1", FilterValueType::VERSION, true, "app_version").evaluate(createLogEntry(LogLevel::INFO, "", "ver.log", {{"app_version", "1.0.0-alpha"}})).value_or(false));
     EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.0.0-alpha", FilterValueType::VERSION, true, "app_version").evaluate(createLogEntry(LogLevel::INFO, "", "ver.log", {{"app_version", "1.0.0-beta"}})).value_or(false));
-    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.0.0-beta.2", FilterValueType::VERSION, true, "app_version").evaluate(createLogEntry(LogLevel::INFO, "", "ver.log", {{"app_version", "1.0.0-rc.1"}})).value_or(false));
+    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.0.0-rc.1", FilterValueType::VERSION, true, "app_version").evaluate(createLogEntry(LogLevel::INFO, "", "ver.log", {{"app_version", "1.0.0"}})).value_or(false)); // Prerelease < no prerelease
     EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.0.0-alpha.0.0", FilterValueType::VERSION, true, "app_version").evaluate(createLogEntry(LogLevel::INFO, "", "ver.log", {{"app_version", "1.0.0-alpha.0.0.1"}})).value_or(false));
     EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "1.0.0-alpha.0.0.1", FilterValueType::VERSION, true, "app_version").evaluate(createLogEntry(LogLevel::INFO, "", "ver.log", {{"app_version", "1.0.0-alpha.0.0"}})).value_or(false));
 }

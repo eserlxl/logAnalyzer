@@ -6,6 +6,10 @@
 #include "config/Settings.h"
 #include "config/CLIConfig.h" // Added for CLIConfig
 #include "core/Error.h" // New: For Error struct and Result alias
+#include "filter/IFilter.h"
+#include "filter/ConcreteFilters.h"
+#include "filter/Types.h"
+#include "stats/Statistics.h" // For statistic collectors
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <chrono>
@@ -18,6 +22,7 @@
 #include <unistd.h> // For isatty
 
 using json = nlohmann::json;
+using namespace filter;
 
 int main(int argc, char *argv[]) {
     auto expectedConfig = CLIConfig::parseCLI(argc, argv);

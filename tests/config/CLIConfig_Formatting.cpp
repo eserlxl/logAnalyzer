@@ -2,6 +2,9 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "tests/include/CLI.h"
+#include "filter/Types.h" // For SortBy, SortOrder
+
+using namespace filter;
 
 TEST_F(CLIConfigTest, OutputJsonOption) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--format", "json"});

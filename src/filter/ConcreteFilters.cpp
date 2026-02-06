@@ -9,6 +9,8 @@
 #include <cmath>
 #include <limits>
 
+namespace filter {
+
 namespace {
     // A more robust floating-point comparison
     bool areAlmostEqual(double a, double b) {
@@ -132,7 +134,8 @@ bool FieldValueFilter::matches(const LogEntry &entry) const {
         } else {
             return Utils::caseInsensitiveEquals(actualValue, valuePattern_);
         }
-    } else {
+    }
+    else {
         if (regexPattern_.has_value()) {
             return std::regex_search(actualValue, *regexPattern_);
         }
@@ -364,3 +367,5 @@ bool ExpressionFilter::matches(const LogEntry &entry) const {
     }
     return *result;
 }
+
+} // namespace filter

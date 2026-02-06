@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 
-void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, char delimiter, std::string_view timestampFormat) const {
+void LogAnalyzer::exportAsCsv(std::ostream& out, const filter::FilterCriteria& filter, char delimiter, std::string_view timestampFormat) const {
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     
     // CSV Header
@@ -61,7 +61,7 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterCriteria& filter, c
     }
 }
 
-void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, bool prettyPrint, std::string_view timestampFormat) const {
+void LogAnalyzer::exportAsJson(std::ostream &out, const filter::FilterCriteria &filter, bool prettyPrint, std::string_view timestampFormat) const {
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     auto filtered_expected = getFilteredEntries_NoLock(filter); // Use non-locking version as we already hold the lock
     if (!filtered_expected) {
@@ -140,7 +140,7 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
     }
 }
 
-void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterExpression& expression, char delimiter, std::string_view timestampFormat) const {
+void LogAnalyzer::exportAsCsv(std::ostream& out, const filter::FilterExpression& expression, char delimiter, std::string_view timestampFormat) const {
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     
     // CSV Header
@@ -191,7 +191,7 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterExpression& express
     }
 }
 
-void LogAnalyzer::exportAsJson(std::ostream &out, const FilterExpression &expression, bool prettyPrint, std::string_view timestampFormat) const {
+void LogAnalyzer::exportAsJson(std::ostream &out, const filter::FilterExpression &expression, bool prettyPrint, std::string_view timestampFormat) const {
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     auto filtered_expected = getFilteredEntries_NoLock(expression);
     if (!filtered_expected) {

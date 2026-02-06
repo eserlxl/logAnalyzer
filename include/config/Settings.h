@@ -50,10 +50,10 @@ struct LogAnalyzerSettings {
     bool caseSensitiveParsing = false; 
 
     // Filter rules
-    std::vector<FilterRule> filterRules;
+    std::vector<filter::FilterRule> filterRules;
     
     // Advanced filtering expression (optional replacement for filterRules)
-    std::optional<FilterExpression> rootFilterExpression;
+    std::optional<filter::FilterExpression> rootFilterExpression;
 
     // Export settings
     ExportSettings exportSettings;
@@ -144,7 +144,7 @@ struct LogAnalyzerSettings {
         customLogLevelMappings[s] = l; return *this; 
     }
     LogAnalyzerSettings& clearCustomLogLevelMappings() { customLogLevelMappings.clear(); return *this; }
-    LogAnalyzerSettings& addFilterRule(FilterRule r) { filterRules.push_back(std::move(r)); return *this; }
+    LogAnalyzerSettings& addFilterRule(filter::FilterRule r) { filterRules.push_back(std::move(r)); return *this; }
     LogAnalyzerSettings& clearFilterRules() { filterRules.clear(); return *this; }
     LogAnalyzerSettings& setExportSettings(ExportSettings es) { exportSettings = std::move(es); return *this; }
     LogAnalyzerSettings& setExportPath(std::string p) { exportSettings.outputPath = std::move(p); return *this; }

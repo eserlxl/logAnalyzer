@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef CONCRETE_FILTERS_H
-#define CONCRETE_FILTERS_H
+#pragma once
 
 #include "filter/IFilter.h"
 #include "filter/Expression.h"
@@ -19,6 +18,8 @@
 #include <optional>
 #include <regex>
 #include <nlohmann/json_fwd.hpp>
+
+namespace filter {
 
 /**
  * @brief An IFilter implementation that evaluates log entries against a FilterExpression tree.
@@ -304,4 +305,4 @@ public:
     DottedKeyValueSetFilter(std::string fieldPath, std::set<std::string> values, bool caseSensitive = false);
 };
 
-#endif // CONCRETE_FILTERS_H
+} // namespace filter

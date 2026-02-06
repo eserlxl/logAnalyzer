@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef EXPORTER_H
-#define EXPORTER_H
+#pragma once
 
 #include <nlohmann/json.hpp>
 #include "core/LogTypes.h"
@@ -24,6 +23,11 @@ enum class ExportFormat {
     UNKNOWN // Default for unrecognized formats
 };
 
+// Forward declarations to break include cycles
+// Full definitions are in Filter.h, Exporter.h, Statistics.h
+enum class StatisticType;
+namespace filter { enum class SortBy : uint8_t; }
+namespace filter { enum class SortOrder : uint8_t; }
 
 
 // New: Custom exception for export errors
@@ -60,8 +64,8 @@ struct ExportSettings {
     bool useAnsiColors = false; // For PLAINTEXT format
     
     // Missing fields identified from tests
-    std::optional<SortBy> sortBy;
-    std::optional<SortOrder> sortOrder;
+    std::optional<filter::SortBy> sortBy;
+    std::optional<filter::SortOrder> sortOrder;
     bool outputNoColor = false;
     std::string textOutputFormat = "{timestamp} {level}: {message}";
     bool includeSummary = false;
@@ -139,4 +143,3 @@ private:
         static constexpr std::string_view PLACEHOLDER_MESSAGE = "{message}";
         static constexpr std::string_view PLACEHOLDER_CUSTOM_PREFIX = "{custom.";
     };
-#endif // EXPORTER_H

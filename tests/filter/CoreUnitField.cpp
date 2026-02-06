@@ -3,10 +3,13 @@
 
 #include <gtest/gtest.h>
 #include "filter/Core.h"
+#include "filter/Condition.h" // Added
+#include "filter/Types.h" // Added
+#include "filter/ConcreteFilters.h" // Added
 #include "core/LogTypes.h"
 #include <chrono>
 #include <map>
-#include <sstream> // Required for std::stringstream and std::get_time
+#include <sstream> // Required for std::stringstream for general string manipulation if needed
 #include <nlohmann/json.hpp> // New include for JSON testing (might be needed for some types)
 
 // Test fixture for creating LogEntry objects

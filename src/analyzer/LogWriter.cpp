@@ -64,8 +64,8 @@ std::string LogWriter::formatEntry(const LogEntry& entry, const FormattingOption
     return formattedString;
 }
 
-void LogWriter::printFilteredEntriesInternal(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
-    FilterExpression combinedExpression = analyzer_.createFilterExpressionFromCriteria(criteria);
+void LogWriter::printFilteredEntriesInternal(std::ostream& out, const filter::FilterCriteria& criteria, const FormattingOptions& options) const {
+    filter::FilterExpression combinedExpression = analyzer_.createFilterExpressionFromCriteria(criteria);
     auto filteredEntriesExpected = analyzer_.getFilteredEntries(combinedExpression);
 
     if (filteredEntriesExpected.has_value()) {
@@ -79,11 +79,11 @@ void LogWriter::printFilteredEntriesInternal(std::ostream& out, const FilterCrit
     }
 }
 
-void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
+void LogWriter::printFilteredEntries(std::ostream& out, const filter::FilterCriteria& criteria, const FormattingOptions& options) const {
     printFilteredEntriesInternal(out, criteria, options);
 }
 
-void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view overallFormatString) const {
+void LogWriter::printFilteredEntries(std::ostream& out, const filter::FilterCriteria& criteria, std::string_view overallFormatString) const {
     FormattingOptions options;
     // Set the overall format string from the parameter
     options.overallFormat = overallFormatString; 

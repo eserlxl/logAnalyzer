@@ -3,9 +3,12 @@
 
 #include "gtest/gtest.h"
 #include "config/Settings.h"
+#include "filter/Types.h"
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>
+
+using namespace filter;
 
 namespace fs = std::filesystem;
 

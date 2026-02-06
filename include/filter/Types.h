@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef FILTER_TYPES_H
-#define FILTER_TYPES_H
+#pragma once
 
 #include <cstdint> // For uint8_t
+
+namespace filter {
 
 // Enum for criteria used to sort log entries.
 enum class SortBy : uint8_t {
@@ -79,4 +80,4 @@ enum class FilterValueType : uint8_t {
     LOG_LEVEL = 11  // Treat value as a log level (e.g., INFO, WARNING).
 };
 
-#endif // FILTER_TYPES_H
+} // namespace filter

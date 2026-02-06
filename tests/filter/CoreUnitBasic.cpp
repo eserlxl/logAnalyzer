@@ -3,6 +3,10 @@
 
 #include <gtest/gtest.h>
 #include "filter/Core.h"
+#include "filter/Condition.h" // Added
+#include "filter/Types.h" // Added
+#include "filter/Expression.h" // Added
+#include "filter/ConcreteFilters.h" // Added
 #include "core/LogTypes.h"
 #include <chrono>
 #include <map>
@@ -421,4 +425,3 @@ TEST_F(FilterTest, ExclusionFilterOfComposite) {
     EXPECT_FALSE(not_info_or_debug->matches(entry_debug));
     EXPECT_TRUE(not_info_or_debug->matches(entry_warning));
 }
-

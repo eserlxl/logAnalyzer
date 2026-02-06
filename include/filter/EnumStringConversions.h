@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef FILTER_ENUM_STRING_CONVERSIONS_H
-#define FILTER_ENUM_STRING_CONVERSIONS_H
+#pragma once
 
 #include <string>
 #include <optional>
 #include "filter/Types.h" // Include the enums
+
+namespace filter {
 
 // to_string functions
 std::string toString(SortBy sortBy);
@@ -22,4 +23,4 @@ std::optional<FilterOperator> fromStringToFilterOperator(const std::string& opSt
 std::optional<FilterLogicalOperator> fromStringToFilterLogicalOperator(const std::string& opStr);
 std::optional<FilterValueType> fromStringToFilterValueType(const std::string& typeStr);
 
-#endif // FILTER_ENUM_STRING_CONVERSIONS_H
+} // namespace filter

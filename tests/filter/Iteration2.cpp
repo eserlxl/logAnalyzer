@@ -3,8 +3,11 @@
 
 #include <gtest/gtest.h>
 #include "filter/Core.h"
-#include "core/LogTypes.h"
+#include "filter/Condition.h" // Added
+#include "filter/Types.h" // Added
 #include "filter/Expression.h"
+#include "filter/ConcreteFilters.h" // Added
+#include "core/LogTypes.h"
 #include "utils/Version.h"
 #include "utils/IpAddress.h"
 #include "utils/Time.h"

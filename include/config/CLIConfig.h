@@ -4,7 +4,8 @@
 #ifndef CLICONFIG_H
 #define CLICONFIG_H
 
-#include "core/LogTypes.h" // For LogLevel, SortBy, SortOrder
+#include "core/LogTypes.h" // For LogLevel
+#include "filter/Types.h" // For SortBy, SortOrder
 #include "filter/Core.h"   // For CompositeFilter::Logic
 #include "config/Settings.h" // To return a populated LogAnalyzerSettings object
 #include "config/CommonTypes.h" // For shared types and maps
@@ -36,12 +37,12 @@ public:
         bool keywordCaseSensitive = false;
         std::vector<std::string> regexPatterns;
         std::vector<std::string> excludeRegexPatterns;
-        std::optional<CompositeFilter::Logic> filterLogic;
+        std::optional<filter::CompositeFilter::Logic> filterLogic;
         std::optional<std::chrono::system_clock::time_point> startTime;
         std::optional<std::chrono::system_clock::time_point> endTime;
         std::optional<std::chrono::microseconds> duration;
-        std::optional<SortBy> sortBy;
-        std::optional<SortOrder> sortOrder;
+        std::optional<filter::SortBy> sortBy;
+        std::optional<filter::SortOrder> sortOrder;
         std::string outputFormat = "text";
         std::string outputPath;
         std::string textOutputFormat = "{timestamp} {level}: {message}"; // Default, matches LogAnalyzer default formatEntry

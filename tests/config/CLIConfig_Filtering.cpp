@@ -2,6 +2,11 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "tests/include/CLI.h"
+#include "filter/ConcreteFilters.h" // For CompositeFilter
+#include "core/LogTypes.h" // For LogLevel
+#include "utils/Time.h" // For Utils::parseTime
+
+using namespace filter;
 
 TEST_F(CLIConfigTest, ParseLogLevel) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--level", "INFO"});

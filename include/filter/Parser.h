@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef FILTER_PARSER_H
-#define FILTER_PARSER_H
+#pragma once
 
 #include "filter/Expression.h"
 #include "core/Error.h"
 #include <string>
+
+namespace filter {
 
 /**
  * @brief Parses a human-readable query string into a FilterExpression.
@@ -25,4 +26,4 @@
  */
 ErrorCode::Result<FilterExpression> parseQuery(const std::string& query);
 
-#endif // FILTER_PARSER_H
+} // namespace filter

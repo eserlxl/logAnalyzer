@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef FILTER_CONDITION_H
-#define FILTER_CONDITION_H
+#pragma once
 
 #include <string>
 #include <optional>
@@ -18,6 +17,8 @@
 #include "filter/EnumStringConversions.h"
 #include "filter/JsonUtils.h"
 #include <iostream> // Added for std::cerr warning
+
+namespace filter {
 
 // Represents a single filtering condition (leaf node in the filter tree)
 struct FilterCondition {
@@ -351,11 +352,8 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     // The evaluation logic will handle parsing of individual elements. This is consistent
     // with how single string values are handled (validation vs. parsing at evaluation).
 
-
-
-
-
     return {}; // Success
 }
 
-#endif // FILTER_CONDITION_H
+} // namespace filter
+

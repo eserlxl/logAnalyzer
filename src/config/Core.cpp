@@ -246,7 +246,7 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
         if (j.contains("filterRules") && j.at("filterRules").is_array()) {
             settings.filterRules.clear();
             for (const auto& ruleJson : j.at("filterRules")) {
-                auto result = from_json(ruleJson);
+                auto result = filter::from_json(ruleJson);
                 if (!result.has_value()) {
                     errors.push_back("Error parsing 'filterRules': " + result.error().message);
                 } else {
@@ -279,8 +279,8 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
         }
 
         if (j.contains("rootFilterExpression") && j.at("rootFilterExpression").is_object()) {
-            FilterExpression fe;
-            auto result = from_json(j.at("rootFilterExpression"), fe);
+            filter::FilterExpression fe;
+            auto result = filter::from_json(j.at("rootFilterExpression"), fe);
             if (result) {
                 settings.rootFilterExpression = fe;
             } else {
@@ -439,9 +439,9 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
         }
 
         // Validate value type for numeric operators
-        if (fr.op == FilterOperator::GREATER_THAN || fr.op == FilterOperator::LESS_THAN ||
-            fr.op == FilterOperator::GREATER_THAN_OR_EQUAL || fr.op == FilterOperator::LESS_THAN_OR_EQUAL ||
-            fr.op == FilterOperator::EQUALS || fr.op == FilterOperator::NOT_EQUALS) // Also applies to EQUALS and NOT_EQUALS for numeric fields
+        if (fr.op == filter::FilterOperator::GREATER_THAN || fr.op == filter::FilterOperator::LESS_THAN ||
+            fr.op == filter::FilterOperator::GREATER_THAN_OR_EQUAL || fr.op == filter::FilterOperator::LESS_THAN_OR_EQUAL ||
+            fr.op == filter::FilterOperator::EQUALS || fr.op == filter::FilterOperator::NOT_EQUALS) // Also applies to EQUALS and NOT_EQUALS for numeric fields
         {
             if (fr.field == LogEntryField::ID || fr.field == LogEntryField::LINE_NUMBER ||
                 fr.field == LogEntryField::THREAD_ID)
@@ -455,7 +455,7 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
             }
         }
 
-        if (fr.op == FilterOperator::REGEX) {
+        if (fr.op == filter::FilterOperator::REGEX) {
             try {
                 std::regex re(fr.value);
             } catch (const std::regex_error& e) {

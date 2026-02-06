@@ -19,11 +19,11 @@ public:
 
     std::string formatEntry(const LogEntry& entry, const FormattingOptions& options) const;
     
-    void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const;
-    void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view overallFormatString) const;
+    void printFilteredEntries(std::ostream& out, const filter::FilterCriteria& criteria, const FormattingOptions& options) const;
+    void printFilteredEntries(std::ostream& out, const filter::FilterCriteria& criteria, std::string_view overallFormatString) const;
 
 private:
-    void printFilteredEntriesInternal(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const;
+    void printFilteredEntriesInternal(std::ostream& out, const filter::FilterCriteria& criteria, const FormattingOptions& options) const;
 
 private:
     const LogAnalyzer& analyzer_;

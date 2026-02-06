@@ -28,22 +28,22 @@ namespace Config {
     };
 
     // Case-insensitive map for Filter Logic strings
-    const static std::map<std::string, CompositeFilter::Logic, LogAnalyzerInternal::ci_less> FilterLogicMap = {
-        {"AND", CompositeFilter::Logic::AND}, {"OR", CompositeFilter::Logic::OR}
+    const static std::map<std::string, filter::CompositeFilter::Logic, LogAnalyzerInternal::ci_less> FilterLogicMap = {
+        {"AND", filter::CompositeFilter::Logic::AND}, {"OR", filter::CompositeFilter::Logic::OR}
     };
 
     // Case-insensitive map for SortBy strings
-    const static std::map<std::string, SortBy, LogAnalyzerInternal::ci_less> SortByMap = {
-        {"time", SortBy::TIMESTAMP}, {"timestamp", SortBy::TIMESTAMP}, 
-        {"level", SortBy::LEVEL}, {"msg", SortBy::MESSAGE}, {"message", SortBy::MESSAGE},
-        {"source", SortBy::SOURCE}, {"source_file", SortBy::SOURCE},
-        {"thread", SortBy::THREAD_ID}, {"thread_id", SortBy::THREAD_ID}
+    const static std::map<std::string, filter::SortBy, LogAnalyzerInternal::ci_less> SortByMap = {
+        {"time", filter::SortBy::TIMESTAMP}, {"timestamp", filter::SortBy::TIMESTAMP}, 
+        {"level", filter::SortBy::LEVEL}, {"msg", filter::SortBy::MESSAGE}, {"message", filter::SortBy::MESSAGE},
+        {"source", filter::SortBy::SOURCE}, {"source_file", filter::SortBy::SOURCE},
+        {"thread", filter::SortBy::THREAD_ID}, {"thread_id", filter::SortBy::THREAD_ID}
     };
 
     // Case-insensitive map for SortOrder strings
-    const static std::map<std::string, SortOrder, LogAnalyzerInternal::ci_less> SortOrderMap = {
-        {"asc", SortOrder::ASCENDING}, {"ascending", SortOrder::ASCENDING},
-        {"desc", SortOrder::DESCENDING}, {"descending", SortOrder::DESCENDING}
+    const static std::map<std::string, filter::SortOrder, LogAnalyzerInternal::ci_less> SortOrderMap = {
+        {"asc", filter::SortOrder::ASCENDING}, {"ascending", filter::SortOrder::ASCENDING},
+        {"desc", filter::SortOrder::DESCENDING}, {"descending", filter::SortOrder::DESCENDING}
     };
 
     // Case-insensitive map for ColorOption strings

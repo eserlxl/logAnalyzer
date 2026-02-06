@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#ifndef FILTER_JSON_UTILS_H
-#define FILTER_JSON_UTILS_H
+#pragma once
 
 #include <nlohmann/json.hpp>
 #include <string>
 #include "core/Error.h"
 
+namespace filter {
 namespace FilterJsonUtils {
 
     /**
@@ -56,5 +56,4 @@ namespace FilterJsonUtils {
     }
 
 } // namespace FilterJsonUtils
-
-#endif // FILTER_JSON_UTILS_H
+} // namespace filter
