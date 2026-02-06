@@ -33,6 +33,12 @@ struct FilterCondition {
 
     std::optional<std::string> datetimeFormat;
     std::optional<std::string> customField; // Added based on audit report
+    
+    // Caching members for performance optimization
+    mutable std::optional<std::regex> compiledRegex;
+    mutable std::optional<FilterValueType> inferredValueType;
+    mutable std::optional<std::variant<std::vector<std::string>, nlohmann::json>> parsedValue;
+
 
     FilterCondition() = default;
 

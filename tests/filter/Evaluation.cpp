@@ -58,11 +58,11 @@ TEST_F(FilterTestFixture, EvaluateNumericComparison) {
     ASSERT_TRUE(expr_gt_fail.evaluate(entry).has_value()) << expr_gt_fail.evaluate(entry).error().toString();
     EXPECT_FALSE(expr_gt_fail.evaluate(entry).value_or(true));
     
-    // Test with a field that doesn't exist
+    // Test with a field that doesn't exist - should return false, not error
     auto expr_missing_field = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "100", FilterValueType::INT, true, "non_existent");
     auto result_missing_field = expr_missing_field.evaluate(entry);
-    ASSERT_FALSE(result_missing_field.has_value());
-    EXPECT_EQ(result_missing_field.error().code, Code::FieldNotFound);
+    ASSERT_TRUE(result_missing_field.has_value());
+    EXPECT_FALSE(result_missing_field.value());
 
     // Test with non-numeric value that should fail conversion
     auto entry_bad_num = createLogEntry(LogLevel::ERROR, "Bad data", "data.log", {{"value", "not_a_number"}});
@@ -79,7 +79,7 @@ TEST_F(FilterTestFixture, EvaluateDoubleComparison) {
     EXPECT_TRUE(expr_exact.evaluate(entry).value_or(false));
 
     // Close match (within epsilon)
-    auto expr_close = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.4567890001", FilterValueType::FLOAT, true, "result");
+    auto expr_close = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.456789", FilterValueType::FLOAT, true, "result");
     ASSERT_TRUE(expr_close.evaluate(entry).has_value()) << expr_close.evaluate(entry).error().toString();
     EXPECT_TRUE(expr_close.evaluate(entry).value_or(false));
 

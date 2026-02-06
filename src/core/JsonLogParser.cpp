@@ -1,4 +1,4 @@
-#include "JsonLogParser.h"
+#include "core/JsonLogParser.h"
 #include "utils/Time.h" // For Utils::parseTimestamp
 #include "utils/String.h" // For Utils::contains
 #include <sstream> // For std::stringstream
@@ -25,9 +25,14 @@ ErrorCode::Result<LogEntry> JsonLogParser::parseLine(std::string_view line, size
 
         // Timestamp
         if (j.contains("timestamp") && j["timestamp"].is_string()) {
-            entry.timestamp = Utils::parseTimestamp(j["timestamp"].get<std::string>());
+            auto tsRes = Utils::parseTime(j["timestamp"].get<std::string>());
+            if (tsRes) {
+                entry.timestamp = *tsRes;
+            } else {
+                entry.parsingErrors.push_back(tsRes.error());
+            }
         } else {
-            entry.parsingErrors.push_back({ErrorCode::MISSING_FIELD, "Missing or invalid 'timestamp' field"});
+            entry.parsingErrors.push_back({Code::MissingField, "Missing or invalid 'timestamp' field"});
         }
 
         // Level
@@ -35,7 +40,7 @@ ErrorCode::Result<LogEntry> JsonLogParser::parseLine(std::string_view line, size
             entry.level = Utils::stringToLogLevel(j["level"].get<std::string>(), customLevelMappings_);
         } else {
             entry.level = LogLevel::UNKNOWN;
-            entry.parsingErrors.push_back({ErrorCode::MISSING_FIELD, "Missing or invalid 'level' field"});
+            entry.parsingErrors.push_back({Code::MissingField, "Missing or invalid 'level' field"});
         }
 
         // Message
@@ -43,7 +48,7 @@ ErrorCode::Result<LogEntry> JsonLogParser::parseLine(std::string_view line, size
             entry.message = j["message"].get<std::string>();
         } else {
             entry.message = "";
-            entry.parsingErrors.push_back({ErrorCode::MISSING_FIELD, "Missing or invalid 'message' field"});
+            entry.parsingErrors.push_back({Code::MissingField, "Missing or invalid 'message' field"});
         }
 
         // Optional fields
@@ -63,7 +68,7 @@ ErrorCode::Result<LogEntry> JsonLogParser::parseLine(std::string_view line, size
             // we can treat the entire JSON as structured data if it's not purely mapping to LogEntry fields.
             // For now, we'll store the raw JSON string if it contains extra fields.
             // This is a heuristic; a more robust solution might require explicit configuration.
-            nlohmann::json_object_t otherFields;
+            nlohmann::json::object_t otherFields;
             for (auto it = j.begin(); it != j.end(); ++it) {
                 // Exclude standard fields already processed
                 if (it.key() != "timestamp" && it.key() != "level" && it.key() != "message" &&
@@ -91,17 +96,17 @@ ErrorCode::Result<LogEntry> JsonLogParser::parseLine(std::string_view line, size
 
 
     } catch (const nlohmann::json::parse_error& e) {
-        entry.parsingErrors.push_back({ErrorCode::JSON_PARSE_ERROR, std::string("JSON parse error: ") + e.what()});
+        entry.parsingErrors.push_back({Code::JsonParseError, std::string("JSON parse error: ") + e.what()});
     } catch (const nlohmann::json::type_error& e) {
-        entry.parsingErrors.push_back({ErrorCode::JSON_TYPE_ERROR, std::string("JSON type error: ") + e.what()});
+        entry.parsingErrors.push_back({Code::JsonTypeError, std::string("JSON type error: ") + e.what()});
     } catch (const nlohmann::json::exception& e) {
-        entry.parsingErrors.push_back({ErrorCode::JSON_ERROR, std::string("JSON error: ") + e.what()});
+        entry.parsingErrors.push_back({Code::UnknownJsonError, std::string("JSON error: ") + e.what()});
     } catch (const std::exception& e) {
-        entry.parsingErrors.push_back({ErrorCode::UNKNOWN_ERROR, std::string("Unknown error during JSON parsing: ") + e.what()});
+        entry.parsingErrors.push_back({Code::Unknown, std::string("Unknown error during JSON parsing: ") + e.what()});
     }
 
     if (entry.hasParsingErrors()) {
-        return applyParserErrorAction({std::move(entry), entry.parsingErrors.front().code}, line, lineNumber, sourceFile);
+        return applyParserErrorAction(std::unexpected(entry.parsingErrors.front()), line, lineNumber, sourceFile);
     }
 
     return entry;

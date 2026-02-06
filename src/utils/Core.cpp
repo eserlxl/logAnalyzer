@@ -279,4 +279,15 @@ std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view 
     return static_cast<size_t>(val * multiplier);
 }
 
+size_t generateLogEntryId(const std::string& sourceFile, size_t lineNumber, std::string_view line) {
+    // Basic but effective ID generation based on file, line, and content
+    // Combining these with a simple hash
+    size_t h1 = std::hash<std::string>{}(sourceFile);
+    size_t h2 = std::hash<size_t>{}(lineNumber);
+    size_t h3 = std::hash<std::string_view>{}(line);
+    
+    // Combine hashes (simple XOR with shifts)
+    return h1 ^ (h2 << 1) ^ (h3 << 2);
+}
+
 } // namespace Utils

@@ -152,16 +152,14 @@ TEST_F(FilterTestFixture, EvaluateErrorOnMissingField) {
 
     // --- Test direct evaluation ---
     auto evaluation_result = expr_missing_field.evaluate(entry);
-    // It should fail because the field does not exist.
-    ASSERT_FALSE(evaluation_result.has_value()) << "Evaluation should have failed for a missing field, but it succeeded.";
-    // Check that the error is the one we expect.
-    EXPECT_EQ(evaluation_result.error().code, Code::FieldNotFound);
+    // It should now return false instead of an error for missing fields.
+    ASSERT_TRUE(evaluation_result.has_value()) << "Evaluation of missing field should not error out.";
+    EXPECT_FALSE(evaluation_result.value()) << "Evaluation of missing field should return false.";
 
     // --- Test negated evaluation ---
     FilterExpression negated_expr_missing_field = expr_missing_field.Not();
     auto negated_evaluation_result = negated_expr_missing_field.evaluate(entry);
-    // The error should propagate through the negation.
-    ASSERT_FALSE(negated_evaluation_result.has_value()) << "Negated evaluation should have failed for a missing field, but it succeeded.";
-    // Check that the propagated error is the correct one.
-    EXPECT_EQ(negated_evaluation_result.error().code, Code::FieldNotFound);
+    // The negation of false is true.
+    ASSERT_TRUE(negated_evaluation_result.has_value()) << "Negated evaluation of missing field should not error out.";
+    EXPECT_TRUE(negated_evaluation_result.value()) << "Negated evaluation of missing field should return true.";
 }

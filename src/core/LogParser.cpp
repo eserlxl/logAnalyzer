@@ -318,8 +318,8 @@ LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEnt
     } else {
         if (_parserErrorAction == CLIConfig::ParserErrorAction::Ignore) {
             partialEntry.message = "Parse ignored: " + std::string(originalLine);
-        } else {
-            partialEntry.message = std::string(originalLine);
+        } else { // Warn
+            partialEntry.message = "Parse failed (warn): " + std::string(originalLine);
         }
     }
     partialEntry.sourceFile = sourceFile;
@@ -418,7 +418,7 @@ std::optional<ErrorCode::Result<LogEntry>> DefaultLogParser::processLine(std::st
 std::vector<ErrorCode::Result<LogEntry>> DefaultLogParser::flushRemaining() {
     std::vector<ErrorCode::Result<LogEntry>> flushedEntries;
     if (!currentLogEntryBuffer.empty()) {
-        flushedEntries.push_back(parseLineInternal(currentLogEntryBuffer, currentLogEntryStartLineNumber, currentLogEntrySourceFile));
+        flushedEntries.push_back(parseLine(currentLogEntryBuffer, currentLogEntryStartLineNumber, currentLogEntrySourceFile));
         currentLogEntryBuffer.clear();
         bufferedLineNumbers.clear();
         currentLogEntryStartLineNumber = 0;

@@ -17,6 +17,8 @@
 - [🚀 Getting Started](#-getting-started)
 - [🏃 Quick Start & Basic Usage](#-quick-start--basic-usage)
 - [📚 Documentation](#-documentation)
+- [💬 Support & Community](#-support--community)
+- [🤝 Contributing](#-contributing)
 - [📜 Changelog](#-changelog)
 - [📄 License](#-license)
 
@@ -36,11 +38,13 @@ Modern applications generate gigabytes of logs daily. While tools like `grep`, `
 ## ✨ Key Features
 
 - **⚡ High Performance**: Written in C++23. Processes logs as streams with minimal memory footprint.
-- **🔍 Advanced Filtering**:
-    - Filter by **Log Level** (ERROR, WARN, INFO).
-    - Filter by **Time Range** (Absolute or Relative).
-    - Filter by **IP Address** (Source, Destination).
-    - **Complex Expressions**: `(level=ERROR OR level=WARN) AND NOT msg contains "noise"`.
+- **🔍 Advanced Filtering Engine**:
+    - **Complex Logical Expressions**: Combine filters with nested `AND`, `OR`, and `NOT` operators, e.g., `(level=ERROR OR level=WARN) AND NOT msg contains "noise"`.
+    - **Rich Set of Operators**: Use a wide array of operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `contains`, `starts_with`, `ends_with`, `regex`, `in`, `not in`, `is present`, `is null`.
+    - **Case-Insensitive Matching**: Use operators like `contains_i` or `equals_i` for case-insensitive searches.
+    - **Typed Comparisons**: Explicitly compare fields as `string`, `int`, `double`, `bool`, `ip_address`, `version`, or `datetime`.
+    - **Auto-Typed Values**: The engine automatically detects types like numbers, booleans, IPs, and versions for simpler queries.
+    - **JSON & Nested Fields**: Filter on nested fields within JSON logs, e.g., `custom.user.id = 123`.
 - **📊 Statistical Analysis**: Generate instant reports on entry rates, top error messages, and more.
 - **📂 Multi-File & Sorting**: Analyze multiple files at once and sort results by any field.
 - **🛠 Structured Support**: Native parsing for JSON logs and customizable text patterns, with the ability to apply different patterns to different files.
@@ -91,16 +95,6 @@ For more comprehensive build instructions, including platform-specific details a
 
 `logAnalyzer` is a versatile tool. Here’s a quick overview of its command-line interface.
 
-### Minimal Example
-
-To quickly see `logAnalyzer` in action, pipe a simple log line into it:
-
-```bash
-echo "INFO 2023-10-27 12:30:00 This is a test log message." | ./build/bin/logAnalyzer
-```
-
-This will parse and display the single log entry.
-
 ### Basic Syntax
 
 ```bash
@@ -109,9 +103,29 @@ This will parse and display the single log entry.
 
 ### Examples
 
+- **Process a log file from `stdin`:**
+  ```bash
+  echo "INFO 2023-10-27 12:30:00 This is a test log message." | ./build/bin/logAnalyzer
+  ```
+
 - **Analyze a specific log file:**
   ```bash
   ./build/bin/logAnalyzer /var/log/syslog
+  ```
+
+- **Use a complex expression to find database errors OR any message containing "timeout":**
+  ```bash
+  ./build/bin/logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
+  ```
+
+- **Generate statistics on the top 5 most common error messages:**
+  ```bash
+  ./build/bin/logAnalyzer system.log --level ERROR --stats "type=TOP_MESSAGES,top_n=5"
+  ```
+
+- **Export errors from the last 2 hours to a JSON file:**
+  ```bash
+  ./build/bin/logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
   ```
 
 For a deep dive into all functionalities, including advanced filtering and configuration, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
@@ -133,6 +147,13 @@ For more in-depth information, explore the documentation in the [`docs/`](./docs
 - [**API Reference**](docs/api-reference.md)
 - [**Contributing Guide**](CONTRIBUTING.md)
 - [**Code of Conduct**](CODE_OF_CONDUCT.md)
+
+## 💬 Support & Community
+
+Have a question, found a bug, or have a feature request? We'd love to hear from you!
+
+-   **Bugs & Feature Requests**: Please open an issue on our [GitHub Issues page](https://github.com/eserlxl/logAnalyzer/issues).
+-   **Questions**: Feel free to start a discussion on our [GitHub Discussions page](https://github.com/eserlxl/logAnalyzer/discussions).
 
 ## 🤝 Contributing
 

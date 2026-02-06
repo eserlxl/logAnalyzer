@@ -51,6 +51,8 @@ set(LIB_SOURCES
     src/config/Utils.cpp
     src/config/CLIConfig.cpp
     src/core/LogParser.cpp
+    src/core/JsonLogParser.cpp
+    src/core/LogTypes.cpp
     src/export/Exporter.cpp
     src/filter/EnumStringConversions.cpp
     src/filter/Expression.cpp

@@ -71,6 +71,8 @@ std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::syst
 
 std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view sizeStr);
 
+size_t generateLogEntryId(const std::string& sourceFile, size_t lineNumber, std::string_view line);
+
 
 // --- Enum to string and string to enum conversions ---
 std::string logEntryFieldToString(LogEntryField field);

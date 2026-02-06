@@ -22,8 +22,11 @@ enum class Code {
     BufferLimitExceeded, // New error code for multi-line buffer overflow
     ConversionError, // New error code for type conversion failures
     JsonParseError, // New error code for JSON parsing failures
+    JsonTypeError, // New: For type mismatches in JSON processing
+    MissingField, // New: For when a required field is missing in input data
     NotImplemented, // New error code for unimplemented features
     FieldNotFound, // New error code for when a log entry field is not found
+    UnknownJsonError, // New: For generic JSON errors not covered by others
     Unexpected, // Added Unexpected error code
     // Add more error codes as needed
 };
@@ -81,28 +84,32 @@ struct Error : public std::runtime_error {
     }
 
 
+    // Convert Code to string
+    static std::string toString(Code code) {
+        switch (code) {
+            case Code::Unknown: return "Unknown";
+            case Code::InvalidArgument: return "InvalidArgument";
+            case Code::FileNotFound: return "FileNotFound";
+            case Code::FileNotReadable: return "FileNotReadable";
+            case Code::InvalidRegex: return "InvalidRegex";
+            case Code::MalformedLogEntry: return "MalformedLogEntry";
+            case Code::InvalidCLIOption: return "InvalidCLIOption";
+            case Code::StatisticNotFound: return "StatisticNotFound";
+            case Code::TimestampParsingFailed: return "TimestampParsingFailed";
+            case Code::SettingsRestoreFailed: return "SettingsRestoreFailed";
+            case Code::BufferLimitExceeded: return "BufferLimitExceeded";
+            case Code::ConversionError: return "ConversionError";
+            case Code::JsonParseError: return "JsonParseError";
+            case Code::NotImplemented: return "NotImplemented";
+            case Code::FieldNotFound: return "FieldNotFound";
+            case Code::Unexpected: return "Unexpected";
+            default: return "UnknownCode";
+        }
+    }
+
     // Convert to string for logging or display
     std::string toString() const {
-        std::string codeStr;
-        switch (code) {
-            case Code::Unknown: codeStr = "Unknown"; break;
-            case Code::InvalidArgument: codeStr = "InvalidArgument"; break;
-            case Code::FileNotFound: codeStr = "FileNotFound"; break;
-            case Code::FileNotReadable: codeStr = "FileNotReadable"; break;
-            case Code::InvalidRegex: codeStr = "InvalidRegex"; break;
-            case Code::MalformedLogEntry: codeStr = "MalformedLogEntry"; break;
-            case Code::InvalidCLIOption: codeStr = "InvalidCLIOption"; break;
-            case Code::StatisticNotFound: codeStr = "StatisticNotFound"; break;
-            case Code::TimestampParsingFailed: codeStr = "TimestampParsingFailed"; break;
-            case Code::SettingsRestoreFailed: codeStr = "SettingsRestoreFailed"; break;
-            case Code::BufferLimitExceeded: codeStr = "BufferLimitExceeded"; break;
-            case Code::ConversionError: codeStr = "ConversionError"; break;
-            case Code::JsonParseError: codeStr = "JsonParseError"; break;
-            case Code::NotImplemented: codeStr = "NotImplemented"; break;
-            case Code::Unexpected: codeStr = "Unexpected"; break;
-            default: codeStr = "UnknownCode"; break;
-        }
-        std::string fullMessage = codeStr;
+        std::string fullMessage = toString(code);
         if (!message.empty()) {
             fullMessage += ": " + message;
         }
@@ -112,6 +119,11 @@ struct Error : public std::runtime_error {
         return fullMessage;
     }
 };
+
+// Helper function to expose Code -> String conversion within namespace
+inline std::string toString(Code code) {
+    return Error::toString(code);
+}
 
 // Overload operator<< for ErrorCode::Error to enable streaming to ostream
 inline std::ostream& operator<<(std::ostream& os, const ErrorCode::Error& error) {

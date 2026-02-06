@@ -105,7 +105,7 @@ public:
      * @param visitor A function that will be called with a const reference to each
      *                FilterCondition in the expression.
      */
-    void visit(std::function<void(const FilterCondition&)> visitor) const;
+    void visit(const std::function<void(const FilterCondition&)>& visitor) const;
 
     /**
      * @brief Returns a human-readable string representation of the filter expression.
@@ -174,7 +174,7 @@ public:
 
 private:
     // Helper to convert a FilterCondition to its string representation.
-    std::string conditionToString(const FilterCondition& cond) const;
+    static std::string conditionToString(const FilterCondition& cond) ;
 
     ExpressionType type_;
     std::optional<FilterCondition> condition_;

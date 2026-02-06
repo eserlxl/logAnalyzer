@@ -92,6 +92,46 @@ logAnalyzer production.log --level ERROR --format xml --output errors.xml
 logAnalyzer server.log --start "today" --format xml --pretty --output today_logs.xml
 ```
 
+### Advanced Expression Examples
+
+The `--expression` flag provides access to a powerful filtering engine. Here are some examples of advanced usage:
+
+- **Check for presence of a field:**
+  ```bash
+  # Find all logs that have a 'user.id' field in their custom JSON data
+  logAnalyzer app.json.log --expression 'custom.user.id is present'
+  ```
+
+- **Filter using a set of values:**
+  ```bash
+  # Find logs where the request status is one of several error codes
+  logAnalyzer api.log --expression 'status in ["500", "502", "503"]'
+  ```
+
+- **Compare Semantic Versions:**
+  ```bash
+  # Find logs from application versions older than 2.1.0
+  logAnalyzer deployment.log --expression 'version < "2.1.0"'
+  ```
+
+- **Filter by IP Address ranges:**
+  ```bash
+  # Find logs from a specific internal IP subnet
+  logAnalyzer firewall.log --expression 'src_ip >= "192.168.1.1" and src_ip <= "192.168.1.255"'
+  ```
+
+- **Case-insensitive search:**
+  ```bash
+  # Find all "error" or "failure" messages, ignoring case
+  logAnalyzer app.log --expression 'msg contains_i "error" or msg contains_i "failure"'
+  ```
+
+- **Using Negation:**
+  ```bash
+  # Find all logs that are not from the 'healthcheck' module and do not contain 'noise'
+  logAnalyzer app.log --expression 'not (module = "healthcheck" or msg contains "noise")'
+  ```
+
 ### Time-based Filtering
 
 `logAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.

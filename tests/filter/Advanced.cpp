@@ -33,9 +33,13 @@ TEST_F(FilterTestFixture, EvaluateInOperatorNonStringItems) {
     LogEntry entry2 = createLogEntry(LogLevel::INFO, "abc");
     EXPECT_TRUE(expr.evaluate(entry2).value_or(false));
 
-    // "123" (as string) is not in ["abc", 123, true] because it only compares string items
+    // "123" (as string) is now in ["abc", 123, true] because integers are correctly converted to strings
     LogEntry entry3 = createLogEntry(LogLevel::INFO, "123");
-    EXPECT_FALSE(expr.evaluate(entry3).value_or(true));
+    EXPECT_TRUE(expr.evaluate(entry3).value_or(false));
+
+    // "true" (as string) is also in the set
+    LogEntry entry4 = createLogEntry(LogLevel::INFO, "true");
+    EXPECT_TRUE(expr.evaluate(entry4).value_or(false));
 }
 
 TEST_F(FilterTestFixture, EvaluateInOperatorEmptyArray) {
