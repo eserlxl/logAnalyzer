@@ -10,7 +10,7 @@
 #include <nlohmann/json.hpp>
 #include "core/Error.h"
 #include "core/LogTypes.h"
-#include "utils/UtilsCore.h"
+#include "utils/Core.h"
 #include "utils/String.h"
 #include "utils/IpAddress.h"
 #include "utils/Version.h"

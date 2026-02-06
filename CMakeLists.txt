@@ -43,25 +43,25 @@ set(LIB_SOURCES
     src/analyzer/LogReader.cpp
     src/analyzer/LogWriter.cpp
     src/analyzer/Stats.cpp
-    src/analyzer/AnalyzerCore.cpp
+    src/analyzer/Core.cpp
     src/analyzer/IO.cpp
     src/analyzer/Export.cpp
     src/analyzer/Filter.cpp
-    src/config/ConfigCore.cpp
-    src/config/ConfigUtils.cpp
+    src/config/Core.cpp
+    src/config/Utils.cpp
     src/config/CLIConfig.cpp
     src/core/LogParser.cpp
     src/export/Exporter.cpp
     src/filter/EnumStringConversions.cpp
     src/filter/Expression.cpp
     src/filter/ConcreteFilters.cpp
-    src/filter/FilterParser.cpp
+    src/filter/Parser.cpp
     src/stats/Statistics.cpp
     src/utils/IpAddress.cpp
     src/utils/Version.cpp
     src/utils/Time.cpp
     src/utils/String.cpp
-    src/utils/UtilsCore.cpp
+    src/utils/Core.cpp
 )
 
 add_library(LogAnalyzerLib ${LIB_SOURCES})

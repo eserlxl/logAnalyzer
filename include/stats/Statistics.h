@@ -4,7 +4,7 @@
 #pragma once
 
 #include "core/LogTypes.h"
-#include "utils/UtilsCore.h"
+#include "utils/Core.h"
 #include <string>
 #include <vector>
 #include <map>

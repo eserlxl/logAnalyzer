@@ -8,7 +8,7 @@
 #include "filter/Expression.h"
 #include "core/LogTypes.h" // For LogLevel, PatternType etc.
 #include "core/Error.h"    // For ErrorCode::Result
-#include "utils/UtilsCore.h"    // For ci_less
+#include "utils/Core.h"    // For ci_less
 #include <string>
 #include <vector>
 #include <set>

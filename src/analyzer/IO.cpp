@@ -7,7 +7,7 @@
 #include "filter/Core.h"
 #include "stats/Statistics.h"
 #include "export/Exporter.h"
-#include "utils/UtilsCore.h"
+#include "utils/Core.h"
 #include "core/Error.h"
 #include <fstream>
 #include <iostream>

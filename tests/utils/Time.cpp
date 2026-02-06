@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "gtest/gtest.h"
-#include "utils/UtilsCore.h"
+#include "utils/Core.h"
 #include <string>
 #include <chrono>
 #include <optional>

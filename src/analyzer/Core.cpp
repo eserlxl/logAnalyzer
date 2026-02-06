@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "analyzer/AnalyzerCore.h"
+#include "analyzer/Core.h"
 #include "analyzer/LogReader.h"
 #include "analyzer/LogWriter.h"
 #include "core/LogParser.h"
 #include "filter/Core.h"
 #include "stats/Statistics.h"
 #include "export/Exporter.h"
-#include "utils/UtilsCore.h"
+#include "utils/Core.h"
 #include "core/Error.h"
 #include <fstream>
 #include <iostream>
@@ -28,7 +28,7 @@
 #include <string_view>
 #include <span>
 
-#include "config/ConfigCore.h" // Renamed from config/Core.h
+#include "config/Core.h" // Renamed from config/Core.h
 #include "config/CLIConfig.h"
 
 

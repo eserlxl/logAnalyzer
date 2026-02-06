@@ -3,8 +3,8 @@
 
 #include "config/CLIConfig.h"
 #include "config/CommonTypes.h" // Added for centralized types
-#include "config/ConfigUtils.h" // Added for centralized config utilities
-#include "utils/UtilsCore.h"
+#include "config/Utils.h" // Added for centralized config utilities
+#include "utils/Core.h"
 #include "core/Error.h" // Add this include
 #include "core/CiLess.h" // For ci_less
 #include "stats/Statistics.h" // For StatisticType, StatisticConfig

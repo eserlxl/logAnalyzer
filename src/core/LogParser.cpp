@@ -316,7 +316,11 @@ LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEnt
     if (parseResult.error().code == Code::BufferLimitExceeded && !currentLogEntryBuffer.empty()) {
         partialEntry.message = currentLogEntryBuffer;
     } else {
-        partialEntry.message = std::string(originalLine);
+        if (_parserErrorAction == CLIConfig::ParserErrorAction::Ignore) {
+            partialEntry.message = "Parse ignored: " + std::string(originalLine);
+        } else {
+            partialEntry.message = std::string(originalLine);
+        }
     }
     partialEntry.sourceFile = sourceFile;
     partialEntry.sourceLineNumber = lineNumber;
@@ -396,17 +400,17 @@ std::optional<ErrorCode::Result<LogEntry>> DefaultLogParser::processLine(std::st
         } else {
             std::cerr << "Warning: Multi-line log buffer exceeded maximum size (" << _maxMultiLineBufferSize << " bytes). Flushing partial entry." << std::endl;
         }
-        // Force flush the current buffer as an error
-ErrorCode::Error bufferError(Code::BufferLimitExceeded, "Multi-line buffer limit exceeded. Partial entry flushed.", std::to_string(currentLogEntryStartLineNumber));
-        result = std::unexpected(bufferError);
-
-        // Clear the buffer to start fresh
-        currentLogEntryBuffer.clear();
-        bufferedLineNumbers.clear();
-        currentLogEntryStartLineNumber = 0;
-        currentLogEntrySourceFile.clear();
-    }
-
+                // Force flush the current buffer as an error
+                ErrorCode::Error bufferError(Code::BufferLimitExceeded, "Multi-line log entry truncated due to buffer limit", std::to_string(currentLogEntryStartLineNumber));
+                result = std::unexpected(bufferError);
+        
+                // Reset the buffer to contain ONLY the current line that caused the overflow
+                currentLogEntryBuffer = std::string(line);
+                bufferedLineNumbers.clear();
+                bufferedLineNumbers.push_back(lineNumber);
+                currentLogEntryStartLineNumber = lineNumber;
+                currentLogEntrySourceFile = sourceFile;
+            }
     lastProcessedLineNumber = lineNumber;
     return result;
 }
@@ -445,7 +449,7 @@ void DefaultLogParser::processStream(
 
 // Define the static constant for legacy KV pattern
 const std::regex& DefaultLogParser::getLegacyKvPattern() {
-    static const std::regex kvPattern("([a-zA-Z0-9_.-]+)\s*=\s*(?:\"(.*?)\"|'([^']*)'|([^\\s,]+))[, ]*", std::regex::optimize);
+    static const std::regex kvPattern("([a-zA-Z0-9_.-]+)\\s*=\\s*(?:\"(.*?)\"|'([^']*)'|([^\\s,]+))[, ]*", std::regex::optimize);
     return kvPattern;
 }
 

@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include "analyzer/LogWriter.h"
-#include "analyzer/AnalyzerCore.h"
+#include "analyzer/Core.h"
 #include "core/Error.h"
 #include "utils/String.h"
-#include "config/ConfigCore.h"
+#include "config/Core.h"
 #include <string>
 #include <sstream>
 #include <vector>

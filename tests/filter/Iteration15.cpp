@@ -5,7 +5,7 @@
 #include "filter/ConcreteFilters.h"
 #include "filter/Expression.h"
 #include "filter/Condition.h"
-#include "filter/FilterParser.h"
+#include "filter/Parser.h"
 #include "core/LogTypes.h"
 #include <nlohmann/json.hpp>
 #include <vector>

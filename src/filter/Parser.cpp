@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "filter/FilterParser.h"
+#include "filter/Parser.h"
 
 ErrorCode::Result<FilterExpression> parseQuery(const std::string& query) {
     // TODO: Implement the query parser.

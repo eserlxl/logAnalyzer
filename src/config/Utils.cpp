@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "config/ConfigUtils.h"
-#include "utils/UtilsCore.h"
+#include "config/Utils.h"
+#include "utils/Core.h"
 #include <sstream>
 #include <regex>
 #include <algorithm>

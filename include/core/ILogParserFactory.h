@@ -8,7 +8,7 @@
 #include <string_view>
 
 #include "core/LogParser.h" // For ILogParser
-#include "config/ConfigCore.h" // For LogAnalyzerSettings
+#include "config/Core.h" // For LogAnalyzerSettings
 
 class ILogParserFactory {
 public:

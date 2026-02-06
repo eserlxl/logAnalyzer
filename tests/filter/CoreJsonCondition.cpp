@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
-// Copyright (c) 2026 Eser KUBALI
+// Copyright (c) 2024 Eser KUBALI
 
 #include <gtest/gtest.h>
 #include "filter/Core.h"
 #include "core/LogTypes.h"
 #include <nlohmann/json.hpp>
-#include <iostream> // Required for std::cerr
 
 // New test fixture for JSON serialization/deserialization tests
 class FilterJsonTest : public ::testing::Test {};
@@ -105,6 +104,13 @@ TEST_F(FilterJsonTest, FromJsonSuccessDatetime) {
     auto result = from_json(j, fc);
     ASSERT_TRUE(result.has_value()) << result.error().message;
 
+    // Debug print
+    if (fc.datetimeFormat.has_value()) {
+        std::cout << "Debug: fc.datetimeFormat has value: " << *fc.datetimeFormat << std::endl;
+        std::cout << "Debug: fc.datetimeFormat is empty: " << fc.datetimeFormat->empty() << std::endl;
+    } else {
+        std::cout << "Debug: fc.datetimeFormat is std::nullopt" << std::endl;
+    }
     EXPECT_EQ(fc.field, LogEntryField::TIMESTAMP);
     EXPECT_EQ(fc.op, FilterOperator::LESS_THAN);
     EXPECT_EQ(fc.valueType, FilterValueType::DATETIME);
@@ -369,3 +375,164 @@ TEST_F(FilterJsonTest, FactoryFailureForDatetimeWithEmptyFormat) {
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error().message, "datetimeFormat cannot be empty for DATETIME type.");
 }
+
+// --- Additional from_json Deserialization Tests (based on audit recommendations) ---
+
+TEST_F(FilterJsonTest, FromJsonFailureDatetimeNonParsableValue) {
+    nlohmann::json j = {
+        {"field", "timestamp"},
+        {"op", "GREATER_THAN"},
+        {"value", "not-a-datetime"},
+        {"value_type", "DATETIME"},
+        {"datetimeFormat", "%Y-%m-%d %H:%M:%S"}
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    // Specific message might vary based on parsing library, but should indicate bad format
+    EXPECT_TRUE(result.error().message.find("Failed to parse datetime value") != std::string::npos ||
+                result.error().message.find("Invalid datetime string format") != std::string::npos)
+                << "Error message was: " << result.error().message;
+}
+
+TEST_F(FilterJsonTest, FromJsonFailureIntNonNumericValue) {
+    nlohmann::json j = {
+        {"field", "process_id"},
+        {"op", "GREATER_THAN"},
+        {"value", "not_an_int"},
+        {"value_type", "INT"}
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().message, "Invalid integer value: not_an_int");
+}
+
+TEST_F(FilterJsonTest, FromJsonFailureBoolNonBooleanValue) {
+    nlohmann::json j = {
+        {"field", "is_error"},
+        {"op", "EQUALS"},
+        {"value", "not_a_bool"},
+        {"value_type", "BOOL"}
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().message, "Invalid boolean value: not_a_bool");
+}
+
+TEST_F(FilterJsonTest, FromJsonFailureDoubleNonNumericValue) {
+    nlohmann::json j = {
+        {"field", "latency"},
+        {"op", "GREATER_THAN"},
+        {"value", "not_a_double"},
+        {"value_type", "DOUBLE"}
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().message, "Invalid float value: not_a_double");
+}
+
+TEST_F(FilterJsonTest, DebugGetOptionalDatetimeFormat) {
+    nlohmann::json j = {
+        {"datetimeFormat", "%Y-%m-%d %H:%M:%S"}
+    };
+    auto optionalFormat = FilterJsonUtils::getOptional<std::string>(j, "datetimeFormat");
+    ASSERT_TRUE(optionalFormat.has_value());
+    EXPECT_EQ(*optionalFormat, "%Y-%m-%d %H:%M:%S");
+
+    nlohmann::json j_null = {
+        {"datetimeFormat", nullptr}
+    };
+    auto optionalFormatNull = FilterJsonUtils::getOptional<std::string>(j_null, "datetimeFormat");
+    ASSERT_FALSE(optionalFormatNull.has_value());
+
+    nlohmann::json j_missing = {};
+    auto optionalFormatMissing = FilterJsonUtils::getOptional<std::string>(j_missing, "datetimeFormat");
+    ASSERT_FALSE(optionalFormatMissing.has_value());
+
+    nlohmann::json j_wrong_type = {
+        {"datetimeFormat", 123} // wrong type
+    };
+    auto optionalFormatWrongType = FilterJsonUtils::getOptional<std::string>(j_wrong_type, "datetimeFormat");
+    ASSERT_FALSE(optionalFormatWrongType.has_value()); // Should return nullopt due to catch block
+}
+
+TEST_F(FilterJsonTest, FromJsonFailureDatetimeEmptyFormat) {
+    nlohmann::json j = {
+        {"field", "timestamp"},
+        {"op", "LESS_THAN"},
+        {"value", "2023-12-31 23:59:59"},
+        {"value_type", "DATETIME"},
+        {"datetimeFormat", ""} // Empty format string
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().message, "DATETIME value_type requires a non-empty 'datetimeFormat'.");
+}
+
+TEST_F(FilterJsonTest, FromJsonSuccessOmittedCaseSensitiveDefaultsToFalse) {
+    nlohmann::json j = {
+        {"field", "MESSAGE"},
+        {"op", "CONTAINS"},
+        {"value", "warning"},
+        {"value_type", "STRING"}
+        // caseSensitive is omitted
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fc.field, LogEntryField::MESSAGE);
+    EXPECT_EQ(fc.op, FilterOperator::CONTAINS);
+    EXPECT_EQ(std::get<std::string>(fc.value), "warning");
+    EXPECT_EQ(fc.valueType, FilterValueType::STRING);
+    EXPECT_FALSE(fc.caseSensitive); // Should default to false
+    EXPECT_FALSE(fc.customField.has_value());
+}
+
+TEST_F(FilterJsonTest, FromJsonFailureDatetimeNullFormat) {
+    nlohmann::json j = {
+        {"field", "timestamp"},
+        {"op", "LESS_THAN"},
+        {"value", "2023-12-31 23:59:59"},
+        {"value_type", "DATETIME"},
+        {"datetimeFormat", nullptr} // Explicitly null datetimeFormat
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().message, "DATETIME value_type requires a non-empty 'datetimeFormat'.");
+}
+
+TEST_F(FilterJsonTest, FromJsonSuccessCaseSensitiveWithNonStringField) {
+    // caseSensitive is primarily for string comparisons, but should deserialize correctly for other types.
+    // Its effect on non-string comparisons is determined by the evaluation logic, not deserialization.
+    nlohmann::json j = {
+        {"field", "level"},
+        {"op", "EQUALS"},
+        {"value", "5"},
+        {"value_type", "INT"},
+        {"caseSensitive", true} // Case-sensitive for an INT field (should just be stored)
+    };
+
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+
+    EXPECT_EQ(fc.field, LogEntryField::LEVEL);
+    EXPECT_EQ(fc.op, FilterOperator::EQUALS);
+    EXPECT_EQ(std::get<std::string>(fc.value), "5");
+    EXPECT_EQ(fc.valueType, FilterValueType::INT);
+    EXPECT_TRUE(fc.caseSensitive); // Ensure it's deserialized correctly
+}
+

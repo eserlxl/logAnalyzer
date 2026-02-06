@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "utils/String.h"
-#include "utils/UtilsCore.h"
+#include "utils/Core.h"
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>

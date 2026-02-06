@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "analyzer/AnalyzerCore.h"
+#include "analyzer/Core.h"
 #include "config/CLIConfig.h"
 #include "filter/Expression.h"
 #include "filter/Condition.h"

@@ -278,8 +278,8 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMalformedDatetimeFormat) {
     auto result = from_json(j, fc, "/");
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    // getOptional returns nullopt on type mismatch, triggering the missing format check
-    EXPECT_NE(result.error().message.find("DATETIME value_type requires a non-empty 'datetimeFormat'"), std::string::npos);
+    // The error is now about the type of datetimeFormat itself.
+    EXPECT_NE(result.error().message.find("Invalid type for key: 'datetimeFormat'"), std::string::npos);
     EXPECT_EQ(result.error().jsonPath, "/datetimeFormat"); // Verify jsonPath
 }
 
