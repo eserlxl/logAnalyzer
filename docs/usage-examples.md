@@ -120,4 +120,17 @@ logAnalyzer app.log --start "2023-11-20 10:00:00" --duration "30m"
 
 # Get logs from a specific day (using ISO 8601 date)
 logAnalyzer app.log --start "2023-11-20T00:00:00Z" --end "2023-11-21T00:00:00Z"
+
+# Filter by specific time range
+logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
 ```
+
+### Combining Filters
+
+Combine multiple filter criteria to narrow down your search results.
+
+```bash
+# Combine filters (e.g., critical errors with specific message content):
+logAnalyzer server.log --level CRITICAL --filter 'msg contains "failed to connect"'
+```
+

@@ -61,7 +61,7 @@ Follow these steps to get `logAnalyzer` running on your system.
 
 For detailed, platform-specific instructions, please refer to the [**Installation Guide**](docs/installation.md).
 
-### Build and Run
+### Building from Source
 
 1. **Clone the repository:**
    ```bash
@@ -86,6 +86,7 @@ For detailed, platform-specific instructions, please refer to the [**Installatio
    ctest
    cd ..
    ```
+For more comprehensive build instructions, including platform-specific details and advanced configurations, please see the [**Build Guide**](docs/build.md).
 
 ## 🏃 Quick Start & Basic Usage
 
@@ -112,21 +113,6 @@ This will parse and display the single log entry.
 - **Analyze a specific log file:**
   ```bash
   ./build/bin/logAnalyzer /var/log/syslog
-  ```
-
-- **Filter messages by log level:**
-  ```bash
-  ./build/bin/logAnalyzer app.log --level ERROR
-  ```
-
-- **Filter by time range:**
-  ```bash
-  ./build/bin/logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
-  ```
-
-- **Combine filters (e.g., critical errors with specific message content):**
-  ```bash
-  ./build/bin/logAnalyzer server.log --level CRITICAL --filter 'msg contains "failed to connect"'
   ```
 
 For a deep dive into all functionalities, including advanced filtering and configuration, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
