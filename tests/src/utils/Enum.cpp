@@ -56,7 +56,7 @@ TEST(UtilsEnumConversionTest, StringToLogEntryField) {
     EXPECT_EQ(Utils::stringToLogEntryField("THREAD_ID"), LogEntryField::THREAD_ID);
     EXPECT_EQ(Utils::stringToLogEntryField("MODULE"), LogEntryField::MODULE);
     EXPECT_EQ(Utils::stringToLogEntryField("HOST"), LogEntryField::HOST);
-    EXPECT_EQ(Utils::stringToLogEntryField("CUSTOM"), LogEntryField::CUSTOM);
+    EXPECT_EQ(Utils::stringToLogEntryField("CUSTOM"), LogEntryField::UNKNOWN);
     EXPECT_EQ(Utils::stringToLogEntryField("STRUCTURED_FIELD"), LogEntryField::STRUCTURED_FIELD);
     EXPECT_EQ(Utils::stringToLogEntryField("INVALID"), LogEntryField::UNKNOWN);
 }

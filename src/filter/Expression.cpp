@@ -496,11 +496,16 @@ ErrorCode::Result<bool> FilterExpression::evaluate(const LogEntry& entry) const 
             break;
     }
 
-    if (!result) return result; // Propagate error
+    if (!result) {
+        std::cerr << "DEBUG: FilterExpression::evaluate - Error propagating: " << result.error().message << std::endl;
+        return result; // Propagate error
+    }
 
     if (negated_) {
+        std::cerr << "DEBUG: FilterExpression::evaluate - Negating " << *result << std::endl;
         return !*result;
     }
+    std::cerr << "DEBUG: FilterExpression::evaluate - Final result: " << *result << std::endl;
     return result;
 }
 

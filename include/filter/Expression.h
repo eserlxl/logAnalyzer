@@ -28,8 +28,12 @@ public:
         : type_(ExpressionType::LOGICAL), logicalOperator_(op), expressions_(std::move(expressions)), negated_(negated) {}
 
     // Fluent builders for complex expressions
-    static FilterExpression create(FilterCondition condition) {
-        return FilterExpression(std::move(condition));
+    static FilterExpression create(const FilterCondition& cond) {
+        FilterExpression expr;
+        expr.type_ = ExpressionType::CONDITION;
+        expr.condition_ = std::make_unique<FilterCondition>(cond);
+        std::cerr << "DEBUG: FilterExpression::create - negated_: " << expr.negated_ << std::endl;
+        return expr;
     }
 
     FilterExpression And(FilterExpression other) const {

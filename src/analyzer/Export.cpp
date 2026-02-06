@@ -70,21 +70,11 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
     }
     const auto& filtered = filtered_expected.value();
 
-    const std::string indent = prettyPrint ? "  " : "";
-    const std::string newline = prettyPrint ? "\n" : "";
-    const std::string entryIndent = prettyPrint ? "    " : "";
+    nlohmann::json rootJson;
+    rootJson["summary"]["count"] = filtered.size();
+    nlohmann::json entriesArray = nlohmann::json::array();
 
-    // Always output a root JSON object.
-    out << "{" << newline;
-    // Ensure "summary" root element is always present for consistency.
-    // It will contain at least "count".
-    out << indent << "\"summary\":{\"count\": " << filtered.size() << "}," << newline;
-    out << indent << "\"entries\": [" << newline;
-
-    for (size_t i = 0; i < filtered.size(); ++i) {
-        const auto& entry = filtered[i];
-        
-        // Use nlohmann::json to construct the entry object for robustness
+    for (const auto& entry : filtered) {
         nlohmann::json entryJson;
 
         if (entry.id.has_value()) {
@@ -133,21 +123,21 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterCriteria &filter, 
         if (!entry.customFields.empty()) {
             nlohmann::json customFieldsJson;
             for (const auto& pair : entry.customFields) {
-                customFieldsJson[Utils::escapeJsonString(pair.first)] = Utils::escapeJsonString(pair.second);
+                // No need to escape here, nlohmann::json::dump handles escaping automatically
+                customFieldsJson[pair.first] = pair.second;
             }
             entryJson["CustomFields"] = customFieldsJson;
         }
-
-        // Output the constructed JSON object
-        if (prettyPrint) {
-            out << entryJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << (i < filtered.size() - 1 ? "," : "") << newline;
-        } else {
-            out << entryJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << (i < filtered.size() - 1 ? "," : "") << newline;
-        }
+        entriesArray.push_back(entryJson);
+        std::cerr << "DEBUG: entryJson for FilterCriteria overload: " << entryJson.dump() << std::endl;
     }
+    rootJson["entries"] = entriesArray;
 
-    out << indent << "]" << newline;
-    out << "}" << newline;
+    if (prettyPrint) {
+        out << rootJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << std::endl;
+    } else {
+        out << rootJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << std::endl;
+    }
 }
 
 void LogAnalyzer::exportAsCsv(std::ostream& out, const FilterExpression& expression, char delimiter, std::string_view timestampFormat) const {
@@ -210,17 +200,11 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterExpression &expres
     }
     const auto& filtered = filtered_expected.value();
 
-    const std::string indent = prettyPrint ? "  " : "";
-    const std::string newline = prettyPrint ? "\n" : "";
-    const std::string entryIndent = prettyPrint ? "    " : "";
+    nlohmann::json rootJson;
+    rootJson["summary"]["count"] = filtered.size();
+    nlohmann::json entriesArray = nlohmann::json::array();
 
-    out << "{" << newline;
-    out << indent << "\"summary\":{\"count\": " << filtered.size() << "}," << newline;
-    out << indent << "\"entries\": [" << newline;
-
-    for (size_t i = 0; i < filtered.size(); ++i) {
-        const auto& entry = filtered[i];
-        
+    for (const auto& entry : filtered) {
         nlohmann::json entryJson;
 
         if (entry.id.has_value()) {
@@ -268,18 +252,18 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const FilterExpression &expres
         if (!entry.customFields.empty()) {
             nlohmann::json customFieldsJson;
             for (const auto& pair : entry.customFields) {
-                customFieldsJson[Utils::escapeJsonString(pair.first)] = Utils::escapeJsonString(pair.second);
+                customFieldsJson[pair.first] = pair.second;
             }
             entryJson["CustomFields"] = customFieldsJson;
         }
-
-        if (prettyPrint) {
-            out << entryJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << (i < filtered.size() - 1 ? "," : "") << newline;
-        } else {
-            out << entryJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << (i < filtered.size() - 1 ? "," : "") << newline;
-        }
+        entriesArray.push_back(entryJson);
+        std::cerr << "DEBUG: entryJson for FilterExpression overload: " << entryJson.dump() << std::endl;
     }
+    rootJson["entries"] = entriesArray;
 
-    out << indent << "]" << newline;
-    out << "}" << newline;
+    if (prettyPrint) {
+        out << rootJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << std::endl;
+    } else {
+        out << rootJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << std::endl;
+    }
 }
