@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #ifndef REGEX_LOG_PARSER_FACTORY_H
 #define REGEX_LOG_PARSER_FACTORY_H
 

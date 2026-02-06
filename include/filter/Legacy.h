@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #ifndef FILTER_LEGACY_H
 #define FILTER_LEGACY_H
 

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #ifndef CONFIG_UTILS_H
 #define CONFIG_UTILS_H
 

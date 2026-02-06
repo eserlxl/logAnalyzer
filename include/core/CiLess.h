@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #ifndef LOGANALYZER_CI_LESS_H
 #define LOGANALYZER_CI_LESS_H
 

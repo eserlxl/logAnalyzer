@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #ifndef FILTER_CONDITION_H
 #define FILTER_CONDITION_H
 
@@ -267,7 +270,34 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     if (fc.op == FilterOperator::IS_NULL || fc.op == FilterOperator::IS_NOT_NULL) {
         fc.value = "";
     }
+
+    // Explicitly handle datetimeFormat to ensure string type and proper error on mismatch
+    if (j.contains("datetimeFormat")) {
+        if (j.at("datetimeFormat").is_null()) {
+            fc.datetimeFormat = std::nullopt;
+        } else if (j.at("datetimeFormat").is_string()) {
+            fc.datetimeFormat = j.at("datetimeFormat").get<std::string>();
+        } else {
+            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid type for key: 'datetimeFormat' (expected string or null)", current_path, "datetimeFormat"));
+        }
+    } else {
+        fc.datetimeFormat = std::nullopt;
+    }
+
+    // Handle caseSensitive
+    if (j.contains("caseSensitive")) {
+        if (!j.at("caseSensitive").is_boolean() && !j.at("caseSensitive").is_null()) {
+             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid type for key 'caseSensitive'", current_path, "caseSensitive"));
+        }
+        fc.caseSensitive = j.at("caseSensitive").is_null() ? false : j.at("caseSensitive").get<bool>();
+    } else {
+        fc.caseSensitive = false;
+    }
     
+    if (fc.valueType == FilterValueType::DATETIME && (!fc.datetimeFormat || fc.datetimeFormat->empty())) {
+        return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "DATETIME value_type requires a non-empty 'datetimeFormat'.", current_path, "datetimeFormat"));
+    }
+
     // The validation logic below assumes value is a string. This needs to be adjusted.
     if (std::holds_alternative<std::string>(fc.value)) {
         const std::string& singleValue = std::get<std::string>(fc.value);
@@ -296,6 +326,11 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
             } catch (...) {
                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + singleValue, current_path, "value"));
             }
+        } else if (fc.valueType == FilterValueType::DATETIME) {
+            auto parseResult = Utils::parseTimeWithFormats(singleValue, {*fc.datetimeFormat});
+            if (!parseResult) {
+                return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Failed to parse datetime value: '" + singleValue + "' with format '" + *fc.datetimeFormat + "'. " + parseResult.error().message, current_path, "value"));
+            }
         } else if (fc.valueType == FilterValueType::IP_ADDRESS) {
             if (!Utils::parseIpAddress(singleValue)) {
                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid IP address: " + singleValue, current_path, "value"));
@@ -310,20 +345,9 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     // The evaluation logic will handle parsing of individual elements. This is consistent
     // with how single string values are handled (validation vs. parsing at evaluation).
 
-    if (j.contains("caseSensitive")) {
-        if (!j.at("caseSensitive").is_boolean() && !j.at("caseSensitive").is_null()) {
-             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid type for key 'caseSensitive'", current_path, "caseSensitive"));
-        }
-        fc.caseSensitive = j.at("caseSensitive").is_null() ? false : j.at("caseSensitive").get<bool>();
-    } else {
-        fc.caseSensitive = false;
-    }
 
-    fc.datetimeFormat = FilterJsonUtils::getOptional<std::string>(j, "datetimeFormat");
 
-    if (fc.valueType == FilterValueType::DATETIME && (!fc.datetimeFormat || fc.datetimeFormat->empty())) {
-        return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "DATETIME value_type requires a non-empty 'datetimeFormat'.", current_path, "datetimeFormat"));
-    }
+
 
     return {}; // Success
 }

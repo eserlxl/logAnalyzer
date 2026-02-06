@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #ifndef FILTER_ENUM_STRING_CONVERSIONS_H
 #define FILTER_ENUM_STRING_CONVERSIONS_H
 

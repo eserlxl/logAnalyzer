@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #ifndef JSON_LOG_PARSER_H
 #define JSON_LOG_PARSER_H
 
