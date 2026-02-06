@@ -9,6 +9,8 @@
 #include <map>
 #include <nlohmann/json.hpp>
 
+const int DEFAULT_TOP_N_STATISTIC_VALUE = 10;
+
 using json = nlohmann::json;
 
 void LogAnalyzer::addStatisticCollector(std::shared_ptr<IStatisticCollector> collector) {
@@ -35,29 +37,15 @@ std::map<std::string, json> LogAnalyzer::getAllStatisticReports() const {
 std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const StatisticConfig& config) {
     std::string targetField;
     std::string customFieldKey;
-    int topN = 0; // Default or parsed
-
-    // Extract common parameters first
-    auto itTargetField = config.params.find("target_field");
-    if (itTargetField != config.params.end()) {
-        targetField = itTargetField->second;
-    }
-
-    auto itCustomFieldKey = config.params.find("custom_field_key");
-    if (itCustomFieldKey != config.params.end()) {
-        customFieldKey = itCustomFieldKey->second;
-    }
-    
+    int topN = DEFAULT_TOP_N_STATISTIC_VALUE; // Default value
     auto itTopN = config.params.find("top_n");
     if (itTopN != config.params.end()) {
         try {
             topN = std::stoi(itTopN->second);
         } catch (const std::exception& e) {
-            std::cerr << "Warning: Invalid 'top_n' parameter for statistic. Defaulting to 10. Error: " << e.what() << std::endl;
-            topN = 10; // Default value if parsing fails
+            std::cerr << "Warning: Invalid 'top_n' parameter for statistic. Defaulting to " << DEFAULT_TOP_N_STATISTIC_VALUE << ". Error: " << e.what() << '\n';
+            // topN remains DEFAULT_TOP_N_STATISTIC_VALUE from initialization
         }
-    } else {
-        topN = 10; // Default if not provided
     }
 
     switch (config.type) {
@@ -70,32 +58,46 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
         case StatisticType::LOG_LEVEL_COUNT:
             return std::make_shared<LogLevelCountCollector>();
         case StatisticType::FIELD_VALUE_COUNT: {
+            // Extract common parameters first if not already done
+            auto itTargetField = config.params.find("target_field");
+            if (itTargetField != config.params.end()) {
+                targetField = itTargetField->second;
+            }
+            auto itCustomFieldKey = config.params.find("custom_field_key");
+            if (itCustomFieldKey != config.params.end()) {
+                customFieldKey = itCustomFieldKey->second;
+            }
+
             if (targetField.empty()) {
                 throw std::runtime_error("FieldValueCountCollector requires 'target_field' parameter.");
             }
-            if (targetField == "customFields") {
-                if (customFieldKey.empty()) {
-                    throw std::runtime_error("FieldValueCountCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
-                }
-                return std::make_shared<FieldValueCountCollector>(targetField, customFieldKey);
+            if (targetField == "customFields" && customFieldKey.empty()) {
+                throw std::runtime_error("FieldValueCountCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
             }
-            return std::make_shared<FieldValueCountCollector>(targetField);
+            return std::make_shared<FieldValueCountCollector>(targetField, customFieldKey);
         }
         case StatisticType::TOP_N_FIELD_VALUES: {
+            // Extract common parameters first if not already done
+            auto itTargetField = config.params.find("target_field");
+            if (itTargetField != config.params.end()) {
+                targetField = itTargetField->second;
+            }
+            auto itCustomFieldKey = config.params.find("custom_field_key");
+            if (itCustomFieldKey != config.params.end()) {
+                customFieldKey = itCustomFieldKey->second;
+            }
+
             if (targetField.empty()) {
                 throw std::runtime_error("TopNFieldValuesCollector requires 'target_field' parameter.");
             }
-            if (targetField == "customFields") {
-                if (customFieldKey.empty()) {
-                    throw std::runtime_error("TopNFieldValuesCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
-                }
-                return std::make_shared<TopNFieldValuesCollector>(topN, targetField, customFieldKey);
+            if (targetField == "customFields" && customFieldKey.empty()) {
+                throw std::runtime_error("TopNFieldValuesCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
             }
-            return std::make_shared<TopNFieldValuesCollector>(topN, targetField);
+            return std::make_shared<TopNFieldValuesCollector>(topN, targetField, customFieldKey);
         }
         case StatisticType::UNKNOWN:
         default:
-            std::cerr << "Warning: Attempted to create unknown statistic type." << std::endl;
+            std::cerr << "Warning: Attempted to create unknown statistic type." << '\n';
             return nullptr;
     }
 }
