@@ -46,43 +46,43 @@ Modern applications generate gigabytes of logs daily. While tools like `grep`, `
 
 ## 🚀 Getting Started
 
-Follow these steps to build and run `logAnalyzer`.
+To get `logAnalyzer` up and running, follow these simple steps. For detailed instructions, refer to the [**Installation Guide**](docs/installation.md).
 
-### Prerequisites
+### Installation
 
-Before you begin, ensure you have the following installed:
-- A C++23 compatible compiler (e.g., GCC 13+, Clang 16+)
-- CMake (3.16 or higher)
-- Git
+1.  **Prerequisites**: Ensure you have a C++23 compatible compiler (e.g., GCC 13+, Clang 16+), CMake (3.16 or higher), and Git installed.
+    For more detailed installation steps, including platform-specific instructions, see [**docs/installation.md**](docs/installation.md).
 
-### Build & Run
-
-1.  **Clone the repository:**
+2.  **Clone the repository:**
     ```bash
     git clone https://github.com/eserlxl/logAnalyzer.git
     cd logAnalyzer
     ```
 
-2.  **Configure and build the project:**
-    This command prepares the build and compiles the source code into an executable.
+3.  **Build the project:**
     ```bash
     cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
     cmake --build build
     ```
+    This command prepares the build and compiles the source code into an executable. For more build options and details, see [**docs/build.md**](docs/build.md).
 
-3.  **Run your first analysis:**
+### Quick Start
+
+Once built, you can immediately start analyzing your logs.
+
+1.  **Run your first analysis:**
     Execute the compiled binary, pointing it to a log file. Let's find all "ERROR" level messages in your system's log.
     ```bash
     ./build/bin/logAnalyzer /var/log/syslog --level ERROR
     ```
 
-4.  **Filter by time:**
+2.  **Filter by time:**
     Narrow down the search to a specific timeframe.
     ```bash
     ./build/bin/logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
     ```
 
-For more advanced use cases, check out our [**Usage Examples**](docs/usage-examples.md) and the complete [**Command Line Reference**](docs/cli-reference.md).
+For more advanced usage scenarios and a complete list of commands, check out our [**Usage Examples**](docs/usage-examples.md) and the comprehensive [**Command Line Reference**](docs/cli-reference.md).
 
 
 ## 📚 Documentation
