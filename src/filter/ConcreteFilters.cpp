@@ -8,6 +8,8 @@
 #include <regex>
 #include <cmath>
 #include <limits>
+#include <nlohmann/json.hpp> // For ExpressionFilter::create
+#include <iostream> // For std::cerr in ExpressionFilter::matches
 
 namespace filter {
 
@@ -218,14 +220,18 @@ bool FieldExistsFilter::matches(const LogEntry &entry) const {
     return entry.customFields.count(fieldKey_) > 0;
 }
 
-PredicateFilter::PredicateFilter(PredicateFilter::Predicate predicate) : predicate_(std::move(predicate)) {}
+PredicateFilter::PredicateFilter(Predicate&& predicate) : predicate_(std::move(predicate)) {}
 
 bool PredicateFilter::matches(const LogEntry &entry) const {
     if (predicate_) {
         return predicate_(entry);
     }
-    return false;
+    return false; // Or some other default behavior if predicate is not set
 }
+
+
+
+
 
 LogLevelSetFilter::LogLevelSetFilter(std::set<LogLevel> allowedLevels) : allowedLevels_(std::move(allowedLevels)) {}
 
@@ -234,29 +240,32 @@ bool LogLevelSetFilter::matches(const LogEntry &entry) const {
 }
 
 KeywordFilter::KeywordFilter(std::string keyword, bool isCaseSensitive)
-    : keywords_({std::move(keyword)}), logic_(Logic::ANY), isCaseSensitive_(isCaseSensitive) {}
+    : keywords_({std::move(keyword)}), logic_(Logic::OR), isCaseSensitive_(isCaseSensitive) {}
 
 KeywordFilter::KeywordFilter(std::vector<std::string> keywords, Logic logic, bool isCaseSensitive)
     : keywords_(std::move(keywords)), logic_(logic), isCaseSensitive_(isCaseSensitive) {}
 
 bool KeywordFilter::matches(const LogEntry &entry) const {
     if (keywords_.empty()) {
-        return logic_ == Logic::ALL; // Consistent with CompositeFilter
+        // If no keywords, AND logic means true (vacuously true), OR logic means false
+        return logic_ == Logic::AND;
     }
     
     auto search_fn = [this](const std::string& text, const std::string& keyword) {
         if (isCaseSensitive_) {
             return text.find(keyword) != std::string::npos;
-        } else {
+        }
+        else {
             return Utils::caseInsensitiveSearch(text, keyword);
         }
     };
 
-    if (logic_ == Logic::ANY) {
+    if (logic_ == Logic::OR) {
         return std::any_of(keywords_.begin(), keywords_.end(), [&](const auto& kw) {
             return search_fn(entry.message, kw);
         });
-    } else { // ALL
+    }
+    else { // Logic::AND
         return std::all_of(keywords_.begin(), keywords_.end(), [&](const auto& kw) {
             return search_fn(entry.message, kw);
         });
@@ -339,8 +348,9 @@ bool CompositeFilter::matches(const LogEntry &entry) const {
 // --- ExpressionFilter Implementation ---
 
 #include "filter/Expression.h"
-#include <nlohmann/json.hpp>
-#include <iostream>
+// nlohmann/json.hpp and iostream are already included at the top of the file
+// #include <nlohmann/json.hpp>
+// #include <iostream>
 
 ExpressionFilter::ExpressionFilter(FilterExpression expression)
     : expression_(std::move(expression)) {}
@@ -367,5 +377,8 @@ bool ExpressionFilter::matches(const LogEntry &entry) const {
     }
     return *result;
 }
+
+
+
 
 } // namespace filter

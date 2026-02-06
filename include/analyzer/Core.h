@@ -82,7 +82,7 @@ class LogAnalyzer {
 
 public:
     LogAnalyzer();
-    ~LogAnalyzer();
+    virtual ~LogAnalyzer();
     explicit LogAnalyzer(const LogAnalyzerSettings& settings);
     ErrorCode::Result<void> setSettings(const LogAnalyzerSettings& settings);
     const LogAnalyzerSettings& getSettings() const;
@@ -199,8 +199,8 @@ public:
     ) const;
 
     [[deprecated("Use getFilteredEntries(const filter::FilterExpression&) instead.")]]
-    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterCriteria& criteria) const;
-    ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterExpression& expression) const;
+    virtual ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterCriteria& criteria) const;
+    virtual ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterExpression& expression) const;
 
     [[deprecated("Use getSortedFilteredEntries(const filter::FilterExpression&, filter::SortBy, filter::SortOrder) instead.")]]
     std::vector<LogEntry> getSortedFilteredEntries(const filter::FilterCriteria& criteria, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
@@ -240,7 +240,7 @@ public:
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
-    filter::FilterExpression createFilterExpressionFromCriteria(const filter::FilterCriteria& criteria) const;
+    virtual filter::FilterExpression createFilterExpressionFromCriteria(const filter::FilterCriteria& criteria) const;
 
 private:
     // Internal helper methods that generators would call

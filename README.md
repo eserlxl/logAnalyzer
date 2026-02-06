@@ -22,7 +22,7 @@
 - [💬 Support & Community](#-support--community)
 - [🤝 Contributing](#-contributing)
 - [📜 Changelog](#-changelog)
-- [📄 License)
+- [📄 License](#-license)
 
 ---
 ## 🤔 Why logAnalyzer?

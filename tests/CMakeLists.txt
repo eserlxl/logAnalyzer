@@ -61,6 +61,7 @@ set(TEST_SOURCES
     "utils/String.cpp"
     "analyzer/Types.cpp"
     "analyzer/LogWriter.cpp"
+    "analyzer/LogWriter_correctness.cpp"
 )
 
 # Loop through each test source file

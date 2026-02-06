@@ -77,6 +77,32 @@ An array of rule objects that define how to filter log entries. Each rule is an 
 -   `value`: The value to compare against.
 -   `customFieldKey` (optional): Required if `field` is `customFields`.
 
+#### `exportSettings`
+An object that configures the output format and destination for the filtered logs.
+
+| Property           | Description                                                                                                                                                                                             | Default                         |
+| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------ |
+| `format`           | The output format. Can be `PLAINTEXT`, `JSON`, `CSV`, or `XML`.                                                                                                                                            | `PLAINTEXT`                     |
+| `outputFile`       | Path to a file where output should be written. If not specified, output goes to `stdout`.                                                                                                               | `(stdout)`                      |
+| `textFormatString` | A custom format string for `PLAINTEXT` output.                                                                                                                                                          | `{timestamp} {level}: {message}` |
+| `useAnsiColors`    | If `true`, enables ANSI color codes in `PLAINTEXT` output for log levels.                                                                                                                               | `false`                         |
+| `fieldsToExport`   | An array of field mapping objects for `JSON` and `CSV` export, specifying which fields to include.                                                                                                        | (All fields)                    |
+| `includeHeader`    | If `true`, includes a header row in `CSV` output.                                                                                                                                                       | `true`                          |
+| `jsonIndent`       | The number of spaces to use for indentation in `JSON` output. A value of `-1` disables pretty-printing.                                                                                                 | `4`                             |
+| `separator`        | The character to use as a field separator in `CSV` output.                                                                                                                                              | `,`                             |
+
+**Placeholders for `textFormatString`:**
+-   `{timestamp}`: The timestamp of the log entry.
+-   `{level}`: The log level (e.g., ERROR, INFO). Will be colorized if `useAnsiColors` is true.
+-   `{message}`: The main log message.
+-   `{id}`: The unique ID of the log entry, if available.
+-   `{sourceFile}`: The source file where the log originated.
+-   `{lineNumber}`: The line number in the source file.
+-   `{threadId}`: The ID of the thread that generated the log.
+-   `{module}`: The module or component name.
+-   `{host}`: The hostname where the log was generated.
+-   `{customFields}`: A formatted string of all custom fields, e.g., `key1:value1;key2:value2`.
+
 #### `statisticConfigs`
 An array of objects to configure which statistics to generate. Each object has a `type` and an optional `params` object.
 

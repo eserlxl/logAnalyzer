@@ -17,7 +17,7 @@ class LogWriter {
 public:
     explicit LogWriter(const LogAnalyzer& analyzer);
 
-    std::string formatEntry(const LogEntry& entry, const FormattingOptions& options) const;
+    static std::string formatEntry(const LogEntry& entry, const FormattingOptions& options) ;
     
     void printFilteredEntries(std::ostream& out, const filter::FilterCriteria& criteria, const FormattingOptions& options) const;
     void printFilteredEntries(std::ostream& out, const filter::FilterCriteria& criteria, std::string_view overallFormatString) const;

@@ -176,7 +176,7 @@ TEST_F(FilterTest, KeywordFilterSingleCaseInsensitive) {
 }
 
 TEST_F(FilterTest, KeywordFilterMultiAny) {
-    KeywordFilter filter({"error", "failed"}, KeywordFilter::Logic::ANY);
+    KeywordFilter filter({"error", "failed"}, KeywordFilter::Logic::OR);
     auto entry1 = createLogEntry(1, "app.log", now, LogLevel::INFO, "Request failed");
     auto entry2 = createLogEntry(2, "app.log", now, LogLevel::INFO, "An error was found");
     auto entry3 = createLogEntry(3, "app.log", now, LogLevel::INFO, "Success");
@@ -186,19 +186,19 @@ TEST_F(FilterTest, KeywordFilterMultiAny) {
 }
 
 TEST_F(FilterTest, KeywordFilterEmptyListAny) {
-    KeywordFilter filter({}, KeywordFilter::Logic::ANY); // Empty list for ANY
+    KeywordFilter filter({}, KeywordFilter::Logic::OR); // Empty list for OR (formerly ANY)
     auto entry = createLogEntry(1, "app.log", now, LogLevel::INFO, "Any message");
     EXPECT_FALSE(filter.matches(entry)); // Empty ANY list should never match
 }
 
 TEST_F(FilterTest, KeywordFilterEmptyListAll) {
-    KeywordFilter filter({}, KeywordFilter::Logic::ALL); // Empty list for ALL
+    KeywordFilter filter({}, KeywordFilter::Logic::AND); // Empty list for AND (formerly ALL)
     auto entry = createLogEntry(1, "app.log", now, LogLevel::INFO, "Any message");
     EXPECT_TRUE(filter.matches(entry)); // Empty ALL list should always match (vacuously true)
 }
 
 TEST_F(FilterTest, KeywordFilterMultiAll) {
-    KeywordFilter filter({"database", "connection", "failed"}, KeywordFilter::Logic::ALL);
+    KeywordFilter filter({"database", "connection", "failed"}, KeywordFilter::Logic::AND);
     auto entry1 = createLogEntry(1, "db.log", now, LogLevel::ERROR, "Database connection failed");
     auto entry2 = createLogEntry(2, "db.log", now, LogLevel::WARNING, "Database connection is slow");
     auto entry3 = createLogEntry(3, "db.log", now, LogLevel::ERROR, "Request failed");
@@ -304,8 +304,8 @@ TEST_F(FilterTest, BoolFilterWhitespaceAndMixedCaseValues) {
 }
 
 TEST_F(FilterTest, KeywordFilterEmptyLogMessage) {
-    KeywordFilter filter_any({"error"}, KeywordFilter::Logic::ANY);
-    KeywordFilter filter_all({"error"}, KeywordFilter::Logic::ALL);
+    KeywordFilter filter_any({"error"}, KeywordFilter::Logic::OR);
+    KeywordFilter filter_all({"error"}, KeywordFilter::Logic::AND);
 
     auto entry_empty_msg = createLogEntry(1, "file.log", now, LogLevel::INFO, "");
     auto entry_with_msg = createLogEntry(2, "file.log", now, LogLevel::INFO, "some message");
@@ -317,7 +317,7 @@ TEST_F(FilterTest, KeywordFilterEmptyLogMessage) {
 }
 
 TEST_F(FilterTest, KeywordFilterOverlappingKeywordsAny) {
-    KeywordFilter filter({"apple", "apple pie"}, KeywordFilter::Logic::ANY);
+    KeywordFilter filter({"apple", "apple pie"}, KeywordFilter::Logic::OR);
     auto entry1 = createLogEntry(1, "log", now, LogLevel::INFO, "I like apple");
     auto entry2 = createLogEntry(2, "log", now, LogLevel::INFO, "I like apple pie");
     auto entry3 = createLogEntry(3, "log", now, LogLevel::INFO, "I like fruit");
@@ -327,7 +327,7 @@ TEST_F(FilterTest, KeywordFilterOverlappingKeywordsAny) {
 }
 
 TEST_F(FilterTest, KeywordFilterOverlappingKeywordsAll) {
-    KeywordFilter filter({"apple", "apple pie"}, KeywordFilter::Logic::ALL);
+    KeywordFilter filter({"apple", "apple pie"}, KeywordFilter::Logic::AND);
     auto entry1 = createLogEntry(1, "log", now, LogLevel::INFO, "I like apple and apple pie");
     auto entry2 = createLogEntry(2, "log", now, LogLevel::INFO, "I like apple"); // Only 'apple'
     auto entry3 = createLogEntry(3, "log", now, LogLevel::INFO, "I like pie"); // Neither
