@@ -6,6 +6,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
+[![Build Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake-ci.yml/badge.svg)](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake-ci.yml)
 ![Platform: Linux | macOS | Windows](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue)
 [![Project Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg)](https://github.com/eserlxl/logAnalyzer)
 
@@ -42,7 +43,7 @@ Modern applications generate gigabytes of logs daily. While tools like `grep`, `
     - **Complex Expressions**: `(level=ERROR OR level=WARN) AND NOT msg contains "noise"`.
 - **📊 Statistical Analysis**: Generate instant reports on entry rates, top error messages, and more.
 - **📂 Multi-File & Sorting**: Analyze multiple files at once and sort results by any field.
-- **🛠 Structured Support**: Native parsing for JSON logs and customizable text patterns.
+- **🛠 Structured Support**: Native parsing for JSON logs and customizable text patterns, with the ability to apply different patterns to different files.
 - **⚙️ Configurable**: Use JSON configuration files for persistent, complex setups.
 - **📤 Flexible Export**: Output to Text, CSV, JSON, or XML.
 - **🔄 Live Monitoring**: Tail files in real-time with filtering applied (`--tail`).
@@ -129,6 +130,7 @@ For more in-depth information, explore the documentation in the [`docs/`](./docs
 ### Developer Documentation
 - [**Build Guide**](docs/build.md)
 - [**Project Structure**](docs/project-structure.md)
+- [**API Reference**](docs/api-reference.md)
 - [**Contributing Guide**](CONTRIBUTING.md)
 - [**Code of Conduct**](CODE_OF_CONDUCT.md)
 

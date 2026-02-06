@@ -5,9 +5,15 @@
 // Test suite for new features in Iteration 13 for FilterExpression
 class Iteration13ExpressionTest : public ::testing::Test {
 protected:
-    FilterCondition cond1{LogEntryField::LEVEL, FilterOperator::EQUALS, "INFO"};
-    FilterCondition cond2{LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error"};
-    FilterCondition cond3{LogEntryField::SOURCE_FILE, FilterOperator::EQUALS, "main.cpp"};
+    FilterCondition cond1;
+    FilterCondition cond2;
+    FilterCondition cond3;
+
+    Iteration13ExpressionTest()
+        : cond1(FilterCondition::createString(LogEntryField::LEVEL, FilterOperator::EQUALS, "INFO").value()),
+          cond2(FilterCondition::createString(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error").value()),
+          cond3(FilterCondition::createString(LogEntryField::SOURCE_FILE, FilterOperator::EQUALS, "main.cpp").value())
+    {}
 };
 
 TEST_F(Iteration13ExpressionTest, ToStringBasicCondition) {

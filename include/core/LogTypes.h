@@ -187,7 +187,9 @@ enum class ParseError {
     SUCCESS,
     PARTIAL_FAILURE,
     UNKNOWN_ERROR,
-    INVALID_REGEX_PATTERN
+    INVALID_REGEX_PATTERN,
+    FILE_ERROR, // New: For file not found/not readable errors
+    SETTINGS_RESTORE_FAILED // New: For when restoring settings fails
 };
 
 enum class ParserErrorAction {
@@ -200,6 +202,30 @@ struct LogParseError {
     ParseError error;
     std::string message;
     size_t lineNumber;
+    std::optional<ErrorCode::Error> originalError; // New member to store the underlying ErrorCode::Error
+
+    // Default constructor
+    LogParseError(ParseError err = ParseError::UNKNOWN_ERROR, std::string msg = "", size_t line = 0)
+        : error(err), message(std::move(msg)), lineNumber(line), originalError(std::nullopt) {}
+
+    // Constructor with original ErrorCode::Error
+    LogParseError(ParseError err, std::string msg, size_t line, const ErrorCode::Error& original)
+        : error(err), message(std::move(msg)), lineNumber(line), originalError(original) {}
+    
+    // Constructor to convert ErrorCode::Error directly
+    explicit LogParseError(const ErrorCode::Error& err, size_t line = 0)
+        : message(err.message), lineNumber(line), originalError(err) {
+            // Map ErrorCode::Code to ParseError if possible
+            if (err.code == Code::FileNotFound || err.code == Code::FileNotReadable) {
+                error = ParseError::FILE_ERROR;
+            } else if (err.code == Code::InvalidRegex) {
+                error = ParseError::INVALID_REGEX_PATTERN;
+            } else if (err.code == Code::SettingsRestoreFailed) {
+                error = ParseError::SETTINGS_RESTORE_FAILED;
+            } else {
+                error = ParseError::UNKNOWN_ERROR;
+            }
+        }
 };
 
 struct AnalysisReport {

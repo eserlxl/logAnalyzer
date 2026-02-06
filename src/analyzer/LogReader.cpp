@@ -25,12 +25,78 @@
 #include <filesystem>
 #include <shared_mutex> // Required for stateMutex_
 
-// Forward declaration for LogAnalyzer members that LogReader needs to access (like settings, entries_, etc.)
-// This is a common pattern when a class needs to interact with another but not own it or be fully defined by it.
-// The LogAnalyzer itself will provide accessors to its members, likely via the analyzer_ member.
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
+#include "analyzer/LogReader.h"
+#include "analyzer/Core.h" // For LogAnalyzer definition which LogReader needs
+#include "core/LogParser.h"
+#include "filter/Core.h"
+#include "stats/Statistics.h"
+#include "export/Exporter.h"
+#include "utils/UtilsCore.h"
+#include "core/Error.h"
+#include <fstream>
+#include <iostream>
+#include <algorithm>
+#include <regex>
+#include <iomanip>
+#include <sstream>
+#include <memory> 
+#include <vector>
+#include <utility>
+#include <future>
+#include <functional>
+#include <iterator>
+#include <map>
+#include <filesystem>
+#include <shared_mutex> // Required for stateMutex_
 
 // Constructor implementation
 LogReader::LogReader(LogAnalyzer& analyzer) : analyzer_(analyzer) {}
+
+// Implementation of LogReader::ScopedLogSettings
+// Assumes analyzer_.stateMutex_ is already locked (unique_lock) by the caller.
+LogReader::ScopedLogSettings::ScopedLogSettings(LogAnalyzer& analyzer, const std::string& pattern_val, LogReader& reader)
+    : analyzer_(analyzer), reader_(reader), restorationError_(std::nullopt), settingsRestored_(false) {
+    originalSettings_ = analyzer_.getSettings(); // Get original settings (under lock)
+    LogAnalyzerSettings tempSettings = originalSettings_;
+
+    if (pattern_val == DEFAULT_LOG_REGEX_PATTERN_SV) {
+        reader_.setDefaultFieldMappings(tempSettings); // Call helper through reader instance
+        // Low-risk cleanup: Redundant assignment of DEFAULT_LOG_REGEX_PATTERN_SV is implicitly removed.
+        // The setDefaultFieldMappings or prior settings logic should handle setting this if appropriate.
+    } else {
+        tempSettings.fieldMappings.clear();
+    }
+    tempSettings.lineParsePattern = pattern_val; // Set the pattern
+
+    if (auto res = analyzer_.setSettings(tempSettings); !res) {
+        // Error setting temporary settings. Store the error, and indicate restoration is not needed.
+        initialSetSettingsError_ = res.error();
+    }
+}
+
+LogReader::ScopedLogSettings::~ScopedLogSettings() {
+    if (!initialSetSettingsError_.has_value() && !settingsRestored_) {
+        if (auto res = analyzer_.setSettings(originalSettings_); !res) {
+            restorationError_ = res.error(); // Store the error for caller to potentially retrieve
+            std::cerr << "CRITICAL ERROR: Failed to restore original settings during LogReader cleanup: " << res.error().message << std::endl;
+        }
+    }
+}
+
+void LogReader::ScopedLogSettings::markSettingsRestored() {
+    settingsRestored_ = true;
+}
+
+std::optional<ErrorCode::Error> LogReader::ScopedLogSettings::getInitialSetSettingsError() const {
+    return initialSetSettingsError_;
+}
+
+std::optional<ErrorCode::Error> LogReader::ScopedLogSettings::getRestorationError() const {
+    return restorationError_;
+}
 
 // Private helper for default field mappings
 void LogReader::setDefaultFieldMappings(LogAnalyzerSettings& settings) {
@@ -41,7 +107,7 @@ void LogReader::setDefaultFieldMappings(LogAnalyzerSettings& settings) {
 }
 
 // Private helper for parsing
-std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
+std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogParser* parser, std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
     std::vector<LogEntry> parsedEntries;
     AnalysisReport report;
     report.status = ParseError::SUCCESS;
@@ -52,11 +118,9 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(std::
         lineNumber++;
         report.linesProcessed++;
         
-        // Assuming currentParser_ is accessible or managed by analyzer_
-        auto parseResult = analyzer_.getCurrentParser()->parseLine(line, lineNumber, sourceIdentifier);
+        auto parseResult = parser->parseLine(line, lineNumber, sourceIdentifier);
         if (parseResult.has_value()) {
             LogEntry entry = parseResult.value(); 
-            std::cout << "DEBUG: Parsed Entry Level: " << (int)entry.level << ", String: " << Utils::logLevelToString(entry.level) << ", Message: " << entry.message << std::endl; // TEMP DEBUG
             entry.sourceFile = sourceIdentifier;
             parsedEntries.push_back(entry);
             report.successfulParses++;
@@ -66,11 +130,11 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(std::
             } else if (errorAction == CLIConfig::ParserErrorAction::Throw) {
                 // This will be handled by the caller by checking the Result
             }
-            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber});
+            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber, parseResult.error()});
         }
     }
 
-    auto flushResults = analyzer_.getCurrentParser()->flushRemaining();
+    auto flushResults = parser->flushRemaining();
     for (const auto& result : flushResults) {
         if (result.has_value()) {
             LogEntry entry = result.value();
@@ -81,7 +145,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(std::
             if (errorAction == CLIConfig::ParserErrorAction::Warn) {
                  std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << std::endl;
             }
-            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.error().message, 0});
+            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.error().message, 0, result.error()});
         }
     }
 
@@ -92,11 +156,10 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(std::
     return {parsedEntries, report};
 }
 
-// Public methods for loading/replacing/appending
-ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
-    // Accessing LogAnalyzer's mutex and state
-    std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Use analyzer's mutex
-    
+// Private helper to perform load and replace logic.
+// Assumes analyzer_.stateMutex_ is already locked (unique_lock) by the caller.
+// The parser passed is expected to be stable for the duration of this call.
+ErrorCode::Result<AnalysisReport> LogReader::doLoadAndReplace(ILogParser* parser, const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
     if (!std::filesystem::exists(filePath)) {
         return std::unexpected(ErrorCode::Error::fileNotFound(filePath));
     }
@@ -105,183 +168,75 @@ ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& f
         return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
     }
 
-    // Clear entries and get new ones
-    std::vector<LogEntry> parsedEntries;
-    AnalysisReport report;
-    std::tie(parsedEntries, report) = parseAndReport(file, filePath, errorAction);
+    // Use C++17 structured bindings
+    auto [parsedEntries, report] = parseAndReport(parser, file, filePath, errorAction);
 
-    // Update analyzer's entries and statistics
-    analyzer_.entries_ = std::move(parsedEntries); // Direct modification, assumes friendship or public access
+    // Modify analyzer_.entries_ (requires unique_lock from caller)
+    analyzer_.entries_ = std::move(parsedEntries);
     
     // Process statistics for all newly loaded entries
-    for (const auto& entry : analyzer_.entries_) { // Use analyzer_.entries_
-        analyzer_.processEntryForStatistics(entry); // Call method on analyzer_
+    for (const auto& entry : analyzer_.entries_) {
+        analyzer_.processEntryForStatistics(entry);
     }
     
     std::sort(analyzer_.entries_.begin(), analyzer_.entries_.end(), [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
-    analyzer_.lastReport = report; // Update analyzer's report
+    analyzer_.lastReport = report;
     
     return report;
 }
 
-ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& filePath, const std::string& pattern) {
-    LogAnalyzerSettings oldSettings = analyzer_.getSettings(); // Get settings from analyzer
-    LogAnalyzerSettings tempSettings = oldSettings;
+// Private helper to perform append logic.
+// Assumes analyzer_.stateMutex_ is already locked (unique_lock) by the caller.
+// The parser passed is expected to be stable for the duration of this call.
+ErrorCode::Result<AnalysisReport> LogReader::doAppend(ILogParser* parser, const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    if (!std::filesystem::exists(filePath)) {
+        return std::unexpected(ErrorCode::Error::fileNotFound(filePath));
+    }
+    std::ifstream file(filePath);
+    if (!file.is_open()) {
+        return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
+    }
+
+    // Use C++17 structured bindings
+    auto [newEntries, report] = parseAndReport(parser, file, filePath, errorAction);
     
-    if (pattern == DEFAULT_LOG_REGEX_PATTERN_SV) {
-        setDefaultFieldMappings(tempSettings); // Use LogReader's helper
-    } else {
-        tempSettings.fieldMappings.clear();
-    }
-    tempSettings.lineParsePattern = pattern; // Set the pattern
-    
-    // Attempt to set temporary settings. Handle potential errors.
-    if (auto res = analyzer_.setSettings(tempSettings); !res) { // Use analyzer's setSettings
-        AnalysisReport report_error; // Local report for error details
-        report_error.status = ParseError::INVALID_REGEX_PATTERN;
-        report_error.parseErrors.emplace_back(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
-        std::cerr << "Error setting temporary settings: " << res.error().message << std::endl;
-        
-        // Attempt to restore settings.
-        if (auto restore_res = analyzer_.setSettings(oldSettings); !restore_res) { // Use analyzer's setSettings
-            std::cerr << "Error restoring settings after temp set failed: " << restore_res.error().message << std::endl;
-        }
-        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, report_error.parseErrors[0].message));
-    }
-
-    // Load the file using the temporary settings.
-    auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
-
-    // Restore original settings.
-    if (auto res = analyzer_.setSettings(oldSettings); !res) { // Use analyzer's setSettings
-        std::cerr << "Error restoring settings: " << res.error().message << std::endl;
-        if (!reportResult.has_value()) {
-             return std::unexpected(ErrorCode::Error(Code::SettingsRestoreFailed, "Failed to restore original settings after load: " + res.error().message));
-        }
-    }
-    
-    return reportResult;
-}
-
-ErrorCode::Result<AnalysisReport> LogReader::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
-    auto reportResult = loadAndReplace(filePath, errorAction);
-    if (!reportResult) {
-        return std::unexpected(reportResult.error());
-    }
-    return reportResult;
-}
-
-std::expected<void, LogParseError> LogReader::load(const std::string& filePath, const std::string& pattern) {
-    LogAnalyzerSettings oldSettings = analyzer_.getSettings();
-    LogAnalyzerSettings tempSettings = oldSettings;
-    
-    if (pattern == DEFAULT_LOG_REGEX_PATTERN_SV) {
-        setDefaultFieldMappings(tempSettings);
-        tempSettings.lineParsePattern = DEFAULT_LOG_REGEX_PATTERN_SV;
-    } else {
-        tempSettings.fieldMappings.clear();
-        tempSettings.lineParsePattern = pattern;
-    }
-    
-    if (auto res = analyzer_.setSettings(tempSettings); !res) {
-        return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
-    }
-
-    auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
-
-    if (auto res = analyzer_.setSettings(oldSettings); !res) {
-        std::cerr << "Error restoring settings: " << res.error().message << std::endl;
-    }
-    
-    if (!reportResult) {
-        return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, reportResult.error().message, 0});
-    }
-    
-    AnalysisReport report = *reportResult;
-    if (report.status != ParseError::SUCCESS && report.status != ParseError::PARTIAL_FAILURE) {
-        return std::unexpected(LogParseError{report.status, report.parseErrors.empty() ? "" : report.parseErrors[0].message, 0});
-    }
-    
-    return {};
-}
-
-std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
-    // Use std::launch::async to ensure it runs in a separate thread
-    return std::async(std::launch::async, [this, filePath, errorAction]() {
-        return load(filePath, errorAction);
-    });
-}
-
-std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::string& filePath, const std::string& pattern) {
-    return std::async(std::launch::async, [this, filePath, pattern]() -> ErrorCode::Result<AnalysisReport> {
-        LogAnalyzerSettings oldSettings = analyzer_.getSettings();
-        LogAnalyzerSettings tempSettings = oldSettings;
-
-        if (pattern == DEFAULT_LOG_REGEX_PATTERN_SV) {
-            setDefaultFieldMappings(tempSettings);
-            tempSettings.lineParsePattern = DEFAULT_LOG_REGEX_PATTERN_SV;
-        } else {
-            tempSettings.fieldMappings.clear();
-            tempSettings.lineParsePattern = pattern;
-        }
-        
-        if (auto res = analyzer_.setSettings(tempSettings); !res) {
-            AnalysisReport report_error;
-            report_error.status = ParseError::INVALID_REGEX_PATTERN;
-            report_error.parseErrors.emplace_back(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
-            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, res.error().message));
-        }
-
-        auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
-
-        if (auto res = analyzer_.setSettings(oldSettings); !res) {
-            std::cerr << "Error restoring settings: " << res.error().message << std::endl;
-        }
-
-        return reportResult;
-    });
-}
-
-ErrorCode::Result<AnalysisReport> LogReader::streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
-    auto [newEntries, report] = parseAndReport(is, sourceIdentifier, errorAction);
-
     std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
     if (newEntries.empty()) {
+        analyzer_.lastReport = report; // Update last report even if nothing new was appended
         return report;
     }
 
     std::vector<LogEntry> mergedEntries;
-    mergedEntries.reserve(analyzer_.entries_.size() + newEntries.size()); // Access analyzer's entries
+    mergedEntries.reserve(analyzer_.entries_.size() + newEntries.size());
 
-    { // Scope for shared_lock to read entries_
-        std::shared_lock<std::shared_mutex> sharedLock(analyzer_.stateMutex_); // Use analyzer's mutex
-        std::merge(analyzer_.entries_.begin(), analyzer_.entries_.end(),
-                   newEntries.begin(), newEntries.end(),
-                   std::back_inserter(mergedEntries),
-                   [](const LogEntry& a, const LogEntry& b) {
-                       return a.timestamp < b.timestamp;
-                   });
-    } // shared_lock is released here
+    // All modifications to analyzer_.entries_ are done under the assumption of a unique_lock held by the caller.
+    std::merge(analyzer_.entries_.begin(), analyzer_.entries_.end(),
+               newEntries.begin(), newEntries.end(),
+               std::back_inserter(mergedEntries),
+               [](const LogEntry& a, const LogEntry& b) {
+                   return a.timestamp < b.timestamp;
+               });
+    
+    analyzer_.entries_.swap(mergedEntries);
+    
+    for (const auto& entry : newEntries) {
+        analyzer_.processEntryForStatistics(entry);
+    }
 
-    { // Scope for unique_lock to modify entries_ and process stats
-        std::unique_lock<std::shared_mutex> uniqueLock(analyzer_.stateMutex_); // Use analyzer's mutex
-        analyzer_.entries_.swap(mergedEntries); // Modify analyzer's entries_
-        
-        for (const auto& entry : newEntries) {
-            analyzer_.processEntryForStatistics(entry); // Call method on analyzer_
-        }
-    } // unique_lock is released here
-
+    analyzer_.lastReport = report; // Update last report
     return report;
 }
 
-ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
+// Private helper to perform analyzeStream logic.
+// Assumes analyzer_.stateMutex_ is already locked (shared_lock or unique_lock) by the caller.
+// The parser passed is expected to be stable for the duration of this call.
+ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
     for (const auto& filePath : filePaths) {
         std::istream* input;
         std::ifstream file;
@@ -300,8 +255,7 @@ ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>&
         bool shouldContinue = true;
         while (std::getline(*input, line)) {
             lineNumber++;
-            // Assuming currentParser_ is accessible or managed by analyzer_
-            auto parseResultOpt = analyzer_.getCurrentParser()->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
+            auto parseResultOpt = parser->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
             if (parseResultOpt.has_value()) {
                 const auto& result = parseResultOpt.value();
                 if (result.has_value()) {
@@ -321,6 +275,7 @@ ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>&
                         partialEntry.message = line;
                         partialEntry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
                         partialEntry.id = lineNumber;
+                        partialEntry.sourceLineNumber = lineNumber; 
                         if (!entryCallback(partialEntry)) {
                             shouldContinue = false;
                             break;
@@ -331,7 +286,7 @@ ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>&
             if (!shouldContinue) break;
         }
         
-        auto flushResults = analyzer_.getCurrentParser()->flushRemaining();
+        auto flushResults = parser->flushRemaining();
         for (const auto& result : flushResults) {
             if (result.has_value()) {
                 LogEntry entry = result.value();
@@ -353,100 +308,203 @@ ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>&
     return {};
 }
 
-std::expected<void, LogParseError> LogReader::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern) {
-    LogAnalyzerSettings oldSettings = analyzer_.getSettings();
-    LogAnalyzerSettings tempSettings = oldSettings;
-    tempSettings.lineParsePattern = pattern;
-    if (pattern == DEFAULT_LOG_REGEX_PATTERN_SV) {
-        setDefaultFieldMappings(tempSettings);
-    } else {
-        tempSettings.fieldMappings.clear();
-    }
+// Public methods for loading/replacing/appending
+ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Acquire unique lock at start
+    ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
+    return doLoadAndReplace(currentParser, filePath, errorAction);
+}
+
+ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& filePath, const std::string& pattern) {
+    std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Protect entire sequence
     
-    if (auto res = analyzer_.setSettings(tempSettings); !res) {
-        return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
+    ScopedLogSettings scopedSettings(analyzer_, pattern, *this);
+    if (scopedSettings.getInitialSetSettingsError().has_value()) {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, scopedSettings.getInitialSetSettingsError()->message));
     }
 
-    auto result = analyzeStream(filePaths, entryCallback, CLIConfig::ParserErrorAction::Warn);
+    ILogParser* currentParser = analyzer_.getCurrentParser();
+    auto reportResult = doLoadAndReplace(currentParser, filePath, CLIConfig::ParserErrorAction::Warn);
 
-    if (auto res = analyzer_.setSettings(oldSettings); !res) {
-        std::cerr << "Error restoring settings: " << res.error().message << std::endl;
+    if (scopedSettings.getRestorationError().has_value()) {
+        if (reportResult.has_value()) {
+            // Parsing was successful, but restoration failed. Add to report.
+            reportResult.value().parseErrors.emplace_back(
+                LogParseError{ParseError::SETTINGS_RESTORE_FAILED, scopedSettings.getRestorationError()->message, 0, scopedSettings.getRestorationError().value()}
+            );
+            if (reportResult.value().status == ParseError::SUCCESS) {
+                reportResult.value().status = ParseError::PARTIAL_FAILURE; // Indicate some issue
+            }
+        }
+        // If reportResult had an error, we don't need to add the restoration error to it again,
+        // as the primary parsing error is more relevant. The critical error for restoration will be logged.
     }
     
-    if(!result) {
-        return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, result.error().message, 0});
+    return reportResult;
+}
+
+ErrorCode::Result<AnalysisReport> LogReader::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    auto reportResult = loadAndReplace(filePath, errorAction);
+    if (!reportResult) {
+        // No need to convert error type as load() returns ErrorCode::Result<AnalysisReport>
+        return std::unexpected(reportResult.error());
     }
+    return reportResult;
+}
+
+std::expected<void, LogParseError> LogReader::load(const std::string& filePath, const std::string& pattern) {
+    std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_);
+
+    ScopedLogSettings scopedSettings(analyzer_, pattern, *this);
+    if (scopedSettings.getInitialSetSettingsError().has_value()) {
+        return std::unexpected(LogParseError(scopedSettings.getInitialSetSettingsError().value()));
+    }
+
+    ILogParser* currentParser = analyzer_.getCurrentParser();
+    auto reportResult = doLoadAndReplace(currentParser, filePath, CLIConfig::ParserErrorAction::Warn);
+
+    if (scopedSettings.getRestorationError().has_value()) {
+        // If restoration failed, return an error indicating that.
+        // This addresses audit point 4 for this method.
+        return std::unexpected(LogParseError(scopedSettings.getRestorationError().value()));
+    }
+    
+    if (!reportResult) {
+        // Convert ErrorCode::Result error to LogParseError. This addresses audit point 3.
+        return std::unexpected(LogParseError(reportResult.error()));
+    }
+    
+    // If all successful (parsing and settings management)
     return {};
 }
 
-ErrorCode::Result<AnalysisReport> LogReader::append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
-    std::ifstream file(filePath);
-    if (!file.is_open()) {
-        return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
-    }
+std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    // Use std::launch::async to ensure it runs in a separate thread
+    // The synchronous load method will acquire its own lock.
+    return std::async(std::launch::async, [this, filePath, errorAction]() {
+        return load(filePath, errorAction);
+    });
+}
 
-    auto [newEntries, report] = parseAndReport(file, filePath, errorAction);
-    
+std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::string& filePath, const std::string& pattern) {
+    return std::async(std::launch::async, [this, filePath, pattern]() -> ErrorCode::Result<AnalysisReport> {
+        std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Protect entire sequence in async thread
+        
+        ScopedLogSettings scopedSettings(analyzer_, pattern, *this);
+        if (scopedSettings.getInitialSetSettingsError().has_value()) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, scopedSettings.getInitialSetSettingsError()->message));
+        }
+
+        ILogParser* currentParser = analyzer_.getCurrentParser();
+        auto reportResult = doLoadAndReplace(currentParser, filePath, CLIConfig::ParserErrorAction::Warn);
+
+        if (scopedSettings.getRestorationError().has_value()) {
+            if (reportResult.has_value()) {
+                reportResult.value().parseErrors.emplace_back(
+                    LogParseError{ParseError::SETTINGS_RESTORE_FAILED, scopedSettings.getRestorationError()->message, 0, scopedSettings.getRestorationError().value()}
+                );
+                if (reportResult.value().status == ParseError::SUCCESS) {
+                    reportResult.value().status = ParseError::PARTIAL_FAILURE;
+                }
+            }
+        }
+
+        return reportResult;
+    });
+}
+
+ErrorCode::Result<AnalysisReport> LogReader::streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
+    std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Acquire unique lock at start (High-risk 1)
+    ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
+
+    // Use C++17 structured bindings
+    auto [newEntries, report] = parseAndReport(currentParser, is, sourceIdentifier, errorAction);
+
     std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
     if (newEntries.empty()) {
+        analyzer_.lastReport = report; // Update last report even if nothing new was appended
         return report;
     }
 
     std::vector<LogEntry> mergedEntries;
-    mergedEntries.reserve(analyzer_.entries_.size() + newEntries.size()); // Access analyzer's entries
+    mergedEntries.reserve(analyzer_.entries_.size() + newEntries.size());
 
-    { // Scope for shared_lock to read entries_
-        std::shared_lock<std::shared_mutex> sharedLock(analyzer_.stateMutex_); // Use analyzer's mutex
-        std::merge(analyzer_.entries_.begin(), analyzer_.entries_.end(),
-                   newEntries.begin(), newEntries.end(),
-                   std::back_inserter(mergedEntries),
-                   [](const LogEntry& a, const LogEntry& b) {
-                       return a.timestamp < b.timestamp;
-                   });
-    } // shared_lock is released here
+    // All modifications to analyzer_.entries_ are done under the unique_lock held for the entire function.
+    std::merge(analyzer_.entries_.begin(), analyzer_.entries_.end(),
+               newEntries.begin(), newEntries.end(),
+               std::back_inserter(mergedEntries),
+               [](const LogEntry& a, const LogEntry& b) {
+                   return a.timestamp < b.timestamp;
+               });
+    
+    analyzer_.entries_.swap(mergedEntries); // Modify analyzer's entries_
+    
+    for (const auto& entry : newEntries) {
+        analyzer_.processEntryForStatistics(entry); // Call method on analyzer_
+    }
 
-    { // Scope for unique_lock to modify entries_ and process stats
-        std::unique_lock<std::shared_mutex> uniqueLock(analyzer_.stateMutex_); // Use analyzer's mutex
-        analyzer_.entries_.swap(mergedEntries); // Modify analyzer's entries_
-        
-        for (const auto& entry : newEntries) {
-            analyzer_.processEntryForStatistics(entry); // Call method on analyzer_
-        }
-    } // unique_lock is released here
-
+    analyzer_.lastReport = report; // Update last report
     return report;
 }
 
+ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
+    std::shared_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Shared lock for reading parser state (High-risk 1)
+    ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
+
+    return doAnalyzeStreamInternal(currentParser, filePaths, entryCallback, errorAction);
+}
+
+std::expected<void, LogParseError> LogReader::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern) {
+    std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Protect entire sequence (High-risk 2)
+
+    ScopedLogSettings scopedSettings(analyzer_, pattern, *this);
+    if (scopedSettings.getInitialSetSettingsError().has_value()) {
+        return std::unexpected(LogParseError(scopedSettings.getInitialSetSettingsError().value()));
+    }
+
+    ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser after settings are applied
+    auto result = doAnalyzeStreamInternal(currentParser, filePaths, entryCallback, CLIConfig::ParserErrorAction::Warn);
+
+    if (scopedSettings.getRestorationError().has_value()) {
+        // If restoration failed, return an error indicating that.
+        return std::unexpected(LogParseError(scopedSettings.getRestorationError().value()));
+    }
+    
+    if (!result) {
+        // Convert ErrorCode::Result error to LogParseError. This addresses audit point 3.
+        return std::unexpected(LogParseError(result.error()));
+    }
+    return {};
+}
+
+ErrorCode::Result<AnalysisReport> LogReader::append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+    std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Acquire unique lock at start
+    ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
+    return doAppend(currentParser, filePath, errorAction);
+}
+
 std::expected<void, LogParseError> LogReader::append(const std::string& filePath, const std::string& pattern) {
-    LogAnalyzerSettings oldSettings = analyzer_.getSettings();
-    LogAnalyzerSettings tempSettings = oldSettings;
-    tempSettings.lineParsePattern = pattern;
-    if (pattern == DEFAULT_LOG_REGEX_PATTERN_SV) {
-        setDefaultFieldMappings(tempSettings);
-    } else {
-        tempSettings.fieldMappings.clear();
+    std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Protect entire sequence
+
+    ScopedLogSettings scopedSettings(analyzer_, pattern, *this);
+    if (scopedSettings.getInitialSetSettingsError().has_value()) {
+        return std::unexpected(LogParseError(scopedSettings.getInitialSetSettingsError().value()));
     }
 
-    if (auto res = analyzer_.setSettings(tempSettings); !res) {
-        return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
-    }
+    ILogParser* currentParser = analyzer_.getCurrentParser();
+    auto reportResult = doAppend(currentParser, filePath, CLIConfig::ParserErrorAction::Warn);
 
-    auto reportResult = append(filePath, CLIConfig::ParserErrorAction::Warn);
-
-    if (auto res = analyzer_.setSettings(oldSettings); !res) {
-        std::cerr << "Error restoring settings: " << res.error().message << std::endl;
-        if (!reportResult) {
-             const auto& error = reportResult.error();
-             return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, error.message, 0});
-        }
+    if (scopedSettings.getRestorationError().has_value()) {
+        // If restoration failed, return an error indicating that.
+        return std::unexpected(LogParseError(scopedSettings.getRestorationError().value()));
     }
 
     if (!reportResult) {
-        const auto& error = reportResult.error();
-        return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, error.message, 0});
+        // Convert ErrorCode::Result error to LogParseError. This addresses audit point 3.
+        return std::unexpected(LogParseError(reportResult.error()));
     }
     
     return {};
