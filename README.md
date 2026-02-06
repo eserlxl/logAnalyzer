@@ -131,6 +131,8 @@ For more in-depth information, explore the documentation in the [`docs/`](./docs
 ### Developer Documentation
 - [**Build Guide**](docs/build.md)
 - [**Project Structure**](docs/project-structure.md)
+- [**Contributing Guide**](CONTRIBUTING.md)
+- [**Code of Conduct**](CODE_OF_CONDUCT.md)
 
 ## 🤝 Contributing
 
