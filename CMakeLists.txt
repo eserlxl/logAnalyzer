@@ -55,6 +55,7 @@ set(LIB_SOURCES
     src/filter/EnumStringConversions.cpp
     src/filter/Expression.cpp
     src/filter/ConcreteFilters.cpp
+    src/filter/FilterParser.cpp
     src/stats/Statistics.cpp
     src/utils/IpAddress.cpp
     src/utils/Version.cpp

@@ -14,7 +14,7 @@
 - [🤔 Why logAnalyzer?](#-why-loganalyzer)
 - [✨ Key Features](#-key-features)
 - [🚀 Getting Started](#-getting-started)
-- [Usage](#usage)
+- [🏃 Quick Start & Basic Usage](#-quick-start--basic-usage)
 - [📚 Documentation](#-documentation)
 - [🤝 Contributing](#-contributing)
 - [📜 Changelog](#-changelog)
@@ -40,6 +40,7 @@ Modern applications generate gigabytes of logs daily. While tools like `grep`, `
 - **🔍 Advanced Filtering**:
     - Filter by **Log Level** (ERROR, WARN, INFO).
     - Filter by **Time Range** (Absolute or Relative).
+    - Filter by **IP Address** (Source, Destination).
     - **Complex Expressions**: `(level=ERROR OR level=WARN) AND NOT msg contains "noise"`.
 - **📊 Statistical Analysis**: Generate instant reports on entry rates, top error messages, and more.
 - **📂 Multi-File & Sorting**: Analyze multiple files at once and sort results by any field.
@@ -79,9 +80,19 @@ For detailed, platform-specific instructions, please refer to the [**Installatio
    ./build/bin/logAnalyzer --help
    ```
 
-## Usage
+## 🏃 Quick Start & Basic Usage
 
 `logAnalyzer` is a versatile tool. Here’s a quick overview of its command-line interface.
+
+### Minimal Example
+
+To quickly see `logAnalyzer` in action, pipe a simple log line into it:
+
+```bash
+echo "INFO 2023-10-27 12:30:00 This is a test log message." | ./build/bin/logAnalyzer
+```
+
+This will parse and display the single log entry.
 
 ### Basic Syntax
 

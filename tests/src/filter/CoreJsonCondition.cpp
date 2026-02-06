@@ -24,7 +24,7 @@ TEST_F(FilterJsonTest, ToJsonStandardField) {
 
     EXPECT_EQ(j["field"], "TIMESTAMP");
     EXPECT_EQ(j["op"], "GREATER_THAN");
-    EXPECT_EQ(j["value"], "2023-01-01T00:00:00Z");
+    EXPECT_EQ(j["value"].get<std::string>(), "2023-01-01T00:00:00Z");
     EXPECT_EQ(j["value_type"], "DATETIME");
     EXPECT_EQ(j["caseSensitive"], false);
     EXPECT_EQ(j["datetimeFormat"], "%Y-%m-%dT%H:%M:%SZ");
@@ -41,7 +41,7 @@ TEST_F(FilterJsonTest, ToJsonCustomField) {
 
     EXPECT_EQ(j["field"], "myCustomKey"); // Custom field name is the value of "field"
     EXPECT_EQ(j["op"], "EQUALS");
-    EXPECT_EQ(j["value"], "my_custom_value");
+    EXPECT_EQ(j["value"].get<std::string>(), "my_custom_value");
     EXPECT_EQ(j["value_type"], "STRING");
     EXPECT_EQ(j["caseSensitive"], true);
     EXPECT_FALSE(j.contains("datetimeFormat"));
@@ -65,7 +65,7 @@ TEST_F(FilterJsonTest, FromJsonSuccessStandardField) {
 
     EXPECT_EQ(fc.field, LogEntryField::MESSAGE);
     EXPECT_EQ(fc.op, FilterOperator::CONTAINS);
-    EXPECT_EQ(fc.value, "warning");
+    EXPECT_EQ(std::get<std::string>(fc.value), "warning");
     EXPECT_EQ(fc.valueType, FilterValueType::STRING);
     EXPECT_TRUE(fc.caseSensitive);
     EXPECT_FALSE(fc.customField.has_value());
@@ -87,7 +87,7 @@ TEST_F(FilterJsonTest, FromJsonSuccessCustomField) {
     EXPECT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "someDynamicKey");
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    EXPECT_EQ(fc.value, "specific_value");
+    EXPECT_EQ(std::get<std::string>(fc.value), "specific_value");
     EXPECT_EQ(fc.valueType, FilterValueType::STRING);
     EXPECT_FALSE(fc.caseSensitive);
 }

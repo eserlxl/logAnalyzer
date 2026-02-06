@@ -83,6 +83,28 @@ public:
     ErrorCode::Result<void> validate() const;
 
     /**
+     * @brief Simplifies the expression tree into a canonical form.
+     *
+     * This method applies rules to reduce redundancy. For example:
+     * - Flattens nested AND/OR groups: `(A AND (B AND C))` -> `(A AND B AND C)`
+     * - Removes duplicate conditions within a group.
+     * - Evaluates constant expressions (e.g., an OR group with a condition that is always true).
+     *
+     * @return A new, simplified FilterExpression.
+     */
+    FilterExpression simplify() const;
+
+    /**
+     * @brief Traverses the expression tree and applies a visitor function to each condition.
+     *
+     * This allows for inspecting all leaf nodes of the tree.
+     *
+     * @param visitor A function that will be called with a const reference to each
+     *                FilterCondition in the expression.
+     */
+    void visit(std::function<void(const FilterCondition&)> visitor) const;
+
+    /**
      * @brief Returns a human-readable string representation of the filter expression.
      *
      * The output aims to be concise and easily understandable, reflecting the structure

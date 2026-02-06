@@ -46,7 +46,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonCustomField) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "non_existent_field");
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    EXPECT_EQ(fc.value, "INFO");
+    EXPECT_EQ(std::get<std::string>(fc.value), "INFO");
 }
 
 
@@ -63,7 +63,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson) {
 
     EXPECT_EQ(j["field"], "TIMESTAMP");
     EXPECT_EQ(j["op"], "GREATER_THAN");
-    EXPECT_EQ(j["value"], "2023-01-01T00:00:00Z");
+    EXPECT_EQ(j["value"].get<std::string>(), "2023-01-01T00:00:00Z");
     EXPECT_EQ(j["value_type"], "DATETIME");
     EXPECT_EQ(j["caseSensitive"], false);
     EXPECT_EQ(j["datetimeFormat"], "%Y-%m-%dT%H:%M:%SZ");
@@ -85,7 +85,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonSuccess) {
 
     EXPECT_EQ(fc.field, LogEntryField::MESSAGE);
     EXPECT_EQ(fc.op, FilterOperator::CONTAINS);
-    EXPECT_EQ(fc.value, "warning");
+    EXPECT_EQ(std::get<std::string>(fc.value), "warning");
     EXPECT_EQ(fc.valueType, FilterValueType::STRING);
     EXPECT_EQ(fc.caseSensitive, true);
     EXPECT_FALSE(fc.datetimeFormat.has_value());
@@ -107,7 +107,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeSuccess) {
 
     EXPECT_EQ(fc.field, LogEntryField::TIMESTAMP);
     EXPECT_EQ(fc.op, FilterOperator::LESS_THAN);
-    EXPECT_EQ(fc.value, "2023-12-31 23:59:59");
+    EXPECT_EQ(std::get<std::string>(fc.value), "2023-12-31 23:59:59");
     EXPECT_EQ(fc.valueType, FilterValueType::DATETIME);
     EXPECT_TRUE(fc.datetimeFormat.has_value());
     EXPECT_EQ(*fc.datetimeFormat, "%Y-%m-%d %H:%M:%S");
@@ -176,7 +176,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonNumericSuccess) {
 
     EXPECT_EQ(fc.field, LogEntryField::THREAD_ID);
     EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
-    EXPECT_EQ(fc.value, "100");
+    EXPECT_EQ(std::get<std::string>(fc.value), "100");
     EXPECT_EQ(fc.valueType, FilterValueType::INT);
     EXPECT_FALSE(fc.datetimeFormat.has_value());
 }
@@ -477,7 +477,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonBoolTrue) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "flag");
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    EXPECT_EQ(fc.value, "true"); // Value stored as string "true"
+    EXPECT_EQ(std::get<std::string>(fc.value), "true");
     EXPECT_EQ(fc.valueType, FilterValueType::BOOL);
 }
 
@@ -497,7 +497,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonBoolFalse) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "active");
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    EXPECT_EQ(fc.value, "false"); // Value stored as string "false"
+    EXPECT_EQ(std::get<std::string>(fc.value), "false"); // Value stored as string "false"
     EXPECT_EQ(fc.valueType, FilterValueType::BOOL);
 }
 
@@ -517,7 +517,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonBoolStringTrue) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "enabled");
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    EXPECT_EQ(fc.value, "true");
+    EXPECT_EQ(std::get<std::string>(fc.value), "true"); // Value stored as string "true"
     EXPECT_EQ(fc.valueType, FilterValueType::BOOL);
 }
 
@@ -537,7 +537,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonBoolStringFalse) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "disabled");
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    EXPECT_EQ(fc.value, "false");
+    EXPECT_EQ(std::get<std::string>(fc.value), "false");
     EXPECT_EQ(fc.valueType, FilterValueType::BOOL);
 }
 
@@ -574,7 +574,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonIpAddressValid) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "source_ip");
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    EXPECT_EQ(fc.value, "192.168.1.1");
+    EXPECT_EQ(std::get<std::string>(fc.value), "192.168.1.1");
     EXPECT_EQ(fc.valueType, FilterValueType::IP_ADDRESS);
 }
 
@@ -611,7 +611,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonVersionValid) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "app_version");
     EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
-    EXPECT_EQ(fc.value, "1.2.3");
+    EXPECT_EQ(std::get<std::string>(fc.value), "1.2.3");
     EXPECT_EQ(fc.valueType, FilterValueType::VERSION);
 }
 
@@ -648,7 +648,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonFloatStringValid) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "duration");
     EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
-    EXPECT_EQ(fc.value, "123.45");
+    EXPECT_EQ(std::get<std::string>(fc.value), "123.45");
     EXPECT_EQ(fc.valueType, FilterValueType::FLOAT);
 }
 
@@ -668,7 +668,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonFloatStringIntegerValid) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "percentage");
     EXPECT_EQ(fc.op, FilterOperator::LESS_THAN_OR_EQUAL);
-    EXPECT_EQ(fc.value, "99");
+    EXPECT_EQ(std::get<std::string>(fc.value), "99");
     EXPECT_EQ(fc.valueType, FilterValueType::FLOAT);
 }
 
@@ -702,7 +702,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonStartsWith) {
     auto result = from_json(j, fc, "/");
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(fc.op, FilterOperator::STARTS_WITH);
-    EXPECT_EQ(fc.value, "Error");
+    EXPECT_EQ(std::get<std::string>(fc.value), "Error");
 }
 
 // Test for FilterOperator::ENDS_WITH
@@ -718,7 +718,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonEndsWith) {
     auto result = from_json(j, fc, "/");
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(fc.op, FilterOperator::ENDS_WITH);
-    EXPECT_EQ(fc.value, ".log");
+    EXPECT_EQ(std::get<std::string>(fc.value), ".log");
 }
 
 // Test for FilterOperator::REGEX
@@ -734,7 +734,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonRegex) {
     auto result = from_json(j, fc, "/");
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(fc.op, FilterOperator::REGEX);
-    EXPECT_EQ(fc.value, ".*(error|fail).*");
+    EXPECT_EQ(std::get<std::string>(fc.value), ".*(error|fail).*");
 }
 
 // Test for FilterOperator::IS_NULL (no value field required)
@@ -752,7 +752,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonIsNull) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "thread_name");
     EXPECT_EQ(fc.op, FilterOperator::IS_NULL);
-    EXPECT_TRUE(fc.value.empty()); // Value should be empty for IS_NULL
+    EXPECT_TRUE(std::get<std::string>(fc.value).empty()); // Value should be empty for IS_NULL
     EXPECT_EQ(fc.valueType, FilterValueType::STRING);
     EXPECT_FALSE(fc.datetimeFormat.has_value());
 }
@@ -772,7 +772,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonIsNotNull) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(*fc.customField, "thread_name");
     EXPECT_EQ(fc.op, FilterOperator::IS_NOT_NULL);
-    EXPECT_TRUE(fc.value.empty()); // Value should be empty for IS_NOT_NULL
+    EXPECT_TRUE(std::get<std::string>(fc.value).empty()); // Value should be empty for IS_NOT_NULL
     EXPECT_EQ(fc.valueType, FilterValueType::STRING);
     EXPECT_FALSE(fc.datetimeFormat.has_value());
 }
@@ -790,7 +790,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonIsNullWithValue) {
     auto result = from_json(j, fc, "/");
     ASSERT_TRUE(result.has_value()); // It should parse successfully and ignore the value.
     EXPECT_EQ(fc.op, FilterOperator::IS_NULL);
-    EXPECT_TRUE(fc.value.empty()); // Value should be empty if ignored.
+    EXPECT_TRUE(std::get<std::string>(fc.value).empty()); // Value should be empty if ignored.
 }
 
 // Test for FilterOperator::IS_NOT_NULL with an unexpected value field
@@ -806,7 +806,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonIsNotNullWithValue) {
     auto result = from_json(j, fc, "/");
     ASSERT_TRUE(result.has_value()); // It should parse successfully and ignore the value.
     EXPECT_EQ(fc.op, FilterOperator::IS_NOT_NULL);
-    EXPECT_TRUE(fc.value.empty()); // Value should be empty if ignored.
+    EXPECT_TRUE(std::get<std::string>(fc.value).empty()); // Value should be empty if ignored.
 }
 
 // Test for DATETIME value_type with empty datetimeFormat string

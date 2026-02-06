@@ -28,7 +28,7 @@ TEST_F(LogAnalyzerConfigTest, FromJsonValid) {
         ],
         "customLogLevelMappings": {"TRC": "TRACE", "DBG": "DEBUG"},
         "filterRules": [
-            {"field": "LEVEL", "op": "EQUALS", "value": "ERROR", "caseSensitive": false}
+            {"field": "LEVEL", "op": "EQUALS", "value": "ERROR", "value_type": "STRING", "caseSensitive": false}
         ],
         "exportSettings": {
             "outputPath": "exports/filtered.json",
@@ -79,7 +79,7 @@ TEST_F(LogAnalyzerConfigTest, FromJsonRootFilterExpression) {
     ASSERT_TRUE(settings.rootFilterExpression->getExpressions()[0].isCondition());
     ASSERT_EQ(settings.rootFilterExpression->getExpressions()[0].getCondition()->field, LogEntryField::LEVEL);
     ASSERT_EQ(settings.rootFilterExpression->getExpressions()[0].getCondition()->op, FilterOperator::EQUALS);
-    ASSERT_EQ(settings.rootFilterExpression->getExpressions()[0].getCondition()->value, "ERROR");
+    ASSERT_EQ(std::get<std::string>(settings.rootFilterExpression->getExpressions()[0].getCondition()->value), "ERROR");
 
     // Check second sub-expression (nested OR logical)
     ASSERT_TRUE(settings.rootFilterExpression->getExpressions()[1].isLogical());
@@ -88,11 +88,11 @@ TEST_F(LogAnalyzerConfigTest, FromJsonRootFilterExpression) {
     ASSERT_TRUE(settings.rootFilterExpression->getExpressions()[1].getExpressions()[0].isCondition());
     ASSERT_EQ(settings.rootFilterExpression->getExpressions()[1].getExpressions()[0].getCondition()->field, LogEntryField::MESSAGE);
     ASSERT_EQ(settings.rootFilterExpression->getExpressions()[1].getExpressions()[0].getCondition()->op, FilterOperator::CONTAINS);
-    ASSERT_EQ(settings.rootFilterExpression->getExpressions()[1].getExpressions()[0].getCondition()->value, "fatal");
+    ASSERT_EQ(std::get<std::string>(settings.rootFilterExpression->getExpressions()[1].getExpressions()[0].getCondition()->value), "fatal");
     ASSERT_TRUE(settings.rootFilterExpression->getExpressions()[1].getExpressions()[1].isCondition()); // Added check for the second OR operand
     ASSERT_EQ(settings.rootFilterExpression->getExpressions()[1].getExpressions()[1].getCondition()->field, LogEntryField::MESSAGE);
     ASSERT_EQ(settings.rootFilterExpression->getExpressions()[1].getExpressions()[1].getCondition()->op, FilterOperator::CONTAINS);
-    ASSERT_EQ(settings.rootFilterExpression->getExpressions()[1].getExpressions()[1].getCondition()->value, "critical");
+    ASSERT_EQ(std::get<std::string>(settings.rootFilterExpression->getExpressions()[1].getExpressions()[1].getCondition()->value), "critical");
 }
 
 TEST_F(LogAnalyzerConfigTest, FromJsonOptionalFields) {

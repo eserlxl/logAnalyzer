@@ -74,28 +74,28 @@ TEST_F(FilterTestFixture, EvaluateDoubleComparison) {
     auto entry = createLogEntry(LogLevel::INFO, "Calculation result", "calc.log", {{"result", "123.456789"}});
     
     // Exact match (within epsilon)
-    auto expr_exact = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.456789", FilterValueType::DOUBLE, true, "result");
+    auto expr_exact = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.456789", FilterValueType::FLOAT, true, "result");
     ASSERT_TRUE(expr_exact.evaluate(entry).has_value()) << expr_exact.evaluate(entry).error().toString();
     EXPECT_TRUE(expr_exact.evaluate(entry).value_or(false));
 
     // Close match (within epsilon)
-    auto expr_close = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.4567890001", FilterValueType::DOUBLE, true, "result");
+    auto expr_close = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.4567890001", FilterValueType::FLOAT, true, "result");
     ASSERT_TRUE(expr_close.evaluate(entry).has_value()) << expr_close.evaluate(entry).error().toString();
     EXPECT_TRUE(expr_close.evaluate(entry).value_or(false));
 
     // Greater than
-    auto expr_gt = createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "123.456", FilterValueType::DOUBLE, true, "result");
+    auto expr_gt = createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "123.456", FilterValueType::FLOAT, true, "result");
     ASSERT_TRUE(expr_gt.evaluate(entry).has_value()) << expr_gt.evaluate(entry).error().toString();
     EXPECT_TRUE(expr_gt.evaluate(entry).value_or(false));
 
     // Less than
-    auto expr_lt = createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "123.457", FilterValueType::DOUBLE, true, "result");
+    auto expr_lt = createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "123.457", FilterValueType::FLOAT, true, "result");
     ASSERT_TRUE(expr_lt.evaluate(entry).has_value()) << expr_lt.evaluate(entry).error().toString();
     EXPECT_TRUE(expr_lt.evaluate(entry).value_or(false));
     
     // Test with non-numeric value that should fail conversion
     auto entry_bad_double = createLogEntry(LogLevel::ERROR, "Bad double data", "data.log", {{"value", "not_a_double"}});
-    auto expr_bad_double = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.23", FilterValueType::DOUBLE, true, "value");
+    auto expr_bad_double = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.23", FilterValueType::FLOAT, true, "value");
     ASSERT_FALSE(expr_bad_double.evaluate(entry_bad_double).has_value()); // Expecting failure due to conversion
 }
 
@@ -136,26 +136,27 @@ TEST_F(FilterTestFixture, EvaluateDateTimeComparison) {
     auto entry_now = createLogEntry(LogLevel::INFO, "Event now", "time.log", {}, std::nullopt, std::chrono::system_clock::now());
 
     // Use a precise format that Utils::parseTime should handle
+    const std::string format = "%Y-%m-%d %H:%M:%S";
     std::string ts_past_str = Utils::formatTimestamp(entry_past.timestamp.value());
     std::string ts_future_str = Utils::formatTimestamp(entry_future.timestamp.value());
     std::string ts_now_str = Utils::formatTimestamp(entry_now.timestamp.value());
 
     // EQUALS
-    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::EQUALS, ts_past_str, FilterValueType::DATETIME).evaluate(entry_past).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::EQUALS, ts_future_str, FilterValueType::DATETIME).evaluate(entry_past).value_or(true));
+    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::EQUALS, ts_past_str, FilterValueType::DATETIME, false, format).evaluate(entry_past).value_or(false));
+    EXPECT_FALSE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::EQUALS, ts_future_str, FilterValueType::DATETIME, false, format).evaluate(entry_past).value_or(true));
 
     // GREATER_THAN
-    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, ts_past_str, FilterValueType::DATETIME).evaluate(entry_future).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, ts_future_str, FilterValueType::DATETIME).evaluate(entry_future).value_or(true));
-    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, ts_past_str, FilterValueType::DATETIME).evaluate(entry_now).value_or(false));
+    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, ts_past_str, FilterValueType::DATETIME, false, format).evaluate(entry_future).value_or(false));
+    EXPECT_FALSE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, ts_future_str, FilterValueType::DATETIME, false, format).evaluate(entry_future).value_or(true));
+    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, ts_past_str, FilterValueType::DATETIME, false, format).evaluate(entry_now).value_or(false));
 
     // LESS_THAN_OR_EQUAL
-    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::LESS_THAN_OR_EQUAL, ts_future_str, FilterValueType::DATETIME).evaluate(entry_future).value_or(false));
-    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::LESS_THAN_OR_EQUAL, ts_future_str, FilterValueType::DATETIME).evaluate(entry_now).value_or(false));
-    EXPECT_FALSE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::LESS_THAN_OR_EQUAL, ts_now_str, FilterValueType::DATETIME).evaluate(entry_future).value_or(true));
+    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::LESS_THAN_OR_EQUAL, ts_future_str, FilterValueType::DATETIME, false, format).evaluate(entry_future).value_or(false));
+    EXPECT_TRUE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::LESS_THAN_OR_EQUAL, ts_future_str, FilterValueType::DATETIME, false, format).evaluate(entry_now).value_or(false));
+    EXPECT_FALSE(createExpr(LogEntryField::TIMESTAMP, FilterOperator::LESS_THAN_OR_EQUAL, ts_now_str, FilterValueType::DATETIME, false, format).evaluate(entry_future).value_or(true));
 
     // Test with invalid datetime string
-    auto expr_invalid_dt = createExpr(LogEntryField::TIMESTAMP, FilterOperator::EQUALS, "not_a_datetime", FilterValueType::DATETIME);
+    auto expr_invalid_dt = createExpr(LogEntryField::TIMESTAMP, FilterOperator::EQUALS, "not_a_datetime", FilterValueType::DATETIME, false, format);
     ASSERT_FALSE(expr_invalid_dt.evaluate(entry_now).has_value());
 }
 
@@ -166,44 +167,31 @@ TEST_F(FilterTestFixture, EvaluateInOperator) {
     auto entry_date = createLogEntry(LogLevel::INFO, "Fruit: Date", "fruit.log", {{"item", "Date"}});
 
     // IN operator - match
-    auto expr_in_match = createExpr(LogEntryField::CUSTOM, FilterOperator::IN, R"json(["Apple", "Banana"])json", FilterValueType::STRING, true, "item");
+    auto expr_in_match = createVectorExpr(LogEntryField::CUSTOM, FilterOperator::IN, {"Apple", "Banana"}, FilterValueType::STRING, true, "item");
     EXPECT_TRUE(expr_in_match.evaluate(entry_apple).value_or(false));
     EXPECT_TRUE(expr_in_match.evaluate(entry_banana).value_or(false));
 
     // IN operator - no match
-    auto expr_in_no_match = createExpr(LogEntryField::CUSTOM, FilterOperator::IN, R"json(["Apple", "Banana"])json", FilterValueType::STRING, true, "item");
+    auto expr_in_no_match = createVectorExpr(LogEntryField::CUSTOM, FilterOperator::IN, {"Apple", "Banana"}, FilterValueType::STRING, true, "item");
     EXPECT_FALSE(expr_in_no_match.evaluate(entry_cherry).value_or(true));
 
     // IN operator - case insensitive
-    auto expr_in_ci = createExpr(LogEntryField::CUSTOM, FilterOperator::IN, R"json(["apple", "banana"])json", FilterValueType::STRING, false, "item");
+    auto expr_in_ci = createVectorExpr(LogEntryField::CUSTOM, FilterOperator::IN, {"apple", "banana"}, FilterValueType::STRING, false, "item");
     EXPECT_TRUE(expr_in_ci.evaluate(entry_apple).value_or(false));
     EXPECT_TRUE(expr_in_ci.evaluate(entry_banana).value_or(false));
     EXPECT_FALSE(expr_in_ci.evaluate(entry_cherry).value_or(true));
 
     // IN operator - empty array
-    auto expr_in_empty = createExpr(LogEntryField::CUSTOM, FilterOperator::IN, R"json([])json", FilterValueType::STRING, true, "item");
+    auto expr_in_empty = createVectorExpr(LogEntryField::CUSTOM, FilterOperator::IN, {}, FilterValueType::STRING, true, "item");
     EXPECT_FALSE(expr_in_empty.evaluate(entry_apple).value_or(true)); // Empty IN should never match
 
-    // IN operator - invalid JSON
-    auto expr_in_invalid_json = createExpr(LogEntryField::CUSTOM, FilterOperator::IN, R"json(["Apple",)json", FilterValueType::STRING, true, "item");
-    ASSERT_FALSE(expr_in_invalid_json.evaluate(entry_apple).has_value()); // Invalid JSON should error
-
-    // IN operator - JSON is not an array
-    auto expr_in_not_array = createExpr(LogEntryField::CUSTOM, FilterOperator::IN, R"json("Apple")json", FilterValueType::STRING, true, "item");
-    ASSERT_FALSE(expr_in_not_array.evaluate(entry_apple).has_value()); // Not an array should error
-
-    // IN operator - array with non-string items (should be ignored)
-    auto expr_in_mixed_types = createExpr(LogEntryField::CUSTOM, FilterOperator::IN, R"json(["Apple", 123, true, null])json", FilterValueType::STRING, true, "item");
-    EXPECT_TRUE(expr_in_mixed_types.evaluate(entry_apple).value_or(false)); // Should match "Apple"
-    EXPECT_FALSE(expr_in_mixed_types.evaluate(entry_banana).value_or(true)); // Should not match "Banana"
-
     // NOT_IN operator - match
-    auto expr_not_in_match = createExpr(LogEntryField::CUSTOM, FilterOperator::NOT_IN, R"json(["Apple", "Banana"])json", FilterValueType::STRING, true, "item");
+    auto expr_not_in_match = createVectorExpr(LogEntryField::CUSTOM, FilterOperator::NOT_IN, {"Apple", "Banana"}, FilterValueType::STRING, true, "item");
     EXPECT_FALSE(expr_not_in_match.evaluate(entry_apple).value_or(true));
     EXPECT_FALSE(expr_not_in_match.evaluate(entry_banana).value_or(true));
 
     // NOT_IN operator - no match
-    auto expr_not_in_no_match = createExpr(LogEntryField::CUSTOM, FilterOperator::NOT_IN, R"json(["Apple", "Banana"])json", FilterValueType::STRING, true, "item");
+    auto expr_not_in_no_match = createVectorExpr(LogEntryField::CUSTOM, FilterOperator::NOT_IN, {"Apple", "Banana"}, FilterValueType::STRING, true, "item");
     EXPECT_TRUE(expr_not_in_no_match.evaluate(entry_cherry).value_or(false));
     EXPECT_TRUE(expr_not_in_no_match.evaluate(entry_date).value_or(false));
 }

@@ -107,9 +107,30 @@ protected:
         const std::string& value,
         FilterValueType valueType = FilterValueType::STRING,
         bool caseSensitive = true,
+        std::optional<std::string> customField = std::nullopt,
+        std::optional<std::string> datetimeFormat = std::nullopt
+    ) {
+        auto fc = createCondition(field, op, value, valueType, caseSensitive, customField);
+        fc.datetimeFormat = datetimeFormat;
+        return FilterExpression::create(fc);
+    }
+
+    FilterExpression createVectorExpr(
+        LogEntryField field,
+        FilterOperator op,
+        const std::vector<std::string>& value,
+        FilterValueType valueType = FilterValueType::STRING,
+        bool caseSensitive = true,
         std::optional<std::string> customField = std::nullopt
     ) {
-        return FilterExpression::create(createCondition(field, op, value, valueType, caseSensitive, customField));
+        FilterCondition fc;
+        fc.field = field;
+        fc.op = op;
+        fc.value = value;
+        fc.valueType = valueType;
+        fc.caseSensitive = caseSensitive;
+        fc.customField = customField;
+        return FilterExpression::create(fc);
     }
 
     // Helper for testing version comparisons

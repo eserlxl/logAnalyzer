@@ -25,7 +25,7 @@ TEST_F(FilterExpressionJsonTest, SingleConditionExpressionToJson) {
 
     ASSERT_TRUE(j.contains("condition"));
     EXPECT_EQ(j["condition"]["field"], "MESSAGE");
-    EXPECT_EQ(j["condition"]["value"], "error");
+    EXPECT_EQ(j["condition"]["value"].get<std::string>(), "error");
 }
 
 TEST_F(FilterExpressionJsonTest, SingleConditionExpressionFromJson) {
@@ -46,7 +46,7 @@ TEST_F(FilterExpressionJsonTest, SingleConditionExpressionFromJson) {
     const auto& cond = expr.getCondition();
     ASSERT_TRUE(cond.has_value());
     EXPECT_EQ(cond->field, LogEntryField::MESSAGE);
-    EXPECT_EQ(cond->value, "error");
+    EXPECT_EQ(std::get<std::string>(cond->value), "error");
 }
 
 TEST_F(FilterExpressionJsonTest, AndExpressionFromJson) {
@@ -135,8 +135,8 @@ TEST_F(FilterExpressionJsonTest, AndExpressionToJson) {
     EXPECT_EQ(j["operator"], "AND");
     ASSERT_TRUE(j["operands"].is_array());
     EXPECT_EQ(j["operands"].size(), 2);
-    EXPECT_EQ(j["operands"][0]["condition"]["value"], "ERROR");
-    EXPECT_EQ(j["operands"][1]["condition"]["value"], "database");
+    EXPECT_EQ(j["operands"][0]["condition"]["value"].get<std::string>(), "ERROR");
+    EXPECT_EQ(j["operands"][1]["condition"]["value"].get<std::string>(), "database");
 }
 
 TEST_F(FilterExpressionJsonTest, OrExpressionToJson) {
@@ -160,7 +160,7 @@ TEST_F(FilterExpressionJsonTest, NotExpressionToJson) {
     to_json(j, expr);
     
     ASSERT_TRUE(j.contains("condition"));
-    EXPECT_EQ(j["condition"]["value"], "success");
+    EXPECT_EQ(j["condition"]["value"].get<std::string>(), "success");
     ASSERT_TRUE(j.contains("negated"));
     EXPECT_TRUE(j["negated"].get<bool>());
 }
@@ -185,7 +185,7 @@ TEST_F(FilterExpressionJsonTest, NestedExpressionToJson) {
     const auto& nested = j["operands"][1];
     EXPECT_EQ(nested["operator"], "AND");
     ASSERT_EQ(nested["operands"].size(), 2);
-    EXPECT_EQ(nested["operands"][0]["condition"]["value"], "timeout");
+    EXPECT_EQ(nested["operands"][0]["condition"]["value"].get<std::string>(), "timeout");
     EXPECT_TRUE(nested["operands"][1].contains("negated"));
     EXPECT_TRUE(nested["operands"][1]["negated"].get<bool>());
 }

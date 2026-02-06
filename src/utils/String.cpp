@@ -198,6 +198,32 @@ bool caseInsensitiveEnds(const std::string& text, const std::string& suffix) {
     return std::equal(suffix.rbegin(), suffix.rend(), text.rbegin(), caseInsensitiveCharCompare);
 }
 
+bool isNumeric(std::string_view s) {
+    if (s.empty()) return false;
+    
+    size_t start = 0;
+    if (s[0] == '-' || s[0] == '+') {
+        if (s.length() == 1) return false;
+        start = 1;
+    }
+    
+    bool hasDecimal = false;
+    bool hasDigits = false;
+    
+    for (size_t i = start; i < s.length(); ++i) {
+        if (std::isdigit(static_cast<unsigned char>(s[i]))) {
+            hasDigits = true;
+        } else if (s[i] == '.') {
+            if (hasDecimal) return false; // Only one decimal point allowed
+            hasDecimal = true;
+        } else {
+            return false;
+        }
+    }
+    
+    return hasDigits;
+}
+
 // Helper to convert a Unicode code point to its UTF-16 surrogate pair representation if necessary
 // and format it as JSON \uXXXX escapes.
 static void appendJsonUnicodeEscape(std::string& output, uint32_t cp) {

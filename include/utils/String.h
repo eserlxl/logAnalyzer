@@ -20,6 +20,7 @@ bool caseInsensitiveEquals(const std::string& s1, const std::string& s2);
 bool caseInsensitiveSearch(const std::string& text, const std::string& pattern);
 bool caseInsensitiveStarts(const std::string& text, const std::string& prefix);
 bool caseInsensitiveEnds(const std::string& text, const std::string& suffix);
+bool isNumeric(std::string_view s);
 std::string escapeJsonString(const std::string& input);
 
 /**

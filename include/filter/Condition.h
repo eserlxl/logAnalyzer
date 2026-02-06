@@ -21,7 +21,9 @@ struct FilterCondition {
     LogEntryField field = LogEntryField::UNKNOWN;
     FilterOperator op = FilterOperator::EQUALS;
     
-    std::string value;
+    // New value representation
+    using ValueVariant = std::variant<std::string, std::vector<std::string>>;
+    ValueVariant value;
     
     FilterValueType valueType = FilterValueType::STRING;
     bool caseSensitive = false;
@@ -86,6 +88,26 @@ struct FilterCondition {
         }
         return FilterCondition(LogEntryField::CUSTOM, o, std::move(v), FilterValueType::DATETIME, false, std::move(dtFormat), std::move(customFieldName));
     }
+    
+    static ErrorCode::Result<FilterCondition> createSet(LogEntryField f, FilterOperator o, std::vector<std::string> v) {
+        if (o != FilterOperator::IN && o != FilterOperator::NOT_IN) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Set-based creation only valid for IN/NOT_IN operators."));
+        }
+        if (f == LogEntryField::CUSTOM) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Use createCustomSet for CUSTOM fields."));
+        }
+        return FilterCondition(f, o, std::move(v), FilterValueType::STRING, false, std::nullopt, std::nullopt);
+    }
+
+    static ErrorCode::Result<FilterCondition> createCustomSet(std::string customFieldName, FilterOperator o, std::vector<std::string> v) {
+        if (o != FilterOperator::IN && o != FilterOperator::NOT_IN) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Set-based creation only valid for IN/NOT_IN operators."));
+        }
+        if (customFieldName.empty()) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Custom field name cannot be empty."));
+        }
+        return FilterCondition(LogEntryField::CUSTOM, o, std::move(v), FilterValueType::STRING, false, std::nullopt, std::move(customFieldName));
+    }
 
     // --- Deprecated Public Constructors ---
 
@@ -103,7 +125,7 @@ struct FilterCondition {
 
 private:
     // Private constructor for internal use by factory functions
-    FilterCondition(LogEntryField f, FilterOperator o, std::string v, FilterValueType vt, bool cs, 
+    FilterCondition(LogEntryField f, FilterOperator o, ValueVariant v, FilterValueType vt, bool cs, 
                     std::optional<std::string> dtFormat, std::optional<std::string> cf)
         : field(f), op(o), value(std::move(v)), valueType(vt), caseSensitive(cs), 
           datetimeFormat(std::move(dtFormat)), customField(std::move(cf)) {}
@@ -121,7 +143,17 @@ inline void to_json(nlohmann::json& j, const FilterCondition& fc) {
     }
     
     j["op"] = toString(fc.op);
-    j["value"] = fc.value;
+    
+    // Serialize value based on variant type
+    std::visit([&j](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, std::string>) {
+            j["value"] = arg;
+        } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+            j["value"] = arg;
+        }
+    }, fc.value);
+
     j["value_type"] = toString(fc.valueType);
     j["caseSensitive"] = fc.caseSensitive;
 
@@ -158,17 +190,35 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     }
     fc.op = *opOpt;
 
-    // Handle 'value' which can be string, boolean, or number
-    // Allow missing value for IS_NULL / IS_NOT_NULL checks
+    // Handle 'value' which can be string, number, boolean, or an array.
+    // Allow missing value for IS_NULL / IS_NOT_NULL checks.
     if (!j.contains("value")) {
         if (fc.op == FilterOperator::IS_NULL || fc.op == FilterOperator::IS_NOT_NULL) {
-            fc.value = ""; // Treat as empty string
+            fc.value = ""; // Default construct a string in the variant.
         } else {
             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Missing required key: 'value'", current_path, "value"));
         }
     } else {
         const auto& valJson = j.at("value");
-        if (valJson.is_string()) {
+        if (valJson.is_array()) {
+            // Only IN and NOT_IN operators support array values.
+            if (fc.op != FilterOperator::IN && fc.op != FilterOperator::NOT_IN) {
+                return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Array value is only supported for 'IN' and 'NOT_IN' operators.", current_path, "value"));
+            }
+            std::vector<std::string> values;
+            for (const auto& element : valJson) {
+                if (element.is_string()) {
+                    values.push_back(element.get<std::string>());
+                } else if (element.is_number()) {
+                    values.push_back(std::to_string(element.get<double>()));
+                } else if (element.is_boolean()) {
+                    values.push_back(element.get<bool>() ? "true" : "false");
+                } else {
+                    return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid type in 'value' array; only strings, numbers, and booleans are supported.", current_path, "value"));
+                }
+            }
+            fc.value = values;
+        } else if (valJson.is_string()) {
             fc.value = valJson.get<std::string>();
         } else if (valJson.is_boolean()) {
             fc.value = valJson.get<bool>() ? "true" : "false";
@@ -179,9 +229,9 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         } else if (valJson.is_number()) {
             fc.value = std::to_string(valJson.get<double>());
         } else if (valJson.is_null()) {
-            // Allow null if operator is IS_NULL or IS_NOT_NULL
+            // Allow null if operator is IS_NULL or IS_NOT_NULL.
             if (fc.op == FilterOperator::IS_NULL || fc.op == FilterOperator::IS_NOT_NULL) {
-                fc.value = ""; // Treat as empty string or ignore
+                fc.value = ""; // Represents an empty value.
             } else {
                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid type for key: 'value' (null not allowed for this operator)", current_path, "value"));
             }
@@ -213,48 +263,52 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "'value_type' must be a string or integer.", current_path, "value_type"));
     }
 
-    // Validation based on valueType
-    // If op is IS_NULL or IS_NOT_NULL, the value must be empty.
+    // If op is IS_NULL or IS_NOT_NULL, the value must be an empty string.
     if (fc.op == FilterOperator::IS_NULL || fc.op == FilterOperator::IS_NOT_NULL) {
         fc.value = "";
     }
-
-    if (fc.valueType == FilterValueType::BOOL) {
-        std::string lowerVal = Utils::toLower(fc.value);
-        if (lowerVal != "true" && lowerVal != "false" && lowerVal != "1" && lowerVal != "0") {
-             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid boolean value: " + fc.value, current_path, "value"));
-        }
-    } else if (fc.valueType == FilterValueType::INT) {
-        try {
-            size_t idx;
-            std::stoll(fc.value, &idx);
-            if (idx != fc.value.length()) {
-                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + fc.value, current_path, "value"));
+    
+    // The validation logic below assumes value is a string. This needs to be adjusted.
+    if (std::holds_alternative<std::string>(fc.value)) {
+        const std::string& singleValue = std::get<std::string>(fc.value);
+        if (fc.valueType == FilterValueType::BOOL) {
+            std::string lowerVal = Utils::toLower(singleValue);
+            if (lowerVal != "true" && lowerVal != "false" && lowerVal != "1" && lowerVal != "0") {
+                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid boolean value: " + singleValue, current_path, "value"));
             }
-        } catch (...) {
-            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + fc.value, current_path, "value"));
-        }
-    } else if (fc.valueType == FilterValueType::DOUBLE || fc.valueType == FilterValueType::FLOAT) {
-        try {
-            size_t idx;
-            std::stod(fc.value, &idx);
-            if (idx != fc.value.length()) {
-                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + fc.value, current_path, "value"));
+        } else if (fc.valueType == FilterValueType::INT) {
+            try {
+                size_t idx;
+                std::stoll(singleValue, &idx);
+                if (idx != singleValue.length()) {
+                     return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + singleValue, current_path, "value"));
+                }
+            } catch (...) {
+                return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + singleValue, current_path, "value"));
             }
-        } catch (...) {
-            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + fc.value, current_path, "value"));
-        }
-    } else if (fc.valueType == FilterValueType::IP_ADDRESS) {
-        // Need to include utils/IpAddress.h
-        if (!Utils::parseIpAddress(fc.value)) {
-            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid IP address: " + fc.value, current_path, "value"));
-        }
-    } else if (fc.valueType == FilterValueType::VERSION) {
-        // Need to include utils/Version.h
-        if (!Utils::parseSemanticVersion(fc.value)) {
-            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid version string: " + fc.value, current_path, "value"));
+        } else if (fc.valueType == FilterValueType::DOUBLE || fc.valueType == FilterValueType::FLOAT) {
+            try {
+                size_t idx;
+                std::stod(singleValue, &idx);
+                if (idx != singleValue.length()) {
+                     return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + singleValue, current_path, "value"));
+                }
+            } catch (...) {
+                return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + singleValue, current_path, "value"));
+            }
+        } else if (fc.valueType == FilterValueType::IP_ADDRESS) {
+            if (!Utils::parseIpAddress(singleValue)) {
+                return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid IP address: " + singleValue, current_path, "value"));
+            }
+        } else if (fc.valueType == FilterValueType::VERSION) {
+            if (!Utils::parseSemanticVersion(singleValue)) {
+                return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid version string: " + singleValue, current_path, "value"));
+            }
         }
     }
+    // Note: Type validation for elements within a std::vector<std::string> is not performed here.
+    // The evaluation logic will handle parsing of individual elements. This is consistent
+    // with how single string values are handled (validation vs. parsing at evaluation).
 
     if (j.contains("caseSensitive")) {
         if (!j.at("caseSensitive").is_boolean() && !j.at("caseSensitive").is_null()) {

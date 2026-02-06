@@ -2,6 +2,7 @@
 #define CONCRETE_FILTERS_H
 
 #include "filter/IFilter.h"
+#include "filter/Expression.h"
 #include "core/LogTypes.h" // For LogLevel, PatternType etc.
 #include "core/Error.h"    // For ErrorCode::Result
 #include "utils/UtilsCore.h"    // For ci_less
@@ -14,6 +15,47 @@
 #include <expected>
 #include <optional>
 #include <regex>
+#include <nlohmann/json_fwd.hpp>
+
+/**
+ * @brief An IFilter implementation that evaluates log entries against a FilterExpression tree.
+ *
+ * This class serves as a bridge between the modern, data-driven FilterExpression
+ * system and legacy components that operate on the IFilter interface.
+ */
+class ExpressionFilter : public IFilter {
+public:
+    /**
+     * @brief Constructs an ExpressionFilter from a FilterExpression.
+     * @param expression The filter expression tree to evaluate. It is moved into the filter.
+     */
+    explicit ExpressionFilter(FilterExpression expression);
+
+    /**
+     * @brief Factory method to create an ExpressionFilter from a JSON object.
+     *
+     * This method deserializes a JSON object into a FilterExpression and validates it
+     * before constructing the filter.
+     *
+     * @param json_spec The nlohmann::json object representing the filter expression.
+     * @return A result containing a shared_ptr to the new ExpressionFilter or an error.
+     */
+    static ErrorCode::Result<std::shared_ptr<ExpressionFilter>> create(const nlohmann::json& json_spec);
+
+    /**
+     * @brief Evaluates the log entry against the stored filter expression.
+     *
+     * Logs an error to stderr and returns `true` (fail-open) if the expression
+     * evaluation fails for an unexpected reason.
+     *
+     * @param entry The log entry to check.
+     * @return True if the entry matches the expression, false otherwise.
+     */
+    bool matches(const LogEntry &entry) const override;
+
+private:
+    FilterExpression expression_;
+};
 
 // Note on pattern matching consistency:
 // For PatternType::Wildcard (after glob-to-regex conversion) and PatternType::Regex,

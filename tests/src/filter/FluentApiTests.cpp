@@ -51,11 +51,11 @@ TEST_F(FilterTestFixture, FluentApiNot) {
     ASSERT_TRUE(not_cond.isCondition()); // It's still a condition, but negated
     EXPECT_TRUE(not_cond.isNegated());   // Check the new negated flag
     EXPECT_EQ(not_cond.getCondition()->field, LogEntryField::LEVEL); // Verify it's the original condition
-    EXPECT_EQ(not_cond.getCondition()->value, "DEBUG");
+    EXPECT_EQ(std::get<std::string>(not_cond.getCondition()->value), "DEBUG");
     
     // NOT(NOT(cond)) should simplify back to the original cond (not negated)
     FilterExpression not_not_cond = not_cond.Not();
     ASSERT_TRUE(not_not_cond.isCondition());
     EXPECT_FALSE(not_not_cond.isNegated()); // Should no longer be negated
-    EXPECT_EQ(not_not_cond.getCondition()->value, "DEBUG");
+    EXPECT_EQ(std::get<std::string>(not_not_cond.getCondition()->value), "DEBUG");
 }

@@ -332,3 +332,35 @@ bool CompositeFilter::matches(const LogEntry &entry) const {
         });
     }
 }
+
+// --- ExpressionFilter Implementation ---
+
+#include "filter/Expression.h"
+#include <nlohmann/json.hpp>
+#include <iostream>
+
+ExpressionFilter::ExpressionFilter(FilterExpression expression)
+    : expression_(std::move(expression)) {}
+
+ErrorCode::Result<std::shared_ptr<ExpressionFilter>> ExpressionFilter::create(const nlohmann::json& json_spec) {
+    FilterExpression expr;
+    if (auto result = from_json(json_spec, expr); !result) {
+        return std::unexpected(result.error());
+    }
+
+    if (auto validationResult = expr.validate(); !validationResult) {
+        return std::unexpected(validationResult.error());
+    }
+    
+    return std::make_shared<ExpressionFilter>(std::move(expr));
+}
+
+bool ExpressionFilter::matches(const LogEntry &entry) const {
+    auto result = expression_.evaluate(entry);
+    if (!result) {
+        // As per design, log error and fail-open (return true)
+        std::cerr << "Error evaluating filter expression: " << result.error().message << std::endl;
+        return true;
+    }
+    return *result;
+}

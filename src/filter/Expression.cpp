@@ -2,22 +2,22 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "filter/Expression.h"
-#include "filter/EnumStringConversions.h" // For new enum to string conversions
+#include "filter/EnumStringConversions.h"
 #include "utils/Core.h"
-#include "utils/Time.h" // For datetime parsing
-#include "utils/String.h" // For string utility functions
-#include "utils/Version.h" // For SemanticVersion parsing and comparison
-#include "utils/IpAddress.h" // For IpAddress parsing and comparison
+#include "utils/Time.h"
+#include "utils/String.h"
+#include "utils/Version.h"
+#include "utils/IpAddress.h"
 #include <regex>
-#include <chrono>   // For std::chrono::system_point
-#include <limits>   // For std::numeric_limits
-#include <cmath>    // For std::abs with doubles
-#include <stdexcept> // For std::stod, std::stoll exceptions
-#include <iostream> // For temporary logging to cerr
+#include <chrono>
+#include <limits>
+#include <cmath>
+#include <stdexcept>
+#include <iostream>
 #include <numeric>
+#include <set>
 
 namespace { // Unnamed namespace for internal helper functions
-
 
 // Helper to convert string to bool
 std::optional<bool> stringToBool(const std::string& s) {
@@ -37,308 +37,153 @@ std::string join(const std::vector<std::string>& elements, const std::string& de
         });
 }
 
-// Struct to hold a parsed value and its inferred type
-struct ParsedValue {
-    FilterValueType type;
-    std::variant<std::string, long long, double, bool,
-                 std::chrono::system_clock::time_point,
-                 Utils::SemanticVersion, Utils::IpAddress> value;
-
-    // Helper to get the type precedence for auto-detection
-    int getTypePrecedence() const {
-        switch (type) {
-            case FilterValueType::IP_ADDRESS: return 7;
-            case FilterValueType::VERSION: return 6;
-            case FilterValueType::DATETIME: return 5;
-            case FilterValueType::DOUBLE: return 4;
-            case FilterValueType::INT: return 3;
-            case FilterValueType::BOOL: return 2;
-            case FilterValueType::STRING: return 1;
-            default: return 0; // UNKNOWN and AUTO (shouldn't happen here)
-        }
-    }
-};
-
-// Attempts to infer the type of a string and parse it accordingly
-std::optional<ParsedValue> inferTypeAndParse(const std::string& s) {
-    // Try IP_ADDRESS
-    if (auto ip = Utils::parseIpAddress(s)) {
-        return ParsedValue{FilterValueType::IP_ADDRESS, *ip};
-    }
-    // Try VERSION
-    if (auto ver = Utils::parseSemanticVersion(s)) {
-        return ParsedValue{FilterValueType::VERSION, *ver};
-    }
-    // Try DATETIME
-    if (auto time = Utils::parseTime(s)) {
-        return ParsedValue{FilterValueType::DATETIME, *time};
-    }
-    // Try BOOL
-    if (auto b = stringToBool(s)) {
-        return ParsedValue{FilterValueType::BOOL, *b};
-    }
-    // Try INT
-    try {
-        size_t pos;
-        long long ll = std::stoll(s, &pos);
-        if (pos == s.length()) { // Successfully parsed entire string as INT
-            return ParsedValue{FilterValueType::INT, ll};
-        }
-    } catch (...) {}
-    // Try DOUBLE
-    try {
-        size_t pos;
-        double d = std::stod(s, &pos);
-        if (pos == s.length()) { // Successfully parsed entire string as DOUBLE
-            return ParsedValue{FilterValueType::DOUBLE, d};
-        }
-    } catch (...) {}
-
-    // Fallback to STRING if no other type matches
-    return ParsedValue{FilterValueType::STRING, s};
-}
-
-} // Unnamed namespace
-
-
-// Helper to evaluate IN and NOT_IN operators
-ErrorCode::Result<bool> evaluateInNotIn(const std::string& fieldValue, const std::string& condValue, FilterValueType type, bool caseSensitive, FilterOperator op) {
-    try {
-        auto jsonArray = nlohmann::json::parse(condValue);
-        if (!jsonArray.is_array()) {
-            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Operator IN/NOT_IN requires a JSON array."));
-        }
-
-        bool found = false;
-
-        switch (type) {
-            case FilterValueType::INT: {
-                long long fieldVal;
-                auto [ptr, ec] = std::from_chars(fieldValue.data(), fieldValue.data() + fieldValue.size(), fieldVal);
-                if (ec != std::errc()) return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid INT field value '" + fieldValue + "'"));
-
-                for (const auto& item : jsonArray) {
-                    if (item.is_number_integer()) {
-                        if (item.get<long long>() == fieldVal) { found = true; break; }
-                    } else if (item.is_string()) {
-                         long long itemVal;
-                         auto s = item.get<std::string>();
-                         auto [p, e] = std::from_chars(s.data(), s.data() + s.size(), itemVal);
-                         if (e == std::errc() && itemVal == fieldVal) { found = true; break; }
-                    }
-                }
-                break;
-            }
-            case FilterValueType::DOUBLE: {
-                double fieldVal;
-                auto [ptr, ec] = std::from_chars(fieldValue.data(), fieldValue.data() + fieldValue.size(), fieldVal);
-                if (ec != std::errc()) return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid DOUBLE field value '" + fieldValue + "'"));
-                
-                const double epsilon = 1e-9;
-                for (const auto& item : jsonArray) {
-                    double itemVal = 0.0;
-                    bool parsed = false;
-                    if (item.is_number()) {
-                        itemVal = item.get<double>();
-                        parsed = true;
-                    } else if (item.is_string()) {
-                        auto s = item.get<std::string>();
-                        auto [p, e] = std::from_chars(s.data(), s.data() + s.size(), itemVal);
-                        if (e == std::errc()) parsed = true;
-                    }
-                    
-                    if (parsed && std::abs(itemVal - fieldVal) < epsilon) { found = true; break; }
-                }
-                break;
-            }
-            case FilterValueType::BOOL: {
-                auto fieldVal = stringToBool(fieldValue);
-                if (!fieldVal) return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid BOOL field value '" + fieldValue + "'"));
-
-                for (const auto& item : jsonArray) {
-                    std::optional<bool> itemVal;
-                    if (item.is_boolean()) {
-                        itemVal = item.get<bool>();
-                    } else if (item.is_string()) {
-                        itemVal = stringToBool(item.get<std::string>());
-                    } else if (item.is_number_integer()) {
-                         // 0 or 1
-                         long long i = item.get<long long>();
-                         if (i == 0) itemVal = false;
-                         else if (i == 1) itemVal = true;
-                    }
-
-                    if (itemVal && *itemVal == *fieldVal) { found = true; break; }
-                }
-                break;
-            }
-            case FilterValueType::DATETIME: {
-                auto fieldVal = Utils::parseTime(fieldValue);
-                if (!fieldVal) return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid DATETIME field value '" + fieldValue + "'"));
-
-                for (const auto& item : jsonArray) {
-                    if (item.is_string()) {
-                        if (auto itemVal = Utils::parseTime(item.get<std::string>())) {
-                            if (*itemVal == *fieldVal) { found = true; break; }
-                        }
-                    }
-                }
-                break;
-            }
-            case FilterValueType::VERSION: {
-                auto fieldVal = Utils::parseSemanticVersion(fieldValue);
-                if (!fieldVal) return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid VERSION field value '" + fieldValue + "'"));
-
-                for (const auto& item : jsonArray) {
-                    if (item.is_string()) {
-                        if (auto itemVal = Utils::parseSemanticVersion(item.get<std::string>())) {
-                            if (*itemVal == *fieldVal) { found = true; break; }
-                        }
-                    }
-                }
-                break;
-            }
-            case FilterValueType::IP_ADDRESS: {
-                auto fieldVal = Utils::parseIpAddress(fieldValue);
-                if (!fieldVal) return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid IP_ADDRESS field value '" + fieldValue + "'"));
-
-                for (const auto& item : jsonArray) {
-                    if (item.is_string()) {
-                        if (auto itemVal = Utils::parseIpAddress(item.get<std::string>())) {
-                            if (*itemVal == *fieldVal) { found = true; break; }
-                        }
-                    }
-                }
-                break;
-            }
-            case FilterValueType::REGEX: {
-                for (const auto& item : jsonArray) {
-                    if (item.is_string()) {
-                        std::string pattern = item.get<std::string>();
-                        try {
-                            auto flags = caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
-                            std::regex re(pattern, flags);
-                            if (std::regex_search(fieldValue, re)) {
-                                found = true;
-                                break;
-                            }
-                        } catch (const std::regex_error& e) {
-                            std::cerr << "Warning: Invalid regex pattern in IN/NOT_IN list: " << pattern << " - " << e.what() << std::endl;
-                        }
-                    }
-                }
-                break;
-            }
-            case FilterValueType::STRING:
-            case FilterValueType::UNKNOWN:
-            case FilterValueType::AUTO: { // AUTO falls back to STRING
-                 for (const auto& item : jsonArray) {
-                    if (item.is_string()) {
-                        std::string s = item.get<std::string>();
-                        if (caseSensitive ? (fieldValue == s) : Utils::caseInsensitiveEquals(fieldValue, s)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-
-        return (op == FilterOperator::IN) ? found : !found;
-
-    } catch (const nlohmann::json::parse_error& e) {
-        return std::unexpected(ErrorCode::Error(Code::JsonParseError, "Failed to parse JSON for IN/NOT_IN operator: " + std::string(e.what())));
-    }
-}
-
-
-// --- Evaluation helpers for FilterExpression ---
-
 std::optional<std::string> getFieldValue(const LogEntry& entry, const FilterCondition& cond) {
-    auto getField = [&]() -> std::optional<std::string> {
-        switch (cond.field) {
-            case LogEntryField::ID:
-                return entry.id.has_value() ? std::optional(std::to_string(*entry.id)) : std::nullopt;
-            case LogEntryField::TIMESTAMP:
-                return entry.timestamp.has_value() ? std::optional(Utils::formatTimestamp(*entry.timestamp)) : std::nullopt;
-            case LogEntryField::LEVEL:
-                return Utils::logLevelToString(entry.level);
-            case LogEntryField::SOURCE_FILE:
-                return entry.sourceFile;
-            case LogEntryField::LINE_NUMBER:
-                return entry.sourceLineNumber.has_value() ? std::optional(std::to_string(*entry.sourceLineNumber)) : std::nullopt;
-            case LogEntryField::THREAD_ID:
-                return entry.threadId;
-            case LogEntryField::MESSAGE:
-                return entry.message;
-            case LogEntryField::MODULE:
-                return entry.module;
-            case LogEntryField::HOST:
-                return entry.host;
-            case LogEntryField::CUSTOM:
-                if (cond.customField) {
-                    auto it = entry.customFields.find(*cond.customField);
-                    if (it != entry.customFields.end()) {
-                        return it->second;
-                    }
-                }
-                return std::nullopt;
-            default:
-                return std::nullopt;
-        }
-    };
-    return getField();
+    switch (cond.field) {
+        case LogEntryField::ID: return entry.id.has_value() ? std::optional(std::to_string(*entry.id)) : std::nullopt;
+        case LogEntryField::TIMESTAMP: return entry.timestamp.has_value() ? std::optional(Utils::formatTimestamp(*entry.timestamp)) : std::nullopt;
+        case LogEntryField::LEVEL: return Utils::logLevelToString(entry.level);
+        case LogEntryField::SOURCE_FILE: return entry.sourceFile;
+        case LogEntryField::LINE_NUMBER: return entry.sourceLineNumber.has_value() ? std::optional(std::to_string(*entry.sourceLineNumber)) : std::nullopt;
+        case LogEntryField::THREAD_ID: return entry.threadId;
+        case LogEntryField::MESSAGE: return entry.message;
+        case LogEntryField::MODULE: return entry.module;
+        case LogEntryField::HOST: return entry.host;
+        case LogEntryField::CUSTOM:
+            if (cond.customField) {
+                auto it = entry.customFields.find(*cond.customField);
+                if (it != entry.customFields.end()) return it->second;
+            }
+            return std::nullopt;
+        default: return std::nullopt;
+    }
 }
 
 ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const LogEntry& entry) {
     auto fieldValueOpt = getFieldValue(entry, cond);
 
-    if (cond.op == FilterOperator::IS_PRESENT) {
+    if (cond.op == FilterOperator::IS_PRESENT || cond.op == FilterOperator::IS_NOT_NULL) {
         return fieldValueOpt.has_value();
     }
-    if (cond.op == FilterOperator::IS_ABSENT) {
+    if (cond.op == FilterOperator::IS_ABSENT || cond.op == FilterOperator::IS_NULL) {
         return !fieldValueOpt.has_value();
     }
 
     if (!fieldValueOpt) {
-        // If the field is not present and the operator is not IS_PRESENT/IS_ABSENT,
-        // it signifies an inability to evaluate, which should be an error.
-        // We retrieve the field name from the condition for a more informative error message.
-        std::string fieldName = Utils::logEntryFieldToString(cond.field);
-        if (cond.field == LogEntryField::CUSTOM && cond.customField) {
-            fieldName = *cond.customField;
-        }
-        return std::unexpected(ErrorCode::Error(Code::FieldNotFound, "LogEntry field not found: " + fieldName));
+        return std::unexpected(ErrorCode::Error(Code::FieldNotFound, "Field not found in log entry."));
     }
     const std::string& fieldValue = *fieldValueOpt;
-    const std::string& condValue = cond.value;
 
-    FilterValueType typeToUse = cond.valueType;
+    std::vector<std::string> valueSet;
+    if (!std::holds_alternative<std::string>(cond.value) && (cond.op != FilterOperator::IN && cond.op != FilterOperator::NOT_IN)) {
+        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Value for this operator must be a single string."));
+    }
 
-    if (typeToUse == FilterValueType::AUTO) {
-        if (auto parsed = inferTypeAndParse(condValue)) {
-            typeToUse = parsed->type;
-        } else {
-            typeToUse = FilterValueType::STRING;
+    auto effectiveValueType = cond.valueType;
+    if (std::holds_alternative<std::string>(cond.value)) {
+        const std::string& condValue = std::get<std::string>(cond.value);
+        if (effectiveValueType == FilterValueType::AUTO) {
+            // Basic type inference
+            if (condValue == "true" || condValue == "false") {
+                effectiveValueType = FilterValueType::BOOL;
+            } else if (Utils::isNumeric(condValue)) {
+                effectiveValueType = condValue.find('.') != std::string::npos ? FilterValueType::DOUBLE : FilterValueType::INT;
+            } else if (Utils::parseIpAddress(condValue)) {
+                effectiveValueType = FilterValueType::IP_ADDRESS;
+            } else if (Utils::parseSemanticVersion(condValue)) {
+                effectiveValueType = FilterValueType::VERSION;
+            } else {
+                effectiveValueType = FilterValueType::STRING;
+            }
         }
     }
 
     if (cond.op == FilterOperator::IN || cond.op == FilterOperator::NOT_IN) {
-        return evaluateInNotIn(fieldValue, condValue, typeToUse, cond.caseSensitive, cond.op);
+        std::vector<std::string> valueSet;
+        if (std::holds_alternative<std::vector<std::string>>(cond.value)) {
+            valueSet = std::get<std::vector<std::string>>(cond.value);
+        } else {
+            // Attempt to parse string as JSON array for backward compatibility
+            const std::string& jsonStr = std::get<std::string>(cond.value);
+            try {
+                auto j = nlohmann::json::parse(jsonStr);
+                if (j.is_array()) {
+                    for (const auto& item : j) {
+                        if (effectiveValueType == FilterValueType::STRING || effectiveValueType == FilterValueType::AUTO) {
+                            if (item.is_string()) valueSet.push_back(item.get<std::string>());
+                        } 
+                        
+                        if (effectiveValueType == FilterValueType::INT || effectiveValueType == FilterValueType::AUTO) {
+                            if (item.is_number_integer()) valueSet.push_back(std::to_string(item.get<int64_t>()));
+                        }
+
+                        if (effectiveValueType == FilterValueType::DOUBLE || effectiveValueType == FilterValueType::FLOAT || effectiveValueType == FilterValueType::AUTO) {
+                            if (item.is_number() && !item.is_number_integer()) {
+                                std::ostringstream ss;
+                                ss << item.get<double>();
+                                valueSet.push_back(ss.str());
+                            }
+                        }
+
+                        if (effectiveValueType == FilterValueType::BOOL || effectiveValueType == FilterValueType::AUTO) {
+                            if (item.is_boolean()) valueSet.push_back(item.get<bool>() ? "true" : "false");
+                        }
+                    }
+                } else {
+                    return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Operator IN/NOT_IN requires a JSON array."));
+                }
+            } catch (...) {
+                return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Operator IN/NOT_IN requires a valid JSON array string."));
+            }
+        }
+        
+        bool found = false;
+        for (const auto& val : valueSet) {
+            if (cond.caseSensitive ? (fieldValue == val) : Utils::caseInsensitiveEquals(fieldValue, val)) {
+                found = true;
+                break;
+            }
+        }
+        return (cond.op == FilterOperator::IN) ? found : !found;
     }
 
-    switch (typeToUse) {
-        case FilterValueType::INT: {
-            long long fieldNum;
-            auto [ptr_field, ec_field] = std::from_chars(fieldValue.data(), fieldValue.data() + fieldValue.size(), fieldNum);
-            if (ec_field != std::errc()) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to convert field value '" + fieldValue + "' to INT."));
+    const std::string& condValue = std::get<std::string>(cond.value);
+
+    switch (effectiveValueType) {
+        case FilterValueType::STRING:
+        {
+             switch (cond.op) {
+                case FilterOperator::EQUALS: return cond.caseSensitive ? (fieldValue == condValue) : Utils::caseInsensitiveEquals(fieldValue, condValue);
+                case FilterOperator::EQUALS_I: return Utils::caseInsensitiveEquals(fieldValue, condValue);
+                case FilterOperator::NOT_EQUALS: return cond.caseSensitive ? (fieldValue != condValue) : !Utils::caseInsensitiveEquals(fieldValue, condValue);
+                case FilterOperator::NOT_EQUALS_I: return !Utils::caseInsensitiveEquals(fieldValue, condValue);
+                case FilterOperator::CONTAINS: return cond.caseSensitive ? (fieldValue.find(condValue) != std::string::npos) : Utils::caseInsensitiveSearch(fieldValue, condValue);
+                case FilterOperator::CONTAINS_I: return Utils::caseInsensitiveSearch(fieldValue, condValue);
+                case FilterOperator::NOT_CONTAINS: return cond.caseSensitive ? (fieldValue.find(condValue) == std::string::npos) : !Utils::caseInsensitiveSearch(fieldValue, condValue);
+                case FilterOperator::NOT_CONTAINS_I: return !Utils::caseInsensitiveSearch(fieldValue, condValue);
+                case FilterOperator::STARTS_WITH: return cond.caseSensitive ? fieldValue.starts_with(condValue) : Utils::caseInsensitiveStarts(fieldValue, condValue);
+                case FilterOperator::STARTS_WITH_I: return Utils::caseInsensitiveStarts(fieldValue, condValue);
+                case FilterOperator::ENDS_WITH: return cond.caseSensitive ? fieldValue.ends_with(condValue) : Utils::caseInsensitiveEnds(fieldValue, condValue);
+                case FilterOperator::ENDS_WITH_I: return Utils::caseInsensitiveEnds(fieldValue, condValue);
+                case FilterOperator::REGEX: {
+                    try {
+                        auto flags = cond.caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
+                        std::regex re(condValue, flags);
+                        return std::regex_search(fieldValue, re);
+                    } catch (const std::regex_error& e) {
+                        return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid regex pattern '" + condValue + "': " + e.what()));
+                    }
+                }
+                default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for STRING type."));
             }
-            long long condNum;
-            auto [ptr_cond, ec_cond] = std::from_chars(condValue.data(), condValue.data() + condValue.size(), condNum);
-            if (ec_cond != std::errc()) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to convert condition value '" + condValue + "' to INT."));
+            break;
+        }
+        case FilterValueType::INT: {
+            long long fieldNum, condNum;
+            try {
+                fieldNum = std::stoll(fieldValue);
+                condNum = std::stoll(condValue);
+            } catch (...) {
+                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Integer conversion failed."));
             }
             switch (cond.op) {
                 case FilterOperator::EQUALS: return fieldNum == condNum;
@@ -349,49 +194,59 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
                 case FilterOperator::LESS_THAN_OR_EQUAL: return fieldNum <= condNum;
                 default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for INT type."));
             }
+            break;
         }
+        case FilterValueType::FLOAT:
         case FilterValueType::DOUBLE: {
-            double fieldNum;
-            auto [ptr_field, ec_field] = std::from_chars(fieldValue.data(), fieldValue.data() + fieldValue.size(), fieldNum);
-            if (ec_field != std::errc()) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to convert field value '" + fieldValue + "' to DOUBLE."));
+            long double fieldNum, condNum;
+            try {
+                fieldNum = std::stold(fieldValue);
+                condNum = std::stold(condValue);
+            } catch (...) {
+                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Floating-point conversion failed."));
             }
-            double condNum;
-            auto [ptr_cond, ec_cond] = std::from_chars(condValue.data(), condValue.data() + condValue.size(), condNum);
-            if (ec_cond != std::errc()) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to convert condition value '" + condValue + "' to DOUBLE."));
-            }
-            const double epsilon = 1e-9;
+            
+            auto areAlmostEqual = [](long double a, long double b) {
+                constexpr long double epsilon = 1e-9L;
+                return std::fabsl(a - b) <= epsilon * std::max({1.0L, std::fabsl(a), std::fabsl(b)});
+            };
+
             switch (cond.op) {
-                case FilterOperator::EQUALS: return std::abs(fieldNum - condNum) < epsilon;
-                case FilterOperator::NOT_EQUALS: return std::abs(fieldNum - condNum) >= epsilon;
-                case FilterOperator::GREATER_THAN: return fieldNum > condNum;
-                case FilterOperator::LESS_THAN: return fieldNum < condNum;
-                case FilterOperator::GREATER_THAN_OR_EQUAL: return fieldNum >= condNum;
-                case FilterOperator::LESS_THAN_OR_EQUAL: return fieldNum <= condNum;
-                default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for DOUBLE type."));
+                case FilterOperator::EQUALS: return areAlmostEqual(fieldNum, condNum);
+                case FilterOperator::NOT_EQUALS: return !areAlmostEqual(fieldNum, condNum);
+                case FilterOperator::GREATER_THAN: return fieldNum > condNum && !areAlmostEqual(fieldNum, condNum);
+                case FilterOperator::LESS_THAN: return fieldNum < condNum && !areAlmostEqual(fieldNum, condNum);
+                case FilterOperator::GREATER_THAN_OR_EQUAL: return fieldNum > condNum || areAlmostEqual(fieldNum, condNum);
+                case FilterOperator::LESS_THAN_OR_EQUAL: return fieldNum < condNum || areAlmostEqual(fieldNum, condNum);
+                default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for numeric type."));
             }
+            break;
         }
         case FilterValueType::BOOL: {
             auto fieldBool = stringToBool(fieldValue);
             auto condBool = stringToBool(condValue);
-            if (!fieldBool || !condBool) {
-                 return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to convert value to BOOL. Field: '" + fieldValue + "', Condition: '" + condValue + "'"));
+            if (!fieldBool.has_value() || !condBool.has_value()) {
+                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid boolean value."));
             }
             switch (cond.op) {
                 case FilterOperator::EQUALS: return *fieldBool == *condBool;
                 case FilterOperator::NOT_EQUALS: return *fieldBool != *condBool;
                 default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for BOOL type."));
             }
+            break;
         }
         case FilterValueType::DATETIME: {
-            auto fieldTime = Utils::parseTime(fieldValue);
-            auto condTime = Utils::parseTime(condValue);
-            if (!fieldTime) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to parse field value '" + fieldValue + "' as DATETIME."));
+            std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> fieldTime, condTime;
+            if (cond.datetimeFormat.has_value() && !cond.datetimeFormat->empty()) {
+                fieldTime = Utils::parseTimeWithFormats(fieldValue, {*cond.datetimeFormat});
+                condTime = Utils::parseTimeWithFormats(condValue, {*cond.datetimeFormat});
+            } else {
+                fieldTime = Utils::parseTime(fieldValue);
+                condTime = Utils::parseTime(condValue);
             }
-            if (!condTime) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to parse condition value '" + condValue + "' as DATETIME."));
+
+            if (!fieldTime.has_value() || !condTime.has_value()) {
+                 return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid datetime value or format."));
             }
             switch (cond.op) {
                 case FilterOperator::EQUALS: return *fieldTime == *condTime;
@@ -402,15 +257,30 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
                 case FilterOperator::LESS_THAN_OR_EQUAL: return *fieldTime <= *condTime;
                 default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for DATETIME type."));
             }
+            break;
+        }
+        case FilterValueType::IP_ADDRESS: {
+            auto fieldIp = Utils::parseIpAddress(fieldValue);
+            auto condIp = Utils::parseIpAddress(condValue);
+            if (!fieldIp || !condIp) {
+                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid IP address string."));
+            }
+            switch (cond.op) {
+                case FilterOperator::EQUALS: return *fieldIp == *condIp;
+                case FilterOperator::NOT_EQUALS: return *fieldIp != *condIp;
+                case FilterOperator::GREATER_THAN: return *fieldIp > *condIp;
+                case FilterOperator::LESS_THAN: return *fieldIp < *condIp;
+                case FilterOperator::GREATER_THAN_OR_EQUAL: return *fieldIp >= *condIp;
+                case FilterOperator::LESS_THAN_OR_EQUAL: return *fieldIp <= *condIp;
+                default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for IP_ADDRESS type."));
+            }
+            break;
         }
         case FilterValueType::VERSION: {
             auto fieldVer = Utils::parseSemanticVersion(fieldValue);
             auto condVer = Utils::parseSemanticVersion(condValue);
-            if (!fieldVer) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to parse field value '" + fieldValue + "' as VERSION."));
-            }
-            if (!condVer) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to parse condition value '" + condValue + "' as VERSION."));
+            if (!fieldVer || !condVer) {
+                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Invalid version string."));
             }
             switch (cond.op) {
                 case FilterOperator::EQUALS: return *fieldVer == *condVer;
@@ -422,60 +292,26 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
                 default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for VERSION type."));
             }
         }
-        case FilterValueType::IP_ADDRESS: {
-            auto fieldIp = Utils::parseIpAddress(fieldValue);
-            auto condIp = Utils::parseIpAddress(condValue);
-            if (!fieldIp) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to parse field value '" + fieldValue + "' as IP_ADDRESS."));
-            }
-            if (!condIp) {
-                return std::unexpected(ErrorCode::Error(Code::ConversionError, "Failed to parse condition value '" + condValue + "' as IP_ADDRESS."));
-            }
+        case FilterValueType::LOG_LEVEL: {
+            auto fieldLevel = Utils::stringToLogLevel(fieldValue);
+            auto condLevel = Utils::stringToLogLevel(condValue);
             switch (cond.op) {
-                case FilterOperator::EQUALS: return *fieldIp == *condIp;
-                case FilterOperator::NOT_EQUALS: return *fieldIp != *condIp;
-                case FilterOperator::GREATER_THAN: return *fieldIp > *condIp;
-                case FilterOperator::LESS_THAN: return *fieldIp < *condIp;
-                case FilterOperator::GREATER_THAN_OR_EQUAL: return *fieldIp >= *condIp;
-                case FilterOperator::LESS_THAN_OR_EQUAL: return *fieldIp <= *condIp;
-                default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for IP_ADDRESS type."));
-            }
-        }
-        case FilterValueType::STRING:
-        case FilterValueType::UNKNOWN:
-        case FilterValueType::AUTO: { // AUTO falls back to STRING
-             switch (cond.op) {
-                case FilterOperator::EQUALS: return cond.caseSensitive ? (fieldValue == condValue) : Utils::caseInsensitiveEquals(fieldValue, condValue);
-                case FilterOperator::NOT_EQUALS: return cond.caseSensitive ? (fieldValue != condValue) : !Utils::caseInsensitiveEquals(fieldValue, condValue);
-                case FilterOperator::EQUALS_I: return Utils::caseInsensitiveEquals(fieldValue, condValue);
-                case FilterOperator::NOT_EQUALS_I: return !Utils::caseInsensitiveEquals(fieldValue, condValue);
-                case FilterOperator::CONTAINS: return cond.caseSensitive ? (fieldValue.find(condValue) != std::string::npos) : Utils::caseInsensitiveSearch(fieldValue, condValue);
-                case FilterOperator::NOT_CONTAINS: return cond.caseSensitive ? (fieldValue.find(condValue) == std::string::npos) : !Utils::caseInsensitiveSearch(fieldValue, condValue);
-                case FilterOperator::CONTAINS_I: return Utils::caseInsensitiveSearch(fieldValue, condValue);
-                case FilterOperator::NOT_CONTAINS_I: return !Utils::caseInsensitiveSearch(fieldValue, condValue);
-                case FilterOperator::STARTS_WITH: return cond.caseSensitive ? fieldValue.starts_with(condValue) : Utils::caseInsensitiveStarts(fieldValue, condValue);
-                case FilterOperator::ENDS_WITH: return cond.caseSensitive ? fieldValue.ends_with(condValue) : Utils::caseInsensitiveEnds(fieldValue, condValue);
-                case FilterOperator::STARTS_WITH_I: return Utils::caseInsensitiveStarts(fieldValue, condValue);
-                case FilterOperator::ENDS_WITH_I: return Utils::caseInsensitiveEnds(fieldValue, condValue);
-                case FilterOperator::REGEX: {
-                    try {
-                        auto flags = cond.caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
-                        std::regex re(condValue, flags);
-                        return std::regex_search(fieldValue, re);
-                    } catch (const std::regex_error& e) {
-                        return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid regex pattern '" + condValue + "': " + e.what()));
-                    }
-                }
-                default:
-                    return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for STRING type."));
+                case FilterOperator::EQUALS: return fieldLevel == condLevel;
+                case FilterOperator::NOT_EQUALS: return fieldLevel != condLevel;
+                case FilterOperator::GREATER_THAN: return fieldLevel > condLevel;
+                case FilterOperator::LESS_THAN: return fieldLevel < condLevel;
+                case FilterOperator::GREATER_THAN_OR_EQUAL: return fieldLevel >= condLevel;
+                case FilterOperator::LESS_THAN_OR_EQUAL: return fieldLevel <= condLevel;
+                default: return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid operator for LOG_LEVEL type."));
             }
         }
         default:
-            return std::unexpected(ErrorCode::Error(Code::NotImplemented, "Unhandled FilterValueType."));
+            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unsupported value type."));
     }
 }
 
-// FilterExpression::evaluate and FilterExpression::validate definitions
+} // Unnamed namespace
+
 ErrorCode::Result<bool> FilterExpression::evaluate(const LogEntry& entry) const {
     ErrorCode::Result<bool> result = false;
     switch (type_) {
@@ -490,34 +326,22 @@ ErrorCode::Result<bool> FilterExpression::evaluate(const LogEntry& entry) const 
                 result = true;
                 for (const auto& expr : expressions_) {
                     auto subResult = expr.evaluate(entry);
-                    if (!subResult) return subResult; // Propagate error
-                    if (!*subResult) {
-                        result = false;
-                        break; // Short-circuit
-                    }
+                    if (!subResult) return subResult;
+                    if (!*subResult) { result = false; break; }
                 }
             } else { // OR
                 result = false;
                 for (const auto& expr : expressions_) {
                     auto subResult = expr.evaluate(entry);
-                    if (!subResult) return subResult; // Propagate error
-                    if (*subResult) {
-                        result = true;
-                        break; // Short-circuit
-                    }
+                    if (!subResult) return subResult;
+                    if (*subResult) { result = true; break; }
                 }
             }
             break;
-        default:
-            result = false;
-            break;
     }
 
-        if (negated_) {
-        if (!result) { // If the inner result is an error, propagate it
-            return result;
-        }
-        // Otherwise, negate the valid boolean value
+    if (negated_) {
+        if (!result) return result;
         return !*result;
     }
     return result;
@@ -525,77 +349,70 @@ ErrorCode::Result<bool> FilterExpression::evaluate(const LogEntry& entry) const 
 
 ErrorCode::Result<void> FilterExpression::validate() const {
     switch (type_) {
-        case ExpressionType::EMPTY:
-            return {}; // Always valid
+        case ExpressionType::EMPTY: return {};
         case ExpressionType::CONDITION:
+            if (condition_->op == FilterOperator::IN || condition_->op == FilterOperator::NOT_IN) {
+                if (!std::holds_alternative<std::vector<std::string>>(condition_->value)) {
+                    return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "IN/NOT_IN operator requires an array value."));
+                }
+            } else if (condition_->op != FilterOperator::IS_NULL && condition_->op != FilterOperator::IS_NOT_NULL &&
+                       condition_->op != FilterOperator::IS_PRESENT && condition_->op != FilterOperator::IS_ABSENT) {
+                if (!std::holds_alternative<std::string>(condition_->value)) {
+                    return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "This operator requires a single string value."));
+                }
+            }
+
             if (condition_->op == FilterOperator::REGEX) {
-                try {
-                    auto flags = condition_->caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
-                    std::regex re(condition_->value, flags);
-                } catch (const std::regex_error& e) {
-                    return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid regex pattern '" + condition_->value + "': " + e.what()));
+                if(auto* condValue = std::get_if<std::string>(&condition_->value)) {
+                    try {
+                        auto flags = condition_->caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
+                        std::regex re(*condValue, flags);
+                    } catch (const std::regex_error& e) {
+                        return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid regex: " + (*condValue) + " (" + e.what() + ")"));
+                    }
                 }
             }
             return {};
         case ExpressionType::LOGICAL:
             for (const auto& expr : expressions_) {
                 auto result = expr.validate();
-                if (!result) {
-                    return result;
-                }
+                if (!result) return result;
             }
             return {};
     }
     return {};
 }
 
-// --- New methods for Iteration 13 ---
-
-FilterExpression FilterExpression::clone() const {
+FilterExpression FilterExpression::simplify() const {
+    if (isLogical()) {
+        std::vector<FilterExpression> new_expressions;
+        for (const auto& child : expressions_) {
+            new_expressions.push_back(child.simplify());
+        }
+        // Basic simplification: flatten nested AND/OR of the same type
+        std::vector<FilterExpression> flattened_expressions;
+        for (auto&& expr : new_expressions) {
+            if (expr.isLogical() && expr.getLogicalOperator() == logicalOperator_ && !expr.isNegated()) {
+                for (auto&& sub_expr : expr.expressions_) {
+                    flattened_expressions.push_back(std::move(sub_expr));
+                }
+            } else {
+                flattened_expressions.push_back(std::move(expr));
+            }
+        }
+        return FilterExpression(*logicalOperator_, std::move(flattened_expressions), negated_);
+    }
     return *this;
 }
 
-FilterExpression FilterExpression::makeEmpty(bool negated) {
-    FilterExpression expr;
-    expr.negated_ = negated;
-    return expr;
-}
-
-FilterExpression FilterExpression::makeCondition(FilterCondition condition, bool negated) {
-    return FilterExpression(std::move(condition), negated);
-}
-
-FilterExpression FilterExpression::makeAnd(std::vector<FilterExpression> expressions, bool negated) {
-    std::vector<FilterExpression> flattened;
-    for (auto& expr : expressions) {
-        if (expr.type_ == ExpressionType::LOGICAL && expr.logicalOperator_ == FilterLogicalOperator::AND && !expr.negated_) {
-            flattened.insert(flattened.end(),
-                             std::make_move_iterator(expr.expressions_.begin()),
-                             std::make_move_iterator(expr.expressions_.end()));
-        } else {
-            flattened.push_back(std::move(expr));
+void FilterExpression::visit(std::function<void(const FilterCondition&)> visitor) const {
+    if (isCondition() && condition_) {
+        visitor(*condition_);
+    } else if (isLogical()) {
+        for (const auto& child : expressions_) {
+            child.visit(visitor);
         }
     }
-    return FilterExpression(FilterLogicalOperator::AND, std::move(flattened), negated);
-}
-
-FilterExpression FilterExpression::makeOr(std::vector<FilterExpression> expressions, bool negated) {
-    std::vector<FilterExpression> flattened;
-    for (auto& expr : expressions) {
-        if (expr.type_ == ExpressionType::LOGICAL && expr.logicalOperator_ == FilterLogicalOperator::OR && !expr.negated_) {
-            flattened.insert(flattened.end(),
-                             std::make_move_iterator(expr.expressions_.begin()),
-                             std::make_move_iterator(expr.expressions_.end()));
-        } else {
-            flattened.push_back(std::move(expr));
-        }
-    }
-    return FilterExpression(FilterLogicalOperator::OR, std::move(flattened), negated);
-}
-
-FilterExpression FilterExpression::makeNot(FilterExpression expr) {
-    expr.negated_ = !expr.negated_;
-    return expr;
 }
 
 std::string FilterExpression::toString() const {
@@ -609,19 +426,19 @@ std::string FilterExpression::toString() const {
             break;
         case ExpressionType::LOGICAL: {
             if (expressions_.empty()) {
-                core_str = logicalOperator_ ? ("EMPTY_" + ::toString(*logicalOperator_)) : "EMPTY";
+                core_str = "EMPTY";
             } else {
                 std::string op_str = " " + ::toString(*logicalOperator_) + " ";
                 std::vector<std::string> parts;
                 for (const auto& expr : expressions_) {
-                    parts.push_back(expr.toString()); // Recursive call
+                    parts.push_back(expr.toString());
                 }
                 core_str = "(" + join(parts, op_str) + ")";
             }
             break;
         }
         default:
-            core_str = "INVALID_EXPRESSION";
+            core_str = "INVALID";
     }
 
     if (negated_) {
@@ -631,24 +448,39 @@ std::string FilterExpression::toString() const {
 }
 
 std::string FilterExpression::conditionToString(const FilterCondition& cond) const {
-    std::string fieldStr = Utils::logEntryFieldToString(cond.field);
-    if (cond.field == LogEntryField::CUSTOM && cond.customField) {
-        fieldStr += ":" + *cond.customField;
-    }
+    std::string fieldStr = cond.customField ? *cond.customField : Utils::logEntryFieldToString(cond.field);
     std::string opStr = ::toString(cond.op);
-    std::string valStr = cond.value;
-
-    if (cond.op == FilterOperator::IS_PRESENT || cond.op == FilterOperator::IS_ABSENT) {
+    
+    if (cond.op == FilterOperator::IS_PRESENT || cond.op == FilterOperator::IS_ABSENT || cond.op == FilterOperator::IS_NULL || cond.op == FilterOperator::IS_NOT_NULL) {
         return fieldStr + " " + opStr;
     }
-
-    // For certain types, quote the value string.
-    bool isJsonLike = (valStr.starts_with('[') && valStr.ends_with(']')) ||
-                      (valStr.starts_with('{') && valStr.ends_with('}'));
-
-    if (!isJsonLike && (cond.valueType == FilterValueType::STRING || cond.valueType == FilterValueType::AUTO)) {
-        valStr = "\"" + valStr + "\"";
-    }
-
+    
+    std::string valStr;
+    std::visit([&valStr](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, std::string>) {
+            valStr = "\"" + arg + "\"";
+        } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+            valStr = "[";
+            for (size_t i = 0; i < arg.size(); ++i) {
+                valStr += "\"" + arg[i] + "\"";
+                if (i < arg.size() - 1) valStr += ", ";
+            }
+            valStr += "]";
+        }
+    }, cond.value);
+    
     return fieldStr + " " + opStr + " " + valStr;
 }
+
+// --- Other FilterExpression methods ---
+FilterExpression FilterExpression::clone() const { return *this; }
+FilterExpression FilterExpression::makeEmpty(bool negated) { FilterExpression e; e.negated_ = negated; return e; }
+FilterExpression FilterExpression::makeCondition(FilterCondition condition, bool negated) { return FilterExpression(std::move(condition), negated); }
+FilterExpression FilterExpression::makeAnd(std::vector<FilterExpression> expressions, bool negated) { 
+    return FilterExpression(FilterLogicalOperator::AND, std::move(expressions), negated).simplify(); 
+}
+FilterExpression FilterExpression::makeOr(std::vector<FilterExpression> expressions, bool negated) { 
+    return FilterExpression(FilterLogicalOperator::OR, std::move(expressions), negated).simplify(); 
+}
+FilterExpression FilterExpression::makeNot(FilterExpression expr) { expr.negated_ = !expr.negated_; return expr; }

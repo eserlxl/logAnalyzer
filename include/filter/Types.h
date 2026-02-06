@@ -72,7 +72,8 @@ enum class FilterValueType : uint8_t {
     VERSION = 7,  // Treat value as a semantic version string (New).
     IP_ADDRESS = 8, // Treat value as an IPv4/IPv6 address (New).
     REGEX = 9,     // Treat value as a regular expression pattern.
-    FLOAT = 10     // Treat value as a floating-point number.
+    FLOAT = 10,     // Treat value as a floating-point number.
+    LOG_LEVEL = 11  // Treat value as a log level (e.g., INFO, WARNING).
 };
 
 #endif // FILTER_TYPES_H
