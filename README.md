@@ -36,12 +36,9 @@ In a world of ever-growing log files, traditional tools like `grep`, `awk`, and 
 -   [Building from Source](#building-from-source)
 -   [Installation](#installation)
 -   [Usage](#usage)
--   [Time-based Filtering](#time-based-filtering)
 -   [Command-Line Interface (CLI)](#command-line-interface-cli)
 -   [Configuration](#configuration)
 -   [Project Structure](#project-structure)
--   [Running Tests](#running-tests)
--   [Developer Tools](#developer-tools)
 -   [Contributing](#contributing)
 -   [Code of Conduct](#code-of-conduct)
 -   [License](#license)
@@ -79,23 +76,7 @@ For detailed build instructions, installation options, and more usage examples, 
 
 ## Features
 
-| Feature                      | Description                                                                                             |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Memory-Efficient Processing** | Handles massive files with minimal memory usage using the `--stream` mode.                              |
-| **Multi-File Support**       | Parses and analyzes multiple log files in a single run.                                                 |
-| **Sorting**                  | Sort results by timestamp, log level, message, or other fields in ascending or descending order.        |
-| **Structured Field Parsing** | Automatically parses log messages into fields, including structured data, using custom patterns and intelligent detection.                         |
-| **Keyword & Regex Filtering**| Filter by log level, keywords, glob patterns (anchored), and case-sensitive/insensitive regular expressions. |
-| **Field-Value Matching**     | Match field values with case-sensitive/insensitive text, regex, and glob patterns.                      |
-| **Nested Field Filtering**   | Target nested fields within structured data (e.g., `user.id` in a JSON log).                            |
-| **Advanced Data Types**      | Compare fields as `version` numbers (semantic versioning) or `IP addresses`.                            |
-| **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on flat and nested fields.     |
-| **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                   |
-| **Time-based Filtering**     | Filter by absolute time range, relative time (`5m ago`), or for a specific day (`yesterday`, `2023-10-20`). |
-| **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
-| **Complex Filter Expressions** | (Coming Soon) Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
-| **Flexible Export**          | Save results in Text, JSON, or CSV formats with customizable and aliasable output fields.                 |
-| **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, log level counts, and unique value counts for any field. |
+See [docs/features.md](docs/features.md) for a comprehensive list of features.
 
 ## Building from Source
 
@@ -104,29 +85,7 @@ See [docs/build.md](docs/build.md) for detailed build instructions.
 
 ## Installation
 
-To install the `LogAnalyzer` executable to a system-wide location (e.g., `/usr/local/bin`), run the following command from your `build` directory. This allows you to run `LogAnalyzer` from any terminal.
-
-```bash
-# Use sudo for system-wide installation
-sudo cmake --install . --prefix /usr/local
-```
-
-For a local installation (if you don't have admin privileges), you can specify a different prefix:
-
-```bash
-# Install to a 'dist' directory inside the project folder
-cmake --install . --prefix ../dist
-```
-
-Alternatively, you can add the `build/bin` directory to your system's `PATH` or copy the `LogAnalyzer` executable to a directory already in your `PATH`.
-
-```bash
-# Add to PATH for the current session (from within the build directory)
-export PATH=$(pwd)/bin:$PATH
-
-# Or copy the executable to a user-local bin directory (ensure ~/.local/bin is in your PATH)
-cp ./bin/LogAnalyzer ~/.local/bin/
-```
+See [docs/installation.md](docs/installation.md) for detailed installation instructions.
 
 ## Usage
 

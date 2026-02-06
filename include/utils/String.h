@@ -7,10 +7,13 @@
 
 namespace Utils {
 
+// Note: Case-insensitive comparisons are ASCII-only and not locale-dependent.
+char asciiToLower(char c);
 void replaceAll(std::string &str, const std::string &from, const std::string &to);
 void replaceAllIgnoreCase(std::string& str, const std::string& from, const std::string& to);
 std::string trim(const std::string& str, std::string_view whitespace = " \t\n\r\f\v");
 std::vector<std::string> split(const std::string& str, char delimiter);
+std::vector<std::string> split(const std::string& str, char delimiter, bool skipEmptyTokens);
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
 bool caseInsensitiveEquals(const std::string& s1, const std::string& s2);

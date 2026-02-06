@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 #include "filter/Core.h"
+#include "filter/Legacy.h" // Add this include
 #include "core/LogTypes.h"
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -37,7 +38,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidField) {
         {"value", "INFO"}
     };
 
-    auto result = from_json<FilterRule>(j, "/"); // Changed: from_json(j, fr) -> from_json(j, "/") and removed FilterRule fr;
+    auto result = from_json(j, std::string("/")); // Corrected call for FilterRule
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("Unrecognized field"), std::string::npos);
@@ -50,7 +51,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonMissingField) {
         {"value", "INFO"}
     };
 
-    auto result = from_json<FilterRule>(j, "/"); // Changed: from_json(j, fr) -> from_json(j, "/") and removed FilterRule fr;
+    auto result = from_json(j, std::string("/")); // Corrected call for FilterRule
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
@@ -230,7 +231,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonMissingOp) {
         {"value", "INFO"}
     };
 
-    auto result = from_json<FilterRule>(j, "/");
+    auto result = from_json(j, std::string("/"));
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
@@ -243,7 +244,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonMissingValue) {
         {"op", "EQUALS"}
     };
 
-    auto result = from_json<FilterRule>(j, "/");
+    auto result = from_json(j, std::string("/"));
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("Missing required key"), std::string::npos);
@@ -257,7 +258,7 @@ TEST_F(FilterJsonTest, FilterRuleFromJsonInvalidOp) {
         {"value", "INFO"}
     };
 
-    auto result = from_json<FilterRule>(j, "/");
+    auto result = from_json(j, std::string("/"));
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("Unrecognized operator"), std::string::npos);
