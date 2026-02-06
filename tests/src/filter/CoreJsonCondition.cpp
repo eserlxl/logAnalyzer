@@ -283,7 +283,7 @@ TEST_F(FilterJsonTest, FromJsonFailureDatetimeMissingFormat) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "DATETIME value_type requires 'datetimeFormat'.");
+    EXPECT_EQ(result.error().message, "DATETIME value_type requires a non-empty 'datetimeFormat'.");
 }
 
 // --- Factory Function Tests ---

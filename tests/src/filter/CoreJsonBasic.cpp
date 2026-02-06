@@ -195,7 +195,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeMissingFormat) {
     auto result = from_json(j, fc, "/");
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("DATETIME value_type requires 'datetimeFormat'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("DATETIME value_type requires a non-empty 'datetimeFormat'"), std::string::npos);
     EXPECT_EQ(result.error().jsonPath, "/datetimeFormat"); // Verify jsonPath
 }
 
@@ -279,7 +279,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonMalformedDatetimeFormat) {
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     // getOptional returns nullopt on type mismatch, triggering the missing format check
-    EXPECT_NE(result.error().message.find("DATETIME value_type requires 'datetimeFormat'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("DATETIME value_type requires a non-empty 'datetimeFormat'"), std::string::npos);
     EXPECT_EQ(result.error().jsonPath, "/datetimeFormat"); // Verify jsonPath
 }
 
@@ -424,7 +424,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJsonDatetimeFormatNull) {
     auto result = from_json(j, fc, "/");
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_NE(result.error().message.find("DATETIME value_type requires 'datetimeFormat'"), std::string::npos);
+    EXPECT_NE(result.error().message.find("DATETIME value_type requires a non-empty 'datetimeFormat'"), std::string::npos);
 }
 
 // Test for a missing value but with an operator that might allow it (e.g., IS_NULL)

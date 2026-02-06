@@ -17,6 +17,8 @@
 - [📚 Documentation](#-documentation)
 - [📜 Changelog](#-changelog)
 - [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🤝 Code of Conduct](#-code-of-conduct)
 
 
 ---
@@ -113,6 +115,10 @@ All notable changes to this project are documented in the [`CHANGELOG.md`](CHANG
 ## 🤝 Contributing
 
 Contributions are welcome! Please see the [Contributing Guide](CONTRIBUTING.md) for details on how to get started, report bugs, and suggest features.
+
+## 🤝 Code of Conduct
+
+Please review our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the expectations for participation in our community.
 
 ## 📄 License
 

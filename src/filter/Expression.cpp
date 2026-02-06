@@ -14,6 +14,7 @@
 #include <cmath>    // For std::abs with doubles
 #include <stdexcept> // For std::stod, std::stoll exceptions
 #include <iostream> // For temporary logging to cerr
+#include <numeric>
 
 namespace { // Unnamed namespace for internal helper functions
 
@@ -24,6 +25,16 @@ std::optional<bool> stringToBool(const std::string& s) {
     if (lowerS == "true" || lowerS == "1" || lowerS == "t" || lowerS == "yes") return true;
     if (lowerS == "false" || lowerS == "0" || lowerS == "f" || lowerS == "no") return false;
     return std::nullopt;
+}
+
+std::string join(const std::vector<std::string>& elements, const std::string& delimiter) {
+    if (elements.empty()) {
+        return "";
+    }
+    return std::accumulate(std::next(elements.begin()), elements.end(), elements[0],
+        [&delimiter](const std::string& a, const std::string& b) {
+            return a + delimiter + b;
+        });
 }
 
 // Struct to hold a parsed value and its inferred type
@@ -533,4 +544,108 @@ ErrorCode::Result<void> FilterExpression::validate() const {
             return {};
     }
     return {};
+}
+
+// --- New methods for Iteration 13 ---
+
+FilterExpression FilterExpression::clone() const {
+    return *this;
+}
+
+FilterExpression FilterExpression::makeEmpty(bool negated) {
+    FilterExpression expr;
+    expr.negated_ = negated;
+    return expr;
+}
+
+FilterExpression FilterExpression::makeCondition(FilterCondition condition, bool negated) {
+    return FilterExpression(std::move(condition), negated);
+}
+
+FilterExpression FilterExpression::makeAnd(std::vector<FilterExpression> expressions, bool negated) {
+    std::vector<FilterExpression> flattened;
+    for (auto& expr : expressions) {
+        if (expr.type_ == ExpressionType::LOGICAL && expr.logicalOperator_ == FilterLogicalOperator::AND && !expr.negated_) {
+            flattened.insert(flattened.end(),
+                             std::make_move_iterator(expr.expressions_.begin()),
+                             std::make_move_iterator(expr.expressions_.end()));
+        } else {
+            flattened.push_back(std::move(expr));
+        }
+    }
+    return FilterExpression(FilterLogicalOperator::AND, std::move(flattened), negated);
+}
+
+FilterExpression FilterExpression::makeOr(std::vector<FilterExpression> expressions, bool negated) {
+    std::vector<FilterExpression> flattened;
+    for (auto& expr : expressions) {
+        if (expr.type_ == ExpressionType::LOGICAL && expr.logicalOperator_ == FilterLogicalOperator::OR && !expr.negated_) {
+            flattened.insert(flattened.end(),
+                             std::make_move_iterator(expr.expressions_.begin()),
+                             std::make_move_iterator(expr.expressions_.end()));
+        } else {
+            flattened.push_back(std::move(expr));
+        }
+    }
+    return FilterExpression(FilterLogicalOperator::OR, std::move(flattened), negated);
+}
+
+FilterExpression FilterExpression::makeNot(FilterExpression expr) {
+    expr.negated_ = !expr.negated_;
+    return expr;
+}
+
+std::string FilterExpression::toString() const {
+    std::string core_str;
+    switch (type_) {
+        case ExpressionType::EMPTY:
+            core_str = "EMPTY";
+            break;
+        case ExpressionType::CONDITION:
+            core_str = conditionToString(*condition_);
+            break;
+        case ExpressionType::LOGICAL: {
+            if (expressions_.empty()) {
+                core_str = logicalOperator_ ? ("EMPTY_" + ::toString(*logicalOperator_)) : "EMPTY";
+            } else {
+                std::string op_str = " " + ::toString(*logicalOperator_) + " ";
+                std::vector<std::string> parts;
+                for (const auto& expr : expressions_) {
+                    parts.push_back(expr.toString()); // Recursive call
+                }
+                core_str = "(" + join(parts, op_str) + ")";
+            }
+            break;
+        }
+        default:
+            core_str = "INVALID_EXPRESSION";
+    }
+
+    if (negated_) {
+        return "NOT (" + core_str + ")";
+    }
+    return core_str;
+}
+
+std::string FilterExpression::conditionToString(const FilterCondition& cond) const {
+    std::string fieldStr = Utils::logEntryFieldToString(cond.field);
+    if (cond.field == LogEntryField::CUSTOM && cond.customField) {
+        fieldStr += ":" + *cond.customField;
+    }
+    std::string opStr = ::toString(cond.op);
+    std::string valStr = cond.value;
+
+    if (cond.op == FilterOperator::IS_PRESENT || cond.op == FilterOperator::IS_ABSENT) {
+        return fieldStr + " " + opStr;
+    }
+
+    // For certain types, quote the value string.
+    bool isJsonLike = (valStr.starts_with('[') && valStr.ends_with(']')) ||
+                      (valStr.starts_with('{') && valStr.ends_with('}'));
+
+    if (!isJsonLike && (cond.valueType == FilterValueType::STRING || cond.valueType == FilterValueType::AUTO)) {
+        valStr = "\"" + valStr + "\"";
+    }
+
+    return fieldStr + " " + opStr + " " + valStr;
 }

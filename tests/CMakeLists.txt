@@ -52,6 +52,7 @@ set(TEST_SOURCES
     "src/filter/CoreUnitBasic.cpp"
     "src/filter/CoreUnitField.cpp"
     "src/filter/Iteration2Tests.cpp"
+    "src/filter/Iteration13Tests.cpp"
     "src/stats/Statistics.cpp"
     "src/utils/Time.cpp"
     "src/utils/Enum.cpp"

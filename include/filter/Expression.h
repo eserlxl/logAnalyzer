@@ -66,7 +66,11 @@ public:
     friend inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe);
 
     // Accessors for internal components (useful for evaluation)
-    enum class ExpressionType { EMPTY, CONDITION, LOGICAL };
+    enum class ExpressionType {
+        EMPTY,      ///< Represents an empty or no-op filter. An EMPTY expression (if not negated) evaluates to `true` (passes all log entries). If `negated_` is true for an EMPTY expression, it evaluates to `false` (blocks all log entries).
+        CONDITION,  ///< Represents a single filter condition (leaf node).
+        LOGICAL     ///< Represents a logical combination of other expressions (internal node).
+    };
     ExpressionType getType() const { return type_; }
     const std::optional<FilterCondition>& getCondition() const { return condition_; }
     const std::optional<FilterLogicalOperator>& getLogicalOperator() const { return logicalOperator_; }
@@ -79,7 +83,75 @@ public:
     ErrorCode::Result<bool> evaluate(const LogEntry& entry) const;
     ErrorCode::Result<void> validate() const;
 
+    /**
+     * @brief Returns a human-readable string representation of the filter expression.
+     *
+     * The output aims to be concise and easily understandable, reflecting the structure
+     * of the expression tree using parentheses for logical grouping and 'NOT' for negation.
+     * This method recursively traverses the expression tree to build the string.
+     *
+     * Example: "((level >= WARNING AND message CONTAINS 'error') OR NOT (source = 'main.cpp'))"
+     *
+     * @return A string representing the filter expression.
+     */
+    std::string toString() const;
+
+    /**
+     * @brief Creates a deep copy of the current FilterExpression instance.
+     *        This method ensures that all internal components (conditions, sub-expressions)
+     *        are also deeply copied.
+     * @return A new FilterExpression object that is a deep copy of *this.
+     */
+    FilterExpression clone() const;
+
+    /**
+     * @brief Creates an empty filter expression.
+     *        An un-negated EMPTY expression evaluates to `true` (passes all log entries).
+     *        If `negated` is true, the expression evaluates to `false` (blocks all log entries).
+     * @param negated If true, the empty expression will act as an 'always false' filter.
+     * @return An empty FilterExpression.
+     */
+    static FilterExpression makeEmpty(bool negated = false);
+
+    /**
+     * @brief Creates a filter expression from a single condition.
+     * @param condition The FilterCondition to encapsulate.
+     * @param negated If true, the result of the condition evaluation is negated.
+     * @return A FilterExpression representing the condition.
+     */
+    static FilterExpression makeCondition(FilterCondition condition, bool negated = false);
+
+    /**
+     * @brief Creates a logical AND expression from a list of sub-expressions.
+     *        Automatically flattens nested AND expressions (e.g., (A AND (B AND C)) becomes (A AND B AND C)).
+     * @param expressions A vector of FilterExpression objects to be combined with AND.
+     * @param negated If true, the result of the entire AND expression is negated.
+     * @return A FilterExpression representing the logical AND.
+     */
+    static FilterExpression makeAnd(std::vector<FilterExpression> expressions, bool negated = false);
+
+    /**
+     * @brief Creates a logical OR expression from a list of sub-expressions.
+     *        Automatically flattens nested OR expressions (e.g., (A OR (B OR C)) becomes (A OR B OR C)).
+     * @param expressions A vector of FilterExpression objects to be combined with OR.
+     * @param negated If true, the result of the entire OR expression is negated.
+     * @return A FilterExpression representing the logical OR.
+     */
+    static FilterExpression makeOr(std::vector<FilterExpression> expressions, bool negated = false);
+
+    /**
+     * @brief Creates a negated version of an existing filter expression.
+     *        If the input expression `expr` is already negated, this method effectively
+     *        un-negates it (i.e., NOT (NOT A) = A).
+     * @param expr The FilterExpression to negate. Its `negated_` state will be toggled.
+     * @return A new FilterExpression with its negation state flipped.
+     */
+    static FilterExpression makeNot(FilterExpression expr);
+
 private:
+    // Helper to convert a FilterCondition to its string representation.
+    std::string conditionToString(const FilterCondition& cond) const;
+
     ExpressionType type_;
     std::optional<FilterCondition> condition_;
     std::optional<FilterLogicalOperator> logicalOperator_; // This will now only hold AND/OR

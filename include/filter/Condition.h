@@ -268,7 +268,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     fc.datetimeFormat = FilterJsonUtils::getOptional<std::string>(j, "datetimeFormat");
 
     if (fc.valueType == FilterValueType::DATETIME && (!fc.datetimeFormat || fc.datetimeFormat->empty())) {
-        return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "DATETIME value_type requires 'datetimeFormat'.", current_path, "datetimeFormat"));
+        return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "DATETIME value_type requires a non-empty 'datetimeFormat'.", current_path, "datetimeFormat"));
     }
 
     return {}; // Success

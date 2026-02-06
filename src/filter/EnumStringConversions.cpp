@@ -54,6 +54,8 @@ std::optional<FilterOperator> fromStringToFilterOperator(const std::string& opSt
     if (upperOpStr == "GREATER_THAN_OR_EQUAL" || upperOpStr == "GTE" || upperOpStr == "GREATER_THAN_OR_EQUALS") return FilterOperator::GREATER_THAN_OR_EQUAL;
     if (upperOpStr == "IS_PRESENT") return FilterOperator::IS_PRESENT;
     if (upperOpStr == "IS_ABSENT") return FilterOperator::IS_ABSENT;
+    if (upperOpStr == "IS_NULL") return FilterOperator::IS_NULL;
+    if (upperOpStr == "IS_NOT_NULL") return FilterOperator::IS_NOT_NULL;
     // New case-insensitive operators
     if (upperOpStr == "EQUALS_I") return FilterOperator::EQUALS_I;
     if (upperOpStr == "NOT_EQUALS_I") return FilterOperator::NOT_EQUALS_I;
