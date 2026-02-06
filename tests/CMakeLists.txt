@@ -57,6 +57,7 @@ set(TEST_SOURCES
     "src/utils/Enum.cpp"
     "src/utils/String.cpp"
     "src/analyzer/Types_test.cpp"
+    "src/analyzer/LogWriter_test.cpp"
 )
 
 # Loop through each test source file

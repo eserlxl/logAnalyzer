@@ -88,6 +88,7 @@ TEST_F(FilterTestFixture, EvaluateIdOptionalPresent) {
 
 TEST_F(FilterTestFixture, EvaluateIdOptionalAbsent) {
     LogEntry entry = createLogEntry(LogLevel::INFO, "Msg", "test.log", {}, std::nullopt);
+    entry.id = std::nullopt; // Explicitly reset because createLogEntry assigns a default ID
     FilterCondition cond = createCondition(LogEntryField::ID, FilterOperator::IS_ABSENT, "", FilterValueType::STRING);
     FilterExpression expr = FilterExpression::create(cond);
     EXPECT_TRUE(expr.evaluate(entry).value_or(false));

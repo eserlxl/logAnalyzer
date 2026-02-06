@@ -66,7 +66,7 @@ Run `logAnalyzer --help` for a full list of commands.
 
 | Option                  | Shorthand | Description                                                                                                                             | Default                         |
 | :---------------------- | :-------- | :-------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------ |
-| `--format [text|json|csv]` |           | Sets the output format for filtered log entries.                                                                                        | `text`                          |
+| `--format [text|json|csv|xml]` |           | Sets the output format for filtered log entries.                                                                                        | `text`                          |
 | `--text-format FORMAT_STRING` |           | Custom format string for `text` output. Placeholders: `{timestamp}`, `{level}`, `{message}`, `{lineNumber}`, `{fileName}`, `{elapsedTime}`. | `{timestamp} {level}: {message}`|
 | `--csv-sep CHAR`        |           | Specifies the separator character for `csv` output.                                                                                     | `,`                             |
 | `--csv-fields "FIELDS"` |           | Comma-separated list of fields to include in `csv` output (e.g., `timestamp,level,message,file`).                                       | `timestamp,level,message,file`  |

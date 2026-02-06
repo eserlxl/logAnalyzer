@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "analyzer/LogWriter.h"
-#include "analyzer/Core.h"
-#include "utils/String.h"
-#include "utils/Time.h"
 #include <iostream>
 #include <sstream>
 #include <string_view>
-#include "filter/IFilter.h" // For FilterCriteria
-#include "core/Error.h" // For ErrorCode
+
+#include "analyzer/Core.h"
+#include "analyzer/LogWriter.h"
+#include "core/Error.h"
+#include "filter/IFilter.h"
+#include "utils/String.h"
+#include "utils/Time.h"
 
 LogWriter::LogWriter(const LogAnalyzer& analyzer) : analyzer_(analyzer) {}
 
-std::string LogWriter::formatEntry(const LogEntry& entry, std::string_view format, const FormattingOptions& options) const {
-    std::string formattedString(format);
+std::string LogWriter::formatEntry(const LogEntry& entry, const FormattingOptions& options) const {
+    std::string formattedString(options.overallFormat);
 
     std::string timestampStr = entry.timestamp.has_value() ? 
         Utils::formatTimestamp(entry.timestamp.value(), options.dateTimeFormat) : "N/A";
@@ -63,31 +64,28 @@ std::string LogWriter::formatEntry(const LogEntry& entry, std::string_view forma
     return formattedString;
 }
 
-std::string LogWriter::formatEntry(const LogEntry& entry, std::string_view dateTimeFormat, bool useColor) const {
-    FormattingOptions options;
-    options.useColor = useColor;
-    options.dateTimeFormat = dateTimeFormat.empty() ? "%Y-%m-%d %H:%M:%S" : std::string(dateTimeFormat);
-
-    std::string overallFormat = "{timestamp} {level}: {message}"; 
-    return formatEntry(entry, overallFormat, options);
-}
-
-void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
+void LogWriter::printFilteredEntriesInternal(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
     FilterExpression combinedExpression = analyzer_.createFilterExpressionFromCriteria(criteria);
-    // Now call the non-deprecated getFilteredEntries with the new expression
     auto filteredEntriesExpected = analyzer_.getFilteredEntries(combinedExpression);
+
     if (filteredEntriesExpected.has_value()) {
         const auto& filteredEntries = filteredEntriesExpected.value();
         for (const auto& entry : filteredEntries) {
-            out << formatEntry(entry, "{timestamp} {level}: {message}", options) << std::endl;
+            out << formatEntry(entry, options) << std::endl;
         }
     } else {
-        out << "Error filtering entries: " << filteredEntriesExpected.error().message << std::endl;
+        // Generic, user-friendly error message
+        out << "An error occurred while filtering log entries." << std::endl;
     }
 }
 
-void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const {
+void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const {
+    printFilteredEntriesInternal(out, criteria, options);
+}
+
+void LogWriter::printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view overallFormatString) const {
     FormattingOptions options;
-    options.dateTimeFormat = std::string(formatString);
-    analyzer_.printFilteredEntries(out, analyzer_.createFilterExpressionFromCriteria(criteria), options);
+    // Set the overall format string from the parameter
+    options.overallFormat = overallFormatString; 
+    printFilteredEntriesInternal(out, criteria, options);
 }

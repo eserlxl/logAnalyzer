@@ -1,6 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
-// Copyright (c) 2026 Eser KUBALI
-
+#include "analyzer/LogWriter.h" // New
 #include "analyzer/Core.h"
 #include "export/Exporter.h"
 #include "utils/UtilsCore.h"
@@ -31,8 +29,7 @@ int main(int argc, char *argv[]) {
     const auto& [analyzerSettings, cliOptions] = expectedConfig.value();
 
     LogAnalyzer analyzer(analyzerSettings); // Construct with settings
-
-
+    LogWriter logWriter(analyzer); // New: Create LogWriter instance
 
     std::ofstream outFile;
     std::ostream *outputStream = &std::cout;
@@ -171,7 +168,7 @@ int main(int argc, char *argv[]) {
                     FormattingOptions fmtOptions;
                     fmtOptions.useColor = useColors;
                     fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
-                    *outputStream << analyzer.formatEntry(entry, cliOptions.textOutputFormat, fmtOptions) << std::endl;
+                    *outputStream << logWriter.formatEntry(entry, fmtOptions) << std::endl;
                  } else { // CSV
                     for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
                         const auto& fieldMapping = csvFieldsToExport[i];

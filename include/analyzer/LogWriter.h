@@ -17,11 +17,13 @@ class LogWriter {
 public:
     explicit LogWriter(const LogAnalyzer& analyzer);
 
-    std::string formatEntry(const LogEntry& entry, std::string_view format, const FormattingOptions& options) const;
-    std::string formatEntry(const LogEntry& entry, std::string_view dateTimeFormat = "%Y-%m-%d %H:%M:%S", bool useColor = false) const;
+    std::string formatEntry(const LogEntry& entry, const FormattingOptions& options) const;
     
     void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const;
-    void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const;
+    void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view overallFormatString) const;
+
+private:
+    void printFilteredEntriesInternal(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const;
 
 private:
     const LogAnalyzer& analyzer_;

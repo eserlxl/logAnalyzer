@@ -77,6 +77,16 @@ logAnalyzer application.log --format csv --csv-fields "timestamp as Time, level,
 ```
 
 
+### Example 8: Export to XML
+
+```bash
+# Export filtered errors to an XML file
+logAnalyzer production.log --level ERROR --format xml --output errors.xml
+
+# Export all messages from a specific day to a pretty-printed XML file
+logAnalyzer server.log --start "today" --format xml --pretty --output today_logs.xml
+```
+
 ### Time-based Filtering
 
 `logAnalyzer` offers flexible options for filtering log entries based on their timestamps using the `--start` and `--end` flags.

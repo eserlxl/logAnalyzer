@@ -82,13 +82,13 @@ TEST_F(LogAnalyzerTest, ExportAsJsonEdgeCases) {
     ASSERT_EQ(j["summary"]["count"], 2);
     ASSERT_EQ(j["entries"].size(), 2);
     
-    // Check first entry (expecting UPPERCASE keys because Exporter uses logEntryFieldToString)
-    ASSERT_EQ(j["entries"][0]["LEVEL"], "INFO");
-    ASSERT_NE(j["entries"][0]["MESSAGE"].get<std::string>().find("First message."), std::string::npos);
+    // Check first entry (expecting CamelCase keys because Exporter uses CamelCase)
+    ASSERT_EQ(j["entries"][0]["Level"], "INFO");
+    ASSERT_NE(j["entries"][0]["Message"].get<std::string>().find("First message."), std::string::npos);
     
     // Check second entry
-    ASSERT_EQ(j["entries"][1]["LEVEL"], "DEBUG");
-    ASSERT_NE(j["entries"][1]["MESSAGE"].get<std::string>().find("Second message."), std::string::npos);
+    ASSERT_EQ(j["entries"][1]["Level"], "DEBUG");
+    ASSERT_NE(j["entries"][1]["Message"].get<std::string>().find("Second message."), std::string::npos);
 }
 
 TEST_F(LogAnalyzerTest, AppendCorrectness) {

@@ -63,17 +63,6 @@ public:
     [[deprecated("Use analyzeStream(const std::vector<std::string>&, std::function<bool(const LogEntry&)>, CLIConfig::ParserAction) instead.")]]
     std::expected<void, LogParseError> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern);
     
-    std::string formatEntry(const LogEntry& entry, std::string_view format, const FormattingOptions& options) const;
-    std::string formatEntry(const LogEntry& entry, std::string_view format, bool useColor) const;
-
-    [[deprecated("Use printFilteredEntries(std::ostream&, const FilterExpression&, const FormattingOptions&) instead.")]]
-    void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, const FormattingOptions& options) const;
-    void printFilteredEntries(std::ostream& out, const FilterExpression& expression, const FormattingOptions& options) const;
-
-    [[deprecated("Use printFilteredEntries(std::ostream&, const FilterExpression&, std::string_view) instead.")]]
-    void printFilteredEntries(std::ostream& out, const FilterCriteria& criteria, std::string_view formatString) const;
-    void printFilteredEntries(std::ostream& out, const FilterExpression& expression, std::string_view formatString) const;
-
     const std::vector<LogEntry>& getEntries() const;
     std::span<const LogEntry> getEntriesView() const;
     const AnalysisReport& getLastReport() const;

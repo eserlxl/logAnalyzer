@@ -8,6 +8,9 @@
 #include "core/Error.h"
 #include "core/LogTypes.h"
 #include "utils/UtilsCore.h"
+#include "utils/String.h"
+#include "utils/IpAddress.h"
+#include "utils/Version.h"
 #include "filter/Types.h"
 #include "filter/EnumStringConversions.h"
 #include "filter/JsonUtils.h"
@@ -155,9 +158,37 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     }
     fc.op = *opOpt;
 
-    auto valRes = FilterJsonUtils::getRequired<std::string>(j, "value", current_path);
-    if (!valRes) return std::unexpected(valRes.error());
-    fc.value = *valRes;
+    // Handle 'value' which can be string, boolean, or number
+    // Allow missing value for IS_NULL / IS_NOT_NULL checks
+    if (!j.contains("value")) {
+        if (fc.op == FilterOperator::IS_NULL || fc.op == FilterOperator::IS_NOT_NULL) {
+            fc.value = ""; // Treat as empty string
+        } else {
+            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Missing required key: 'value'", current_path, "value"));
+        }
+    } else {
+        const auto& valJson = j.at("value");
+        if (valJson.is_string()) {
+            fc.value = valJson.get<std::string>();
+        } else if (valJson.is_boolean()) {
+            fc.value = valJson.get<bool>() ? "true" : "false";
+        } else if (valJson.is_number_integer()) {
+            fc.value = std::to_string(valJson.get<int64_t>());
+        } else if (valJson.is_number_unsigned()) {
+            fc.value = std::to_string(valJson.get<uint64_t>());
+        } else if (valJson.is_number()) {
+            fc.value = std::to_string(valJson.get<double>());
+        } else if (valJson.is_null()) {
+            // Allow null if operator is IS_NULL or IS_NOT_NULL
+            if (fc.op == FilterOperator::IS_NULL || fc.op == FilterOperator::IS_NOT_NULL) {
+                fc.value = ""; // Treat as empty string or ignore
+            } else {
+                return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid type for key: 'value' (null not allowed for this operator)", current_path, "value"));
+            }
+        } else {
+            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid type for key: 'value'", current_path, "value"));
+        }
+    }
 
     auto vtRes = FilterJsonUtils::getRequired<nlohmann::json>(j, "value_type", current_path);
     if (!vtRes) return std::unexpected(vtRes.error());
@@ -173,7 +204,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         // For backward compatibility
         std::cerr << "Warning: Using integer for 'value_type' is deprecated and may be removed in future versions. Please use string representations.\n";
         int vt_int = vtJson.get<int>();
-        if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::IP_ADDRESS)) {
+        if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::FLOAT)) {
             fc.valueType = static_cast<FilterValueType>(vt_int);
         } else {
             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer for 'value_type'.", current_path, "value_type"));
@@ -182,10 +213,61 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "'value_type' must be a string or integer.", current_path, "value_type"));
     }
 
-    fc.caseSensitive = FilterJsonUtils::getOptional<bool>(j, "caseSensitive").value_or(false);
+    // Validation based on valueType
+    // If op is IS_NULL or IS_NOT_NULL, the value must be empty.
+    if (fc.op == FilterOperator::IS_NULL || fc.op == FilterOperator::IS_NOT_NULL) {
+        fc.value = "";
+    }
+
+    if (fc.valueType == FilterValueType::BOOL) {
+        std::string lowerVal = Utils::toLower(fc.value);
+        if (lowerVal != "true" && lowerVal != "false" && lowerVal != "1" && lowerVal != "0") {
+             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid boolean value: " + fc.value, current_path, "value"));
+        }
+    } else if (fc.valueType == FilterValueType::INT) {
+        try {
+            size_t idx;
+            std::stoll(fc.value, &idx);
+            if (idx != fc.value.length()) {
+                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + fc.value, current_path, "value"));
+            }
+        } catch (...) {
+            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + fc.value, current_path, "value"));
+        }
+    } else if (fc.valueType == FilterValueType::DOUBLE || fc.valueType == FilterValueType::FLOAT) {
+        try {
+            size_t idx;
+            std::stod(fc.value, &idx);
+            if (idx != fc.value.length()) {
+                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + fc.value, current_path, "value"));
+            }
+        } catch (...) {
+            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + fc.value, current_path, "value"));
+        }
+    } else if (fc.valueType == FilterValueType::IP_ADDRESS) {
+        // Need to include utils/IpAddress.h
+        if (!Utils::parseIpAddress(fc.value)) {
+            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid IP address: " + fc.value, current_path, "value"));
+        }
+    } else if (fc.valueType == FilterValueType::VERSION) {
+        // Need to include utils/Version.h
+        if (!Utils::parseSemanticVersion(fc.value)) {
+            return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid version string: " + fc.value, current_path, "value"));
+        }
+    }
+
+    if (j.contains("caseSensitive")) {
+        if (!j.at("caseSensitive").is_boolean() && !j.at("caseSensitive").is_null()) {
+             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid type for key 'caseSensitive'", current_path, "caseSensitive"));
+        }
+        fc.caseSensitive = j.at("caseSensitive").is_null() ? false : j.at("caseSensitive").get<bool>();
+    } else {
+        fc.caseSensitive = false;
+    }
+
     fc.datetimeFormat = FilterJsonUtils::getOptional<std::string>(j, "datetimeFormat");
 
-    if (fc.valueType == FilterValueType::DATETIME && !fc.datetimeFormat) {
+    if (fc.valueType == FilterValueType::DATETIME && (!fc.datetimeFormat || fc.datetimeFormat->empty())) {
         return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "DATETIME value_type requires 'datetimeFormat'.", current_path, "datetimeFormat"));
     }
 
