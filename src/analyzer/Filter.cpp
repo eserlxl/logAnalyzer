@@ -132,6 +132,9 @@ ErrorCode::Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const F
 }
 
 ErrorCode::Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(const FilterExpression& expression) const {
+    if (auto res = expression.validate(); !res) {
+        return std::unexpected(res.error());
+    }
     std::vector<LogEntry> filtered;
     for (const auto& entry : entries_) {
         auto result = expression.evaluate(entry);

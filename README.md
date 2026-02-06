@@ -9,15 +9,26 @@
 ![Platform: Linux | macOS | Windows](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue)
 
 ---
+## 📚 Table of Contents
+- [🤔 Why logAnalyzer?](#-why-loganalyzer)
+- [✨ Key Features](#-key-features)
+- [🚀 Getting Started](#-getting-started)
+- [📚 Documentation](#-documentation)
+- [📜 Changelog](#-changelog)
+- [🤝 Contributing](#-contributing)
 
-## 🚀 Overview
 
-Modern applications generate gigabytes of logs daily. Traditional tools like `grep` or `awk` struggle with:
-- **Complex filtering** (e.g., "ERRORs between 10 AM and 11 AM").
-- **Structured data** (e.g., parsing JSON logs).
-- **Performance** on multi-GB files.
+---
+## 🤔 Why logAnalyzer?
 
-`logAnalyzer` solves this with a **stream-based architecture** and a powerful **filtering engine**, allowing you to query logs like a database from your terminal.
+Modern applications generate gigabytes of logs daily. While tools like `grep`, `awk`, or `less` are powerful, they often fall short when dealing with the scale and complexity of today's logging formats. You've likely felt the pain of:
+
+-   **Complex Queries**: Trying to filter logs by a specific time range and multiple keywords (`grep "ERROR" | grep "2023-10-27 10:"`) is cumbersome and inefficient.
+-   **Lack of Structure**: Parsing structured formats like JSON or key-value pairs requires custom, often brittle, scripting.
+-   **Performance Bottlenecks**: Searching multi-gigabyte files can be slow and memory-intensive, bringing your analysis to a crawl.
+-   **No Built-in Analytics**: `grep` can find lines, but it can't tell you the rate of errors per minute or the top 10 most common log messages.
+
+`logAnalyzer` was built to solve these problems. It treats your logs as a structured data source, allowing you to query them with power and flexibility, right from your terminal. Its stream-based architecture ensures it can handle files of any size with minimal memory usage.
 
 ## ✨ Key Features
 
@@ -35,60 +46,73 @@ Modern applications generate gigabytes of logs daily. Traditional tools like `gr
 
 ## 🚀 Getting Started
 
-### Installation & Building
+Follow these steps to build and run `logAnalyzer`.
 
-`logAnalyzer` is primarily built from source.
+### Prerequisites
 
-- **Build Instructions**: See [docs/build.md](docs/build.md) for prerequisites and step-by-step build commands.
-- **Installation**: See [docs/installation.md](docs/installation.md) for installing the binary to your system path.
+Before you begin, ensure you have the following installed:
+- A C++23 compatible compiler (e.g., GCC 13+, Clang 16+)
+- CMake (3.16 or higher)
+- Git
 
-### Quick Start
+### Build & Run
 
-**1. Build (if not already done):**
-```bash
-git clone https://github.com/eserlxl/logAnalyzer.git
-cd logAnalyzer
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build .
-```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/eserlxl/logAnalyzer.git
+    cd logAnalyzer
+    ```
 
-**2. Run a basic analysis:**
-```bash
-# Navigate to project root
-cd ../
+2.  **Configure and build the project:**
+    This command prepares the build and compiles the source code into an executable.
+    ```bash
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+    cmake --build build
+    ```
 
-# Analyze a log file for ERRORs
-./build/bin/logAnalyzer /var/log/syslog --level ERROR
+3.  **Run your first analysis:**
+    Execute the compiled binary, pointing it to a log file. Let's find all "ERROR" level messages in your system's log.
+    ```bash
+    ./build/bin/logAnalyzer /var/log/syslog --level ERROR
+    ```
 
-# Analyze logs from a specific time range
-./build/bin/logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
-```
+4.  **Filter by time:**
+    Narrow down the search to a specific timeframe.
+    ```bash
+    ./build/bin/logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
+    ```
 
-**3. Use a Configuration File:**
-For complex rules, use a JSON config file:
-```bash
-./build/bin/logAnalyzer app.log --config my_config.json
-```
+For more advanced use cases, check out our [**Usage Examples**](docs/usage-examples.md) and the complete [**Command Line Reference**](docs/cli-reference.md).
 
-For more examples, see [Usage Examples](docs/usage-examples.md) and the [Command Line Reference](docs/cli-reference.md).
 
 ## 📚 Documentation
 
-Detailed documentation is available in the `docs/` directory:
+All documentation is located in the [`docs/`](/docs) directory.
 
-- [**Features Overview**](docs/features.md): In-depth look at capabilities.
-- [**Build Guide**](docs/build.md): Compiling from source.
-- [**Installation Guide**](docs/installation.md): System installation.
-- [**Command Line Reference**](docs/cli-reference.md): Flags and arguments.
-- [**Usage Examples**](docs/usage-examples.md): Common use cases.
-- [**Configuration Guide**](docs/configuration.md): JSON configuration format.
-- [**Project Structure**](docs/project-structure.md): Codebase organization.
+### Usage
+- [**Features Overview**](docs/features.md): A detailed look at what `logAnalyzer` can do.
+- [**Installation Guide**](docs/installation.md): How to install `logAnalyzer` on your system.
+- [**Command Line Reference**](docs/cli-reference.md): A complete guide to all flags and arguments.
+- [**Configuration Guide**](docs/configuration.md): How to use JSON for advanced setups.
+- [**Usage Examples**](docs/usage-examples.md): Practical examples for common scenarios.
+
+### Development
+- [**Build Guide**](docs/build.md): Instructions for compiling from the source.
+- [**Project Structure**](docs/project-structure.md): An overview of the codebase organization.
+
+### Community
+- [**Contributing Guide**](CONTRIBUTING.md): How to contribute to the project.
+- [**Code of Conduct**](CODE_OF_CONDUCT.md): Our community standards.
+- [**License**](LICENSE): The project's license.
+
+## 📜 Changelog
+
+All notable changes to this project are documented in the [`CHANGELOG.md`](CHANGELOG.md) file.
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to get started, report bugs, or suggest features.
+Contributions are welcome! Please see the [Contributing Guide](CONTRIBUTING.md) for details on how to get started, report bugs, and suggest features.
 
 ## 📄 License
 
-This project is licensed under the [GPL-3.0 License](LICENSE).
+This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.

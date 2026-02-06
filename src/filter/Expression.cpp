@@ -482,3 +482,29 @@ ErrorCode::Result<bool> FilterExpression::evaluate(const LogEntry& entry) const 
     }
     return result;
 }
+
+ErrorCode::Result<void> FilterExpression::validate() const {
+    switch (type_) {
+        case ExpressionType::EMPTY:
+            return {}; // Always valid
+        case ExpressionType::CONDITION:
+            if (condition_->op == FilterOperator::REGEX_MATCH) {
+                try {
+                    auto flags = condition_->caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
+                    std::regex re(condition_->value, flags);
+                } catch (const std::regex_error& e) {
+                    return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid regex pattern '" + condition_->value + "': " + e.what()));
+                }
+            }
+            return {};
+        case ExpressionType::LOGICAL:
+            for (const auto& expr : expressions_) {
+                auto result = expr.validate();
+                if (!result) {
+                    return result;
+                }
+            }
+            return {};
+    }
+    return {};
+}

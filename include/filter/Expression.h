@@ -73,6 +73,7 @@ public:
     bool isLogical() const { return type_ == ExpressionType::LOGICAL; }
 
     ErrorCode::Result<bool> evaluate(const LogEntry& entry) const;
+    ErrorCode::Result<void> validate() const;
 
 private:
     ExpressionType type_;
