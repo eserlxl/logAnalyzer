@@ -60,31 +60,31 @@ Follow these steps to get `logAnalyzer` running on your system.
 
 For detailed, platform-specific instructions, please refer to the [**Installation Guide**](docs/installation.md).
 
-### Building from Source
+### Quick Start (Build & Run)
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/eserlxl/logAnalyzer.git
-   cd logAnalyzer
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/eserlxl/logAnalyzer.git
+    cd logAnalyzer
+    ```
 
-2. **Configure and build the project:**
-   ```bash
-   cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-   cmake --build build
-   ```
+2.  **Build the project:**
+    ```bash
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+    cmake --build build
+    ```
 
-3. **Run the application:**
-   ```bash
-   ./build/bin/logAnalyzer --help
-   ```
+3.  **Run the application:**
+    ```bash
+    ./build/bin/logAnalyzer --help
+    ```
 
-4. **Run Tests (Optional):**
-   ```bash
-   cd build
-   ctest
-   cd ..
-   ```
+4.  **Run Tests (Optional):**
+    ```bash
+    cd build
+    ctest
+    cd ..
+    ```
 For more comprehensive build instructions, including platform-specific details and advanced configurations, please see the [**Build Guide**](docs/build.md).
 
 ## 🏃 Quick Start & Basic Usage

@@ -135,6 +135,7 @@ json FieldValueCountCollector::generateReport() const {
     if (!_customFieldKey.empty()) {
         report["custom_field_key"] = _customFieldKey;
     }
+    report["total_unique_values"] = _counts.size();
     report["counts"] = _counts;
     return report;
 }

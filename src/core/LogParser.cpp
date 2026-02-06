@@ -285,7 +285,16 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view
 
 // Public override for ILogParser::parseLine
 ErrorCode::Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const {
-    return parseLineInternal(line, lineNumber, sourceFile);
+    auto result = parseLineInternal(line, lineNumber, sourceFile);
+    if (result.has_value()) {
+        return result;
+    }
+
+    if (_parserErrorAction == CLIConfig::ParserErrorAction::Throw) {
+        throw ErrorCode::Error(result.error());
+    }
+
+    return applyParserErrorAction(result, line, lineNumber, sourceFile);
 }
 
 // Helper to apply _parserErrorAction
@@ -454,13 +463,13 @@ namespace Utils {
             std::string key = match[1].str();
             std::string value;
 
-            // Check for quoted values (groups 3 and 4) or unquoted (group 5)
-            if (match[3].matched) { // Double quotes
+            // Check for quoted values (groups 2 and 3) or unquoted (group 4)
+            if (match[2].matched) { // Double quotes
+                value = match[2].str();
+            } else if (match[3].matched) { // Single quotes
                 value = match[3].str();
-            } else if (match[4].matched) { // Single quotes
+            } else if (match[4].matched) { // Unquoted
                 value = match[4].str();
-            } else if (match[5].matched) { // Unquoted
-                value = match[5].str();
             }
             targetMap[key] = value;
             next++;
