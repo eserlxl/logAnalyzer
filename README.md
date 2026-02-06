@@ -80,6 +80,13 @@ For detailed, platform-specific instructions, please refer to the [**Installatio
    ./build/bin/logAnalyzer --help
    ```
 
+4. **Run Tests (Optional):**
+   ```bash
+   cd build
+   ctest
+   cd ..
+   ```
+
 ## 🏃 Quick Start & Basic Usage
 
 `logAnalyzer` is a versatile tool. Here’s a quick overview of its command-line interface.
@@ -115,6 +122,11 @@ This will parse and display the single log entry.
 - **Filter by time range:**
   ```bash
   ./build/bin/logAnalyzer app.log --after "2023-10-27 10:00:00" --before "2023-10-27 11:00:00"
+  ```
+
+- **Combine filters (e.g., critical errors with specific message content):**
+  ```bash
+  ./build/bin/logAnalyzer server.log --level CRITICAL --filter 'msg contains "failed to connect"'
   ```
 
 For a deep dive into all functionalities, including advanced filtering and configuration, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
