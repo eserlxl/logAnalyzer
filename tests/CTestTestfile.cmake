@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (c) 2026 eserlxl
+
 # CMake generated Testfile for 
 # Source directory: /opt/lxl/c++/logAnalyzer/tests
 # Build directory: /opt/lxl/c++/logAnalyzer/tests

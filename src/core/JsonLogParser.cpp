@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "core/JsonLogParser.h"
 #include "utils/Time.h" // For Utils::parseTimestamp
 #include "utils/String.h" // For Utils::contains

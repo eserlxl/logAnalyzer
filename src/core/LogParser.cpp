@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 // Default implementation of ILogParser using regex
 #include "core/LogParser.h"
 

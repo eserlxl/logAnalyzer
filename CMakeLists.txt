@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (c) 2026 eserlxl
+
 cmake_minimum_required(VERSION 3.14)
 project(logAnalyzer VERSION 1.0.0 LANGUAGES CXX)
 

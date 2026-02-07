@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 eserlxl
+
 #include "analyzer/LogWriter.h" // New
 #include "analyzer/Core.h"
 #include "export/Exporter.h"
