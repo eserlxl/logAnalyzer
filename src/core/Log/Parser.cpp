@@ -458,12 +458,6 @@ void DefaultLogParser::processStream(
     }
 }
 
-// Define the static constant for legacy KV pattern
-const std::regex& DefaultLogParser::getLegacyKvPattern() {
-    static const std::regex kvPattern("([a-zA-Z0-9_.-]+)\\s*=\\s*(?:\"(.*?)\"|'([^']*)'|([^\\s,]+))[, ]*", std::regex::optimize);
-    return kvPattern;
-}
-
 
 
 

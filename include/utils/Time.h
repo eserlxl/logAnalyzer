@@ -113,7 +113,7 @@ std::string format_iso8601(const std::chrono::system_clock::time_point& tp);
 std::chrono::system_clock::time_point parse_iso8601(const std::string& time_str);
 
 
-std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format);
+std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format = "%Y-%m-%d %H:%M:%S");
 
 std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits = false);
 

@@ -169,8 +169,6 @@ public:
 
     CLIConfig::ParserErrorAction _parserErrorAction; // New: To store the error action
 
-public:
-    static const std::regex& getLegacyKvPattern(); // For legacy structured field parsing
 private:
 
     // Helper to apply _parserErrorAction

@@ -2,13 +2,6 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "core/Log/ParserUtils.h"
-#include "core/Log/Parser.h" // For DefaultLogParser::getLegacyKvPattern if needed, or we just move the static pattern here?
-// Actually DefaultLogParser::getLegacyKvPattern is static in DefaultLogParser. 
-// We should probably move the pattern here or keep accessing it. 
-// Accessing it requires including LogParser.h which creates circular dependency if LogParser.h includes LogParserUtils.h?
-// LogParser.h probably doesn't need to include LogParserUtils.h if these are helper functions. 
-// But LogParser.cpp needs both.
-
 #include <regex>
 
 namespace Utils {
@@ -34,8 +27,6 @@ namespace Utils {
     }
 
     void parseLegacyStructuredData(const std::string& message, std::map<std::string, std::string>& targetMap) {
-        // Re-use the new structured data parser with the legacy pattern
-        // We can redefine the pattern here to decouple.
         static const std::regex kvPattern("([a-zA-Z0-9_.-]+)\\s*=\\s*(?:\"(.*?)\"|'([^']*)'|([^\\s,]+))[, ]*", std::regex::optimize);
         parseStructuredData(message, targetMap, kvPattern);
     }
