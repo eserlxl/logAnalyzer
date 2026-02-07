@@ -9,20 +9,19 @@ namespace Utils {
         std::sregex_iterator next(data.begin(), data.end(), kvPattern);
         std::sregex_iterator end;
         while (next != end) {
-            std::smatch match = *next;
+            const std::smatch& match = *next;
             std::string key = match[1].str();
             std::string value;
 
-            // Check for quoted values (groups 2 and 3) or unquoted (group 4)
-            if (match[2].matched) { // Double quotes
-                value = match[2].str();
-            } else if (match[3].matched) { // Single quotes
-                value = match[3].str();
-            } else if (match[4].matched) { // Unquoted
-                value = match[4].str();
+            // Iterate through all capture groups starting from index 2 to find the value
+            for (size_t i = 2; i < match.size(); ++i) {
+                if (match[i].matched) {
+                    value = match[i].str();
+                    break;
+                }
             }
             targetMap[key] = value;
-            next++;
+            ++next;
         }
     }
 
