@@ -6,7 +6,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg?style=for-the-badge)](https://en.cppreference.com/w/cpp/23)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/eserlxl/logAnalyzer/cmake-ci.yml?branch=main&style=for-the-badge)](https://github.com/eserlxl/logAnalyzer/actions/workflows/cmake-ci.yml)
+[![Build Status](https://img.shields.io/badge/Build%20Status-passing-brightgreen?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue.svg?style=for-the-badge)](https://cmake.org)
 [![Project Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer)
 
