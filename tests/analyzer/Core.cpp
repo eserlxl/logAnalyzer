@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include "analyzer/Core.h"
-#include "config/CLIConfig.h"
+#include "config/CLI.h"
 #include "filter/Expression.h"
 #include "filter/Condition.h"
 #include "filter/Types.h"

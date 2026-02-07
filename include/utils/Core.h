@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "core/Log/Types.h"   // For LogEntryField, LogLevel
-
 #ifndef UTILS_H
 #define UTILS_H
+
+#include "core/Log/Types.h"   // For LogEntryField, LogLevel
+#include "core/CiLess.h"     // For ci_less comparator
+#include "core/Error.h"      // For ErrorCode::Error
+#include "utils/Time.h"      // For time utilities
 
 #include <string>
 #include <string_view>
@@ -17,10 +20,6 @@
 #include <algorithm>
 #include <cctype>
 #include <optional>
-
-#include "core/CiLess.h"     // For ci_less comparator
-#include "core/Error.h"      // For ErrorCode::Error
-
 
 // Forward declarations to break include cycles
 // Full definitions are in Filter.h, Exporter.h, Statistics.h
@@ -58,16 +57,8 @@ std::string getFileName(const std::string& filePath);
 std::string getFileExtension(const std::string& filePath);
 std::string getDirectory(const std::string& filePath);
 
-// --- Time Utilities (from UtilsTime.cpp) ---
-std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format = "%Y-%m-%d %H:%M:%S");
-std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits);
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr);
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbsoluteTime(const std::string& timeStr);
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8601(const std::string& timeStr);
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime(const std::string& timeStr);
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>& formats);
-std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateTimestampCliOption(const std::string &tsStr);
-std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error> parseDayRange(const std::string& dateString);
+// --- Time Utilities ---
+// Provided by utils/Time.h
 
 std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view sizeStr);
 

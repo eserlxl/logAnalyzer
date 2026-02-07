@@ -29,7 +29,7 @@
 #include <span>
 
 #include "config/Core.h" // Renamed from config/Core.h
-#include "config/CLIConfig.h"
+#include "config/CLI.h"
 
 
 LogAnalyzer::LogAnalyzer()

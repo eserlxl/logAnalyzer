@@ -7,7 +7,7 @@
 
 #include "utils/Time.h"
 #include "utils/String.h"
-#include "config/CLIConfig.h" // For CLIConfig::ParserErrorAction
+#include "config/CLI.h" // For CLIConfig::ParserErrorAction
 #include <iostream>
 #include <stdexcept>
 

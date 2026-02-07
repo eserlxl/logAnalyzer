@@ -10,7 +10,7 @@
 #include "core/Log/Types.h"
 #include <nlohmann/json.hpp>
 #include <optional>
-#include "FilterJsonTestFixture.h" // Assuming this path is correct relative to tests/
+#include "FilterJsonFixture.h"
 
 using namespace filter;
 

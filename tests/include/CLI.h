@@ -4,7 +4,7 @@
 #pragma once
 
 #include "gtest/gtest.h"
-#include "config/CLIConfig.h"
+#include "config/CLI.h"
 #include "core/Log/Types.h"
 #include "core/Error.h"
 #include "utils/Time.h"

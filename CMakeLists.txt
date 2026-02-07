@@ -44,6 +44,13 @@ include(GoogleTest)
 if(TARGET gtest)
     add_library(GTest::GTest ALIAS gtest)
     add_library(GTest::Main ALIAS gtest_main)
+
+    if(NOT MSVC)
+        target_compile_options(gtest PRIVATE -Wno-character-conversion)
+        if(TARGET gtest_main)
+            target_compile_options(gtest_main PRIVATE -Wno-character-conversion)
+        endif()
+    endif()
 endif()
 
 # Library source files
@@ -61,7 +68,7 @@ set(LIB_SOURCES
     src/config/CoreJson.cpp
     src/config/CoreValidation.cpp
     src/config/Utils.cpp
-    src/config/CLIConfig.cpp
+    src/config/CLI.cpp
     src/core/Log/Parser.cpp
     src/core/Log/ParserUtils.cpp
     src/core/JsonLogParser.cpp

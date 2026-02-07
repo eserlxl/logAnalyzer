@@ -16,12 +16,12 @@ endif()
 
 # Find all test source files
 set(TEST_SOURCES
-    "config/CLIConfig/InputOutput.cpp"
-    "config/CLIConfig/Filtering.cpp"
-    "config/CLIConfig/Formatting.cpp"
-    "config/CLIConfig/Analysis.cpp"
-    "config/CLIConfig/Errors.cpp"
-    "config/CLIConfig/Defaults.cpp"
+    "config/CLI/InputOutput.cpp"
+    "config/CLI/Filtering.cpp"
+    "config/CLI/Formatting.cpp"
+    "config/CLI/Analysis.cpp"
+    "config/CLI/Errors.cpp"
+    "config/CLI/Defaults.cpp"
     "config/Core/Basic.cpp"
     "config/Core/Json.cpp"
     "config/Core/Validation.cpp"
@@ -36,9 +36,9 @@ set(TEST_SOURCES
     "export/Text.cpp"
     "export/FieldMapping.cpp"
     "export/Settings.cpp"
-    "export/TestUtils.cpp"
+    "export/Utils.cpp"
     "analyzer/Core.cpp"
-    "filter/LegacyFilter.cpp"
+    "filter/Legacy.cpp"
     "filter/FluentApi.cpp"
     "filter/Evaluation.cpp"
     "filter/LogicalNegation.cpp"
@@ -63,7 +63,7 @@ set(TEST_SOURCES
     "utils/String.cpp"
     "analyzer/Types.cpp"
     "analyzer/LogWriter.cpp"
-    "analyzer/LogWriter_correctness.cpp"
+    "analyzer/LogWriterCorrectness.cpp"
 )
 
 # Loop through each test source file

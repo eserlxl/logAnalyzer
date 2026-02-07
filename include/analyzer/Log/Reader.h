@@ -4,7 +4,7 @@
 #ifndef LOGANALYZER_ANALYZER_LOGREADER_H
 #define LOGANALYZER_ANALYZER_LOGREADER_H
 
-#include "config/CLIConfig.h"
+#include "config/CLI.h"
 #include "core/Log/Types.h"
 #include <future>
 #include <future>

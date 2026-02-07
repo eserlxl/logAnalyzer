@@ -10,7 +10,7 @@
 #include <expected>
 #include <ctime> // For std::tm
 
-#include "utils/Core.h" // For ErrorCode::Error
+#include "core/Error.h" // For ErrorCode::Error
 
 namespace Utils {
 

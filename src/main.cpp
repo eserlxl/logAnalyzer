@@ -7,7 +7,7 @@
 #include "utils/Core.h"
 #include "utils/String.h"
 #include "config/Settings.h"
-#include "config/CLIConfig.h" // Added for CLIConfig
+#include "config/CLI.h" // Added for CLIConfig
 #include "core/Error.h" // New: For Error struct and Result alias
 #include "filter/IFilter.h"
 #include "filter/ConcreteFilters.h"

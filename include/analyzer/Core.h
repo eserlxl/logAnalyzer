@@ -7,7 +7,7 @@
 #include "core/Log/Types.h"
 #include "filter/Core.h"
 #include "core/Error.h"
-#include "config/CLIConfig.h"
+#include "config/CLI.h"
 #include "stats/Core.h"
 #include "analyzer/Log/Reader.h"
 #include "analyzer/Log/Writer.h"

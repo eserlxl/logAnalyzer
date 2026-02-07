@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "config/CLIConfig.h"
+#include "config/CLI.h"
 #include "config/CommonTypes.h" // Added for centralized types
 #include "config/Utils.h" // Added for centralized config utilities
 #include "utils/Core.h"

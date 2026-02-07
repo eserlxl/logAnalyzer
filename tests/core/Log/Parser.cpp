@@ -5,7 +5,7 @@
 #include "core/Log/Parser.h"
 #include "core/Log/Types.h"
 #include "core/Error.h"
-#include "config/CLIConfig.h"
+#include "config/CLI.h"
 #include <sstream>
 #include <memory>
 #include <iostream> // Already present.
