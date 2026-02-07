@@ -78,7 +78,7 @@ struct LogAnalyzerSettings {
     /**
      * Merges settings from 'other' into this object.
      * Scalar values (strings, bools, optionals) in 'other' will overwrite current values if set.
-     * Collections (vectors, maps) will be replaced by the collections in 'other' if they are not empty.
+     * Collections (vectors, maps) will be merged (upserted or appended) with the existing collections.
      */
     void merge(const LogAnalyzerSettings& other);
 
@@ -175,8 +175,9 @@ public:
     explicit LogAnalyzerSettings(std::string pattern)
         : lineParsePattern(std::move(pattern))
     {
-        // Always initialize default field mappings to provide a baseline.
-        initializeDefaultFieldMappings();
+        if (lineParsePattern == DEFAULT_LOG_REGEX_PATTERN_INTERNAL) {
+            initializeDefaultFieldMappings();
+        }
     }
 };
 #endif // LOG_ANALYZER_SETTINGS_H

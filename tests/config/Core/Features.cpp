@@ -7,6 +7,7 @@
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>
+#include <chrono>
 
 using namespace filter;
 
@@ -15,22 +16,33 @@ namespace fs = std::filesystem;
 class ConfigCoreTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        testDir = fs::temp_directory_path() / "log_analyzer_tests";
+        auto now = std::chrono::system_clock::now();
+        auto duration = now.time_since_epoch();
+        auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+        testDir = fs::temp_directory_path() / ("log_analyzer_tests_" + std::to_string(nanos));
         fs::create_directories(testDir);
     }
 
     void TearDown() override {
-        fs::remove_all(testDir);
+        if (fs::exists(testDir)) {
+            fs::remove_all(testDir);
+        }
     }
 
-    void createTestFile(const fs::path& path, const std::string& content) {
+    static void createTestFile(const fs::path& path, const std::string& content) {
         std::ofstream ofs(path);
         ofs << content;
     }
 
-    void loadAndVerify(const fs::path& path, LogAnalyzerSettings& settings, bool expandEnv = true) {
+    static void loadAndVerify(const fs::path& path, LogAnalyzerSettings& settings, bool expandEnv = true) {
         auto result = LogAnalyzerSettings::fromFile(path, expandEnv);
-        ASSERT_TRUE(result.has_value()) << "Errors: " << (result.has_value() ? "" : result.error()[0]);
+        if (!result.has_value()) {
+            std::string allErrors;
+            for (const auto& err : result.error()) {
+                allErrors += err + "\n";
+            }
+            FAIL() << "Failed to load config from " << path << ". Errors:\n" << allErrors;
+        }
         settings = result.value();
     }
 
@@ -39,7 +51,7 @@ protected:
 
 TEST_F(ConfigCoreTest, CreateDefault) {
     LogAnalyzerSettings settings = LogAnalyzerSettings::createDefault();
-    ASSERT_EQ(settings.lineParsePattern, R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$)");
+    ASSERT_EQ(settings.lineParsePattern, DEFAULT_LOG_REGEX_PATTERN_INTERNAL);
     ASSERT_EQ(settings.fieldMappings.size(), 3);
 
     auto checkField = [&](size_t index, LogEntryField expected) {
@@ -58,7 +70,7 @@ TEST_F(ConfigCoreTest, Merge) {
     LogAnalyzerSettings overlay;
     overlay.setLineParsePattern("new_pattern");
     overlay.setCaseSensitiveParsing(true);
-    overlay.addFilterRule({LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error"});
+    overlay.addFilterRule({.field=LogEntryField::MESSAGE, .op=FilterOperator::CONTAINS, .value="error"});
 
     base.merge(overlay);
 
@@ -71,12 +83,12 @@ TEST_F(ConfigCoreTest, Merge) {
 TEST_F(ConfigCoreTest, EnvVarExpansion) {
     // Set a test environment variable
 #ifdef _WIN32
-    _putenv("TEST_VAR=expanded_value");
+    _putenv("LOG_ANALYZER_TEST_VAR=expanded_value");
 #else
-    setenv("TEST_VAR", "expanded_value", 1);
+    setenv("LOG_ANALYZER_TEST_VAR", "expanded_value", 1);
 #endif
 
-    std::string jsonContent = R"({ "lineParsePattern": "${TEST_VAR}" })";
+    std::string jsonContent = R"({ "lineParsePattern": "${LOG_ANALYZER_TEST_VAR}" })";
     auto configPath = testDir / "config.json";
     createTestFile(configPath, jsonContent);
 
@@ -85,9 +97,9 @@ TEST_F(ConfigCoreTest, EnvVarExpansion) {
     ASSERT_EQ(settings.lineParsePattern, "expanded_value");
 
 #ifdef _WIN32
-    _putenv("TEST_VAR=");
+    _putenv("LOG_ANALYZER_TEST_VAR=");
 #else
-    unsetenv("TEST_VAR");
+    unsetenv("LOG_ANALYZER_TEST_VAR");
 #endif
 }
 
@@ -179,4 +191,56 @@ TEST_F(ConfigCoreTest, CircularIncludeDetection) {
     auto result = LogAnalyzerSettings::fromFile(path1);
     ASSERT_FALSE(result.has_value());
     ASSERT_THAT(result.error(), testing::Contains(testing::HasSubstr("Circular include detected")));
+}
+
+TEST_F(ConfigCoreTest, ComprehensiveMerge) {
+    LogAnalyzerSettings base;
+    base.setLineParsePattern("base_pattern");
+    base.setCaseSensitiveParsing(false);
+    base.parserErrorAction = ParserErrorAction::Warn;
+    base.maxMultilineBufferSize = 1024;
+    
+    LogAnalyzerSettings overlay;
+    overlay.setLineParsePattern("overlay_pattern");
+    overlay.setCaseSensitiveParsing(true);
+    overlay.setLogEntryStartPattern("start_pattern");
+    overlay.parserErrorAction = ParserErrorAction::Throw;
+    overlay.maxMultilineBufferSize = 2048;
+    
+    base.merge(overlay);
+    
+    EXPECT_EQ(base.lineParsePattern, "overlay_pattern");
+    EXPECT_TRUE(base.caseSensitiveParsing.value());
+    EXPECT_EQ(base.logEntryStartPattern.value(), "start_pattern");
+    EXPECT_EQ(base.parserErrorAction, ParserErrorAction::Throw);
+    EXPECT_EQ(base.maxMultilineBufferSize, 2048);
+}
+
+TEST_F(ConfigCoreTest, AdvancedMerge) {
+    LogAnalyzerSettings base;
+    base.statisticConfigs.push_back({StatisticType::UNIQUE_MESSAGES, {}});
+    
+    LogAnalyzerSettings overlay;
+    overlay.statisticConfigs.push_back({StatisticType::TOP_MESSAGES, {{"top_n", "5"}}});
+    filter::FilterExpression expr(filter::FilterLogicalOperator::AND);
+    overlay.rootFilterExpression = expr;
+    
+    base.merge(overlay);
+    
+    ASSERT_EQ(base.statisticConfigs.size(), 2);
+    EXPECT_EQ(base.statisticConfigs[0].type, StatisticType::UNIQUE_MESSAGES);
+    EXPECT_EQ(base.statisticConfigs[1].type, StatisticType::TOP_MESSAGES);
+    EXPECT_EQ(base.statisticConfigs[1].params.at("top_n"), "5");
+    ASSERT_TRUE(base.rootFilterExpression.has_value());
+    EXPECT_EQ(base.rootFilterExpression->getLogicalOperator(), filter::FilterLogicalOperator::AND);
+}
+
+TEST_F(ConfigCoreTest, MissingIncludeDetection) {
+    std::string rootJson = R"({ "includes": ["non_existent.json"] })";
+    auto rootPath = testDir / "root.json";
+    createTestFile(rootPath, rootJson);
+
+    auto result = LogAnalyzerSettings::fromFile(rootPath);
+    ASSERT_FALSE(result.has_value());
+    ASSERT_THAT(result.error(), testing::Contains(testing::HasSubstr("Failed to resolve include path")));
 }

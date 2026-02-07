@@ -45,9 +45,8 @@ TEST_F(LogAnalyzerConfigTest, CustomPatternConstructorInitializesCorrectly) {
     std::string customPattern = R"(^(\d{2}-\d{2}-\d{4}) (.*)$)";
     LogAnalyzerSettings customSettings(customPattern);
     ASSERT_EQ(customSettings.lineParsePattern, customPattern);
-    // Default mappings should still be present
-    ASSERT_FALSE(customSettings.fieldMappings.empty());
-    ASSERT_EQ(customSettings.fieldMappings.size(), DEFAULT_FIELD_MAPPING_COUNT);
+    // Default mappings should NOT be present for custom patterns
+    ASSERT_TRUE(customSettings.fieldMappings.empty());
 }
 
 TEST_F(LogAnalyzerConfigTest, FluentApiForCoreParsingSettings) {

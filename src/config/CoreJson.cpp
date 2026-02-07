@@ -98,7 +98,12 @@ nlohmann::json resolveIncludes(
             }
 
             std::filesystem::path includePath = parentDir / includeNode.get<std::string>();
-            includePath = std::filesystem::canonical(includePath); // Resolve to absolute path
+            std::error_code ec;
+            includePath = std::filesystem::canonical(includePath, ec); // Resolve to absolute path
+            if (ec) {
+                errors.push_back("Failed to resolve include path: " + includeNode.get<std::string>() + " (Error: " + ec.message() + ")");
+                continue;
+            }
 
             std::ifstream ifs(includePath);
             if (!ifs.is_open()) {
@@ -170,7 +175,11 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
         
         // Resolve includes
         std::set<std::filesystem::path> visitedFiles;
-        auto absolutePath = std::filesystem::canonical(filePath);
+        std::error_code ec;
+        auto absolutePath = std::filesystem::canonical(filePath, ec);
+        if (ec) {
+            return std::unexpected<std::vector<std::string>>({"Failed to resolve configuration file path: " + filePath.string() + " (Error: " + ec.message() + ")"});
+        }
         nlohmann::json finalJson = resolveIncludes(absolutePath, std::move(rootJson), visitedFiles, errors);
         
         if (!errors.empty()) {
