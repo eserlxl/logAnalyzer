@@ -7,7 +7,7 @@
 #include "core/LogParser.h"
 #include "filter/Core.h"
 #include "stats/Core.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "utils/Core.h"
 #include "core/Error.h"
 #include <fstream>
@@ -263,9 +263,9 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
     tempSettings.lineParsePattern = pattern;
     if (pattern == DEFAULT_LOG_REGEX_PATTERN_SV) {
         tempSettings.fieldMappings.clear();
-        tempSettings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
-        tempSettings.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
-        tempSettings.fieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
+        tempSettings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), std::vector<std::string>{"%Y-%m-%d %H:%M:%S"});
+        tempSettings.fieldMappings.emplace_back(LogEntryField::LEVEL, std::make_optional<size_t>(2));
+        tempSettings.fieldMappings.emplace_back(LogEntryField::MESSAGE, std::make_optional<size_t>(3));
     } else {
         tempSettings.fieldMappings.clear();
     }

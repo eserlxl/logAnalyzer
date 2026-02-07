@@ -8,7 +8,7 @@
 #include "core/LogTypes.h"
 #include "core/Error.h"
 #include "utils/Time.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "config/Settings.h"
 #include <fstream>
 #include <filesystem>

@@ -7,7 +7,7 @@
 #include "filter/Types.h" // Ensure this header includes SortBy and SortOrder
 #include "filter/Condition.h" // Added as a common header that might transitively include sort-related enums
 #include "filter/Expression.h" // Added for similar reasons
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "stats/Core.h"
 #include <optional>
 

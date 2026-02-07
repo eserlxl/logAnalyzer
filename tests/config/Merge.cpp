@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include "config/Settings.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include <iostream>
 
 TEST(MergeTest, PartialMergeDoesNotOverwriteDefaults) {

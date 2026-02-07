@@ -18,7 +18,7 @@ namespace Utils {
 
 namespace LogAnalyzerInternal {
     // Definition of the static member for case-insensitive comparison
-    const ci_less ci_less_instance = {};
+
 }
 
 // Static default log level mappings

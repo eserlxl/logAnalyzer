@@ -20,7 +20,7 @@
 #include "utils/Core.h"
 #include "utils/Version.h"
 #include "utils/IpAddress.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "filter/Core.h"
 #include "filter/Expression.h"
 #include "filter/EnumStringConversions.h"

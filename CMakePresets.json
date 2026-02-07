@@ -36,13 +36,11 @@
   "buildPresets": [
     {
       "name": "default",
-      "configurePreset": "default",
-      "jobs": 20
+      "configurePreset": "default"
     },
     {
       "name": "release",
-      "configurePreset": "release",
-      "jobs": 20
+      "configurePreset": "release"
     }
   ]
 }

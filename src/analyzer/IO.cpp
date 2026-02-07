@@ -7,7 +7,7 @@
 #include "core/LogParser.h"
 #include "filter/Core.h"
 #include "stats/Core.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "utils/Core.h"
 #include "core/Error.h"
 #include <fstream>
@@ -27,9 +27,9 @@
 
 void LogAnalyzer::setDefaultFieldMappings(LogAnalyzerSettings& settings) {
     settings.fieldMappings.clear();
-    settings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S");
-    settings.fieldMappings.emplace_back(LogEntryField::LEVEL, 2);
-    settings.fieldMappings.emplace_back(LogEntryField::MESSAGE, 3);
+    settings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), std::vector<std::string>{"%Y-%m-%d %H:%M:%S"});
+    settings.fieldMappings.emplace_back(LogEntryField::LEVEL, std::make_optional<size_t>(2));
+    settings.fieldMappings.emplace_back(LogEntryField::MESSAGE, std::make_optional<size_t>(3));
 }
 
 std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(

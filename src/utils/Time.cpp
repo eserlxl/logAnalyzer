@@ -342,7 +342,6 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbso
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8601(const std::string& timeStr) {
-    std::chrono::system_clock::time_point tp;
     std::string format;
 
     // Regex to handle ISO 8601 with optional 'Z' or offset

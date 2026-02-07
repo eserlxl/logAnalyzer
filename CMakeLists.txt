@@ -4,6 +4,11 @@
 cmake_minimum_required(VERSION 3.14)
 project(logAnalyzer VERSION 1.0.0 LANGUAGES CXX)
 
+# Prevent in-source builds
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR "In-source builds are not allowed. Please create a separate build directory (e.g., mkdir build && cd build && cmake ..).")
+endif()
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -21,7 +26,7 @@ FetchContent_MakeAvailable(nlohmann_json)
 FetchContent_Declare(
     cli11
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-    GIT_TAG v2.4.2
+    GIT_TAG v2.6.0
 )
 FetchContent_MakeAvailable(cli11)
 
@@ -60,7 +65,8 @@ set(LIB_SOURCES
     src/core/LogParser.cpp
     src/core/JsonLogParser.cpp
     src/core/LogTypes.cpp
-    src/export/Exporter.cpp
+    src/export/Core.cpp
+    src/export/Json.cpp
     src/filter/EnumStringConversions.cpp
     src/filter/Expression.cpp
     src/filter/ConcreteFilters.cpp

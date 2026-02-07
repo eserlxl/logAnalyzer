@@ -3,7 +3,7 @@
 
 #include "utils/Core.h" // Includes all necessary declarations for Utils namespace
 #include "utils/String.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "filter/Types.h" // Include FilterTypes.h for SortBy, SortOrder
 #include "stats/Core.h"
 #include <algorithm>

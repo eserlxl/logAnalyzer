@@ -3,7 +3,7 @@
 
 #include "analyzer/LogWriter.h" // New
 #include "analyzer/Core.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "utils/Core.h"
 #include "utils/String.h"
 #include "config/Settings.h"

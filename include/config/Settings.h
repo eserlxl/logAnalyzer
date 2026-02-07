@@ -6,7 +6,7 @@
 
 #include "core/LogTypes.h"
 #include "filter/Core.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "stats/Core.h"
 #include <string>
 #include <vector>

@@ -7,7 +7,7 @@
 #include "core/LogParser.h"
 #include "filter/Core.h"
 #include "stats/Core.h"
-#include "export/Exporter.h"
+#include "export/Core.h"
 #include "utils/Core.h"
 #include "core/Error.h"
 #include <fstream>
