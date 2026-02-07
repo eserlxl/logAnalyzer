@@ -5,7 +5,7 @@
 
 #include "filter/IFilter.h"
 #include "filter/Expression.h"
-#include "core/LogTypes.h" // For LogLevel, PatternType etc.
+#include "core/Log/Types.h" // For LogLevel, PatternType etc.
 #include "core/Error.h"    // For ErrorCode::Result
 #include "utils/Core.h"    // For ci_less
 #include <string>

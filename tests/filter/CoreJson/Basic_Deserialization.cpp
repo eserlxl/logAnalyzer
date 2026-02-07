@@ -7,7 +7,7 @@
 #include "filter/Condition.h"
 #include "filter/Types.h"
 #include "filter/Expression.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include <nlohmann/json.hpp>
 #include <optional>
 #include "FilterJsonTestFixture.h"

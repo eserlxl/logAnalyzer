@@ -5,7 +5,7 @@
 #define LOGANALYZER_ANALYZER_LOGREADER_H
 
 #include "config/CLIConfig.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include <future>
 #include <future>
 #include <string>

@@ -62,10 +62,10 @@ set(LIB_SOURCES
     src/config/CoreValidation.cpp
     src/config/Utils.cpp
     src/config/CLIConfig.cpp
-    src/core/LogParser.cpp
-    src/core/LogParserUtils.cpp
+    src/core/Log/Parser.cpp
+    src/core/Log/ParserUtils.cpp
     src/core/JsonLogParser.cpp
-    src/core/LogTypes.cpp
+    src/core/Log/Types.cpp
     src/export/Core.cpp
     src/export/Json.cpp
     src/filter/EnumStringConversions.cpp

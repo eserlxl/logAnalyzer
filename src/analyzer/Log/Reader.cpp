@@ -3,7 +3,7 @@
 
 #include "analyzer/Log/Reader.h"
 #include "analyzer/Core.h" // For LogAnalyzer definition which LogReader needs
-#include "core/LogParser.h"
+#include "core/Log/Parser.h"
 #include "filter/Core.h"
 #include "stats/Core.h"
 #include "export/Core.h"

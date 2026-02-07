@@ -4,7 +4,7 @@
 #ifndef LOGANALYZER_ANALYZER_LOGWRITER_H
 #define LOGANALYZER_ANALYZER_LOGWRITER_H
 
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "analyzer/Types.h"
 #include "filter/Legacy.h"
 #include <string>

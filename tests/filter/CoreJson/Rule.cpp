@@ -5,7 +5,7 @@
 #include <gmock/gmock.h>
 #include "filter/Legacy.h"
 #include "filter/Types.h" // Added
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include <nlohmann/json.hpp>
 
 using namespace filter;

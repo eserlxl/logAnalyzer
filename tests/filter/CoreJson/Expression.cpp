@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include "filter/Core.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include <nlohmann/json.hpp>
 
 using namespace filter;

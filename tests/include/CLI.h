@@ -5,7 +5,7 @@
 
 #include "gtest/gtest.h"
 #include "config/CLIConfig.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "core/Error.h"
 #include "utils/Time.h"
 #include "export/Core.h"

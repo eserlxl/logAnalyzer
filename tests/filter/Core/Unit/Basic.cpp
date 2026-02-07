@@ -7,7 +7,7 @@
 #include "filter/Types.h" // Added
 #include "filter/Expression.h" // Added
 #include "filter/ConcreteFilters.h" // Added
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include <chrono>
 #include <map>
 #include <sstream> // Required for std::stringstream for general string manipulation if needed

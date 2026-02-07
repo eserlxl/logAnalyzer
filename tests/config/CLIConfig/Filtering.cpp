@@ -3,7 +3,7 @@
 
 #include "tests/include/CLI.h"
 #include "filter/ConcreteFilters.h" // For CompositeFilter
-#include "core/LogTypes.h" // For LogLevel
+#include "core/Log/Types.h" // For LogLevel
 #include "utils/Time.h" // For Utils::parseTime
 
 using namespace filter;

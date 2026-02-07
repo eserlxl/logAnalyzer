@@ -3,7 +3,7 @@
 
 #include "gtest/gtest.h"
 #include "analyzer/Log/Writer.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "filter/Types.h"
 #include "filter/Expression.h"
 #include "analyzer/Core.h"

@@ -4,7 +4,7 @@
 #include "analyzer/Core.h"
 #include "analyzer/Log/Reader.h"
 #include "utils/String.h"
-#include "core/LogParser.h"
+#include "core/Log/Parser.h"
 #include "filter/Core.h"
 #include "stats/Core.h"
 #include "export/Core.h"

@@ -11,7 +11,7 @@
 #include <nlohmann/json.hpp>
 
 #include "core/Error.h" // For ErrorCode::Result
-#include "core/LogTypes.h" // For LogLevel, PatternType etc.
+#include "core/Log/Types.h" // For LogLevel, PatternType etc.
 #include "utils/Core.h"    // For ci_less
 #include "filter/EnumStringConversions.h" // For enum to string conversions
 #include "filter/JsonUtils.h"

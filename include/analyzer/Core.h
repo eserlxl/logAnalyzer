@@ -4,7 +4,7 @@
 #ifndef LOG_ANALYZER_H
 #define LOG_ANALYZER_H
 
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "filter/Core.h"
 #include "core/Error.h"
 #include "config/CLIConfig.h"
@@ -40,7 +40,7 @@
 class LogReader;
 class LogWriter;
 
-#include "core/LogParser.h"
+#include "core/Log/Parser.h"
 #include "config/Core.h"
 
 // New: Define a CancellationToken structure

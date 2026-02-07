@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "core/LogTypes.h"   // For LogEntryField, LogLevel
+#include "core/Log/Types.h"   // For LogEntryField, LogLevel
 
 #ifndef UTILS_H
 #define UTILS_H

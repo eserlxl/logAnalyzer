@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "core/LogParserUtils.h"
-#include "core/LogParser.h" // For DefaultLogParser::getLegacyKvPattern if needed, or we just move the static pattern here?
+#include "core/Log/ParserUtils.h"
+#include "core/Log/Parser.h" // For DefaultLogParser::getLegacyKvPattern if needed, or we just move the static pattern here?
 // Actually DefaultLogParser::getLegacyKvPattern is static in DefaultLogParser. 
 // We should probably move the pattern here or keep accessing it. 
 // Accessing it requires including LogParser.h which creates circular dependency if LogParser.h includes LogParserUtils.h?

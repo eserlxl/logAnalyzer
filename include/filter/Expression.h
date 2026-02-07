@@ -9,7 +9,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include "core/Error.h"
-#include "core/LogTypes.h" // For LogEntry
+#include "core/Log/Types.h" // For LogEntry
 #include "filter/Condition.h" // For FilterCondition
 #include "filter/Types.h"     // For FilterLogicalOperator
 #include "filter/EnumStringConversions.h" // New: For enum to string conversions

@@ -4,7 +4,7 @@
 #ifndef CLICONFIG_H
 #define CLICONFIG_H
 
-#include "core/LogTypes.h" // For LogLevel
+#include "core/Log/Types.h" // For LogLevel
 #include "filter/Types.h" // For SortBy, SortOrder
 #include "filter/Core.h"   // For CompositeFilter::Logic
 #include "config/Settings.h" // To return a populated LogAnalyzerSettings object

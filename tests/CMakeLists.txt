@@ -28,8 +28,8 @@ set(TEST_SOURCES
     "config/Core/Features.cpp"
     "config/Merge.cpp"
     "config/Utils.cpp"
-    "core/LogParser.cpp"
-    "core/LogTypes.cpp"
+    "core/Log/Parser.cpp"
+    "core/Log/Types.cpp"
     "export/Core.cpp"
     "export/Json.cpp"
     "export/Csv.cpp"
@@ -51,9 +51,9 @@ set(TEST_SOURCES
     "filter/CoreJson/Condition_Deserialization.cpp"
     "filter/CoreJson/Expression.cpp"
     "filter/CoreJson/Rule.cpp"
-    "filter/Core/UnitAdvanced.cpp"
-    "filter/Core/UnitBasic.cpp"
-    "filter/Core/UnitField.cpp"
+    "filter/Core/Unit/Advanced.cpp"
+    "filter/Core/Unit/Basic.cpp"
+    "filter/Core/Unit/Field.cpp"
     "filter/Iteration2.cpp"
     "filter/Iteration13.cpp"
     "filter/Iteration15.cpp"
@@ -88,7 +88,11 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
 
     # Set C++ standard for the test executable
     target_compile_features(${TEST_NAME} PRIVATE cxx_std_${LOGANALYZER_TEST_CXX_STANDARD})
-    set_target_properties(${TEST_NAME} PROPERTIES CXX_STANDARD ${LOGANALYZER_TEST_CXX_STANDARD} CXX_STANDARD_REQUIRED ON)
+    set_target_properties(${TEST_NAME} PROPERTIES
+        CXX_STANDARD ${LOGANALYZER_TEST_CXX_STANDARD}
+        CXX_STANDARD_REQUIRED ON
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+    )
 
     # Pass LOGANALYZER_TEST_DATA_DIR as a compile definition
     target_compile_definitions(${TEST_NAME} PRIVATE "LOGANALYZER_TEST_DATA_DIR=\"${LOGANALYZER_TEST_DATA_DIR}\"")

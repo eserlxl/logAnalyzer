@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
 #include "config/Core.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "filter/Core.h"
 #include "export/Core.h"
 #include "stats/Core.h"

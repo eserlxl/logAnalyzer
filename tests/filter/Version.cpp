@@ -6,7 +6,7 @@
 #include "filter/Condition.h" // Added
 #include "filter/Types.h" // Added
 #include "filter/ConcreteFilters.h" // Added for filter types used in createExpr
-#include "core/LogTypes.h" // Added for LogEntry and LogLevel
+#include "core/Log/Types.h" // Added for LogEntry and LogLevel
 
 using namespace filter;
 

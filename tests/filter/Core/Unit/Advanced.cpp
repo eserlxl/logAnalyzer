@@ -6,7 +6,7 @@
 #include "filter/Condition.h" // Added
 #include "filter/Types.h" // Added
 #include "filter/ConcreteFilters.h" // Added
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "TestUtils.h"
 #include <chrono>
 #include <map>

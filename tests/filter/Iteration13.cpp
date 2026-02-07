@@ -5,7 +5,7 @@
 #include "filter/Expression.h"
 #include "filter/Condition.h"
 #include "filter/Types.h" // Added
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include <chrono>
 #include <map>
 #include <vector> // Added for std::vector

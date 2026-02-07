@@ -4,7 +4,7 @@
 #ifndef LOG_PARSER_H
 #define LOG_PARSER_H
 
-#include "core/LogTypes.h" // Includes LogEntryField, FieldMapping, etc.
+#include "core/Log/Types.h" // Includes LogEntryField, FieldMapping, etc.
 #include "config/CLIConfig.h" // For CLIConfig::ParserErrorAction
 #include "core/Error.h" // For Error struct and Result alias
 #include "core/CiLess.h" // For LogAnalyzer::LogAnalyzerInternal::ci_less

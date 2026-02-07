@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
 #include "config/Settings.h" // Use direct include
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "filter/Types.h"
 #include "filter/Legacy.h"
 #include <string>

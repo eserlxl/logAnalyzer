@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include "utils/Core.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "filter/Types.h" // Ensure this header includes SortBy and SortOrder
 #include "filter/Condition.h" // Added as a common header that might transitively include sort-related enums
 #include "filter/Expression.h" // Added for similar reasons

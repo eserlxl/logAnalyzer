@@ -4,7 +4,7 @@
 #ifndef CONFIG_COMMON_TYPES_H
 #define CONFIG_COMMON_TYPES_H
 
-#include "core/LogTypes.h" // For LogLevel
+#include "core/Log/Types.h" // For LogLevel
 #include "filter/Types.h"  // For SortBy, SortOrder
 #include "filter/Core.h"   // For CompositeFilter::Logic
 #include "config/Settings.h" // For ParserErrorAction (nested enum)

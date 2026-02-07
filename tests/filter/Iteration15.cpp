@@ -6,7 +6,7 @@
 #include "filter/Expression.h"
 #include "filter/Condition.h"
 #include "filter/Parser.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include <nlohmann/json.hpp>
 #include <vector>
 #include <string>

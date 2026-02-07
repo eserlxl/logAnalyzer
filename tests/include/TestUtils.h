@@ -15,7 +15,7 @@
 #include <nlohmann/json.hpp>
 
 // Includes from the project
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "utils/Time.h"
 #include "utils/Core.h"
 #include "utils/Version.h"

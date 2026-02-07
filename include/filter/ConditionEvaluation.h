@@ -5,7 +5,7 @@
 #define FILTER_CONDITION_EVALUATION_H
 
 #include "filter/Condition.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "core/Error.h"
 #include <optional>
 #include <string>

@@ -2,8 +2,8 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "core/LogParser.h"
-#include "core/LogTypes.h"
+#include "core/Log/Parser.h"
+#include "core/Log/Types.h"
 #include "core/Error.h"
 #include "config/CLIConfig.h"
 #include <sstream>

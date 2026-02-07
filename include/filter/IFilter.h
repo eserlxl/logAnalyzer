@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 
 namespace filter {
 

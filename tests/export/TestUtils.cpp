@@ -6,7 +6,7 @@
 #include <optional>
 #include <map>
 #include "TestUtils.h"
-#include "core/LogTypes.h" // Assuming LogEntry and LogLevel are defined here
+#include "core/Log/Types.h" // Assuming LogEntry and LogLevel are defined here
 
 // Helper to create a time point for testing
 std::chrono::system_clock::time_point create_test_time_point(int year, int month, int day, int hour, int min, int sec) {

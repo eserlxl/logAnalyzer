@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <nlohmann/json.hpp>
 #include "core/Error.h"
-#include "core/LogTypes.h"
+#include "core/Log/Types.h"
 #include "utils/Core.h"
 #include "utils/String.h"
 #include "utils/IpAddress.h"
