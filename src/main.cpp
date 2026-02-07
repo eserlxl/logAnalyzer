@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "analyzer/LogWriter.h" // New
+#include "analyzer/Log/Writer.h" // New
 #include "analyzer/Core.h"
 #include "export/Core.h"
 #include "utils/Core.h"
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
         ));
     }
 
-        if (cliOptions.streamMode) {
+    if (cliOptions.streamMode) {
         if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv") {
             std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << std::endl;
             return 1;

@@ -8,7 +8,7 @@
 #include <map>    // Required for std::map to store placeholders
 
 #include "analyzer/Core.h"
-#include "analyzer/LogWriter.h"
+#include "analyzer/Log/Writer.h"
 #include "filter/IFilter.h"
 #include "utils/String.h"
 #include "utils/Time.h"

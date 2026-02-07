@@ -48,14 +48,14 @@ endif()
 
 # Library source files
 set(LIB_SOURCES
-    src/analyzer/LogReader.cpp
-    src/analyzer/LogWriter.cpp
+    src/analyzer/Log/Reader.cpp
+    src/analyzer/Log/Writer.cpp
+    src/analyzer/Log/Loader.cpp
     src/analyzer/Stats.cpp
     src/analyzer/Core.cpp
     src/analyzer/IO.cpp
     src/analyzer/Export.cpp
     src/analyzer/Filter.cpp
-    src/analyzer/LogLoader.cpp
     src/analyzer/Streaming.cpp
     src/config/Core.cpp
     src/config/CoreJson.cpp
@@ -63,6 +63,7 @@ set(LIB_SOURCES
     src/config/Utils.cpp
     src/config/CLIConfig.cpp
     src/core/LogParser.cpp
+    src/core/LogParserUtils.cpp
     src/core/JsonLogParser.cpp
     src/core/LogTypes.cpp
     src/export/Core.cpp

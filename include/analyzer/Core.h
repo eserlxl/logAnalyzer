@@ -9,8 +9,8 @@
 #include "core/Error.h"
 #include "config/CLIConfig.h"
 #include "stats/Core.h"
-#include "analyzer/LogReader.h"
-#include "analyzer/LogWriter.h"
+#include "analyzer/Log/Reader.h"
+#include "analyzer/Log/Writer.h"
 #include "analyzer/Types.h" // Added for FormattingOptions
 #include "core/ILogParserFactory.h" // New: For parser factory interface
 #include "core/RegexLogParserFactory.h" // New: For regex parser factory

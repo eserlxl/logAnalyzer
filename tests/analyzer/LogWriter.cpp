@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "analyzer/LogWriter.h"
+#include "analyzer/Log/Writer.h"
 #include "analyzer/Core.h"
 #include "core/Error.h"
 #include "utils/String.h"

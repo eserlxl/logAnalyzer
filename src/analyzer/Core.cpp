@@ -2,8 +2,8 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "analyzer/Core.h"
-#include "analyzer/LogReader.h"
-#include "analyzer/LogWriter.h"
+#include "analyzer/Log/Reader.h"
+#include "analyzer/Log/Writer.h"
 #include "core/LogParser.h"
 #include "filter/Core.h"
 #include "stats/Core.h"

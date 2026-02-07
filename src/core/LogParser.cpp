@@ -3,12 +3,7 @@
 
 // Default implementation of ILogParser using regex
 #include "core/LogParser.h"
-
-namespace Utils {
-    // Forward declarations for functions defined later in this file.
-    void parseStructuredData(const std::string& data, std::map<std::string, std::string>& targetMap, const std::regex& kvPattern);
-    void parseLegacyStructuredData(const std::string& message, std::map<std::string, std::string>& targetMap);
-}
+#include "core/LogParserUtils.h"
 
 #include "utils/Time.h"
 #include "utils/String.h"
@@ -473,33 +468,6 @@ const std::regex& DefaultLogParser::getLegacyKvPattern() {
 
 
 
-namespace Utils {
-    // Function to parse structured data from a string into a map
-    void parseStructuredData(const std::string& data, std::map<std::string, std::string>& targetMap, const std::regex& kvPattern) {
-        std::sregex_iterator next(data.begin(), data.end(), kvPattern);
-        std::sregex_iterator end;
-        while (next != end) {
-            std::smatch match = *next;
-            std::string key = match[1].str();
-            std::string value;
 
-            // Check for quoted values (groups 2 and 3) or unquoted (group 4)
-            if (match[2].matched) { // Double quotes
-                value = match[2].str();
-            } else if (match[3].matched) { // Single quotes
-                value = match[3].str();
-            } else if (match[4].matched) { // Unquoted
-                value = match[4].str();
-            }
-            targetMap[key] = value;
-            next++;
-        }
-    }
-
-    void parseLegacyStructuredData(const std::string& message, std::map<std::string, std::string>& targetMap) {
-        // Re-use the new structured data parser with the legacy pattern
-        parseStructuredData(message, targetMap, DefaultLogParser::getLegacyKvPattern());
-    }
-} // namespace Utils
 
 

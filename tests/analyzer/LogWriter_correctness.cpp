@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "gtest/gtest.h"
-#include "analyzer/LogWriter.h"
+#include "analyzer/Log/Writer.h"
 #include "core/LogTypes.h"
 #include "filter/Types.h"
 #include "filter/Expression.h"

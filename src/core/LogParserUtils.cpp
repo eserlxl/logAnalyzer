@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
+#include "core/LogParserUtils.h"
+#include "core/LogParser.h" // For DefaultLogParser::getLegacyKvPattern if needed, or we just move the static pattern here?
+// Actually DefaultLogParser::getLegacyKvPattern is static in DefaultLogParser. 
+// We should probably move the pattern here or keep accessing it. 
+// Accessing it requires including LogParser.h which creates circular dependency if LogParser.h includes LogParserUtils.h?
+// LogParser.h probably doesn't need to include LogParserUtils.h if these are helper functions. 
+// But LogParser.cpp needs both.
+
+#include <regex>
+
+namespace Utils {
+    void parseStructuredData(const std::string& data, std::map<std::string, std::string>& targetMap, const std::regex& kvPattern) {
+        std::sregex_iterator next(data.begin(), data.end(), kvPattern);
+        std::sregex_iterator end;
+        while (next != end) {
+            std::smatch match = *next;
+            std::string key = match[1].str();
+            std::string value;
+
+            // Check for quoted values (groups 2 and 3) or unquoted (group 4)
+            if (match[2].matched) { // Double quotes
+                value = match[2].str();
+            } else if (match[3].matched) { // Single quotes
+                value = match[3].str();
+            } else if (match[4].matched) { // Unquoted
+                value = match[4].str();
+            }
+            targetMap[key] = value;
+            next++;
+        }
+    }
+
+    void parseLegacyStructuredData(const std::string& message, std::map<std::string, std::string>& targetMap) {
+        // Re-use the new structured data parser with the legacy pattern
+        // We can redefine the pattern here to decouple.
+        static const std::regex kvPattern("([a-zA-Z0-9_.-]+)\\s*=\\s*(?:\"(.*?)\"|'([^']*)'|([^\\s,]+))[, ]*", std::regex::optimize);
+        parseStructuredData(message, targetMap, kvPattern);
+    }
+}
