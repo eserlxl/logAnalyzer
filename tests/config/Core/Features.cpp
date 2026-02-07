@@ -2,8 +2,8 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "gtest/gtest.h"
+#include <gmock/gmock.h>
 #include "config/Settings.h"
-#include "filter/Types.h"
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>
@@ -15,20 +15,23 @@ namespace fs = std::filesystem;
 class ConfigCoreTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        // Create a temporary directory for test files
         testDir = fs::temp_directory_path() / "log_analyzer_tests";
         fs::create_directories(testDir);
     }
 
     void TearDown() override {
-        // Clean up the temporary directory
         fs::remove_all(testDir);
     }
 
     void createTestFile(const fs::path& path, const std::string& content) {
         std::ofstream ofs(path);
         ofs << content;
-        ofs.close();
+    }
+
+    void loadAndVerify(const fs::path& path, LogAnalyzerSettings& settings, bool expandEnv = true) {
+        auto result = LogAnalyzerSettings::fromFile(path, expandEnv);
+        ASSERT_TRUE(result.has_value()) << "Errors: " << (result.has_value() ? "" : result.error()[0]);
+        settings = result.value();
     }
 
     fs::path testDir;
@@ -38,12 +41,15 @@ TEST_F(ConfigCoreTest, CreateDefault) {
     LogAnalyzerSettings settings = LogAnalyzerSettings::createDefault();
     ASSERT_EQ(settings.lineParsePattern, R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$)");
     ASSERT_EQ(settings.fieldMappings.size(), 3);
-    ASSERT_TRUE(std::holds_alternative<LogEntryField>(settings.fieldMappings[0].field));
-    ASSERT_EQ(std::get<LogEntryField>(settings.fieldMappings[0].field), LogEntryField::TIMESTAMP);
-    ASSERT_TRUE(std::holds_alternative<LogEntryField>(settings.fieldMappings[1].field));
-    ASSERT_EQ(std::get<LogEntryField>(settings.fieldMappings[1].field), LogEntryField::LEVEL);
-    ASSERT_TRUE(std::holds_alternative<LogEntryField>(settings.fieldMappings[2].field));
-    ASSERT_EQ(std::get<LogEntryField>(settings.fieldMappings[2].field), LogEntryField::MESSAGE);
+
+    auto checkField = [&](size_t index, LogEntryField expected) {
+        ASSERT_TRUE(std::holds_alternative<LogEntryField>(settings.fieldMappings[index].field));
+        ASSERT_EQ(std::get<LogEntryField>(settings.fieldMappings[index].field), expected);
+    };
+
+    checkField(0, LogEntryField::TIMESTAMP);
+    checkField(1, LogEntryField::LEVEL);
+    checkField(2, LogEntryField::MESSAGE);
     ASSERT_FALSE(settings.caseSensitiveParsing.value_or(false));
 }
 
@@ -74,10 +80,8 @@ TEST_F(ConfigCoreTest, EnvVarExpansion) {
     auto configPath = testDir / "config.json";
     createTestFile(configPath, jsonContent);
 
-    auto result = LogAnalyzerSettings::fromFile(configPath, true);
-    ASSERT_TRUE(result.has_value()) << "Errors: " << (result.has_value() ? "" : result.error()[0]);
-    
-    LogAnalyzerSettings settings = result.value();
+    LogAnalyzerSettings settings;
+    loadAndVerify(configPath, settings, true);
     ASSERT_EQ(settings.lineParsePattern, "expanded_value");
 
 #ifdef _WIN32
@@ -91,16 +95,12 @@ TEST_F(ConfigCoreTest, FileIncludes) {
     std::string baseJson = R"({ "lineParsePattern": "base_pattern" })";
     std::string rootJson = R"({ "version": "1.0", "includes": ["base.json"], "caseSensitiveParsing": true })";
 
-    auto basePath = testDir / "base.json";
     auto rootPath = testDir / "root.json";
-
-    createTestFile(basePath, baseJson);
+    createTestFile(testDir / "base.json", baseJson);
     createTestFile(rootPath, rootJson);
 
-    auto result = LogAnalyzerSettings::fromFile(rootPath);
-    ASSERT_TRUE(result.has_value()) << "Errors: " << (result.has_value() ? "" : result.error()[0]);
-
-    LogAnalyzerSettings settings = result.value();
+    LogAnalyzerSettings settings;
+    loadAndVerify(rootPath, settings);
     ASSERT_EQ(settings.lineParsePattern, "base_pattern");
     ASSERT_TRUE(settings.caseSensitiveParsing);
     ASSERT_EQ(settings.version, "1.0");
@@ -110,16 +110,12 @@ TEST_F(ConfigCoreTest, IncludeOverridesRoot) {
     std::string baseJson = R"({ "lineParsePattern": "base_pattern", "caseSensitiveParsing": false })";
     std::string rootJson = R"({ "includes": ["base.json"], "lineParsePattern": "root_pattern" })";
 
-    auto basePath = testDir / "base.json";
     auto rootPath = testDir / "root.json";
-
-    createTestFile(basePath, baseJson);
+    createTestFile(testDir / "base.json", baseJson);
     createTestFile(rootPath, rootJson);
 
-    auto result = LogAnalyzerSettings::fromFile(rootPath);
-    ASSERT_TRUE(result.has_value()) << "Errors: " << (result.has_value() ? "" : result.error()[0]);
-
-    LogAnalyzerSettings settings = result.value();
+    LogAnalyzerSettings settings;
+    loadAndVerify(rootPath, settings);
     // Root value should override included value
     ASSERT_EQ(settings.lineParsePattern, "root_pattern");
     // Value from base should persist if not in root
@@ -182,13 +178,5 @@ TEST_F(ConfigCoreTest, CircularIncludeDetection) {
 
     auto result = LogAnalyzerSettings::fromFile(path1);
     ASSERT_FALSE(result.has_value());
-    ASSERT_GE(result.error().size(), 1);
-    bool found = false;
-    for(const auto& err : result.error()) {
-        if(err.find("Circular include detected") != std::string::npos) {
-            found = true;
-            break;
-        }
-    }
-    ASSERT_TRUE(found);
+    ASSERT_THAT(result.error(), testing::Contains(testing::HasSubstr("Circular include detected")));
 }

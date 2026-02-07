@@ -19,7 +19,7 @@ public:
                    CLIConfig::ParserErrorAction errorAction);
 
     ErrorCode::Result<LogEntry> parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const override;
-    std::unique_ptr<LogParser> clone() const override;
+    std::unique_ptr<ILogParser> clone() const override;
 
 private:
     std::string patternString;

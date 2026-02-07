@@ -12,9 +12,9 @@
 #include "analyzer/Log/Reader.h"
 #include "analyzer/Log/Writer.h"
 #include "analyzer/Types.h" // Added for FormattingOptions
-#include "core/ILogParserFactory.h" // New: For parser factory interface
-#include "core/RegexLogParserFactory.h" // New: For regex parser factory
-#include "core/JsonLogParserFactory.h" // New: For JSON parser factory
+#include "core/Log/IParserFactory.h" // New: For parser factory interface
+#include "core/Log/RegexParserFactory.h" // New: For regex parser factory
+#include "core/Log/JsonParserFactory.h" // New: For JSON parser factory
 #include "utils/Time.h" // For Utils::generateLogEntryId
 
 #include <atomic>

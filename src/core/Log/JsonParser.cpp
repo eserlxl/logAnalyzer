@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "core/JsonLogParser.h"
+#include "core/Log/JsonParser.h"
 #include "utils/Time.h" // For Utils::parseTimestamp
 #include "utils/String.h" // For Utils::contains
 #include <sstream> // For std::stringstream

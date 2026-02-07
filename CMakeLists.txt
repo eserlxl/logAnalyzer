@@ -71,7 +71,7 @@ set(LIB_SOURCES
     src/config/CLI.cpp
     src/core/Log/Parser.cpp
     src/core/Log/ParserUtils.cpp
-    src/core/JsonLogParser.cpp
+    src/core/Log/JsonParser.cpp
     src/core/Log/Types.cpp
     src/export/Core.cpp
     src/export/Json.cpp

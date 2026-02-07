@@ -4,7 +4,7 @@
 #ifndef REGEX_LOG_PARSER_FACTORY_H
 #define REGEX_LOG_PARSER_FACTORY_H
 
-#include "ILogParserFactory.h"
+#include "IParserFactory.h"
 #include "core/Log/Parser.h" // For DefaultLogParser
 
 class RegexLogParserFactory : public ILogParserFactory {
