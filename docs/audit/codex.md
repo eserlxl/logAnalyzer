@@ -89,12 +89,12 @@
 - Why it matters: Config errors may raise exceptions rather than structured diagnostics, complicating CLI error UX.  
 - Minimal mitigation idea: Add input-validation contract in docs + tests that assert user-facing error shape for malformed stats config.
 
-10. **Test data path default likely mismatched with repository layout**  
+10. **Test data path default likely mismatched with repository layout (Resolved)**  
 - Severity: Low  
 - Likelihood: Medium  
-- Where: `tests/CMakeLists.txt:14`, actual repo has `tests/data/`  
-- Why it matters: Hidden data-dependent tests can silently misread or skip intended fixtures in some setups.  
-- Minimal mitigation idea: Document expected test data directory and enforce it via configure-time assert in test instructions.
+- Where found: `tests/CMakeLists.txt`  
+- Resolution: Fixed in commit `00a6093`; default test data directory now points to `${CMAKE_SOURCE_DIR}/tests/data`.
+- Follow-up: Keep this default aligned with repository layout if test fixture directories move.
 
 ## Build/test results block
 
