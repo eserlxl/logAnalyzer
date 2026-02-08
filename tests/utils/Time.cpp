@@ -54,6 +54,12 @@ TEST(UtilsTime, ParseDuration) {
     std::string max_ll_str(std::to_string(LLONG_MAX));
     std::string too_large_str = max_ll_str + "0";
     EXPECT_FALSE(parseDuration(too_large_str + "s", false).has_value()); // Should fail due to out_of_range
+
+    // Test overflow during unit conversion for extended units.
+    const long long maxMicros = std::chrono::microseconds::max().count();
+    const long long microsPerWeek = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::weeks(1)).count();
+    const long long overflowingWeeks = (maxMicros / microsPerWeek) + 1;
+    EXPECT_FALSE(parseDuration(std::to_string(overflowingWeeks) + "w", true).has_value());
     
     // Test extended units disabled
     EXPECT_FALSE(parseDuration("500ms", false).has_value());

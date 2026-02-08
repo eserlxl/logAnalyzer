@@ -8,6 +8,7 @@
 #include <regex>
 #include <mutex>
 #include <iostream>
+#include <limits>
 
 namespace Utils {
 
@@ -238,22 +239,40 @@ std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const s
     long long value;
     try {
         value = std::stoll(matches[1].str());
-    } catch (const std::out_of_range&) {
+    } catch (const std::exception&) {
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Duration value out of range: " + durationStr));
     }
 
+    const auto toMicroseconds = [&](long long multiplier) -> std::expected<std::chrono::microseconds, ErrorCode::Error> {
+        const auto maxMicros = std::chrono::microseconds::max().count();
+        if (value < 0 || multiplier <= 0 || value > maxMicros / multiplier) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Duration value out of range: " + durationStr));
+        }
+        return std::chrono::microseconds(value * multiplier);
+    };
+
+    constexpr long long kMicrosPerMicrosecond = 1LL;
+    constexpr long long kMicrosPerMillisecond = 1000LL;
+    constexpr long long kMicrosPerSecond = 1000LL * 1000LL;
+    constexpr long long kMicrosPerMinute = 60LL * kMicrosPerSecond;
+    constexpr long long kMicrosPerHour = 60LL * kMicrosPerMinute;
+    constexpr long long kMicrosPerDay = 24LL * kMicrosPerHour;
+    constexpr long long kMicrosPerWeek = 7LL * kMicrosPerDay;
+    constexpr long long kMicrosPerMonthApprox = 30LL * kMicrosPerDay;
+    constexpr long long kMicrosPerYearApprox = 365LL * kMicrosPerDay;
+
     std::string unit = matches[2].str();
-        if (unit == "s" || unit == "second" || unit == "seconds") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(value));
-        if (unit == "m" || unit == "minute" || unit == "minutes") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::minutes(value));
-        if (unit == "h" || unit == "hour" || unit == "hours") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::hours(value));
-        if (unit == "d" || unit == "day" || unit == "days") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value));
+        if (unit == "s" || unit == "second" || unit == "seconds") return toMicroseconds(kMicrosPerSecond);
+        if (unit == "m" || unit == "minute" || unit == "minutes") return toMicroseconds(kMicrosPerMinute);
+        if (unit == "h" || unit == "hour" || unit == "hours") return toMicroseconds(kMicrosPerHour);
+        if (unit == "d" || unit == "day" || unit == "days") return toMicroseconds(kMicrosPerDay);
         
         if (allowExtendedUnits) {
-            if (unit == "ms") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds(value));
-            if (unit == "us") return std::chrono::microseconds(value);
-            if (unit == "w" || unit == "week" || unit == "weeks") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::weeks(value));
-            if (unit == "M" || unit == "month" || unit == "months") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value * 30)); // Approximation
-            if (unit == "y" || unit == "year" || unit == "years") return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::days(value * 365)); // Approximation
+            if (unit == "ms") return toMicroseconds(kMicrosPerMillisecond);
+            if (unit == "us") return toMicroseconds(kMicrosPerMicrosecond);
+            if (unit == "w" || unit == "week" || unit == "weeks") return toMicroseconds(kMicrosPerWeek);
+            if (unit == "M" || unit == "month" || unit == "months") return toMicroseconds(kMicrosPerMonthApprox); // Approximation
+            if (unit == "y" || unit == "year" || unit == "years") return toMicroseconds(kMicrosPerYearApprox); // Approximation
         }
     
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unsupported duration unit: " + unit));
