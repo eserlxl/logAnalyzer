@@ -109,6 +109,38 @@ TEST_F(LogAnalyzerTest, Concurrency_Placeholder) {
     SUCCEED();
 }
 
+TEST_F(LogAnalyzerTest, LoadAndReplaceSupportsMultilineEntries) {
+    LogAnalyzerSettings settings;
+    settings.lineParsePattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): ([\s\S]*)$)";
+    settings.logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:)";
+    settings.fieldMappings = {
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional<size_t>(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional<size_t>(3), {}}
+    };
+
+    auto settingsResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
+
+    const std::string filePath = "test_multiline_load.log";
+    std::ofstream ofs(filePath);
+    ofs << "2023-01-01 10:00:00 INFO: Entry one line 1\n";
+    ofs << "  Entry one line 2\n";
+    ofs << "2023-01-01 10:00:01 ERROR: Entry two\n";
+    ofs.close();
+
+    auto reportResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+
+    ASSERT_TRUE(reportResult.has_value()) << reportResult.error().toString();
+    const auto& entries = analyzer.getEntries();
+    ASSERT_EQ(entries.size(), 2);
+    EXPECT_EQ(entries[0].level, LogLevel::INFO);
+    EXPECT_EQ(entries[0].message, "Entry one line 1\n  Entry one line 2");
+    EXPECT_EQ(entries[1].level, LogLevel::ERROR);
+    EXPECT_EQ(entries[1].message, "Entry two");
+}
+
 class FilterExpressionTest : public ::testing::Test {
 protected:
     void SetUp() override {

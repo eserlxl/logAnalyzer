@@ -53,18 +53,21 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
         }
         lineNumber++;
         report.linesProcessed++;
-        
-        auto parseResult = currentParser_->parseLine(line, lineNumber, sourceIdentifier);
+
+        auto parseResultOpt = currentParser_->processLine(line, lineNumber, sourceIdentifier);
+        if (!parseResultOpt.has_value()) {
+            continue;
+        }
+
+        const auto& parseResult = parseResultOpt.value();
         if (parseResult.has_value()) {
-            LogEntry entry = parseResult.value(); 
+            LogEntry entry = parseResult.value();
             entry.sourceFile = sourceIdentifier;
             parsedEntries.push_back(entry);
             report.successfulParses++;
         } else {
             if (errorAction == CLIConfig::ParserErrorAction::Warn) {
                 std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResult.error().message << std::endl;
-            } else if (errorAction == CLIConfig::ParserErrorAction::Throw) {
-                // This will be handled by the caller by checking the Result
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber});
         }
