@@ -19,7 +19,7 @@
 |---|---:|---|
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
 | Correctness / edge-case handling | 7.5 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, descending sort now uses strict ordering semantics, and query parsing is implemented for `--expression` with parser tests (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `src/filter/Parser.cpp`, `tests/filter/Iteration15.cpp`). |
-| Error handling consistency | 7.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing, analyzer catches parser exceptions, and parser throw mode now returns structured `Result` errors (commit `3ce6b12`). |
+| Error handling consistency | 8.0 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, and parser throw mode now returns structured `Result` errors (commit `3ce6b12`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 8.5 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency now includes deterministic snapshot/load coverage and concurrent append/filter/export stability checks (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`), and direct JsonLogParser tests were added (commit `ade5392`). |
 | Build hygiene | 8.5 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy improved with system-package fallback plus optional fetch (`LOGANALYZER_FETCH_DEPS`, commit `fb4597d`). |
@@ -90,12 +90,12 @@
 - Resolution: Fixed in commit `43ebdec`; install now exports `logAnalyzerTargets`, installs `logAnalyzerConfig.cmake` + version file, and supports `find_package(logAnalyzer CONFIG REQUIRED)` for installed consumers.
 - Follow-up: Keep a small external-consumer configure/build check in CI to guard install-package regressions.
 
-9. **Stats config parsing throws from JSON helpers**  
+9. **Stats config parsing throws from JSON helpers (Resolved)**  
 - Severity: Medium  
 - Likelihood: Medium  
-- Where: `include/stats/Core.h:37`, `include/stats/Core.h:57`  
-- Why it matters: Config errors may raise exceptions rather than structured diagnostics, complicating CLI error UX.  
-- Minimal mitigation idea: Add input-validation contract in docs + tests that assert user-facing error shape for malformed stats config.
+- Where: `include/stats/Core.h`, `tests/config/Core/Json.cpp`  
+- Resolution: Fixed in commit `e622f96`; `StatisticConfig::from_json` now avoids throw-prone map conversions, handles malformed `params` values with no-throw invalidation, and regression tests assert validation-oriented error messages.
+- Follow-up: Keep malformed stats-config coverage in config JSON tests as statistic parameters evolve.
 
 10. **Test data path default likely mismatched with repository layout (Resolved)**  
 - Severity: Low  
@@ -146,6 +146,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (no-throw stats config JSON parsing): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R config_Core_Json
 
 Warnings:
 - warning count: 0
