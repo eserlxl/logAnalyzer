@@ -6,6 +6,32 @@
 #include <string>
 #include <chrono>
 #include <optional>
+#include <cstdlib>
+
+namespace {
+class ScopedTimezone {
+public:
+    explicit ScopedTimezone(const char* tz)
+        : hadOld_(std::getenv("TZ") != nullptr),
+          old_(hadOld_ ? std::getenv("TZ") : "") {
+        setenv("TZ", tz, 1);
+        tzset();
+    }
+
+    ~ScopedTimezone() {
+        if (hadOld_) {
+            setenv("TZ", old_.c_str(), 1);
+        } else {
+            unsetenv("TZ");
+        }
+        tzset();
+    }
+
+private:
+    bool hadOld_;
+    std::string old_;
+};
+} // namespace
 
 // Helper function to create a time point with a specific date and time
 std::chrono::system_clock::time_point createTimePoint(int year, int month, int day, int hour, int minute, int second) {
@@ -250,4 +276,14 @@ TEST(UtilsTime, ParseUtcStrictDateValidation) {
 
     EXPECT_THROW(Utils::parse_utc("2023-02-30 10:30:00 UTC"), std::runtime_error);
     EXPECT_THROW(Utils::parse_utc("2023-10-27 10:30:00 UTC trailing"), std::runtime_error);
+}
+
+TEST(UtilsTime, ParseAbsoluteTimeRespectsDstAutoDetection) {
+    ScopedTimezone tz("America/New_York");
+
+    auto parsed = Utils::parseAbsoluteTime("2023-07-01 12:00:00");
+    ASSERT_TRUE(parsed.has_value());
+
+    auto expected = createTimePoint(2023, 7, 1, 12, 0, 0);
+    EXPECT_EQ(parsed.value(), expected);
 }

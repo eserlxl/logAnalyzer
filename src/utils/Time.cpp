@@ -336,6 +336,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbso
     }
     
     std::tm tm_orig = tm;
+    tm.tm_isdst = -1;
     std::time_t time;
     {
         std::lock_guard<std::mutex> lock(localtimeMutex);
@@ -373,6 +374,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8
     std::tm tm_orig = tm;
 
     if (timezone_part.empty()) { // Local time
+        tm.tm_isdst = -1;
         std::time_t time;
         {
             std::lock_guard<std::mutex> lock(localtimeMutex);
@@ -446,6 +448,7 @@ parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>&
             ss >> std::ws;
             if (ss.eof()) {
                 std::tm tm_orig = tm;
+                tm.tm_isdst = -1;
                 std::time_t t;
                 {
                     std::lock_guard<std::mutex> lock(localtimeMutex);
@@ -479,6 +482,7 @@ parseDayRange(const std::string& dateString) {
             tm.tm_min = 0;
             tm.tm_sec = 0;
             std::tm tm_orig = tm;
+            tm.tm_isdst = -1;
             
             std::time_t start_time;
             {
