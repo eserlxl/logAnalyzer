@@ -294,6 +294,20 @@ TEST_F(FilterJsonTest, FromJsonFailureWhitespacePaddedNumericValue) {
     EXPECT_EQ(result_float.error().message, "Invalid float value: 1.23 ");
 }
 
+TEST_F(FilterJsonTest, FromJsonFailurePlusPrefixedIntValue) {
+    nlohmann::json j = {
+        {"field", "line_number"},
+        {"op", "EQUALS"},
+        {"value", "+42"},
+        {"value_type", "INT"},
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().message, "Invalid integer value: +42");
+}
+
 // --- Factory Function Tests ---
 
 TEST_F(FilterJsonTest, FactorySuccess) {

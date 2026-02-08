@@ -86,6 +86,9 @@ TEST_F(FilterTestFixture, EvaluateNumericComparison) {
 
     auto expr_space_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, " 123", FilterValueType::INT, true, "response_time_ms");
     ASSERT_FALSE(expr_space_cond.evaluate(entry).has_value());
+
+    auto expr_plus_prefixed_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "+550", FilterValueType::INT, true, "response_time_ms");
+    ASSERT_FALSE(expr_plus_prefixed_cond.evaluate(entry).has_value());
 }
 
 TEST_F(FilterTestFixture, EvaluateDoubleComparison) {

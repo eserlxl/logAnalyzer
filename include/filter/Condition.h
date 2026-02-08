@@ -6,6 +6,7 @@
 #include <string>
 #include <optional>
 #include <stdexcept>
+#include <charconv>
 #include <cmath>
 #include <cctype>
 #include <nlohmann/json.hpp>
@@ -324,16 +325,14 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
                  return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid boolean value: " + singleValue, current_path, "value"));
             }
         } else if (fc.valueType == FilterValueType::INT) {
-            try {
-                if (hasWhitespace(singleValue)) {
-                    return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + singleValue, current_path, "value"));
-                }
-                size_t idx;
-                std::stoll(singleValue, &idx);
-                if (idx != singleValue.length()) {
-                     return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + singleValue, current_path, "value"));
-                }
-            } catch (...) {
+            if (hasWhitespace(singleValue)) {
+                return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + singleValue, current_path, "value"));
+            }
+            long long parsed = 0;
+            const char* begin = singleValue.data();
+            const char* end = begin + singleValue.size();
+            const auto [ptr, ec] = std::from_chars(begin, end, parsed);
+            if (ec != std::errc{} || ptr != end) {
                 return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + singleValue, current_path, "value"));
             }
         } else if (fc.valueType == FilterValueType::DOUBLE || fc.valueType == FilterValueType::FLOAT) {
