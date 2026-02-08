@@ -58,6 +58,7 @@
 - Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`, `include/stats/Core.h` JSON deserialization was hardened in commit `4dd1531`, analyzer parsing catches parser exceptions in commit `15eb077`, and parser throw mode now returns `Result` errors instead of throwing in commit `3ce6b12`.
 - Mitigation progress: Constructor parser initialization now falls back to default settings instead of throwing on invalid user-supplied regex/config in commit `eddbe55`.
 - Mitigation progress: `setSettings()` is now transactional and `setCustomLogLevelMapping()` no longer throws on parser recreation failures, preserving prior valid state in commit `074892a`.
+- Mitigation progress: API-level error boundary policy is now documented in `docs/api-reference.md`, and regression tests assert non-throw behavior for invalid file inputs across `loadAndReplace`, `append`, and `analyzeStream` in commit `ff802a8`.
 - Minimal mitigation idea: Define and document one error boundary policy (no-throw across public API, or explicit throw boundaries) and test for it.
 
 5. **Thread-safety contract leak via returned references after lock release (Resolved)**  
@@ -190,6 +191,10 @@ Configure/build:
 - Post-fix verification (export debug-noise removal under repeated analyzer runs): SUCCESS
   Commands:
   - ./build/tests/analyzer_Core --gtest_repeat=5 --gtest_shuffle --gtest_brief=1
+- Post-fix verification (documented no-throw API policy + regression): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
 
 Warnings:
 - warning count: 0
