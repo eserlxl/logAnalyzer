@@ -104,3 +104,15 @@ TEST_F(CLIConfigTest, TailIntervalMustBePositive) {
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }
+
+TEST_F(CLIConfigTest, StatsWindowMustBePositive) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats-window", "0"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, FindGapsMustBePositive) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--find-gaps", "-1"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}

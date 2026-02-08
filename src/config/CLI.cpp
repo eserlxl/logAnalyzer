@@ -298,10 +298,12 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     // Stats (Legacy options)
     int statsWindowSec = 0;
-    app.add_option("--stats-window", statsWindowSec, "Show log frequency distribution over a time window (seconds) (Deprecated)");
+    app.add_option("--stats-window", statsWindowSec, "Show log frequency distribution over a time window (seconds) (Deprecated)")
+       ->check(CLI::PositiveNumber);
     
     int gapDurationMs = 0;
-    app.add_option("--find-gaps", gapDurationMs, "Find time gaps longer than X ms (Deprecated)");
+    app.add_option("--find-gaps", gapDurationMs, "Find time gaps longer than X ms (Deprecated)")
+       ->check(CLI::PositiveNumber);
 
     // New options from Iteration 7 Design
     app.add_option("--on-parse-error", appOptions.parserErrorAction, "Action on parse error (skip, log, fail)")
