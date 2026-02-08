@@ -155,6 +155,9 @@ TEST(UtilsTime, ParseISO8601) {
     EXPECT_FALSE(parseISO8601("2023-10-27 10:30:00").has_value()); // Standard format, not ISO
     EXPECT_FALSE(parseISO8601("2023-13-01T10:30:00Z").has_value()); // Invalid month
     EXPECT_FALSE(parseISO8601("2023-10-27T25:30:00Z").has_value()); // Invalid hour
+    EXPECT_FALSE(parseISO8601("2023-02-30T10:30:00").has_value()); // Invalid date (local)
+    EXPECT_FALSE(parseISO8601("2023-02-30T10:30:00Z").has_value()); // Invalid date (UTC)
+    EXPECT_FALSE(parseISO8601("2023-02-30T10:30:00+02:00").has_value()); // Invalid date (offset)
     EXPECT_FALSE(parseISO8601("2023-10-27T10:30:00+24:00").has_value()); // Invalid hours in offset
     EXPECT_FALSE(parseISO8601("2023-10-27T10:30:00-24:00").has_value()); // Invalid hours in offset
     EXPECT_FALSE(parseISO8601("2023-10-27T10:30:00+02:65").has_value()); // Invalid minutes in offset

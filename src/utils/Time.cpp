@@ -360,25 +360,27 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to parse date/time part of ISO string: " + datetime_part));
     }
 
+    std::tm tm_orig = tm;
+
     if (timezone_part.empty()) { // Local time
         std::time_t time;
         {
             std::lock_guard<std::mutex> lock(localtimeMutex);
             time = std::mktime(&tm);
         }
-        if (time == -1) {
+        if (time == -1 || !isTmValid(tm_orig, tm)) {
             return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert local time to time_t: " + datetime_part));
         }
         return std::chrono::system_clock::from_time_t(time);
     } else if (timezone_part == "Z") { // UTC
         time_t time = portable_timegm(&tm);
-        if (time == -1) {
+        if (time == -1 || !isTmValid(tm_orig, tm)) {
             return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert UTC time to time_t: " + datetime_part));
         }
         return std::chrono::system_clock::from_time_t(time);
     } else { // UTC with offset
         time_t time = portable_timegm(&tm);
-        if (time == -1) {
+        if (time == -1 || !isTmValid(tm_orig, tm)) {
             return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert base time to time_t for offset calculation: " + datetime_part));
         }
         
