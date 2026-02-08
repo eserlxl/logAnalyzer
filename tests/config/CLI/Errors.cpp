@@ -98,3 +98,9 @@ TEST_F(CLIConfigTest, DurationInvalidFormat) {
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidArgument); // Following the pattern of DurationWithoutTimeBoundariesError
 }
+
+TEST_F(CLIConfigTest, TailIntervalMustBePositive) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--tail", "--tail-interval", "-10"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}

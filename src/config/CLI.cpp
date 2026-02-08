@@ -309,7 +309,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     app.add_flag("--tail", appOptions.tailMode, "Enable tail mode to monitor files for new lines");
     int tailIntervalMs = 1000;
-    app.add_option("--tail-interval", tailIntervalMs, "Polling interval for tail mode in ms (default: 1000)");
+    app.add_option("--tail-interval", tailIntervalMs, "Polling interval for tail mode in ms (default: 1000)")
+       ->check(CLI::PositiveNumber);
 
     app.add_option("--expression", appOptions.complexFilterExpression, "Complex filter expression");
 
