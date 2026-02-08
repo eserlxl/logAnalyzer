@@ -177,7 +177,9 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
     if (!report.parseErrors.empty()) {
         report.status = ParseError::PARTIAL_FAILURE;
     }
-    emitProgress(100.0, "Parsing completed");
+    if (report.status != ParseError::CANCELLED) {
+        emitProgress(100.0, "Parsing completed");
+    }
     
     return {std::move(parsedEntries), report};
 }
