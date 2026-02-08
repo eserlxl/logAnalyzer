@@ -39,10 +39,34 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
     std::optional<CancellationToken*> cancellationToken,
     std::optional<ProgressCallback> progressCallback
 ) {
-    (void)progressCallback; // TODO: Implement progress reporting based on stream position if possible
     std::vector<LogEntry> parsedEntries;
     AnalysisReport report;
     report.status = ParseError::SUCCESS;
+    std::streamoff totalBytes = 0;
+
+    auto emitProgress = [&](double percentage, std::string_view message) {
+        if (!progressCallback.has_value()) {
+            return;
+        }
+        try {
+            (*progressCallback)(percentage, message);
+        } catch (...) {
+            // Ignore callback exceptions to keep parsing resilient.
+        }
+    };
+
+    // Best-effort progress support for seekable streams.
+    const std::streampos originalPos = is.tellg();
+    if (progressCallback.has_value() && originalPos != std::streampos(-1)) {
+        is.seekg(0, std::ios::end);
+        const std::streampos endPos = is.tellg();
+        if (endPos != std::streampos(-1) && endPos >= originalPos) {
+            totalBytes = static_cast<std::streamoff>(endPos - originalPos);
+        }
+        is.clear();
+        is.seekg(originalPos);
+    }
+    emitProgress(0.0, "Parsing started");
 
     std::unique_ptr<ILogParser> parser;
     {
@@ -73,10 +97,22 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
     while (std::getline(is, line)) {
         if (cancellationToken && (*cancellationToken)->isCancelled()) {
             report.status = ParseError::CANCELLED;
+            emitProgress(100.0, "Parsing cancelled");
             break;
         }
         lineNumber++;
         report.linesProcessed++;
+        if (totalBytes > 0) {
+            const std::streampos currentPos = is.tellg();
+            if (currentPos != std::streampos(-1) && currentPos >= originalPos) {
+                const auto consumed = static_cast<std::streamoff>(currentPos - originalPos);
+                const double progress = std::clamp(
+                    (100.0 * static_cast<double>(consumed)) / static_cast<double>(totalBytes),
+                    0.0,
+                    100.0);
+                emitProgress(progress, "Parsing stream");
+            }
+        }
 
         std::optional<ErrorCode::Result<LogEntry>> parseResultOpt;
         try {
@@ -141,6 +177,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
     if (!report.parseErrors.empty()) {
         report.status = ParseError::PARTIAL_FAILURE;
     }
+    emitProgress(100.0, "Parsing completed");
     
     return {std::move(parsedEntries), report};
 }

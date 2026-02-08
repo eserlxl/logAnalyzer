@@ -104,6 +104,36 @@ TEST_F(LogWriterTest, FormatEntry_CustomFormat) {
     EXPECT_EQ(result, "[DEBUG] Debug info");
 }
 
+TEST(LogAnalyzerProgressTest, StreamInInvokesProgressCallbackForSeekableStream) {
+    LogAnalyzerSettings settings;
+    settings.lineParsePattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+) (.*)$)";
+    settings.fieldMappings.clear();
+    settings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), std::vector<std::string>{"%Y-%m-%d %H:%M:%S"});
+    settings.fieldMappings.emplace_back(LogEntryField::LEVEL, std::make_optional<size_t>(2));
+    settings.fieldMappings.emplace_back(LogEntryField::MESSAGE, std::make_optional<size_t>(3));
+
+    LogAnalyzer analyzer(settings);
+    std::stringstream ss;
+    ss << "2023-03-15 00:00:00 INFO User logged in.\n";
+    ss << "2023-03-15 00:01:00 WARNING Disk space low.\n";
+    ss << "2023-03-15 00:02:00 ERROR Failed to connect.\n";
+
+    std::vector<double> progressValues;
+    const auto result = analyzer.streamIn(
+        ss,
+        "progress_stream",
+        ParserErrorAction::Ignore,
+        std::nullopt,
+        ProgressCallback([&progressValues](double progress, std::string_view) {
+            progressValues.push_back(progress);
+        }));
+
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    ASSERT_FALSE(progressValues.empty());
+    EXPECT_DOUBLE_EQ(progressValues.front(), 0.0);
+    EXPECT_DOUBLE_EQ(progressValues.back(), 100.0);
+}
+
 // --- LogWriter::printFilteredEntries Tests ---
 
 TEST_F(LogWriterTest, PrintFilteredEntries_All) {
