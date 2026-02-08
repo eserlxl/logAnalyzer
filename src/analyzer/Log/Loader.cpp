@@ -64,6 +64,7 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(
 ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string& filePath, const std::string& pattern) {
     LogAnalyzerSettings oldSettings = getSettings();
     LogAnalyzerSettings tempSettings = oldSettings;
+    tempSettings.lineParsePattern = pattern;
     // Existing code before the if block:
     // tempSettings.fieldMappings.clear(); // This is handled by setDefaultFieldMappings
 

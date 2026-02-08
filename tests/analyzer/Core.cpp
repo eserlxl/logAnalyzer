@@ -96,6 +96,33 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {
     EXPECT_EQ(loadResult->successfulParses, 1);
 }
 
+TEST_F(LogAnalyzerTest, DeprecatedLoadAndReplacePatternUsesProvidedPattern) {
+    const std::string filePath = "test_deprecated_load_replace_pattern.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "INFO|message-a\n";
+        ofs << "ERROR|message-b\n";
+    }
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+    auto result = analyzer.loadAndReplace(filePath, R"(^(\w+)\|(.*)$)");
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    EXPECT_EQ(result->successfulParses, 2);
+}
+
 TEST_F(LogAnalyzerTest, GetFilteredEntriesInvalidRegex) {
     auto condition = FilterCondition::createTyped(LogEntryField::MESSAGE, FilterOperator::REGEX, "[", FilterValueType::REGEX);
     ASSERT_TRUE(condition.has_value());
