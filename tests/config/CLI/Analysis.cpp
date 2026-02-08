@@ -41,6 +41,16 @@ TEST_F(CLIConfigTest, StatisticConfigWithWhitespace) {
     ASSERT_EQ(settings.statisticConfigs[0].params.at("top_n"), "7");
 }
 
+TEST_F(CLIConfigTest, StatisticConfigKeysAreCaseInsensitive) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", " TYPE = TOP_MESSAGES , TOP_N = 7 "});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TOP_MESSAGES);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("top_n"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("top_n"), "7");
+}
+
 TEST_F(CLIConfigTest, StatisticConfigRejectsUnknownBareToken) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=top_messages,bogus"});
     ASSERT_FALSE(result.has_value());

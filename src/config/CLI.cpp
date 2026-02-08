@@ -81,8 +81,9 @@ namespace {
                 if (key.empty()) {
                     return std::nullopt;
                 }
+                const std::string normalizedKey = Utils::toLower(key);
                 
-                if (key == "type") {
+                if (normalizedKey == "type") {
                     if (typeFound) {
                         return std::nullopt;
                     }
@@ -95,7 +96,7 @@ namespace {
                         return std::nullopt; 
                     }
                 } else {
-                    config.params[key] = value;
+                    config.params[normalizedKey] = value;
                 }
             } else {
                 // Token without '=', maybe it's just the type name mixed with params? 
