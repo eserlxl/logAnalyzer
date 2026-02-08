@@ -147,6 +147,7 @@ ErrorCode::Result<AnalysisReport> LogReader::doLoadAndReplace(ILogParser* parser
 
     // Modify analyzer_.entries_ (requires unique_lock from caller)
     analyzer_.entries_ = std::move(parsedEntries);
+    analyzer_.resetStatisticCollectors();
     
     // Process statistics for all newly loaded entries
     for (const auto& entry : analyzer_.entries_) {
