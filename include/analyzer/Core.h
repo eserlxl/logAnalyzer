@@ -5,7 +5,9 @@
 #define LOG_ANALYZER_H
 
 #include "core/Log/Types.h"
-#include "filter/Core.h"
+#include "filter/Expression.h"
+#include "filter/Legacy.h"
+#include "filter/Types.h"
 #include "core/Error.h"
 #include "config/CLI.h"
 #include "core/CiLess.h"
