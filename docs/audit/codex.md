@@ -6,6 +6,7 @@
 - Main correctness risks are now primarily error-model consistency and API/build hygiene.
 - Multiline parser integration in `load/append` has been fixed in commit `c3ea33b` by switching analyzer pipeline parsing to `processLine()` and adding regression coverage (`src/analyzer/IO.cpp`, `tests/analyzer/Core.cpp`).
 - Descending sort comparator strict-order bug has been fixed in commit `f76b95e` in both sorted-filter paths, with regression coverage in analyzer tests (`src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`).
+- Statistic collector creation now avoids runtime exceptions on invalid collector params (commit `7e7e68e`), reducing crash risk in constructor/settings flows (`src/analyzer/Stats.cpp`, `tests/analyzer/Core.cpp`).
 - Error model is mixed (`Result` + exceptions), including throws in parser/stats constructors and paths (`src/core/Log/Parser.cpp:322`, `src/analyzer/Stats.cpp:72`).
 - README/product claims and actual implementation diverge in a few places (notably query parser / `--expression`).
 - Overall: solid foundation with real strengths, but several high-likelihood correctness and maintainability risks remain.
@@ -16,7 +17,7 @@
 |---|---:|---|
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
 | Correctness / edge-case handling | 7.0 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, and descending sort now uses strict ordering semantics with regression coverage (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`). |
-| Error handling consistency | 4.5 | `ErrorCode::Result` is used widely, but exceptions still thrown in hot paths (`src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`, `src/analyzer/Stats.cpp:72`). |
+| Error handling consistency | 5.5 | `ErrorCode::Result` is used widely and stats collector construction no longer throws on invalid params; exceptions still exist in parser throw paths (`src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 6.5 | 49 passing tests with good breadth; strong parser/filter/export coverage. Gaps: concurrency is placeholder (`tests/analyzer/Core.cpp:108`), parseQuery is expected unimplemented (`tests/filter/Iteration15.cpp:142`), no direct JsonLogParser-focused tests observed. |
 | Build hygiene | 7.0 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration. Weakness: dependency fetch requires network on fresh configure (offline failure), no visible CI config (`.github` absent). |
@@ -45,11 +46,12 @@
 - Resolution: Fixed in commit `f76b95e` by implementing descending comparison as reversed strict ascending (`less(b, a)`) instead of `!less(a, b)` in both sorted-filter overloads.
 - Follow-up: Keep regression coverage in `tests/analyzer/Core.cpp` and add broader sort-property tests when expanding test depth.
 
-4. **Mixed exception + `Result` error model in critical paths**  
+4. **Mixed exception + `Result` error model in critical paths (Partially mitigated)**  
 - Severity: High  
 - Likelihood: Medium  
-- Where: `src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`, `src/analyzer/Stats.cpp:72`, `src/analyzer/Core.cpp:60`  
+- Where: `src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`, `src/analyzer/Core.cpp:60`  
 - Why it matters: Unexpected throws can bypass expected error-handling paths and terminate CLI/library consumers.  
+- Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`.
 - Minimal mitigation idea: Define and document one error boundary policy (no-throw across public API, or explicit throw boundaries) and test for it.
 
 5. **Thread-safety contract leak via returned references after lock release**  
@@ -116,6 +118,10 @@ Configure/build:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
 - Post-fix verification (descending comparator strict ordering): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (stats collector exception hardening): SUCCESS
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
