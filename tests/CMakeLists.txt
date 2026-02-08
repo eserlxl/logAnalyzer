@@ -10,8 +10,8 @@ endif()
 
 # Default test data directory if not explicitly set
 if(NOT DEFINED LOGANALYZER_TEST_DATA_DIR)
-    # Default to a 'data' directory in the project's source root
-    set(LOGANALYZER_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/test_data" CACHE PATH "Directory for shared test data")
+    # Default to tests/data in the project's source tree.
+    set(LOGANALYZER_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/tests/data" CACHE PATH "Directory for shared test data")
 endif()
 
 # Find all test source files
