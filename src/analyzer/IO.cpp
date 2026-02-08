@@ -123,8 +123,10 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
 }
 
 const std::vector<LogEntry>& LogAnalyzer::getEntries() const {
+    static thread_local std::vector<LogEntry> snapshot;
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
-    return entries_;
+    snapshot = entries_;
+    return snapshot;
 }
 
 std::vector<LogEntry> LogAnalyzer::getEntriesSnapshot() const {
@@ -134,8 +136,10 @@ std::vector<LogEntry> LogAnalyzer::getEntriesSnapshot() const {
 
 // Add getLastReport method for thread-safe access
 const AnalysisReport& LogAnalyzer::getLastReport() const {
+    static thread_local AnalysisReport snapshot;
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
-    return lastReport;
+    snapshot = lastReport;
+    return snapshot;
 }
 
 AnalysisReport LogAnalyzer::getLastReportSnapshot() const {
@@ -144,6 +148,6 @@ AnalysisReport LogAnalyzer::getLastReportSnapshot() const {
 }
 
 std::span<const LogEntry> LogAnalyzer::getEntriesView() const {
-    std::shared_lock<std::shared_mutex> lock(stateMutex_);
-    return entries_;
+    const auto& snapshot = getEntries();
+    return std::span<const LogEntry>(snapshot.data(), snapshot.size());
 }

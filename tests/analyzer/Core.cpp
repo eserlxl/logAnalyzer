@@ -323,6 +323,35 @@ TEST_F(LogAnalyzerTest, SnapshotAccessorsReturnIndependentCopies) {
     EXPECT_EQ(reportSnapshot.successfulParses, 1);
 }
 
+TEST_F(LogAnalyzerTest, ReferenceAccessorsReturnStableSnapshots) {
+    const std::string filePath = "test_reference_snapshot.log";
+    std::ofstream ofs(filePath);
+    ofs << "2023-01-01 10:00:00 INFO: one\n";
+    ofs.close();
+
+    auto firstLoad = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    ASSERT_TRUE(firstLoad.has_value());
+
+    const auto& entriesRefSnapshot = analyzer.getEntries();
+    const auto& reportRefSnapshot = analyzer.getLastReport();
+    ASSERT_EQ(entriesRefSnapshot.size(), 1);
+    ASSERT_EQ(reportRefSnapshot.successfulParses, 1);
+
+    std::ofstream ofs2(filePath, std::ios::trunc);
+    ofs2 << "2023-01-01 10:00:01 INFO: two\n";
+    ofs2 << "2023-01-01 10:00:02 INFO: three\n";
+    ofs2.close();
+
+    auto secondLoad = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(secondLoad.has_value());
+
+    // Reference-returning accessors expose thread-local snapshots and remain stable.
+    EXPECT_EQ(entriesRefSnapshot.size(), 1);
+    EXPECT_EQ(entriesRefSnapshot[0].message, "one");
+    EXPECT_EQ(reportRefSnapshot.successfulParses, 1);
+}
+
 TEST_F(LogAnalyzerTest, ConcurrentSnapshotAccessDuringLoad) {
     const std::string filePath = "test_concurrent_snapshot.log";
     std::ofstream ofs(filePath);
