@@ -44,10 +44,9 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
     }
 
     std::vector<LogEntry> mergedEntries;
-    mergedEntries.reserve(entries_.size() + newEntries.size());
-
     { // Scope for shared_lock to read entries_
         std::shared_lock<std::shared_mutex> sharedLock(stateMutex_);
+        mergedEntries.reserve(entries_.size() + newEntries.size());
         std::merge(entries_.begin(), entries_.end(),
                    newEntries.begin(), newEntries.end(),
                    std::back_inserter(mergedEntries),
