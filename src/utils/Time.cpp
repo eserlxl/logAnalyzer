@@ -468,13 +468,14 @@ parseDayRange(const std::string& dateString) {
             tm.tm_hour = 0;
             tm.tm_min = 0;
             tm.tm_sec = 0;
+            std::tm tm_orig = tm;
             
             std::time_t start_time;
             {
                 std::lock_guard<std::mutex> lock(localtimeMutex);
                 start_time = std::mktime(&tm);
             }
-            if (start_time != -1) {
+            if (start_time != -1 && isTmValid(tm_orig, tm)) {
                 auto start_tp = std::chrono::system_clock::from_time_t(start_time);
                 // Fix: Ensure the end time covers the entire day by setting it to the start of the next day.
                 // The TimeRangeFilter uses [start, end) semantics, so this includes all times up to 23:59:59.999...

@@ -193,6 +193,7 @@ TEST(UtilsTime, ParseDayRange) {
     EXPECT_FALSE(parseDayRange("27-10-2023").has_value());
     EXPECT_FALSE(parseDayRange("2023-10-32").has_value());
     EXPECT_FALSE(parseDayRange("2023-13-27").has_value());
+    EXPECT_FALSE(parseDayRange("2023-02-30").has_value());
 
     // Test DST transition (Spring Forward - day is 23 hours)
     auto start_before_dst = createTimePoint(2023, 3, 11, 0, 0, 0);
