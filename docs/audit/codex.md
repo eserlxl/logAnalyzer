@@ -286,7 +286,7 @@ Tests:
 
 **Features present but under-documented in README**
 - Advanced parser and expression options are now surfaced in README (commit `47e4cbc`), including `--expression`, `--multiline-start-pattern`, `--max-multiline-buffer`, and `--on-parse-error`.
-- JSON-based filter expression serialization/deserialization is well-covered in tests (`tests/filter/CoreJson/*`) but not clearly surfaced in README feature summary.
+- JSON-based filter expression serialization/deserialization documentation gap was closed in commit `3ac04a6` (README + features table updates).
 
 ## Appendix: key file paths reviewed
 - `CMakeLists.txt`
