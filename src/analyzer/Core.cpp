@@ -193,6 +193,7 @@ void LogAnalyzer::clear() {
     std::unique_lock<std::shared_mutex> lock(stateMutex_);
     entries_.clear();
     levelCounts.clear();
+    resetStatisticCollectors();
     lastReport = {};
 }
 

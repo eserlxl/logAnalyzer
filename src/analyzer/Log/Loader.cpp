@@ -48,6 +48,7 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(
     {
         std::unique_lock<std::shared_mutex> lock(stateMutex_);
         entries_ = std::move(parsedEntries);
+        resetStatisticCollectors();
 
         // Process statistics for all newly loaded entries
         for (const auto& entry : entries_) {

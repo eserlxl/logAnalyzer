@@ -201,6 +201,58 @@ TEST_F(LogAnalyzerTest, StreamInUpdatesStatisticsWhenAnalyzerStartsEmpty) {
     ASSERT_EQ(report["counts"]["WARNING"], 1);
 }
 
+TEST_F(LogAnalyzerTest, LoadAndReplaceResetsStatisticsToCurrentDataset) {
+    analyzer.addStatisticCollector(std::make_shared<LogLevelCountCollector>());
+
+    const std::string firstFile = "test_load_replace_stats_first.log";
+    {
+        std::ofstream ofs(firstFile);
+        ofs << "2023-01-01 10:00:00 INFO: First 1\n";
+        ofs << "2023-01-01 10:01:00 INFO: First 2\n";
+    }
+    auto firstLoad = analyzer.loadAndReplace(firstFile, ParserErrorAction::Warn);
+    std::remove(firstFile.c_str());
+    ASSERT_TRUE(firstLoad.has_value()) << firstLoad.error().toString();
+
+    const std::string secondFile = "test_load_replace_stats_second.log";
+    {
+        std::ofstream ofs(secondFile);
+        ofs << "2023-01-01 11:00:00 ERROR: Second 1\n";
+    }
+    auto secondLoad = analyzer.loadAndReplace(secondFile, ParserErrorAction::Warn);
+    std::remove(secondFile.c_str());
+    ASSERT_TRUE(secondLoad.has_value()) << secondLoad.error().toString();
+
+    const auto reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("log_level_count"));
+    const auto& report = reports.at("log_level_count");
+    ASSERT_EQ(report["total_entries"], 1);
+    ASSERT_EQ(report["counts"]["ERROR"], 1);
+    EXPECT_FALSE(report["counts"].contains("INFO"));
+}
+
+TEST_F(LogAnalyzerTest, ClearResetsStatistics) {
+    analyzer.addStatisticCollector(std::make_shared<LogLevelCountCollector>());
+
+    const std::string filePath = "test_clear_stats.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "2023-01-01 10:00:00 INFO: Entry 1\n";
+        ofs << "2023-01-01 10:01:00 WARNING: Entry 2\n";
+    }
+    auto loadResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
+
+    analyzer.clear();
+
+    const auto reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("log_level_count"));
+    const auto& report = reports.at("log_level_count");
+    EXPECT_EQ(report["total_entries"], 0);
+    EXPECT_TRUE(report["counts"].empty());
+}
+
 TEST_F(LogAnalyzerTest, StatisticCollectorLifecycleApisWork) {
     auto collector = std::make_shared<LogLevelCountCollector>();
     analyzer.addStatisticCollector(collector);
