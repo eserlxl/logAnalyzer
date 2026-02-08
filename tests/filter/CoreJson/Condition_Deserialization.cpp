@@ -451,6 +451,20 @@ TEST_F(FilterJsonTest, FromJsonFailureBoolNonBooleanValue) {
     EXPECT_EQ(result.error().message, "Invalid boolean value: not_a_bool");
 }
 
+TEST_F(FilterJsonTest, FromJsonSuccessBoolExtendedLiterals) {
+    for (const std::string& value : {"t", "f", "yes", "no", "TRUE", "FALSE"}) {
+        nlohmann::json j = {
+            {"field", "is_error"},
+            {"op", "EQUALS"},
+            {"value", value},
+            {"value_type", "BOOL"}
+        };
+        FilterCondition fc;
+        auto result = from_json(j, fc);
+        ASSERT_TRUE(result.has_value()) << "value=" << value << " error=" << result.error().message;
+    }
+}
+
 TEST_F(FilterJsonTest, FromJsonFailureDoubleNonNumericValue) {
     nlohmann::json j = {
         {"field", "latency"},

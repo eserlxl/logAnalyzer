@@ -321,7 +321,10 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         };
         if (fc.valueType == FilterValueType::BOOL) {
             std::string lowerVal = Utils::toLower(singleValue);
-            if (lowerVal != "true" && lowerVal != "false" && lowerVal != "1" && lowerVal != "0") {
+            if (lowerVal != "true" && lowerVal != "false" &&
+                lowerVal != "1" && lowerVal != "0" &&
+                lowerVal != "t" && lowerVal != "f" &&
+                lowerVal != "yes" && lowerVal != "no") {
                  return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid boolean value: " + singleValue, current_path, "value"));
             }
         } else if (fc.valueType == FilterValueType::INT) {
