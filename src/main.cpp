@@ -9,7 +9,6 @@
 #include "config/Settings.h"
 #include "config/CLI.h" // Added for CLIConfig
 #include "core/Error.h" // New: For Error struct and Result alias
-#include "filter/IFilter.h"
 #include "filter/ConcreteFilters.h"
 #include "filter/Parser.h"
 #include "filter/Types.h"
