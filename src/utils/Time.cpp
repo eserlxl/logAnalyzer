@@ -68,6 +68,10 @@ std::chrono::system_clock::time_point parse_utc(const std::string& time_str, con
     if (ss.fail()) {
         throw std::runtime_error("Failed to parse UTC time string: " + time_str + " with format: " + format_str);
     }
+    ss >> std::ws;
+    if (!ss.eof()) {
+        throw std::runtime_error("Failed to parse UTC time string: " + time_str + " with format: " + format_str);
+    }
 
     time_t time = portable_timegm(&tm_utc);
     if (time == (time_t)-1 || !isTmValid(tm_orig, tm_utc)) {

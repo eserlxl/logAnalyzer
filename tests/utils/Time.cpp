@@ -248,4 +248,5 @@ TEST(UtilsTime, ParseUtcStrictDateValidation) {
     EXPECT_EQ(valid_tp, expected_tp);
 
     EXPECT_THROW(Utils::parse_utc("2023-02-30 10:30:00 UTC"), std::runtime_error);
+    EXPECT_THROW(Utils::parse_utc("2023-10-27 10:30:00 UTC trailing"), std::runtime_error);
 }
