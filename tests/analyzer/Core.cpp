@@ -15,6 +15,7 @@
 #include <atomic>
 #include <thread>
 #include <map>
+#include <span>
 
 using namespace filter;
 
@@ -198,6 +199,38 @@ TEST_F(LogAnalyzerTest, StreamInUpdatesStatisticsWhenAnalyzerStartsEmpty) {
     ASSERT_EQ(report["total_entries"], 2);
     ASSERT_EQ(report["counts"]["INFO"], 1);
     ASSERT_EQ(report["counts"]["WARNING"], 1);
+}
+
+TEST_F(LogAnalyzerTest, StatisticCollectorLifecycleApisWork) {
+    auto collector = std::make_shared<LogLevelCountCollector>();
+    analyzer.addStatisticCollector(collector);
+
+    const auto now = std::chrono::system_clock::now();
+    std::vector<LogEntry> entries = {
+        {1, "a.log", 1, now, LogLevel::INFO, "one"},
+        {2, "a.log", 2, now + std::chrono::seconds(1), LogLevel::ERROR, "two"},
+    };
+
+    analyzer.processEntriesForStatistics(std::span<const LogEntry>(entries));
+    auto reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("log_level_count"));
+    EXPECT_EQ(reports["log_level_count"]["total_entries"], 2);
+    EXPECT_EQ(reports["log_level_count"]["counts"]["INFO"], 1);
+    EXPECT_EQ(reports["log_level_count"]["counts"]["ERROR"], 1);
+
+    analyzer.resetStatisticCollectors();
+    reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("log_level_count"));
+    EXPECT_EQ(reports["log_level_count"]["total_entries"], 0);
+
+    analyzer.removeStatisticCollector(collector);
+    reports = analyzer.getAllStatisticReports();
+    EXPECT_TRUE(reports.empty());
+
+    analyzer.addStatisticCollector(std::make_shared<LogLevelCountCollector>());
+    analyzer.clearStatisticCollectors();
+    reports = analyzer.getAllStatisticReports();
+    EXPECT_TRUE(reports.empty());
 }
 
 TEST_F(LogAnalyzerTest, ConcurrentAppendAndFilterIsStable) {

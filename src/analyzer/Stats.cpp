@@ -3,6 +3,7 @@
 
 #include "analyzer/Core.h"
 #include "stats/Core.h"
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -22,6 +23,39 @@ void LogAnalyzer::addStatisticCollector(std::shared_ptr<IStatisticCollector> col
 void LogAnalyzer::processEntryForStatistics(const LogEntry& entry) {
     for (const auto& collector : collectors_) {
         collector->collect(entry);
+    }
+}
+
+void LogAnalyzer::removeStatisticCollector(const std::shared_ptr<IStatisticCollector>& collector) {
+    if (!collector) {
+        return;
+    }
+    collectors_.erase(
+        std::remove(collectors_.begin(), collectors_.end(), collector),
+        collectors_.end());
+}
+
+void LogAnalyzer::clearStatisticCollectors() {
+    collectors_.clear();
+}
+
+void LogAnalyzer::resetStatisticCollectors() {
+    for (const auto& collector : collectors_) {
+        if (collector) {
+            collector->reset();
+        }
+    }
+}
+
+void LogAnalyzer::processEntriesForStatistics(std::span<const LogEntry> entries) {
+    for (const auto& entry : entries) {
+        processEntryForStatistics(entry);
+    }
+}
+
+void LogAnalyzer::processEntriesForStatistics(std::generator<const LogEntry&> entries) {
+    for (const auto& entry : entries) {
+        processEntryForStatistics(entry);
     }
 }
 
