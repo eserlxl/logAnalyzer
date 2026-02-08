@@ -22,7 +22,7 @@
 | Error handling consistency | 8.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, parser throw mode returns structured `Result` errors (commit `3ce6b12`), and settings updates now roll back safely without leaving partial invalid state (commit `074892a`). |
 | Performance risks | 6.8 | Stream mode exists; regex caches present; noisy unconditional export debug dumps were removed (commit `2dc97f8`), and parse pipeline copies were reduced via move-based entry handling (commit `055d6e8`). Remaining cost drivers are non-stream load/append full-vector merge/sort (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`). |
 | Test quality | 9.1 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency includes deterministic snapshot/load coverage, concurrent append/filter/export checks, concurrent `loadAsync` filter/export stress coverage, concurrent multiline `analyzeStream` isolation checks, and explicit concurrent dual-append preservation coverage (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`, `51d85c3`, `6a63d62`, `17a85b4`), plus direct JsonLogParser tests (commit `ade5392`). |
-| Build hygiene | 9.2 | Strict warnings-as-errors in CMake (`CMakeLists.txt`), clean ctest integration, CI now includes repeated analyzer concurrency runs (`.github/workflows/ci.yml`, commit `075f68b`), and dependency strategy supports system packages, optional fetch, plus hermetic offline mirror mode (`LOGANALYZER_OFFLINE_DEPS`, commit `624536a`). |
+| Build hygiene | 9.4 | Strict warnings-as-errors in CMake (`CMakeLists.txt`), clean ctest integration, CI now includes repeated and shuffled long-running analyzer concurrency stress runs (`.github/workflows/ci.yml`, commits `075f68b`, `113a617`), and dependency strategy supports system packages, optional fetch, plus hermetic offline mirror mode (`LOGANALYZER_OFFLINE_DEPS`, commit `624536a`). |
 | API hygiene | 7.0 | Public API header is broad, but analyzer state access now uses thread-safe snapshots for both explicit snapshot APIs and reference-returning accessors (`src/analyzer/IO.cpp`, commits `17ef73c`, `645a17e`). |
 
 ## Risk register
@@ -70,7 +70,7 @@
 - Resolution: Fixed in commit `645a17e`; `getEntries()`, `getLastReport()`, and `getEntriesView()` now return thread-local snapshots rather than aliases to shared mutable state, with regression coverage in `tests/analyzer/Core.cpp`.
 - Follow-up: Continue using explicit snapshot APIs for clarity in performance-sensitive call paths.
 
-6. **Concurrency behavior largely untested (Further mitigated)**  
+6. **Concurrency behavior largely untested (Resolved)**  
 - Severity: Medium  
 - Likelihood: High  
 - Where: `tests/analyzer/Core.cpp:108`  
@@ -82,7 +82,8 @@
 - Mitigation progress: CI now runs repeated `analyzer_Core` executions with `ctest --repeat until-fail` in commit `075f68b` to detect flaky/racy behavior continuously.
 - Mitigation progress: `streamIn()` lock boundary now covers `entries_.size()` used for merge reservation, removing a concrete read-race in commit `fc3f674`.
 - Mitigation progress: `parseAndReport()` now clones parser state per call, and append/stream merge-commit is atomic under unique lock to prevent concurrent lost updates (commit `17a85b4`), with explicit concurrent dual-append preservation test coverage.
-- Minimal mitigation idea: Add dedicated long-running stress/fuzz job for high-contention scenarios in CI.
+- Resolution: Added dedicated long-running shuffled concurrency stress execution in CI (`./build/tests/analyzer_Core --gtest_repeat=50 --gtest_shuffle`) in commit `113a617`.
+- Follow-up: Add sanitizer-backed race job (TSAN) when dependency provisioning for fresh offline builds is available in CI.
 
 7. **Fresh builds depend on live network FetchContent (Resolved)**  
 - Severity: Medium  
@@ -208,6 +209,9 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (long-running shuffled concurrency stress): SUCCESS
+  Commands:
+  - ./build/tests/analyzer_Core --gtest_repeat=10 --gtest_shuffle --gtest_brief=1
 
 Warnings:
 - warning count: 0
