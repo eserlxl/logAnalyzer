@@ -112,7 +112,7 @@
 - Likelihood: Medium  
 - Where found: `tests/CMakeLists.txt`  
 - Resolution: Fixed in commit `00a6093`; default test data directory now points to `${CMAKE_SOURCE_DIR}/tests/data`.
-- Follow-up: Keep this default aligned with repository layout if test fixture directories move.
+- Follow-up: Completed in commit `212aa20`; test CMake now validates fixture directory existence, supports legacy fallback, and auto-recovers stale cached test-data paths to `${CMAKE_SOURCE_DIR}/tests/data`.
 
 ## Build/test results block
 
@@ -252,6 +252,11 @@ Configure/build:
   - ctest --test-dir build --output-on-failure -R analyzer_Core
 - Post-fix verification (explicit snapshot API usage in non-stream CLI path): SUCCESS
   Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
+- Post-fix verification (test data directory alignment and stale-cache recovery): SUCCESS
+  Commands:
+  - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
 
