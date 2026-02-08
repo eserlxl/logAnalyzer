@@ -9,6 +9,7 @@
 #include "filter/Types.h"
 #include <fstream>
 #include <filesystem>
+#include <algorithm>
 
 using namespace filter;
 
@@ -107,6 +108,29 @@ TEST_F(LogAnalyzerTest, AppendCorrectness) {
 
 TEST_F(LogAnalyzerTest, Concurrency_Placeholder) {
     SUCCEED();
+}
+
+TEST_F(LogAnalyzerTest, SortedFilteredEntriesDescendingUsesStrictComparator) {
+    const std::string filePath = "test_desc_sort.log";
+    std::ofstream ofs(filePath);
+    ofs << "2023-01-01 10:00:00 INFO: alpha\n";
+    ofs << "2023-01-01 10:00:01 INFO: zeta\n";
+    ofs << "2023-01-01 10:00:02 INFO: middle\n";
+    ofs << "2023-01-01 10:00:03 INFO: middle\n";
+    ofs.close();
+
+    auto loadResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
+
+    FilterExpression allEntries;
+    auto sorted = analyzer.getSortedFilteredEntries(allEntries, SortBy::MESSAGE, SortOrder::DESCENDING);
+    ASSERT_EQ(sorted.size(), 4);
+    EXPECT_EQ(sorted.front().message, "zeta");
+    EXPECT_EQ(sorted.back().message, "alpha");
+    for (size_t i = 1; i < sorted.size(); ++i) {
+        EXPECT_GE(sorted[i - 1].message, sorted[i].message);
+    }
 }
 
 TEST_F(LogAnalyzerTest, LoadAndReplaceSupportsMultilineEntries) {

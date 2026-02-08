@@ -93,30 +93,37 @@ std::vector<LogEntry> LogAnalyzer::getSortedFilteredEntries(const filter::Filter
     }
 
     auto sortLambda = [&](const LogEntry& a, const LogEntry& b) {
-        bool result = false;
-        switch (sortBy) {
-            case filter::SortBy::TIMESTAMP:
-                result = a.timestamp < b.timestamp;
-                break;
-            case filter::SortBy::LEVEL:
-                result = a.level < b.level;
-                break;
-            case filter::SortBy::MESSAGE:
-                result = a.message < b.message;
-                break;
-            case filter::SortBy::SOURCE:
-                result = a.sourceFile < b.sourceFile;
-                break;
-            case filter::SortBy::THREAD_ID:
-                // Handle optional: nullopt is considered "less than" a value.
-                if (a.threadId.has_value() && b.threadId.has_value()) {
-                    result = *a.threadId < *b.threadId;
-                } else {
-                    result = a.threadId.has_value() < b.threadId.has_value();
-                }
-                break;
+        auto lessByField = [](const LogEntry& lhs, const LogEntry& rhs, filter::SortBy key) {
+            bool result = false;
+            switch (key) {
+                case filter::SortBy::TIMESTAMP:
+                    result = lhs.timestamp < rhs.timestamp;
+                    break;
+                case filter::SortBy::LEVEL:
+                    result = lhs.level < rhs.level;
+                    break;
+                case filter::SortBy::MESSAGE:
+                    result = lhs.message < rhs.message;
+                    break;
+                case filter::SortBy::SOURCE:
+                    result = lhs.sourceFile < rhs.sourceFile;
+                    break;
+                case filter::SortBy::THREAD_ID:
+                    // nullopt is ordered before a present value.
+                    if (lhs.threadId.has_value() && rhs.threadId.has_value()) {
+                        result = *lhs.threadId < *rhs.threadId;
+                    } else {
+                        result = lhs.threadId.has_value() < rhs.threadId.has_value();
+                    }
+                    break;
+            }
+            return result;
+        };
+
+        if (sortOrder == filter::SortOrder::ASCENDING) {
+            return lessByField(a, b, sortBy);
         }
-        return (sortOrder == filter::SortOrder::ASCENDING) ? result : !result;
+        return lessByField(b, a, sortBy);
     };
 
     std::sort(filtered.begin(), filtered.end(), sortLambda);
@@ -157,29 +164,36 @@ std::vector<LogEntry> LogAnalyzer::getSortedFilteredEntries(const filter::Filter
     std::vector<LogEntry> filtered = filtered_expected.value();
 
     auto sortLambda = [&](const LogEntry& a, const LogEntry& b) {
-        bool result = false;
-        switch (sortBy) {
-            case filter::SortBy::TIMESTAMP:
-                result = a.timestamp < b.timestamp;
-                break;
-            case filter::SortBy::LEVEL:
-                result = a.level < b.level;
-                break;
-            case filter::SortBy::MESSAGE:
-                result = a.message < b.message;
-                break;
-            case filter::SortBy::SOURCE:
-                result = a.sourceFile < b.sourceFile;
-                break;
-            case filter::SortBy::THREAD_ID:
-                if (a.threadId.has_value() && b.threadId.has_value()) {
-                    result = *a.threadId < *b.threadId;
-                } else {
-                    result = a.threadId.has_value() < b.threadId.has_value();
-                }
-                break;
+        auto lessByField = [](const LogEntry& lhs, const LogEntry& rhs, filter::SortBy key) {
+            bool result = false;
+            switch (key) {
+                case filter::SortBy::TIMESTAMP:
+                    result = lhs.timestamp < rhs.timestamp;
+                    break;
+                case filter::SortBy::LEVEL:
+                    result = lhs.level < rhs.level;
+                    break;
+                case filter::SortBy::MESSAGE:
+                    result = lhs.message < rhs.message;
+                    break;
+                case filter::SortBy::SOURCE:
+                    result = lhs.sourceFile < rhs.sourceFile;
+                    break;
+                case filter::SortBy::THREAD_ID:
+                    if (lhs.threadId.has_value() && rhs.threadId.has_value()) {
+                        result = *lhs.threadId < *rhs.threadId;
+                    } else {
+                        result = lhs.threadId.has_value() < rhs.threadId.has_value();
+                    }
+                    break;
+            }
+            return result;
+        };
+
+        if (sortOrder == filter::SortOrder::ASCENDING) {
+            return lessByField(a, b, sortBy);
         }
-        return (sortOrder == filter::SortOrder::ASCENDING) ? result : !result;
+        return lessByField(b, a, sortBy);
     };
 
     std::sort(filtered.begin(), filtered.end(), sortLambda);
