@@ -10,8 +10,35 @@ endif()
 
 # Default test data directory if not explicitly set
 if(NOT DEFINED LOGANALYZER_TEST_DATA_DIR)
-    # Default to tests/data in the project's source tree.
-    set(LOGANALYZER_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/tests/data" CACHE PATH "Directory for shared test data")
+    set(_default_test_data_dir "${CMAKE_SOURCE_DIR}/tests/data")
+    set(_legacy_test_data_dir "${CMAKE_SOURCE_DIR}/test_data")
+
+    if(EXISTS "${_default_test_data_dir}")
+        set(LOGANALYZER_TEST_DATA_DIR "${_default_test_data_dir}" CACHE PATH "Directory for shared test data")
+    elseif(EXISTS "${_legacy_test_data_dir}")
+        # Keep compatibility with historical layout in case fixtures are moved.
+        set(LOGANALYZER_TEST_DATA_DIR "${_legacy_test_data_dir}" CACHE PATH "Directory for shared test data")
+        message(WARNING "Using legacy test data directory '${_legacy_test_data_dir}'. Prefer '${_default_test_data_dir}'.")
+    else()
+        message(FATAL_ERROR
+            "No test data directory found. Expected '${_default_test_data_dir}'"
+            " (or legacy '${_legacy_test_data_dir}')."
+            " Set LOGANALYZER_TEST_DATA_DIR explicitly.")
+    endif()
+endif()
+
+if(NOT EXISTS "${LOGANALYZER_TEST_DATA_DIR}")
+    set(_default_test_data_dir "${CMAKE_SOURCE_DIR}/tests/data")
+    if(EXISTS "${_default_test_data_dir}")
+        message(WARNING
+            "LOGANALYZER_TEST_DATA_DIR='${LOGANALYZER_TEST_DATA_DIR}' does not exist."
+            " Resetting to '${_default_test_data_dir}'.")
+        set(LOGANALYZER_TEST_DATA_DIR "${_default_test_data_dir}" CACHE PATH "Directory for shared test data" FORCE)
+    else()
+        message(FATAL_ERROR
+            "LOGANALYZER_TEST_DATA_DIR='${LOGANALYZER_TEST_DATA_DIR}' does not exist."
+            " Update LOGANALYZER_TEST_DATA_DIR or restore the test fixtures directory.")
+    endif()
 endif()
 
 # Find all test source files
