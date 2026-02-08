@@ -265,6 +265,11 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
             if(pos == std::string::npos) throw CLI::ValidationError("Invalid KEY=VALUE format for --map-level");
             std::string from = s.substr(0, pos);
             std::string to = s.substr(pos + 1);
+            trimInPlace(from);
+            trimInPlace(to);
+            if (from.empty() || to.empty()) {
+                throw CLI::ValidationError("Invalid KEY=VALUE format for --map-level");
+            }
             std::string toUpper = to;
             std::transform(toUpper.begin(), toUpper.end(), toUpper.begin(), [](unsigned char c) {
                 return static_cast<char>(std::toupper(c));

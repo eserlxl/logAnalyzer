@@ -151,3 +151,11 @@ TEST_F(CLIConfigTest, CustomLogLevelMapping) {
     ASSERT_EQ(settings.customLogLevelMappings.at("CRITICAL"), LogLevel::FATAL);
     ASSERT_EQ(settings.customLogLevelMappings.at("VERBOSE"), LogLevel::DEBUG);
 }
+
+TEST_F(CLIConfigTest, CustomLogLevelMappingTrimsWhitespace) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--map-level", "  CRITICAL  =  fatal  "});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.customLogLevelMappings.size(), 1);
+    ASSERT_EQ(settings.customLogLevelMappings.at("CRITICAL"), LogLevel::FATAL);
+}
