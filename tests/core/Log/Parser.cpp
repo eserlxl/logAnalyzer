@@ -100,6 +100,33 @@ TEST(LogParserTest, StructuredFieldQuotedValuesAndSpecialChars) {
     ASSERT_EQ(result2.value().customFields["topping"], "Chocolate Sauce");
 }
 
+TEST(LogParserTest, RejectsPartialNumericLineNumberField) {
+    std::string pattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): (.*) \[line=(\S+)\]$)";
+    std::vector<FieldMapping> mappings = {
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional(3), {}},
+        FieldMapping{LogEntryField::LINE_NUMBER, std::make_optional(4), {}}
+    };
+
+    auto parserResult = DefaultLogParser::create(
+        pattern, mappings, {}, std::nullopt, std::nullopt,
+        ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
+    ASSERT_TRUE(parserResult.has_value()) << parserResult.error().message;
+    std::unique_ptr<ILogParser> parser = std::move(parserResult.value());
+
+    auto result = parser->parseLine(
+        "2023-01-01 10:00:00 INFO: Sample payload [line=12abc]",
+        999,
+        "line_number_partial.log");
+    ASSERT_TRUE(result.has_value());
+    const auto& entry = result.value();
+    ASSERT_TRUE(entry.sourceLineNumber.has_value());
+    EXPECT_EQ(entry.sourceLineNumber.value(), 999u);
+    ASSERT_TRUE(entry.hasParsingErrors());
+    EXPECT_EQ(entry.parsingErrors.back().code, Code::ConversionError);
+}
+
 // Comprehensive Multi-line Log Entry Scenarios
 // Test 1: A log file with only a single log entry (no logEntryStartPattern encountered after the first line).
 TEST(LogParserTest, MultiLineSingleEntryFile) {

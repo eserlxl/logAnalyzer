@@ -7,6 +7,7 @@
 
 #include "utils/Time.h"
 #include "utils/String.h"
+#include <charconv>
 #include <iostream>
 #include <stdexcept>
 
@@ -248,10 +249,17 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view
                     break;
                 case LogEntryField::LINE_NUMBER: {
                     if (!extractedValue.empty()) {
-                        try {
-                            entry.sourceLineNumber = std::stoul(std::string(extractedValue));
-                        } catch (const std::exception& e) {
-                            entry.parsingErrors.emplace_back(ErrorCode::Error(Code::ConversionError, "Failed to convert line number to unsigned long: " + std::string(e.what()), std::to_string(lineNumber)));
+                        size_t parsedLineNumber = 0;
+                        const char* begin = extractedValue.data();
+                        const char* end = begin + extractedValue.size();
+                        auto [ptr, ec] = std::from_chars(begin, end, parsedLineNumber);
+                        if (ec == std::errc{} && ptr == end) {
+                            entry.sourceLineNumber = parsedLineNumber;
+                        } else {
+                            entry.parsingErrors.emplace_back(ErrorCode::Error(
+                                Code::ConversionError,
+                                "Failed to convert line number to unsigned integer: '" + std::string(extractedValue) + "'",
+                                std::to_string(lineNumber)));
                         }
                     }
                     break;
@@ -454,7 +462,6 @@ void DefaultLogParser::processStream(
         onEntry(result);
     }
 }
-
 
 
 
