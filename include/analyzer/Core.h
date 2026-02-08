@@ -106,7 +106,7 @@ public:
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
-    [[deprecated("Use loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction, std::optional<CancellationToken*>, std::optional<ProgressCallback>) instead.")]]
+    [[deprecated("Use loadAndReplace(const std::string& filePath, ParserErrorAction, std::optional<CancellationToken*>, std::optional<ProgressCallback>) instead.")]]
     ErrorCode::Result<AnalysisReport> loadAndReplace(const std::string& filePath, const std::string& pattern);
     
     ErrorCode::Result<AnalysisReport> load(
@@ -115,7 +115,7 @@ public:
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
-    [[deprecated("Use load(const std::string& filePath, CLIConfig::ParserErrorAction, std::optional<CancellationToken*>, std::optional<ProgressCallback>) instead.")]]
+    [[deprecated("Use load(const std::string& filePath, ParserErrorAction, std::optional<CancellationToken*>, std::optional<ProgressCallback>) instead.")]]
     std::expected<void, LogParseError> load(const std::string& filePath, const std::string& pattern);
     
     std::future<ErrorCode::Result<AnalysisReport>> loadAsync(
@@ -124,7 +124,7 @@ public:
         std::shared_ptr<CancellationToken> cancellationToken = nullptr, // shared_ptr for async ownership
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
-    [[deprecated("Use loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction, std::shared_ptr<CancellationToken>, std::optional<ProgressCallback>) instead.")]]
+    [[deprecated("Use loadAsync(const std::string& filePath, ParserErrorAction, std::shared_ptr<CancellationToken>, std::optional<ProgressCallback>) instead.")]]
     std::future<ErrorCode::Result<AnalysisReport>> loadAsync(const std::string& filePath, const std::string& pattern);
 
     ErrorCode::Result<AnalysisReport> append(
@@ -133,7 +133,7 @@ public:
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
-    [[deprecated("Use append(const std::string&, CLIConfig::ParserErrorAction, std::optional<CancellationToken*>, std::optional<ProgressCallback>) instead.")]]
+    [[deprecated("Use append(const std::string&, ParserErrorAction, std::optional<CancellationToken*>, std::optional<ProgressCallback>) instead.")]]
     std::expected<void, LogParseError> append(const std::string& filePath, const std::string& pattern);
     
     ErrorCode::Result<AnalysisReport> streamIn(
@@ -144,7 +144,7 @@ public:
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
     ErrorCode::Result<void> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction);
-    [[deprecated("Use analyzeStream(const std::vector<std::string>&, std::function<bool(const LogEntry&)>, CLIConfig::ParserAction) instead.")]]
+    [[deprecated("Use analyzeStream(const std::vector<std::string>&, std::function<bool(const LogEntry&)>, ParserErrorAction) instead.")]]
     std::expected<void, LogParseError> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern);
     
     // New: Stream filtered entries using std::generator
