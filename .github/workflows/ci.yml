@@ -95,11 +95,13 @@ jobs:
 
           int main() {
               LogAnalyzer analyzer;
-              (void)analyzer;
-              return 0;
+              return analyzer.getEntriesSnapshot().empty() ? 0 : 1;
           }
           EOF
-          cmake -S /tmp/loganalyzer-consumer -B /tmp/loganalyzer-consumer/build -DlogAnalyzer_DIR=/tmp/loganalyzer-install/lib/cmake/logAnalyzer
+          cmake -S /tmp/loganalyzer-consumer -B /tmp/loganalyzer-consumer/build -DCMAKE_PREFIX_PATH=/tmp/loganalyzer-install
 
       - name: Build Consumer
         run: cmake --build /tmp/loganalyzer-consumer/build --parallel
+
+      - name: Run Consumer
+        run: /tmp/loganalyzer-consumer/build/consumer
