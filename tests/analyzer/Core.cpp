@@ -29,6 +29,24 @@ TEST_F(LogAnalyzerTest, SetCustomLogLevelMapping) {
     SUCCEED();
 }
 
+TEST_F(LogAnalyzerTest, CustomLogLevelMappingIsAppliedDuringParsing) {
+    analyzer.setCustomLogLevelMapping("VERBOSE", LogLevel::DEBUG);
+
+    const std::string filePath = "test_custom_level_mapping.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "2023-01-01 10:00:00 VERBOSE: mapped message\n";
+    }
+
+    auto result = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+
+    auto entries = analyzer.getEntriesSnapshot();
+    ASSERT_EQ(entries.size(), 1);
+    EXPECT_EQ(entries[0].level, LogLevel::DEBUG);
+}
+
 TEST_F(LogAnalyzerTest, GetSettingsReflectsLatestSetSettingsValues) {
     LogAnalyzerSettings settings;
     settings.lineParsePattern = R"(^(\w+)\|(.*)$)";

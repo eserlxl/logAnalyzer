@@ -200,7 +200,7 @@ void LogAnalyzer::clear() {
 }
 
 void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel) {
-    std::unique_lock<std::shared_mutex> lock(customLogLevelMappingMutex_); // Use specific mutex for this map
+    std::unique_lock<std::shared_mutex> lock(stateMutex_);
     auto previousMapping = customLogLevelMapping_;
     customLogLevelMapping_[std::string(levelString)] = mappedLevel;
     // Recreate the parser with the updated customLogLevelMapping_
