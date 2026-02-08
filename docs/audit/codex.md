@@ -60,7 +60,7 @@
 - Mitigation progress: `setSettings()` is now transactional and `setCustomLogLevelMapping()` no longer throws on parser recreation failures, preserving prior valid state in commit `074892a`.
 - Mitigation progress: API-level error boundary policy is now documented in `docs/api-reference.md`, and regression tests assert non-throw behavior for invalid file inputs across `loadAndReplace`, `append`, and `analyzeStream` in commit `ff802a8`.
 - Resolution: Constructor fallback path no longer throws explicitly when parser initialization remains unavailable, keeping the object constructible and shifting failures to structured runtime `Result` errors (commit `a4d9101`).
-- Follow-up: Keep constructor/operational non-throw behavior covered by analyzer regression tests as parser creation logic evolves.
+- Follow-up: Completed in commit `7c1c04c`; analyzer regression coverage now explicitly includes throw-mode `append` and `analyzeStream` non-throw paths, and stream parsing/flush exceptions are translated into `Result` errors.
 
 5. **Thread-safety contract leak via returned references after lock release (Resolved)**  
 - Severity: Medium  
@@ -246,6 +246,10 @@ Configure/build:
 - Post-fix verification (parser/analyzer integration CI regression target): SUCCESS
   Commands:
   - ./build/tests/analyzer_Core --gtest_filter=LogAnalyzerTest.LoadAndReplaceSupportsMultilineEntries:LogAnalyzerTest.ConcurrentAnalyzeStreamUsesIndependentParserState --gtest_brief=1
+- Post-fix verification (throw-mode append/analyzeStream non-throw coverage): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
 
 Warnings:
 - warning count: 0
