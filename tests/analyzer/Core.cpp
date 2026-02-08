@@ -6,6 +6,7 @@
 #include "filter/Expression.h"
 #include "filter/Condition.h"
 #include "filter/Types.h"
+#include "stats/Core.h"
 #include <fstream>
 #include <filesystem>
 #include <algorithm>
@@ -157,6 +158,46 @@ TEST_F(LogAnalyzerTest, AppendCorrectness) {
     auto result1 = analyzer.append(filePath1, ParserErrorAction::Warn);
     ASSERT_TRUE(result1.has_value());
     std::remove(filePath1.c_str());
+}
+
+TEST_F(LogAnalyzerTest, AppendUpdatesStatisticsWhenAnalyzerStartsEmpty) {
+    analyzer.addStatisticCollector(std::make_shared<LogLevelCountCollector>());
+
+    const std::string filePath = "test_append_stats_empty.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "2023-01-01 10:00:00 INFO: Entry 1\n";
+        ofs << "2023-01-01 10:01:00 ERROR: Entry 2\n";
+    }
+
+    auto appendResult = analyzer.append(filePath, ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(appendResult.has_value()) << appendResult.error().toString();
+
+    const auto reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("log_level_count"));
+    const auto& report = reports.at("log_level_count");
+    ASSERT_EQ(report["total_entries"], 2);
+    ASSERT_EQ(report["counts"]["INFO"], 1);
+    ASSERT_EQ(report["counts"]["ERROR"], 1);
+}
+
+TEST_F(LogAnalyzerTest, StreamInUpdatesStatisticsWhenAnalyzerStartsEmpty) {
+    analyzer.addStatisticCollector(std::make_shared<LogLevelCountCollector>());
+
+    std::stringstream ss;
+    ss << "2023-01-01 10:00:00 INFO: Stream entry 1\n";
+    ss << "2023-01-01 10:01:00 WARNING: Stream entry 2\n";
+
+    auto streamResult = analyzer.streamIn(ss, "stats_stream", ParserErrorAction::Warn);
+    ASSERT_TRUE(streamResult.has_value()) << streamResult.error().toString();
+
+    const auto reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("log_level_count"));
+    const auto& report = reports.at("log_level_count");
+    ASSERT_EQ(report["total_entries"], 2);
+    ASSERT_EQ(report["counts"]["INFO"], 1);
+    ASSERT_EQ(report["counts"]["WARNING"], 1);
 }
 
 TEST_F(LogAnalyzerTest, ConcurrentAppendAndFilterIsStable) {

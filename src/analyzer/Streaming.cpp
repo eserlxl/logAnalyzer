@@ -45,6 +45,11 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
 
     { // Scope for unique_lock to modify entries_ and process stats atomically
         std::unique_lock<std::shared_mutex> uniqueLock(stateMutex_);
+        // Collect stats before ownership moves from newEntries.
+        for (const auto& entry : newEntries) {
+            processEntryForStatistics(entry);
+        }
+
         if (entries_.empty()) {
             entries_ = std::move(newEntries);
         } else if (entries_.back().timestamp <= newEntries.front().timestamp) {
@@ -72,12 +77,6 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
                            return a.timestamp < b.timestamp;
                        });
             entries_.swap(mergedEntries);
-        }
-
-        // Process statistics for the newly added entries. This modifies statistics_,
-        // so it must be within the unique lock scope.
-        for (const auto& entry : newEntries) {
-            processEntryForStatistics(entry);
         }
     } // unique_lock is released here
 
