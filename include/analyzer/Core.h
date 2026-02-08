@@ -9,7 +9,6 @@
 #include "filter/Legacy.h"
 #include "filter/Types.h"
 #include "core/Error.h"
-#include "config/CLI.h"
 #include "core/CiLess.h"
 #include "core/Log/IParserFactory.h"
 #include <nlohmann/json_fwd.hpp>
@@ -100,7 +99,7 @@ public:
 
     ErrorCode::Result<AnalysisReport> loadAndReplace(
         const std::string& filePath, 
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
@@ -109,7 +108,7 @@ public:
     
     ErrorCode::Result<AnalysisReport> load(
         const std::string& filePath, 
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
@@ -118,7 +117,7 @@ public:
     
     std::future<ErrorCode::Result<AnalysisReport>> loadAsync(
         const std::string& filePath, 
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         std::shared_ptr<CancellationToken> cancellationToken = nullptr, // shared_ptr for async ownership
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
@@ -127,7 +126,7 @@ public:
 
     ErrorCode::Result<AnalysisReport> append(
         const std::string& filePath, 
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
@@ -137,11 +136,11 @@ public:
     ErrorCode::Result<AnalysisReport> streamIn(
         std::istream& is, 
         const std::string& sourceIdentifier, 
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
-    ErrorCode::Result<void> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<void> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction);
     [[deprecated("Use analyzeStream(const std::vector<std::string>&, std::function<bool(const LogEntry&)>, CLIConfig::ParserAction) instead.")]]
     std::expected<void, LogParseError> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern);
     
@@ -159,7 +158,7 @@ public:
     std::generator<const LogEntry&> streamAnalyze(
         std::istream& is, 
         std::string_view sourceIdentifier,
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         std::optional<filter::FilterExpression> filter = std::nullopt,
         std::optional<std::function<LogEntry(LogEntry)>> transform = std::nullopt,
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
@@ -235,7 +234,7 @@ public:
     std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(
         std::istream& is, 
         const std::string& sourceIdentifier, 
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
