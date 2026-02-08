@@ -6,7 +6,6 @@
 
 #include "core/Log/Types.h"
 #include "filter/Expression.h"
-#include "filter/Legacy.h"
 #include "filter/Types.h"
 #include "core/Error.h"
 #include "core/CiLess.h"
@@ -36,6 +35,10 @@ class LogWriter;
 class ILogParser;
 class IStatisticCollector;
 struct StatisticConfig;
+
+namespace filter {
+struct FilterCriteria;
+}
 
 #include "config/Core.h"
 
