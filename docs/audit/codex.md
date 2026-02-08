@@ -98,7 +98,7 @@
 - Likelihood: Medium  
 - Where: `CMakeLists.txt`, `cmake/logAnalyzerConfig.cmake.in`  
 - Resolution: Fixed in commit `43ebdec`; install now exports `logAnalyzerTargets`, installs `logAnalyzerConfig.cmake` + version file, and supports `find_package(logAnalyzer CONFIG REQUIRED)` for installed consumers.
-- Follow-up: Keep a small external-consumer configure/build check in CI to guard install-package regressions.
+- Follow-up: Completed in commit `b73916e`; CI package-consumer validation now uses `CMAKE_PREFIX_PATH` package discovery and executes the built consumer binary.
 
 9. **Stats config parsing throws from JSON helpers (Resolved)**  
 - Severity: Medium  
@@ -150,8 +150,9 @@ Configure/build:
 - Post-fix verification (installed package export/consumer): SUCCESS
   Commands:
   - cmake --install build --prefix /tmp/loganalyzer-install-test
-  - cmake -S /tmp/loganalyzer-consumer -B /tmp/loganalyzer-consumer/build -DlogAnalyzer_DIR=/tmp/loganalyzer-install-test/lib/cmake/logAnalyzer
+  - cmake -S /tmp/loganalyzer-consumer -B /tmp/loganalyzer-consumer/build -DCMAKE_PREFIX_PATH=/tmp/loganalyzer-install-test
   - cmake --build /tmp/loganalyzer-consumer/build --parallel
+  - /tmp/loganalyzer-consumer/build/consumer
 - Post-fix verification (concurrent append/filter/export test coverage): SUCCESS
   Commands:
   - cmake --build build --parallel
