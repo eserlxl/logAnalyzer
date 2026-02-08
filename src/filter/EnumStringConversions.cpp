@@ -100,6 +100,7 @@ std::optional<FilterLogicalOperator> fromStringToFilterLogicalOperator(const std
 // FilterValueType conversions
 std::string toString(FilterValueType type) {
     switch (type) {
+        case FilterValueType::UNKNOWN: return "UNKNOWN";
         case FilterValueType::AUTO: return "AUTO";
         case FilterValueType::STRING: return "STRING";
         case FilterValueType::INT: return "INT";
@@ -118,6 +119,7 @@ std::string toString(FilterValueType type) {
 
 std::optional<FilterValueType> fromStringToFilterValueType(const std::string& typeStr) {
     std::string upperTypeStr = toUpper(typeStr);
+    if (upperTypeStr == "UNKNOWN" || upperTypeStr == "UNKNOWN_VALUE_TYPE") return FilterValueType::UNKNOWN;
     if (upperTypeStr == "AUTO") return FilterValueType::AUTO;
     if (upperTypeStr == "STRING") return FilterValueType::STRING;
     if (upperTypeStr == "INT") return FilterValueType::INT;

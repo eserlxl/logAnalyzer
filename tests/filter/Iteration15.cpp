@@ -198,3 +198,9 @@ TEST_F(FilterIteration15Test, FilterOperatorToStringCoversAllIteration15Operator
     EXPECT_EQ(toString(FilterOperator::IN), "IN");
     EXPECT_EQ(toString(FilterOperator::NOT_IN), "NOT_IN");
 }
+
+TEST_F(FilterIteration15Test, FilterValueTypeUnknownRoundTripAliases) {
+    EXPECT_EQ(toString(FilterValueType::UNKNOWN), "UNKNOWN");
+    EXPECT_EQ(fromStringToFilterValueType("UNKNOWN"), FilterValueType::UNKNOWN);
+    EXPECT_EQ(fromStringToFilterValueType("UNKNOWN_VALUE_TYPE"), FilterValueType::UNKNOWN);
+}
