@@ -19,7 +19,7 @@ namespace Utils {
 // static std::mutex localtimeMutex; // Cannot be in header if static. Will make it extern if needed.
 
 // Helper to validate if a date is valid (not normalized by mktime)
-bool isTmValid(const std::tm& tm_orig, const std::tm& tm_new);
+bool isTmValid(const std::tm& tm_orig, std::tm& tm_new);
 
 // Portable timegm implementation
 time_t portable_timegm(struct tm *tm);

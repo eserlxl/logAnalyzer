@@ -191,6 +191,33 @@ TEST(UtilsTime, ParseISO8601) {
     EXPECT_FALSE(parseISO8601("2023-10-27T10:30:00+XX:00").has_value()); // Invalid offset hours
 }
 
+TEST(UtilsTime, ParseIso8601LegacyApiMatchesExpected) {
+    std::tm tm_utc = {};
+    tm_utc.tm_year = 2023 - 1900;
+    tm_utc.tm_mon = 10 - 1;
+    tm_utc.tm_mday = 27;
+    tm_utc.tm_hour = 10;
+    tm_utc.tm_min = 30;
+    tm_utc.tm_sec = 0;
+    auto expected_tp_utc = std::chrono::system_clock::from_time_t(timegm(&tm_utc));
+
+    EXPECT_EQ(Utils::parse_iso8601("2023-10-27T10:30:00Z"), expected_tp_utc);
+    EXPECT_THROW(Utils::parse_iso8601("2023-10-27 10:30:00"), std::runtime_error);
+}
+
+TEST(UtilsTime, ParseTimeSupportsUnixTimestampAndTrimmedInput) {
+    auto expected = std::chrono::system_clock::from_time_t(static_cast<time_t>(1700000000));
+    auto parsedUnix = Utils::parseTime("1700000000");
+    ASSERT_TRUE(parsedUnix.has_value());
+    EXPECT_EQ(parsedUnix.value(), expected);
+
+    auto parsedTrimmed = Utils::parseTime("  1700000000  ");
+    ASSERT_TRUE(parsedTrimmed.has_value());
+    EXPECT_EQ(parsedTrimmed.value(), expected);
+
+    EXPECT_FALSE(Utils::parseTime("1700000000xyz").has_value());
+}
+
 TEST(UtilsTime, ParseDayRange) {
     using namespace Utils;
 

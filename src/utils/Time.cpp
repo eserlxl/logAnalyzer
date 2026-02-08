@@ -9,10 +9,44 @@
 #include <mutex>
 #include <iostream>
 #include <limits>
+#include <charconv>
 
 namespace Utils {
 
 static std::mutex localtimeMutex;
+
+namespace {
+std::string trimCopy(std::string s) {
+    const auto first = s.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) {
+        return {};
+    }
+    const auto last = s.find_last_not_of(" \t\r\n");
+    return s.substr(first, last - first + 1);
+}
+
+std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseUnixTimestampStrict(std::string_view input) {
+    if (input.empty()) {
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Empty Unix timestamp."));
+    }
+
+    long long seconds = 0;
+    const auto [ptr, ec] = std::from_chars(input.data(), input.data() + input.size(), seconds);
+    if (ec != std::errc{} || ptr != input.data() + input.size()) {
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid Unix timestamp: " + std::string(input)));
+    }
+
+    const auto minSecs = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::time_point::min().time_since_epoch()).count();
+    const auto maxSecs = std::chrono::duration_cast<std::chrono::seconds>(
+        std::chrono::system_clock::time_point::max().time_since_epoch()).count();
+    if (seconds < minSecs || seconds > maxSecs) {
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unix timestamp out of range: " + std::string(input)));
+    }
+
+    return std::chrono::system_clock::time_point(std::chrono::seconds(seconds));
+}
+} // namespace
 
 bool isTmValid(const std::tm& tm_orig, std::tm& tm_new) {
     // Before comparing, adjust tm_new's daylight saving flag to match the original.
@@ -215,6 +249,14 @@ std::string format_iso8601(const std::chrono::system_clock::time_point& tp) {
     return format_utc(tp, "%Y-%m-%dT%H:%M:%SZ");
 }
 
+std::chrono::system_clock::time_point parse_iso8601(const std::string& time_str) {
+    auto parsed = parseISO8601(time_str);
+    if (!parsed) {
+        throw std::runtime_error(parsed.error().message);
+    }
+    return *parsed;
+}
+
 // Placeholder implementations for missing functions to allow linking
 std::string formatTimestamp(std::chrono::system_clock::time_point tp, std::string_view format) {
     std::time_t t = std::chrono::system_clock::to_time_t(tp);
@@ -242,10 +284,11 @@ std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const s
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid duration format: " + durationStr));
     }
 
-    long long value;
-    try {
-        value = std::stoll(matches[1].str());
-    } catch (const std::exception&) {
+    long long value = 0;
+    const auto& numberStr = matches[1].str();
+    const auto [ptr, ec] =
+        std::from_chars(numberStr.data(), numberStr.data() + numberStr.size(), value);
+    if (ec != std::errc{} || ptr != numberStr.data() + numberStr.size()) {
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Duration value out of range: " + durationStr));
     }
 
@@ -396,8 +439,16 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8
             return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert base time to time_t for offset calculation: " + datetime_part));
         }
         
-        int offset_hours = std::stoi(timezone_part.substr(1, 2));
-        int offset_minutes = std::stoi(timezone_part.substr(4, 2));
+        int offset_hours = 0;
+        int offset_minutes = 0;
+        const auto hoursStart = timezone_part.data() + 1;
+        const auto minsStart = timezone_part.data() + 4;
+        const auto [hptr, hec] = std::from_chars(hoursStart, hoursStart + 2, offset_hours);
+        const auto [mptr, mec] = std::from_chars(minsStart, minsStart + 2, offset_minutes);
+        if (hec != std::errc{} || hptr != hoursStart + 2 ||
+            mec != std::errc{} || mptr != minsStart + 2) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid offset value: " + timeStr));
+        }
         if (offset_hours >= 24) {
             return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid offset hours: " + timeStr));
         }
@@ -415,19 +466,30 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseTime(const std::string& timeStr) {
+    const std::string trimmed = trimCopy(timeStr);
+    if (trimmed.empty()) {
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Empty time value."));
+    }
+
+    // Support Unix timestamp input in seconds.
+    auto unixTs = parseUnixTimestampStrict(trimmed);
+    if (unixTs) {
+        return *unixTs;
+    }
+
     // Try ISO 8601
-    auto res_iso = parseISO8601(timeStr);
+    auto res_iso = parseISO8601(trimmed);
     if (res_iso) return res_iso;
 
     // Try Absolute Time
-    auto res_abs = parseAbsoluteTime(timeStr);
+    auto res_abs = parseAbsoluteTime(trimmed);
     if (res_abs) return res_abs;
 
     // Try Relative Time
-    auto res_rel = parseRelativeTime(timeStr);
+    auto res_rel = parseRelativeTime(trimmed);
     if (res_rel) return res_rel;
 
-    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unsupported time format: " + timeStr));
+    return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unsupported time format: " + trimmed));
 }
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error>
@@ -471,10 +533,10 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> validateT
 
 std::expected<std::pair<std::chrono::system_clock::time_point, std::chrono::system_clock::time_point>, ErrorCode::Error>
 parseDayRange(const std::string& dateString) {
-    std::tm tm = {};
     const std::vector<std::string> formats = {"%Y-%m-%d", "%Y/%m/%d", "%m-%d-%Y", "%m/%d/%Y"};
 
     for (const auto& format : formats) {
+        std::tm tm = {};
         std::stringstream ss(dateString);
         ss >> std::get_time(&tm, format.c_str());
         if (!ss.fail() && ss.eof()) {
