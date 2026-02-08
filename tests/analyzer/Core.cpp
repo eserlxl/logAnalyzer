@@ -110,6 +110,29 @@ TEST_F(LogAnalyzerTest, Concurrency_Placeholder) {
     SUCCEED();
 }
 
+TEST_F(LogAnalyzerTest, InvalidStatisticConfigDoesNotThrowOnSetSettings) {
+    LogAnalyzerSettings settings;
+    settings.statisticConfigs = {
+        {StatisticType::FIELD_VALUE_COUNT, {}}
+    };
+
+    EXPECT_NO_THROW({
+        auto result = analyzer.setSettings(settings);
+        EXPECT_TRUE(result.has_value()) << result.error().toString();
+    });
+}
+
+TEST(LogAnalyzerCtorTest, InvalidStatisticConfigDoesNotThrowInConstructor) {
+    LogAnalyzerSettings settings;
+    settings.statisticConfigs = {
+        {StatisticType::TOP_N_FIELD_VALUES, {{"top_n", "5"}}}
+    };
+
+    EXPECT_NO_THROW({
+        LogAnalyzer localAnalyzer(settings);
+    });
+}
+
 TEST_F(LogAnalyzerTest, SortedFilteredEntriesDescendingUsesStrictComparator) {
     const std::string filePath = "test_desc_sort.log";
     std::ofstream ofs(filePath);

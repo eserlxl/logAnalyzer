@@ -69,10 +69,12 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             }
 
             if (targetField.empty()) {
-                throw std::runtime_error("FieldValueCountCollector requires 'target_field' parameter.");
+                std::cerr << "Warning: FieldValueCountCollector requires 'target_field' parameter. Collector disabled." << '\n';
+                return nullptr;
             }
             if (targetField == "customFields" && customFieldKey.empty()) {
-                throw std::runtime_error("FieldValueCountCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
+                std::cerr << "Warning: FieldValueCountCollector with target_field 'customFields' requires 'custom_field_key' parameter. Collector disabled." << '\n';
+                return nullptr;
             }
             return std::make_shared<FieldValueCountCollector>(targetField, customFieldKey);
         }
@@ -88,10 +90,12 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             }
 
             if (targetField.empty()) {
-                throw std::runtime_error("TopNFieldValuesCollector requires 'target_field' parameter.");
+                std::cerr << "Warning: TopNFieldValuesCollector requires 'target_field' parameter. Collector disabled." << '\n';
+                return nullptr;
             }
             if (targetField == "customFields" && customFieldKey.empty()) {
-                throw std::runtime_error("TopNFieldValuesCollector with target_field 'customFields' requires 'custom_field_key' parameter.");
+                std::cerr << "Warning: TopNFieldValuesCollector with target_field 'customFields' requires 'custom_field_key' parameter. Collector disabled." << '\n';
+                return nullptr;
             }
             return std::make_shared<TopNFieldValuesCollector>(topN, targetField, customFieldKey);
         }
