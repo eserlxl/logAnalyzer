@@ -330,6 +330,10 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbso
     if (ss.fail()) {
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid absolute time format: " + timeStr));
     }
+    ss >> std::ws;
+    if (!ss.eof()) {
+        return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid absolute time format: " + timeStr));
+    }
     
     std::tm tm_orig = tm;
     std::time_t time;

@@ -113,6 +113,7 @@ TEST(UtilsTime, ParseAbsoluteTime) {
     EXPECT_FALSE(parseAbsoluteTime("27-10-2023 10:30:00").has_value());
     EXPECT_FALSE(parseAbsoluteTime("2023/10/27 10:30:00").has_value());
     EXPECT_FALSE(parseAbsoluteTime("2023-10-27T10:30:00").has_value()); // ISO format, should be handled by parseISO8601
+    EXPECT_FALSE(parseAbsoluteTime("2023-10-27 10:30:00 trailing").has_value()); // Trailing input should be rejected
 
     // Test invalid date (e.g., Feb 30)
     EXPECT_FALSE(parseAbsoluteTime("2023-02-30 10:00:00").has_value());
