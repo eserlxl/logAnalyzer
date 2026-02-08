@@ -38,6 +38,28 @@ jobs:
       - name: Concurrency Stress (analyzer_Core shuffle x50)
         run: ./build/tests/analyzer_Core --gtest_repeat=50 --gtest_shuffle --gtest_brief=1
 
+  tsan-analyzer-core:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure (TSAN)
+        run: >
+          cmake -S . -B build-tsan
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_CXX_COMPILER=clang++
+          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer"
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread"
+          -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=thread"
+
+      - name: Build (TSAN)
+        run: cmake --build build-tsan --parallel --target analyzer_Core
+
+      - name: Test (TSAN analyzer_Core)
+        run: TSAN_OPTIONS=halt_on_error=1 ./build-tsan/tests/analyzer_Core --gtest_brief=1
+
   package-consumer:
     runs-on: ubuntu-latest
     steps:

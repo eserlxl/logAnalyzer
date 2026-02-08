@@ -8,9 +8,6 @@
 #include <regex>
 #include <mutex>
 #include <iostream>
-#include <stdlib.h> // for setenv, getenv, unsetenv
-#include <string.h> // for strdup, free
-#include <errno.h>  // for errno
 
 namespace Utils {
 
@@ -32,34 +29,11 @@ bool isTmValid(const std::tm& tm_orig, std::tm& tm_new) {
 
 // Portable timegm implementation
 time_t portable_timegm(struct tm *tm) {
-    // Save original TZ
-    char* original_tz = getenv("TZ");
-    char* original_tz_copy = nullptr;
-    if (original_tz) {
-        original_tz_copy = strdup(original_tz);
-        if (!original_tz_copy) {
-            // Handle memory allocation failure
-            return -1; 
-        }
-    }
-
-    // Set TZ to UTC
-    setenv("TZ", "UTC", 1);
-    tzset();
-
-    // Call mktime
-    time_t ret = mktime(tm);
-
-    // Restore original TZ
-    if (original_tz_copy) {
-        setenv("TZ", original_tz_copy, 1);
-        free(original_tz_copy);
-    } else {
-        unsetenv("TZ");
-    }
-    tzset();
-
-    return ret;
+#if defined(_WIN32)
+    return _mkgmtime(tm);
+#else
+    return timegm(tm);
+#endif
 }
 
 // Implementation for Iteration 5 Feature Design
@@ -333,7 +307,11 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseAbso
     }
     
     std::tm tm_orig = tm;
-    std::time_t time = std::mktime(&tm);
+    std::time_t time;
+    {
+        std::lock_guard<std::mutex> lock(localtimeMutex);
+        time = std::mktime(&tm);
+    }
     if (time == -1 || !isTmValid(tm_orig, tm)) {
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert to time_t or invalid date: " + timeStr));
     }
@@ -364,7 +342,11 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8
     }
 
     if (timezone_part.empty()) { // Local time
-        std::time_t time = std::mktime(&tm);
+        std::time_t time;
+        {
+            std::lock_guard<std::mutex> lock(localtimeMutex);
+            time = std::mktime(&tm);
+        }
         if (time == -1) {
             return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Failed to convert local time to time_t: " + datetime_part));
         }
@@ -430,7 +412,11 @@ parseTimeWithFormats(const std::string& timeStr, const std::vector<std::string>&
             ss >> std::ws;
             if (ss.eof()) {
                 std::tm tm_orig = tm;
-                std::time_t t = std::mktime(&tm);
+                std::time_t t;
+                {
+                    std::lock_guard<std::mutex> lock(localtimeMutex);
+                    t = std::mktime(&tm);
+                }
                 
                 // Use the updated isTmValid function
                 if (t != (time_t)-1 && isTmValid(tm_orig, tm)) {
@@ -459,7 +445,11 @@ parseDayRange(const std::string& dateString) {
             tm.tm_min = 0;
             tm.tm_sec = 0;
             
-            std::time_t start_time = std::mktime(&tm);
+            std::time_t start_time;
+            {
+                std::lock_guard<std::mutex> lock(localtimeMutex);
+                start_time = std::mktime(&tm);
+            }
             if (start_time != -1) {
                 auto start_tp = std::chrono::system_clock::from_time_t(start_time);
                 // Fix: Ensure the end time covers the entire day by setting it to the start of the next day.
