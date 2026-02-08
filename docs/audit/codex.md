@@ -152,7 +152,7 @@ Tests:
 ## Reality check vs README
 
 **Claims not clearly supported by code/tests**
-- README prerequisite says CMake `4.2.3+`, but project minimum is `3.14` (`README.md:47`, `CMakeLists.txt:4`).
+- CMake prerequisite/version mismatch has been resolved in commit `0309f10` (README now matches `cmake_minimum_required` and executable output path).
 - “C++ API” is claimed, but install currently exports binaries/libs only, not headers/package config (`README.md:36`, `CMakeLists.txt:111`).
 
 **Features present but under-documented in README**
