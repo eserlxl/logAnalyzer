@@ -153,7 +153,7 @@ Tests:
 
 **Claims not clearly supported by code/tests**
 - CMake prerequisite/version mismatch has been resolved in commit `0309f10` (README now matches `cmake_minimum_required` and executable output path).
-- “C++ API” is claimed, but install currently exports binaries/libs only, not headers/package config (`README.md:36`, `CMakeLists.txt:111`).
+- C++ API install hygiene is partially improved in commit `982a724` (public headers now installed); packaged CMake target export/config is still pending.
 
 **Features present but under-documented in README**
 - Parser error action control and multiline parser knobs (`--on-parse-error`, `--multiline-start-pattern`, `--max-multiline-buffer`, `--field-map`) are present in CLI implementation (`src/config/CLI.cpp`), but not prominent in top-level README quick-start section.
