@@ -163,7 +163,7 @@ Tests:
 - C++ API install hygiene is partially improved in commit `982a724` (public headers now installed); packaged CMake target export/config is still pending.
 
 **Features present but under-documented in README**
-- Parser error action control and multiline parser knobs (`--on-parse-error`, `--multiline-start-pattern`, `--max-multiline-buffer`, `--field-map`) are present in CLI implementation (`src/config/CLI.cpp`), but not prominent in top-level README quick-start section.
+- Advanced parser and expression options are now surfaced in README (commit `47e4cbc`), including `--expression`, `--multiline-start-pattern`, `--max-multiline-buffer`, and `--on-parse-error`.
 - JSON-based filter expression serialization/deserialization is well-covered in tests (`tests/filter/CoreJson/*`) but not clearly surfaced in README feature summary.
 
 ## Appendix: key file paths reviewed
