@@ -6,10 +6,14 @@
 
 #include "config/Core.h"
 #include "core/Log/Types.h"
+#include <expected>
+#include <functional>
 #include <future>
+#include <iosfwd>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
-#include <memory> // Required for std::unique_ptr in ScopedLogSettings
 
 class LogAnalyzer;
 class ILogParser; // Forward declare ILogParser
