@@ -9,13 +9,8 @@
 #include "core/Error.h"
 #include "config/CLI.h"
 #include "stats/Core.h"
-#include "analyzer/Log/Reader.h"
-#include "analyzer/Log/Writer.h"
-#include "analyzer/Types.h" // Added for FormattingOptions
-#include "core/Log/IParserFactory.h" // New: For parser factory interface
-#include "core/Log/RegexParserFactory.h" // New: For regex parser factory
-#include "core/Log/JsonParserFactory.h" // New: For JSON parser factory
-#include "utils/Time.h" // For Utils::generateLogEntryId
+#include "core/CiLess.h"
+#include "core/Log/IParserFactory.h"
 
 #include <atomic>
 #include <future>
@@ -32,15 +27,13 @@
 #include <expected>
 #include <span>
 #include <iosfwd>
-#include <ranges> // C++20 for ranges
-#include <fstream>
 
 
 // Forward declarations
 class LogReader;
 class LogWriter;
+class ILogParser;
 
-#include "core/Log/Parser.h"
 #include "config/Core.h"
 
 // New: Define a CancellationToken structure
