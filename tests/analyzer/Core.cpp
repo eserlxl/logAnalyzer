@@ -29,6 +29,21 @@ TEST_F(LogAnalyzerTest, SetCustomLogLevelMapping) {
     SUCCEED();
 }
 
+TEST_F(LogAnalyzerTest, GetSettingsReflectsLatestSetSettingsValues) {
+    LogAnalyzerSettings settings;
+    settings.lineParsePattern = R"(^(\w+)\|(.*)$)";
+    settings.fieldMappings.clear();
+    settings.fieldMappings.emplace_back(LogEntryField::LEVEL, std::make_optional<size_t>(1));
+    settings.fieldMappings.emplace_back(LogEntryField::MESSAGE, std::make_optional<size_t>(2));
+
+    auto setResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(setResult.has_value()) << setResult.error().toString();
+
+    const auto& snapshot = analyzer.getSettings();
+    EXPECT_EQ(snapshot.lineParsePattern, settings.lineParsePattern);
+    ASSERT_EQ(snapshot.fieldMappings.size(), settings.fieldMappings.size());
+}
+
 TEST_F(LogAnalyzerTest, SetCustomLogLevelMappingDoesNotThrowAfterRejectedSettings) {
     LogAnalyzerSettings invalidSettings;
     invalidSettings.lineParsePattern = "[";

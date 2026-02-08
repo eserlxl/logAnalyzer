@@ -185,7 +185,10 @@ ErrorCode::Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& sett
 }
 
 const LogAnalyzerSettings& LogAnalyzer::getSettings() const {
-    return currentSettings_;
+    static thread_local LogAnalyzerSettings snapshot;
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    snapshot = currentSettings_;
+    return snapshot;
 }
 
 void LogAnalyzer::clear() {
