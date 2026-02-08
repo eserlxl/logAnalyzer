@@ -234,3 +234,18 @@ TEST(UtilsTime, FormatTimestamp) {
         EXPECT_EQ(results[i], expected_format);
     }
 }
+
+TEST(UtilsTime, ParseUtcStrictDateValidation) {
+    auto valid_tp = Utils::parse_utc("2023-10-27 10:30:00 UTC");
+    std::tm tm_utc = {};
+    tm_utc.tm_year = 2023 - 1900;
+    tm_utc.tm_mon = 10 - 1;
+    tm_utc.tm_mday = 27;
+    tm_utc.tm_hour = 10;
+    tm_utc.tm_min = 30;
+    tm_utc.tm_sec = 0;
+    auto expected_tp = std::chrono::system_clock::from_time_t(timegm(&tm_utc));
+    EXPECT_EQ(valid_tp, expected_tp);
+
+    EXPECT_THROW(Utils::parse_utc("2023-02-30 10:30:00 UTC"), std::runtime_error);
+}

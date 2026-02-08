@@ -58,17 +58,19 @@ std::string format_utc(const std::chrono::system_clock::time_point& tp, const st
 std::chrono::system_clock::time_point parse_utc(const std::string& time_str, const std::string& format_str) {
     std::tm tm_utc = {};
     std::stringstream ss(time_str);
+    std::tm tm_orig = {};
 
     std::lock_guard<std::mutex> lock(localtimeMutex);
 
     ss >> std::get_time(&tm_utc, format_str.c_str());
+    tm_orig = tm_utc;
 
     if (ss.fail()) {
         throw std::runtime_error("Failed to parse UTC time string: " + time_str + " with format: " + format_str);
     }
 
     time_t time = portable_timegm(&tm_utc);
-    if (time == (time_t)-1) {
+    if (time == (time_t)-1 || !isTmValid(tm_orig, tm_utc)) {
          throw std::runtime_error("Failed to convert parsed tm to time_t for UTC string: " + time_str);
     }
 
