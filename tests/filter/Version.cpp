@@ -98,3 +98,45 @@ TEST_F(FilterTestFixture, EvaluateVersionInvalidInput) {
     expr = FilterExpression::create(cond);
     EXPECT_FALSE(expr.evaluate(entry2).has_value());
 }
+
+TEST_F(FilterTestFixture, EvaluateVersionRejectsInvalidSemverForms) {
+    auto checkInvalid = [&](const std::string& rawVersion) {
+        LogEntry entry = createLogEntry(LogLevel::INFO, "Version test", "ver.log", {{"version_field", rawVersion}});
+        FilterCondition cond = createCondition(
+            LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.0.0",
+            FilterValueType::VERSION, true, "version_field");
+        FilterExpression expr = FilterExpression::create(cond);
+        EXPECT_FALSE(expr.evaluate(entry).has_value()) << rawVersion;
+    };
+
+    checkInvalid("01.2.3");          // Leading zero in major
+    checkInvalid("1.02.3");          // Leading zero in minor
+    checkInvalid("1.2.03");          // Leading zero in patch
+    checkInvalid("1.2.3-alpha..1");  // Empty prerelease identifier
+    checkInvalid("1.2.3-alpha.");    // Trailing prerelease separator
+    checkInvalid("1.2.3+build..7");  // Empty build identifier
+    checkInvalid("1.2.3+build.");    // Trailing build separator
+    checkInvalid("1.2.3-ä");         // Non-ASCII identifier char
+}
+
+TEST_F(FilterTestFixture, EvaluateVersionComparesLargeNumericPrereleaseIdentifiersSafely) {
+    // SemVer numeric prerelease identifiers compare numerically even when they exceed
+    // native integer widths.
+    auto huge = createLogEntry(
+        LogLevel::INFO, "Version huge", "ver.log",
+        {{"app_version", "1.0.0-18446744073709551616"}});
+
+    auto tiny = createLogEntry(
+        LogLevel::INFO, "Version tiny", "ver.log",
+        {{"app_version", "1.0.0-2"}});
+
+    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.0.0-2",
+                           FilterValueType::VERSION, true, "app_version")
+                    .evaluate(huge)
+                    .value_or(false));
+
+    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "1.0.0-18446744073709551616",
+                           FilterValueType::VERSION, true, "app_version")
+                    .evaluate(tiny)
+                    .value_or(false));
+}

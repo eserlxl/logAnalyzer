@@ -5,6 +5,7 @@
 #include "utils/String.h" // For Utils::split
 #include <regex>
 #include <charconv> // For std::from_chars in C++17
+#include <cctype>
 
 namespace Utils {
 
@@ -32,15 +33,21 @@ static int comparePrerelease(const std::string& pr1, const std::string& pr2) {
 
     for (size_t i = 0; i < std::min(split1.size(), split2.size()); ++i) {
         // Numeric identifiers have lower precedence than non-numeric
-        bool isNum1 = std::all_of(split1[i].begin(), split1[i].end(), ::isdigit);
-        bool isNum2 = std::all_of(split2[i].begin(), split2[i].end(), ::isdigit);
+        bool isNum1 = std::all_of(split1[i].begin(), split1[i].end(), [](unsigned char c) {
+            return std::isdigit(c) != 0;
+        });
+        bool isNum2 = std::all_of(split2[i].begin(), split2[i].end(), [](unsigned char c) {
+            return std::isdigit(c) != 0;
+        });
 
         if (isNum1 && isNum2) {
-            unsigned int num1 = 0, num2 = 0;
-            std::from_chars(split1[i].data(), split1[i].data() + split1[i].size(), num1);
-            std::from_chars(split2[i].data(), split2[i].data() + split2[i].size(), num2);
-            if (num1 < num2) return -1;
-            if (num1 > num2) return 1;
+            // SemVer numeric identifiers compare numerically. Compare by length first
+            // to avoid integer overflow for very large identifiers.
+            if (split1[i].size() < split2[i].size()) return -1;
+            if (split1[i].size() > split2[i].size()) return 1;
+            int cmp = split1[i].compare(split2[i]);
+            if (cmp < 0) return -1;
+            if (cmp > 0) return 1;
         } else if (isNum1) { // num1 is numeric, num2 is not (numeric is lower)
             return -1;
         } else if (isNum2) { // num2 is numeric, num1 is not (numeric is lower)
@@ -116,13 +123,13 @@ std::string SemanticVersion::toString() const {
 }
 
 std::optional<SemanticVersion> parseSemanticVersion(const std::string& versionStr) {
-    // SemVer regex: ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
-    // Simplified for common cases. This regex ensures:
-    // - Major, minor, patch are non-negative integers. Leading zeros are only allowed for '0'.
-    // - Prerelease: alpha-numeric, can be dot-separated. Numeric parts of prerelease can have leading zeros.
-    // - Build: alpha-numeric, can be dot-separated.
+    // Strict SemVer 2.0.0 regex:
+    // - Major/minor/patch: no leading zeros unless the number is exactly zero.
+    // - Prerelease identifiers: dot-separated, non-empty, [0-9A-Za-z-], numeric identifiers
+    //   cannot include leading zeros unless equal to "0".
+    // - Build identifiers: dot-separated, non-empty, [0-9A-Za-z-].
     static const std::regex semverRegex(
-        R"(^(\d+)\.(\d+)\.(\d+)(?:-([0-9a-zA-Z\.-]+))?(?:\+([0-9a-zA-Z\.-]+))?$)"
+        R"(^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$)"
     );
 
     std::smatch matches;
