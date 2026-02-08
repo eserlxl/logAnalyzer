@@ -46,6 +46,9 @@ bool tryParseStrictLongDouble(std::string_view value, long double& out) {
         if (idx != value.size()) {
             return false;
         }
+        if (!std::isfinite(tmp)) {
+            return false;
+        }
         out = tmp;
         return true;
     } catch (...) {

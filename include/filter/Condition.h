@@ -6,6 +6,7 @@
 #include <string>
 #include <optional>
 #include <stdexcept>
+#include <cmath>
 #include <nlohmann/json.hpp>
 #include "core/Error.h"
 #include "core/Log/Types.h"
@@ -326,8 +327,8 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         } else if (fc.valueType == FilterValueType::DOUBLE || fc.valueType == FilterValueType::FLOAT) {
             try {
                 size_t idx;
-                std::stod(singleValue, &idx);
-                if (idx != singleValue.length()) {
+                const double parsed = std::stod(singleValue, &idx);
+                if (idx != singleValue.length() || !std::isfinite(parsed)) {
                      return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + singleValue, current_path, "value"));
                 }
             } catch (...) {
@@ -356,4 +357,3 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
 }
 
 } // namespace filter
-

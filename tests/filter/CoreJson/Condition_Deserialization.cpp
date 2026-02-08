@@ -242,6 +242,32 @@ TEST_F(FilterJsonTest, FromJsonFailureDatetimeMissingFormat) {
     EXPECT_EQ(result.error().message, "DATETIME value_type requires a non-empty 'datetimeFormat'.");
 }
 
+TEST_F(FilterJsonTest, FromJsonFailureNonFiniteFloatValue) {
+    nlohmann::json j_nan = {
+        {"field", "message"},
+        {"op", "EQUALS"},
+        {"value", "nan"},
+        {"value_type", "FLOAT"},
+    };
+    FilterCondition fc_nan;
+    auto result_nan = from_json(j_nan, fc_nan);
+    ASSERT_FALSE(result_nan.has_value());
+    EXPECT_EQ(result_nan.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result_nan.error().message, "Invalid float value: nan");
+
+    nlohmann::json j_inf = {
+        {"field", "message"},
+        {"op", "EQUALS"},
+        {"value", "inf"},
+        {"value_type", "DOUBLE"},
+    };
+    FilterCondition fc_inf;
+    auto result_inf = from_json(j_inf, fc_inf);
+    ASSERT_FALSE(result_inf.has_value());
+    EXPECT_EQ(result_inf.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result_inf.error().message, "Invalid float value: inf");
+}
+
 // --- Factory Function Tests ---
 
 TEST_F(FilterJsonTest, FactorySuccess) {

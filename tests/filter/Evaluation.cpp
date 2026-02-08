@@ -115,6 +115,17 @@ TEST_F(FilterTestFixture, EvaluateDoubleComparison) {
 
     auto expr_partial_double_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.456789ms", FilterValueType::FLOAT, true, "result");
     ASSERT_FALSE(expr_partial_double_cond.evaluate(entry).has_value());
+
+    // Non-finite floating-point values should be rejected.
+    auto expr_nan_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "nan", FilterValueType::FLOAT, true, "result");
+    ASSERT_FALSE(expr_nan_cond.evaluate(entry).has_value());
+
+    auto expr_inf_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "inf", FilterValueType::FLOAT, true, "result");
+    ASSERT_FALSE(expr_inf_cond.evaluate(entry).has_value());
+
+    auto entry_nan_value = createLogEntry(LogLevel::INFO, "NaN value", "calc.log", {{"result", "nan"}});
+    auto expr_nan_field = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.0", FilterValueType::FLOAT, true, "result");
+    ASSERT_FALSE(expr_nan_field.evaluate(entry_nan_value).has_value());
 }
 
 
