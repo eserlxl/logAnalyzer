@@ -12,7 +12,6 @@
 #include "filter/Parser.h"
 #include "filter/Types.h"
 #include "stats/Core.h" // For statistic collectors
-#include <nlohmann/json.hpp>
 #include <algorithm>
 #include <chrono>
 #include <fstream>
@@ -23,7 +22,6 @@
 #include <vector>
 #include <unistd.h> // For isatty
 
-using json = nlohmann::json;
 using namespace filter;
 
 namespace {
