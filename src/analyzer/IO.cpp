@@ -127,8 +127,18 @@ const std::vector<LogEntry>& LogAnalyzer::getEntries() const {
     return entries_;
 }
 
+std::vector<LogEntry> LogAnalyzer::getEntriesSnapshot() const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    return entries_;
+}
+
 // Add getLastReport method for thread-safe access
 const AnalysisReport& LogAnalyzer::getLastReport() const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    return lastReport;
+}
+
+AnalysisReport LogAnalyzer::getLastReportSnapshot() const {
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     return lastReport;
 }

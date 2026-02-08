@@ -170,8 +170,10 @@ public:
     ) const;
 
     const std::vector<LogEntry>& getEntries() const;
+    std::vector<LogEntry> getEntriesSnapshot() const;
     std::span<const LogEntry> getEntriesView() const; // Renamed from getEntriesView() to avoid confusion
     const AnalysisReport& getLastReport() const;
+    AnalysisReport getLastReportSnapshot() const;
     
     void setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel);
     
