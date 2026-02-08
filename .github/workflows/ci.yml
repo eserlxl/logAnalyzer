@@ -19,6 +19,16 @@ jobs:
       - name: Build
         run: cmake --build build --parallel
 
+      - name: Build (Offline Mirror Mode)
+        run: |
+          rm -rf /tmp/loganalyzer-mirror
+          mkdir -p /tmp/loganalyzer-mirror
+          cp -R build/_deps/nlohmann_json-src /tmp/loganalyzer-mirror/nlohmann_json
+          cp -R build/_deps/cli11-src /tmp/loganalyzer-mirror/cli11
+          cp -R build/_deps/googletest-src /tmp/loganalyzer-mirror/googletest
+          cmake -S . -B build-offline-mirror -DCMAKE_BUILD_TYPE=Debug -DLOGANALYZER_OFFLINE_DEPS=ON -DLOGANALYZER_FETCH_DEPS=ON -DLOGANALYZER_DEPS_MIRROR_DIR=/tmp/loganalyzer-mirror
+          cmake --build build-offline-mirror --parallel
+
       - name: Test
         run: ctest --test-dir build --output-on-failure
 
@@ -27,3 +37,47 @@ jobs:
 
       - name: Concurrency Stress (analyzer_Core shuffle x50)
         run: ./build/tests/analyzer_Core --gtest_repeat=50 --gtest_shuffle --gtest_brief=1
+
+  package-consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Install
+        run: cmake --install build --prefix /tmp/loganalyzer-install
+
+      - name: Configure Consumer
+        run: |
+          mkdir -p /tmp/loganalyzer-consumer
+          cat > /tmp/loganalyzer-consumer/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.24)
+          project(loganalyzer_consumer LANGUAGES CXX)
+
+          set(CMAKE_CXX_STANDARD 23)
+          set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+          find_package(logAnalyzer CONFIG REQUIRED)
+
+          add_executable(consumer main.cpp)
+          target_link_libraries(consumer PRIVATE logAnalyzer::LogAnalyzerLib)
+          EOF
+          cat > /tmp/loganalyzer-consumer/main.cpp <<'EOF'
+          #include "analyzer/Core.h"
+
+          int main() {
+              LogAnalyzer analyzer;
+              (void)analyzer;
+              return 0;
+          }
+          EOF
+          cmake -S /tmp/loganalyzer-consumer -B /tmp/loganalyzer-consumer/build -DlogAnalyzer_DIR=/tmp/loganalyzer-install/lib/cmake/logAnalyzer
+
+      - name: Build Consumer
+        run: cmake --build /tmp/loganalyzer-consumer/build --parallel
