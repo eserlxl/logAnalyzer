@@ -195,6 +195,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (append fixture warning-noise cleanup): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
