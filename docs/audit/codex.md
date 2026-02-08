@@ -21,7 +21,7 @@
 | Correctness / edge-case handling | 7.5 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, descending sort now uses strict ordering semantics, and query parsing is implemented for `--expression` with parser tests (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `src/filter/Parser.cpp`, `tests/filter/Iteration15.cpp`). |
 | Error handling consistency | 7.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing, analyzer catches parser exceptions, and parser throw mode now returns structured `Result` errors (commit `3ce6b12`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
-| Test quality | 6.5 | 49 passing tests with good breadth; strong parser/filter/export coverage. Gaps: concurrency is placeholder (`tests/analyzer/Core.cpp:108`), parseQuery is expected unimplemented (`tests/filter/Iteration15.cpp:142`), no direct JsonLogParser-focused tests observed. |
+| Test quality | 7.5 | 49+ passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, and concurrency now has deterministic analyzer snapshot/load coverage (`tests/analyzer/Core.cpp`, commit `9a69617`). Remaining gap: direct JsonLogParser-focused unit tests. |
 | Build hygiene | 8.5 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy improved with system-package fallback plus optional fetch (`LOGANALYZER_FETCH_DEPS`, commit `fb4597d`). |
 | API hygiene | 6.0 | Public API header is broad, but thread-safe snapshot accessors were added for analyzer state (`include/analyzer/Core.h`, `src/analyzer/IO.cpp`, commit `17ef73c`). Legacy reference-returning accessors still exist. |
 
@@ -71,7 +71,8 @@
 - Likelihood: High  
 - Where: `tests/analyzer/Core.cpp:108`  
 - Why it matters: Real-world async/stream use can race; current tests don’t validate concurrent access correctness.  
-- Minimal mitigation idea: Add at least one deterministic multi-thread scenario in test plan before release.
+- Mitigation progress: Added deterministic concurrent snapshot-read/load test in commit `9a69617`.
+- Minimal mitigation idea: Expand to include concurrent append + filter/export scenarios.
 
 7. **Fresh builds depend on live network FetchContent**  
 - Severity: Medium  
