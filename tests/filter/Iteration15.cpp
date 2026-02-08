@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include "filter/ConcreteFilters.h"
 #include "filter/Expression.h"
 #include "filter/Condition.h"
@@ -159,4 +160,29 @@ TEST_F(FilterIteration15Test, ParseQueryLogicalExpressionWithSet) {
     EXPECT_TRUE(result->evaluate(matchEntry).value_or(false));
     EXPECT_FALSE(result->evaluate(blockedByNot).value_or(true));
     EXPECT_FALSE(result->evaluate(blockedBySet).value_or(true));
+}
+
+TEST_F(FilterIteration15Test, ParseQueryLogicalOperatorAliases) {
+    auto result = parseQuery("!(level = DEBUG) && (message CONTAINS 'hello' || message CONTAINS 'world')");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+
+    LogEntry matchHello = createEntry(LogLevel::INFO, "say hello");
+    LogEntry matchWorld = createEntry(LogLevel::WARNING, "world event");
+    LogEntry blockedByNot = createEntry(LogLevel::DEBUG, "hello");
+    LogEntry blockedByContent = createEntry(LogLevel::INFO, "other");
+
+    EXPECT_TRUE(result->evaluate(matchHello).value_or(false));
+    EXPECT_TRUE(result->evaluate(matchWorld).value_or(false));
+    EXPECT_FALSE(result->evaluate(blockedByNot).value_or(true));
+    EXPECT_FALSE(result->evaluate(blockedByContent).value_or(true));
+}
+
+TEST_F(FilterIteration15Test, ParseQueryMalformedDiagnostics) {
+    auto missingValue = parseQuery("level = ");
+    ASSERT_FALSE(missingValue.has_value());
+    EXPECT_THAT(missingValue.error().message, testing::HasSubstr("Expected value in condition."));
+
+    auto missingRhs = parseQuery("level = INFO AND");
+    ASSERT_FALSE(missingRhs.has_value());
+    EXPECT_THAT(missingRhs.error().message, testing::HasSubstr("Expected field name in condition."));
 }

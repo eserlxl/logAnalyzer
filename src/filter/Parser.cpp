@@ -160,7 +160,7 @@ private:
         auto left = parseAndExpression();
         if (!left) return std::unexpected(left.error());
 
-        while (matchKeyword("OR")) {
+        while (matchOrOperator()) {
             auto right = parseAndExpression();
             if (!right) return std::unexpected(right.error());
             left = FilterExpression::makeOr({*left, *right});
@@ -172,7 +172,7 @@ private:
         auto left = parseUnaryExpression();
         if (!left) return std::unexpected(left.error());
 
-        while (matchKeyword("AND")) {
+        while (matchAndOperator()) {
             auto right = parseUnaryExpression();
             if (!right) return std::unexpected(right.error());
             left = FilterExpression::makeAnd({*left, *right});
@@ -181,7 +181,7 @@ private:
     }
 
     ErrorCode::Result<FilterExpression> parseUnaryExpression() {
-        if (matchKeyword("NOT")) {
+        if (matchNotOperator()) {
             auto expr = parseUnaryExpression();
             if (!expr) return std::unexpected(expr.error());
             return FilterExpression::makeNot(*expr);
@@ -395,6 +395,29 @@ private:
             return false;
         }
         if (Utils::toUpper(current().text) != keyword) {
+            return false;
+        }
+        ++idx_;
+        return true;
+    }
+
+    bool matchAndOperator() {
+        return matchKeyword("AND") || matchLogicalSymbol("&&");
+    }
+
+    bool matchOrOperator() {
+        return matchKeyword("OR") || matchLogicalSymbol("||");
+    }
+
+    bool matchNotOperator() {
+        return matchKeyword("NOT") || matchLogicalSymbol("!");
+    }
+
+    bool matchLogicalSymbol(const char* symbol) {
+        if (current().kind != TokenKind::Operator && current().kind != TokenKind::Identifier) {
+            return false;
+        }
+        if (current().text != symbol) {
             return false;
         }
         ++idx_;
