@@ -129,7 +129,6 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const filter::FilterCriteria &
             entryJson["CustomFields"] = customFieldsJson;
         }
         entriesArray.push_back(entryJson);
-        std::cerr << "DEBUG: entryJson for FilterCriteria overload: " << entryJson.dump() << std::endl;
     }
     rootJson["entries"] = entriesArray;
 
@@ -257,7 +256,6 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const filter::FilterExpression
             entryJson["CustomFields"] = customFieldsJson;
         }
         entriesArray.push_back(entryJson);
-        std::cerr << "DEBUG: entryJson for FilterExpression overload: " << entryJson.dump() << std::endl;
     }
     rootJson["entries"] = entriesArray;
 
