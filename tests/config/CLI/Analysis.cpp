@@ -23,6 +23,12 @@ TEST_F(CLIConfigTest, StatisticConfigWithWhitespace) {
     ASSERT_EQ(settings.statisticConfigs[0].params.at("top_n"), "7");
 }
 
+TEST_F(CLIConfigTest, StatisticConfigRejectsUnknownBareToken) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=top_messages,bogus"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
 TEST_F(CLIConfigTest, TopMessagesCount) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--top-n", "20"});
     ASSERT_TRUE(result.has_value());

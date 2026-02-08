@@ -91,6 +91,9 @@ namespace {
                 if (type) {
                     config.type = *type;
                     typeFound = true;
+                } else {
+                    // Bare token is neither a type nor a key=value parameter: reject.
+                    return std::nullopt;
                 }
             }
         }
