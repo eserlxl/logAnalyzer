@@ -16,5 +16,6 @@
 | **Field Presence Checks**    | Filter for logs where a specific field `is present` or `is absent`.                                       |
 | **Automatic Type Inference** | Automatically infers data types (Integer, Double, Boolean, IP, Version) in filter expressions, simplifying queries. |
 | **Complex Filter Expressions** | Build sophisticated filter logic using parenthesized, nested `AND`/`OR`/`NOT` conditions.                     |
+| **Filter JSON Roundtrip**    | Serialize/deserialize `filter::FilterExpression` trees to/from JSON for reusable configs and API-driven workflows. |
 | **Flexible Export**          | Save results in Text, JSON, CSV, or XML formats with customizable and aliasable output fields.                 |
 | **Statistical Analysis**     | Generate statistics on log data, such as entry rates, top messages, log level counts, and unique value counts for any field. |
