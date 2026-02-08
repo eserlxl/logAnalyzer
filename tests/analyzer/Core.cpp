@@ -12,6 +12,8 @@
 #include <algorithm>
 #include <future>
 #include <chrono>
+#include <atomic>
+#include <thread>
 
 using namespace filter;
 
@@ -108,8 +110,59 @@ TEST_F(LogAnalyzerTest, AppendCorrectness) {
     std::remove(filePath1.c_str());
 }
 
-TEST_F(LogAnalyzerTest, Concurrency_Placeholder) {
-    SUCCEED();
+TEST_F(LogAnalyzerTest, ConcurrentAppendAndFilterIsStable) {
+    const std::string filePath1 = "test_concurrent_append_1.log";
+    const std::string filePath2 = "test_concurrent_append_2.log";
+
+    {
+        std::ofstream ofs(filePath1);
+        for (int i = 0; i < 150; ++i) {
+            ofs << "2023-01-01 10:00:" << (i % 60 < 10 ? "0" : "") << (i % 60)
+                << " INFO: append-a-" << i << "\n";
+        }
+    }
+    {
+        std::ofstream ofs(filePath2);
+        for (int i = 0; i < 150; ++i) {
+            ofs << "2023-01-01 11:00:" << (i % 60 < 10 ? "0" : "") << (i % 60)
+                << " DEBUG: append-b-" << i << "\n";
+        }
+    }
+
+    std::atomic<bool> writerDone{false};
+    std::atomic<bool> writerOk{true};
+
+    auto writer = std::async(std::launch::async, [&]() {
+        auto r1 = analyzer.append(filePath1, CLIConfig::ParserErrorAction::Warn);
+        auto r2 = analyzer.append(filePath2, CLIConfig::ParserErrorAction::Warn);
+        writerOk.store(r1.has_value() && r2.has_value());
+        writerDone.store(true);
+    });
+
+    auto cond = FilterCondition::createString(LogEntryField::LEVEL, FilterOperator::NOT_EQUALS, "NONE");
+    ASSERT_TRUE(cond.has_value());
+    FilterExpression all(*cond);
+
+    size_t observedMax = 0;
+    for (int i = 0; i < 400 && !writerDone.load(); ++i) {
+        auto filteredResult = analyzer.getFilteredEntries(all);
+        ASSERT_TRUE(filteredResult.has_value()) << filteredResult.error().toString();
+        observedMax = std::max(observedMax, filteredResult->size());
+
+        std::stringstream ss;
+        ASSERT_NO_THROW(analyzer.exportAsJson(ss, all, false));
+        ASSERT_NO_THROW((void)nlohmann::json::parse(ss.str()));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    writer.wait();
+    std::remove(filePath1.c_str());
+    std::remove(filePath2.c_str());
+    ASSERT_TRUE(writerOk.load());
+
+    auto finalEntries = analyzer.getEntriesSnapshot();
+    EXPECT_EQ(finalEntries.size(), 300);
+    EXPECT_LE(observedMax, finalEntries.size());
 }
 
 TEST_F(LogAnalyzerTest, InvalidStatisticConfigDoesNotThrowOnSetSettings) {
