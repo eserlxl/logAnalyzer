@@ -34,10 +34,10 @@ inline void from_json(const json& j, StatisticType& st) {
         if (opt) {
             st = *opt;
         } else {
-            throw std::runtime_error("StatisticConfig has an unrecognized type.");
+            st = StatisticType::UNKNOWN;
         }
     } else {
-        throw std::runtime_error("StatisticType must be a string.");
+        st = StatisticType::UNKNOWN;
     }
 }
 
@@ -51,14 +51,19 @@ inline void to_json(json& j, const StatisticConfig& sc) {
 }
 
 inline void from_json(const json& j, StatisticConfig& sc) {
+    sc.type = StatisticType::UNKNOWN;
+    sc.params.clear();
+
     if (j.contains("type")) {
         sc.type = j.at("type").get<StatisticType>();
-    } else {
-        throw std::runtime_error("StatisticConfig is missing 'type'.");
     }
     
     if (j.contains("params")) {
-        j.at("params").get_to(sc.params);
+        if (j.at("params").is_object()) {
+            j.at("params").get_to(sc.params);
+        } else {
+            sc.type = StatisticType::UNKNOWN;
+        }
     }
 }
 

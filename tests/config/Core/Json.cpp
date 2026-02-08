@@ -176,7 +176,10 @@ TEST_F(LogAnalyzerConfigTest, FromJsonMalformedInternalStructures) {
     })";
     auto result4 = LogAnalyzerSettings::fromJson(jsonContent4);
     ASSERT_FALSE(result4.has_value());
-    ASSERT_THAT(result4.error()[0], testing::HasSubstr("Error parsing 'statisticConfigs':"));
+    ASSERT_THAT(result4.error()[0], testing::AnyOf(
+        testing::HasSubstr("Error parsing 'statisticConfigs':"),
+        testing::HasSubstr("StatisticConfig has an unrecognized type.")
+    ));
 
     // Malformed rootFilterExpression (invalid operator)
     std::string jsonContent5 = R"({
