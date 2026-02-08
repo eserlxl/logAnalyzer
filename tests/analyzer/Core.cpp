@@ -43,9 +43,37 @@ TEST_F(LogAnalyzerTest, DefaultLogLevelMapping) {
 }
 
 TEST_F(LogAnalyzerTest, AnalyzeStreamFileOpenError) {
-    auto result = analyzer.loadAndReplace("non_existent_file.log", CLIConfig::ParserErrorAction::Warn);
+    ErrorCode::Result<AnalysisReport> result;
+    EXPECT_NO_THROW({
+        result = analyzer.loadAndReplace("non_existent_file.log", CLIConfig::ParserErrorAction::Warn);
+    });
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::FileNotFound);
+}
+
+TEST_F(LogAnalyzerTest, PublicApiInvalidInputsReturnErrorsWithoutThrowing) {
+    ErrorCode::Result<AnalysisReport> loadReplaceResult;
+    EXPECT_NO_THROW({
+        loadReplaceResult = analyzer.loadAndReplace("missing.log", CLIConfig::ParserErrorAction::Warn);
+    });
+    ASSERT_FALSE(loadReplaceResult.has_value());
+    EXPECT_EQ(loadReplaceResult.error().code, Code::FileNotFound);
+
+    ErrorCode::Result<AnalysisReport> appendResult;
+    EXPECT_NO_THROW({
+        appendResult = analyzer.append("missing.log", CLIConfig::ParserErrorAction::Warn);
+    });
+    ASSERT_FALSE(appendResult.has_value());
+    EXPECT_EQ(appendResult.error().code, Code::FileNotReadable);
+
+    ErrorCode::Result<void> streamResult;
+    EXPECT_NO_THROW({
+        streamResult = analyzer.analyzeStream({"missing.log"},
+            [](const LogEntry&) { return true; },
+            CLIConfig::ParserErrorAction::Warn);
+    });
+    ASSERT_FALSE(streamResult.has_value());
+    EXPECT_EQ(streamResult.error().code, Code::FileNotReadable);
 }
 
 TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {

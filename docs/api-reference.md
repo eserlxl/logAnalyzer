@@ -158,3 +158,10 @@ if (!result) {
     std::cerr << "Error: " << result.error().message << std::endl;
 }
 ```
+
+### Error Boundary Policy
+
+- Public operational APIs are designed to report recoverable failures via `ErrorCode::Result<T>` instead of throwing (for example: `load*`, `append`, `streamIn`, `analyzeStream`, `getFilteredEntries`, `setSettings`).
+- Invalid user input (bad files, invalid regex/settings, malformed expression/config data) should surface as structured error codes/messages.
+- Constructors may still throw only for unrecoverable initialization failures after fallback attempts.
+- Deprecated legacy overloads returning `std::expected<void, LogParseError>` preserve their existing contract.
