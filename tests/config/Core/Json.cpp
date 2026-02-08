@@ -195,6 +195,34 @@ TEST_F(LogAnalyzerConfigTest, FromJsonMalformedInternalStructures) {
     ASSERT_THAT(result4b.error(), testing::Contains(testing::HasSubstr("StatisticConfig has an unrecognized type.")));
     ASSERT_THAT(result4b.error(), testing::Not(testing::Contains(testing::HasSubstr("Error parsing 'statisticConfigs':"))));
 
+    // Malformed StatisticConfig params (non-object params) should remain no-throw
+    // and surface via validation as an invalid statistic config.
+    std::string jsonContent4c = R"({
+        "lineParsePattern": ".*",
+        "statisticConfigs": [
+            {"type": "COUNT_BY_LEVEL", "params": [1, 2, 3]}
+        ],
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result4c = LogAnalyzerSettings::fromJson(jsonContent4c);
+    ASSERT_FALSE(result4c.has_value());
+    ASSERT_THAT(result4c.error(), testing::Contains(testing::HasSubstr("StatisticConfig has an unrecognized type.")));
+    ASSERT_THAT(result4c.error(), testing::Not(testing::Contains(testing::HasSubstr("Error parsing 'statisticConfigs':"))));
+
+    // Malformed StatisticConfig params (nested object value) should also be
+    // reported through validation and not through helper exceptions.
+    std::string jsonContent4d = R"({
+        "lineParsePattern": ".*",
+        "statisticConfigs": [
+            {"type": "COUNT_BY_LEVEL", "params": {"top_n": {"value": "5"}}}
+        ],
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result4d = LogAnalyzerSettings::fromJson(jsonContent4d);
+    ASSERT_FALSE(result4d.has_value());
+    ASSERT_THAT(result4d.error(), testing::Contains(testing::HasSubstr("StatisticConfig has an unrecognized type.")));
+    ASSERT_THAT(result4d.error(), testing::Not(testing::Contains(testing::HasSubstr("Error parsing 'statisticConfigs':"))));
+
     // Malformed rootFilterExpression (invalid operator)
     std::string jsonContent5 = R"({
         "lineParsePattern": ".*",
