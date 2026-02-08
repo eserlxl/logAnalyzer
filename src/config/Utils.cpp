@@ -9,9 +9,20 @@
 #include <format>
 
 namespace ConfigUtils {
+    namespace {
+        std::string_view trimView(std::string_view s) {
+            const auto first = s.find_first_not_of(" \t");
+            if (first == std::string_view::npos) {
+                return {};
+            }
+            const auto last = s.find_last_not_of(" \t");
+            return s.substr(first, last - first + 1);
+        }
+    } // namespace
 
     ErrorCode::Result<FieldMapping> parseFieldMappingString(std::string_view fieldMapStr) {
         // Expected format: "1=timestamp:%Y-%m-%d %H:%M:%S" or "2=level" or "3=customField"
+        fieldMapStr = trimView(fieldMapStr);
         
         size_t eqPos = fieldMapStr.find('=');
         if (eqPos == std::string_view::npos) {
@@ -19,15 +30,16 @@ namespace ConfigUtils {
         }
 
         size_t groupIndex = 0;
-        auto result = std::from_chars(fieldMapStr.data(), fieldMapStr.data() + eqPos, groupIndex);
-        if (result.ec != std::errc() || result.ptr != fieldMapStr.data() + eqPos) {
+        const auto groupIndexStr = trimView(fieldMapStr.substr(0, eqPos));
+        auto result = std::from_chars(groupIndexStr.data(), groupIndexStr.data() + groupIndexStr.size(), groupIndex);
+        if (result.ec != std::errc() || result.ptr != groupIndexStr.data() + groupIndexStr.size()) {
              return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, std::format("Invalid group index in field map: {}", fieldMapStr)));
         }
 
-        std::string_view remainder = fieldMapStr.substr(eqPos + 1);
+        std::string_view remainder = trimView(fieldMapStr.substr(eqPos + 1));
         size_t colonPos = remainder.find(':');
         
-        std::string_view fieldNameView = (colonPos == std::string_view::npos) ? remainder : remainder.substr(0, colonPos);
+        std::string_view fieldNameView = (colonPos == std::string_view::npos) ? remainder : trimView(remainder.substr(0, colonPos));
         
         if (fieldNameView.empty()) {
              return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, std::format("Invalid field map format. Field name cannot be empty: {}", fieldMapStr)));
@@ -36,7 +48,7 @@ namespace ConfigUtils {
         std::string fieldName(fieldNameView);
         std::string format;
         if (colonPos != std::string_view::npos) {
-            format = std::string(remainder.substr(colonPos + 1));
+            format = std::string(trimView(remainder.substr(colonPos + 1)));
         }
 
         LogEntryField field = Utils::stringToLogEntryField(fieldName);

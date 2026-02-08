@@ -70,6 +70,22 @@ TEST(ConfigUtilsTest, ParseFieldMappingString_InvalidFormat_EmptyField) {
     EXPECT_EQ(result.error().code, ::Code::InvalidArgument);
 }
 
+TEST(ConfigUtilsTest, ParseFieldMappingString_TrimsWhitespaceInAllParts) {
+    auto result = ConfigUtils::parseFieldMappingString("  7 \t = \t timestamp \t : \t %Y-%m-%d %H:%M:%S \t ");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->groupIndex.value_or(0), 7u);
+    ASSERT_TRUE(std::holds_alternative<LogEntryField>(result->field));
+    EXPECT_EQ(std::get<LogEntryField>(result->field), LogEntryField::TIMESTAMP);
+    ASSERT_EQ(result->formats.size(), 1u);
+    EXPECT_EQ(result->formats[0], "%Y-%m-%d %H:%M:%S");
+}
+
+TEST(ConfigUtilsTest, ParseFieldMappingString_RejectsWhitespaceOnlyFieldName) {
+    auto result = ConfigUtils::parseFieldMappingString("4=   \t  ");
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, ::Code::InvalidArgument);
+}
+
 TEST(ConfigUtilsTest, ParseFieldMappingStrings_MultipleValid) {
     std::vector<std::string> inputs = {"1=timestamp", "2=level"};
     auto result = ConfigUtils::parseFieldMappingStrings(inputs);
