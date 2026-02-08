@@ -88,7 +88,9 @@ namespace {
     // Helper to parse "field as alias" string
     std::pair<std::string, std::string> parseFieldAlias(const std::string& fieldStr) {
         std::string lower = fieldStr;
-        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+        });
         
         auto pos = lower.find(" as ");
         if (pos != std::string::npos) {
@@ -241,7 +243,9 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
             std::string from = s.substr(0, pos);
             std::string to = s.substr(pos + 1);
             std::string toUpper = to;
-            std::transform(toUpper.begin(), toUpper.end(), toUpper.begin(), ::toupper);
+            std::transform(toUpper.begin(), toUpper.end(), toUpper.begin(), [](unsigned char c) {
+                return static_cast<char>(std::toupper(c));
+            });
             
             if(Config::LogLevelMap.count(toUpper)) {
                 settings.customLogLevelMappings[from] = Config::LogLevelMap.at(toUpper);
