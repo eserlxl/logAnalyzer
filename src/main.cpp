@@ -264,15 +264,17 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // Sorting
-        if (cliOptions.sortBy != SortBy::TIMESTAMP || cliOptions.sortOrder != SortOrder::ASCENDING) {
+        // Sorting: treat unspecified options as defaults.
+        const SortBy sortBy = cliOptions.sortBy.value_or(SortBy::TIMESTAMP);
+        const SortOrder sortOrder = cliOptions.sortOrder.value_or(SortOrder::ASCENDING);
+        if (sortBy != SortBy::TIMESTAMP || sortOrder != SortOrder::ASCENDING) {
             std::sort(filteredEntries.begin(), filteredEntries.end(), [&](const LogEntry& a, const LogEntry& b) {
-                if (cliOptions.sortBy == SortBy::TIMESTAMP) {
-                    return cliOptions.sortOrder == SortOrder::ASCENDING ? a.timestamp < b.timestamp : a.timestamp > b.timestamp;
-                } else if (cliOptions.sortBy == SortBy::LEVEL) {
-                    return cliOptions.sortOrder == SortOrder::ASCENDING ? a.level < b.level : a.level > b.level;
+                if (sortBy == SortBy::TIMESTAMP) {
+                    return sortOrder == SortOrder::ASCENDING ? a.timestamp < b.timestamp : a.timestamp > b.timestamp;
+                } else if (sortBy == SortBy::LEVEL) {
+                    return sortOrder == SortOrder::ASCENDING ? a.level < b.level : a.level > b.level;
                 } else { // MESSAGE
-                    return cliOptions.sortOrder == SortOrder::ASCENDING ? a.message < b.message : a.message > b.message;
+                    return sortOrder == SortOrder::ASCENDING ? a.message < b.message : a.message > b.message;
                 }
             });
         }
