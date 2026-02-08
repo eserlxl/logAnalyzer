@@ -365,6 +365,9 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseISO8
         
         int offset_hours = std::stoi(timezone_part.substr(1, 2));
         int offset_minutes = std::stoi(timezone_part.substr(4, 2));
+        if (offset_hours >= 24) {
+            return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid offset hours: " + timeStr));
+        }
         if (offset_minutes >= 60) {
             return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Invalid offset minutes: " + timeStr));
         }
