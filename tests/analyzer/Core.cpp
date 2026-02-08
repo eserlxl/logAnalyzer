@@ -3,7 +3,6 @@
 
 #include <gtest/gtest.h>
 #include "analyzer/Core.h"
-#include "config/CLI.h"
 #include "filter/Expression.h"
 #include "filter/Condition.h"
 #include "filter/Types.h"
@@ -46,7 +45,7 @@ TEST_F(LogAnalyzerTest, DefaultLogLevelMapping) {
 TEST_F(LogAnalyzerTest, AnalyzeStreamFileOpenError) {
     ErrorCode::Result<AnalysisReport> result;
     EXPECT_NO_THROW({
-        result = analyzer.loadAndReplace("non_existent_file.log", CLIConfig::ParserErrorAction::Warn);
+        result = analyzer.loadAndReplace("non_existent_file.log", ParserErrorAction::Warn);
     });
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::FileNotFound);
@@ -55,14 +54,14 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamFileOpenError) {
 TEST_F(LogAnalyzerTest, PublicApiInvalidInputsReturnErrorsWithoutThrowing) {
     ErrorCode::Result<AnalysisReport> loadReplaceResult;
     EXPECT_NO_THROW({
-        loadReplaceResult = analyzer.loadAndReplace("missing.log", CLIConfig::ParserErrorAction::Warn);
+        loadReplaceResult = analyzer.loadAndReplace("missing.log", ParserErrorAction::Warn);
     });
     ASSERT_FALSE(loadReplaceResult.has_value());
     EXPECT_EQ(loadReplaceResult.error().code, Code::FileNotFound);
 
     ErrorCode::Result<AnalysisReport> appendResult;
     EXPECT_NO_THROW({
-        appendResult = analyzer.append("missing.log", CLIConfig::ParserErrorAction::Warn);
+        appendResult = analyzer.append("missing.log", ParserErrorAction::Warn);
     });
     ASSERT_FALSE(appendResult.has_value());
     EXPECT_EQ(appendResult.error().code, Code::FileNotReadable);
@@ -71,7 +70,7 @@ TEST_F(LogAnalyzerTest, PublicApiInvalidInputsReturnErrorsWithoutThrowing) {
     EXPECT_NO_THROW({
         streamResult = analyzer.analyzeStream({"missing.log"},
             [](const LogEntry&) { return true; },
-            CLIConfig::ParserErrorAction::Warn);
+            ParserErrorAction::Warn);
     });
     ASSERT_FALSE(streamResult.has_value());
     EXPECT_EQ(streamResult.error().code, Code::FileNotReadable);
@@ -89,7 +88,7 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {
     ofs << "2023-01-01 10:00:00 INFO: still-usable\n";
     ofs.close();
 
-    auto loadResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto loadResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
     EXPECT_EQ(loadResult->successfulParses, 1);
@@ -126,7 +125,7 @@ TEST_F(LogAnalyzerTest, ExportAsJsonEdgeCases) {
     std::ofstream ofs(filePath);
     ofs << logContent;
     ofs.close();
-    auto reportResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto reportResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     ASSERT_TRUE(reportResult.has_value()) << "Load failed with error: " << reportResult.error().toString();
     AnalysisReport report = reportResult.value();
     ASSERT_EQ(report.successfulParses, 2) << "Expected 2 successful parses, but got " << report.successfulParses;
@@ -155,7 +154,7 @@ TEST_F(LogAnalyzerTest, AppendCorrectness) {
     std::ofstream ofs1(filePath1);
     ofs1 << logContent1;
     ofs1.close();
-    auto result1 = analyzer.append(filePath1, CLIConfig::ParserErrorAction::Warn);
+    auto result1 = analyzer.append(filePath1, ParserErrorAction::Warn);
     ASSERT_TRUE(result1.has_value());
     std::remove(filePath1.c_str());
 }
@@ -183,8 +182,8 @@ TEST_F(LogAnalyzerTest, ConcurrentAppendAndFilterIsStable) {
     std::atomic<bool> writerOk{true};
 
     auto writer = std::async(std::launch::async, [&]() {
-        auto r1 = analyzer.append(filePath1, CLIConfig::ParserErrorAction::Warn);
-        auto r2 = analyzer.append(filePath2, CLIConfig::ParserErrorAction::Warn);
+        auto r1 = analyzer.append(filePath1, ParserErrorAction::Warn);
+        auto r2 = analyzer.append(filePath2, ParserErrorAction::Warn);
         writerOk.store(r1.has_value() && r2.has_value());
         writerDone.store(true);
     });
@@ -235,10 +234,10 @@ TEST_F(LogAnalyzerTest, ConcurrentAppendFromTwoThreadsPreservesAllEntries) {
     }
 
     auto f1 = std::async(std::launch::async, [&]() {
-        return analyzer.append(filePath1, CLIConfig::ParserErrorAction::Warn);
+        return analyzer.append(filePath1, ParserErrorAction::Warn);
     });
     auto f2 = std::async(std::launch::async, [&]() {
-        return analyzer.append(filePath2, CLIConfig::ParserErrorAction::Warn);
+        return analyzer.append(filePath2, ParserErrorAction::Warn);
     });
 
     auto r1 = f1.get();
@@ -290,7 +289,7 @@ TEST(LogAnalyzerCtorTest, InvalidRegexSettingsFallsBackInConstructor) {
     ofs << "2023-01-01 10:00:00 INFO: fallback works\n";
     ofs.close();
 
-    auto loadResult = localAnalyzer->loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto loadResult = localAnalyzer->loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
     EXPECT_EQ(loadResult->successfulParses, 1);
@@ -305,7 +304,7 @@ TEST_F(LogAnalyzerTest, SortedFilteredEntriesDescendingUsesStrictComparator) {
     ofs << "2023-01-01 10:00:03 INFO: middle\n";
     ofs.close();
 
-    auto loadResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto loadResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
 
@@ -330,7 +329,7 @@ TEST_F(LogAnalyzerTest, SortedFilteredEntriesMaintainOrderingAndMembershipAcross
     ofs << "2023-01-01 10:00:05 ERROR: delta\n";
     ofs.close();
 
-    auto loadResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto loadResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
 
@@ -416,7 +415,7 @@ TEST_F(LogAnalyzerTest, LoadAndReplaceSupportsMultilineEntries) {
     ofs << "2023-01-01 10:00:01 ERROR: Entry two\n";
     ofs.close();
 
-    auto reportResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto reportResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
 
     ASSERT_TRUE(reportResult.has_value()) << reportResult.error().toString();
@@ -436,7 +435,7 @@ TEST_F(LogAnalyzerTest, LoadAndReplaceDoesNotThrowWhenParserConfiguredToThrow) {
         FieldMapping{LogEntryField::LEVEL, std::make_optional<size_t>(2), {}},
         FieldMapping{LogEntryField::MESSAGE, std::make_optional<size_t>(3), {}}
     };
-    settings.parserErrorAction = CLIConfig::ParserErrorAction::Throw;
+    settings.parserErrorAction = ParserErrorAction::Throw;
 
     auto settingsResult = analyzer.setSettings(settings);
     ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
@@ -448,7 +447,7 @@ TEST_F(LogAnalyzerTest, LoadAndReplaceDoesNotThrowWhenParserConfiguredToThrow) {
 
     ErrorCode::Result<AnalysisReport> loadResult;
     EXPECT_NO_THROW({
-        loadResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Throw);
+        loadResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Throw);
     });
     std::remove(filePath.c_str());
 
@@ -465,7 +464,7 @@ TEST_F(LogAnalyzerTest, AppendDoesNotThrowWhenParserConfiguredToThrow) {
         FieldMapping{LogEntryField::LEVEL, std::make_optional<size_t>(2), {}},
         FieldMapping{LogEntryField::MESSAGE, std::make_optional<size_t>(3), {}}
     };
-    settings.parserErrorAction = CLIConfig::ParserErrorAction::Throw;
+    settings.parserErrorAction = ParserErrorAction::Throw;
     auto settingsResult = analyzer.setSettings(settings);
     ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
 
@@ -474,7 +473,7 @@ TEST_F(LogAnalyzerTest, AppendDoesNotThrowWhenParserConfiguredToThrow) {
         std::ofstream ofs(seedFile);
         ofs << "2023-01-01 10:00:00 INFO: seed line\n";
     }
-    auto seedLoad = analyzer.loadAndReplace(seedFile, CLIConfig::ParserErrorAction::Warn);
+    auto seedLoad = analyzer.loadAndReplace(seedFile, ParserErrorAction::Warn);
     std::remove(seedFile.c_str());
     ASSERT_TRUE(seedLoad.has_value()) << seedLoad.error().toString();
 
@@ -487,7 +486,7 @@ TEST_F(LogAnalyzerTest, AppendDoesNotThrowWhenParserConfiguredToThrow) {
 
     ErrorCode::Result<AnalysisReport> appendResult;
     EXPECT_NO_THROW({
-        appendResult = analyzer.append(appendFile, CLIConfig::ParserErrorAction::Throw);
+        appendResult = analyzer.append(appendFile, ParserErrorAction::Throw);
     });
     std::remove(appendFile.c_str());
 
@@ -508,7 +507,7 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamDoesNotThrowWhenParserConfiguredToThrow) {
         FieldMapping{LogEntryField::LEVEL, std::make_optional<size_t>(2), {}},
         FieldMapping{LogEntryField::MESSAGE, std::make_optional<size_t>(3), {}}
     };
-    settings.parserErrorAction = CLIConfig::ParserErrorAction::Throw;
+    settings.parserErrorAction = ParserErrorAction::Throw;
     auto settingsResult = analyzer.setSettings(settings);
     ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
 
@@ -525,7 +524,7 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamDoesNotThrowWhenParserConfiguredToThrow) {
         streamResult = analyzer.analyzeStream({filePath}, [&](const LogEntry&) {
             ++callbackCount;
             return true;
-        }, CLIConfig::ParserErrorAction::Throw);
+        }, ParserErrorAction::Throw);
     });
     std::remove(filePath.c_str());
 
@@ -539,7 +538,7 @@ TEST_F(LogAnalyzerTest, SnapshotAccessorsReturnIndependentCopies) {
     ofs << "2023-01-01 10:00:00 INFO: first\n";
     ofs.close();
 
-    auto firstLoad = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto firstLoad = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     ASSERT_TRUE(firstLoad.has_value());
 
     auto entriesSnapshot = analyzer.getEntriesSnapshot();
@@ -552,7 +551,7 @@ TEST_F(LogAnalyzerTest, SnapshotAccessorsReturnIndependentCopies) {
     ofs2 << "2023-01-01 10:00:02 INFO: third\n";
     ofs2.close();
 
-    auto secondLoad = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto secondLoad = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     ASSERT_TRUE(secondLoad.has_value());
     ASSERT_EQ(analyzer.getEntries().size(), 2);
@@ -569,7 +568,7 @@ TEST_F(LogAnalyzerTest, ReferenceAccessorsReturnStableSnapshots) {
     ofs << "2023-01-01 10:00:00 INFO: one\n";
     ofs.close();
 
-    auto firstLoad = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto firstLoad = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     ASSERT_TRUE(firstLoad.has_value());
 
     const auto& entriesRefSnapshot = analyzer.getEntries();
@@ -582,7 +581,7 @@ TEST_F(LogAnalyzerTest, ReferenceAccessorsReturnStableSnapshots) {
     ofs2 << "2023-01-01 10:00:02 INFO: three\n";
     ofs2.close();
 
-    auto secondLoad = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto secondLoad = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     ASSERT_TRUE(secondLoad.has_value());
 
@@ -602,7 +601,7 @@ TEST_F(LogAnalyzerTest, ConcurrentSnapshotAccessDuringLoad) {
     ofs.close();
 
     auto futureLoad = std::async(std::launch::async, [&]() {
-        return analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+        return analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     });
 
     while (futureLoad.wait_for(std::chrono::milliseconds(1)) != std::future_status::ready) {
@@ -627,7 +626,7 @@ TEST_F(LogAnalyzerTest, ConcurrentLoadAsyncWithFilterAndExport) {
     }
     ofs.close();
 
-    auto futureLoad = analyzer.loadAsync(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto futureLoad = analyzer.loadAsync(filePath, ParserErrorAction::Warn);
 
     auto cond = FilterCondition::createString(LogEntryField::LEVEL, FilterOperator::NOT_EQUALS, "NONE");
     ASSERT_TRUE(cond.has_value());
@@ -693,7 +692,7 @@ TEST_F(LogAnalyzerTest, ConcurrentAnalyzeStreamUsesIndependentParserState) {
                 ++countA;
             }
             return true;
-        }, CLIConfig::ParserErrorAction::Warn);
+        }, ParserErrorAction::Warn);
     });
     auto f2 = std::async(std::launch::async, [&]() {
         return analyzer.analyzeStream({filePath2}, [&](const LogEntry& entry) {
@@ -701,7 +700,7 @@ TEST_F(LogAnalyzerTest, ConcurrentAnalyzeStreamUsesIndependentParserState) {
                 ++countB;
             }
             return true;
-        }, CLIConfig::ParserErrorAction::Warn);
+        }, ParserErrorAction::Warn);
     });
 
     auto r1 = f1.get();
@@ -728,7 +727,7 @@ protected:
         std::ofstream ofs(filePath);
         ofs << logContent;
         ofs.close();
-        auto reportResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+        auto reportResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
         ASSERT_TRUE(reportResult.has_value());
         std::remove(filePath.c_str());
     }

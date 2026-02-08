@@ -3,10 +3,9 @@
 
 #include <gtest/gtest.h>
 #include "core/Log/JsonParser.h"
-#include "config/CLI.h"
 
 TEST(JsonLogParserTest, ParseValidJsonLine) {
-    JsonLogParser parser({}, CLIConfig::ParserErrorAction::Warn, std::nullopt);
+    JsonLogParser parser({}, ParserErrorAction::Warn, std::nullopt);
     const std::string line = R"({"timestamp":"2023-01-01 10:00:00","level":"INFO","message":"hello","request_id":"abc-123"})";
 
     auto result = parser.parseLine(line, 7, "json.log");
@@ -22,7 +21,7 @@ TEST(JsonLogParserTest, ParseValidJsonLine) {
 }
 
 TEST(JsonLogParserTest, WarnModeReturnsErrorEntryForMalformedJson) {
-    JsonLogParser parser({}, CLIConfig::ParserErrorAction::Warn, std::nullopt);
+    JsonLogParser parser({}, ParserErrorAction::Warn, std::nullopt);
     const std::string line = R"({"timestamp":"2023-01-01 10:00:00","level":"INFO","message":"missing brace")";
 
     auto result = parser.parseLine(line, 10, "json.log");
@@ -35,7 +34,7 @@ TEST(JsonLogParserTest, WarnModeReturnsErrorEntryForMalformedJson) {
 }
 
 TEST(JsonLogParserTest, ThrowModeReturnsUnexpectedForMalformedJson) {
-    JsonLogParser parser({}, CLIConfig::ParserErrorAction::Throw, std::nullopt);
+    JsonLogParser parser({}, ParserErrorAction::Throw, std::nullopt);
     const std::string line = R"({"timestamp":"2023-01-01 10:00:00","level":"INFO","message":"missing brace")";
 
     auto result = parser.parseLine(line, 11, "json.log");

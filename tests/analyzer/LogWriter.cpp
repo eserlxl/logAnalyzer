@@ -8,7 +8,6 @@
 #include "core/Error.h"
 #include "utils/String.h"
 #include "config/Core.h"
-#include "config/CLI.h"
 #include <string>
 #include <sstream>
 #include <vector>
@@ -45,7 +44,7 @@ protected:
         ss << "2023-03-15 00:03:00 DEBUG Debug message.\n";
 
         // Load data into analyzer
-        auto result = analyzer->streamIn(ss, "test_stream", CLIConfig::ParserErrorAction::Ignore);
+        auto result = analyzer->streamIn(ss, "test_stream", ParserErrorAction::Ignore);
         ASSERT_TRUE(result.has_value()) << "Failed to parse test data: " << result.error().toString();
         
         // Verify entries count
