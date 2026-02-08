@@ -349,43 +349,20 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        // IStatisticCollector logic
-    for (const auto& statName : cliOptions.enabledStatistics) {
-        if (statName == "unique_messages") {
-            analyzer.addStatisticCollector(std::make_shared<UniqueMessagesCollector>());
-        } else if (statName.rfind("top_messages", 0) == 0) {
-            int n = cliOptions.topMessagesCount;
-            // Allow override from option like top_messages:5
-            auto colonPos = statName.find(':');
-            if (colonPos != std::string::npos) {
-                try {
-                    n = std::stoi(statName.substr(colonPos + 1));
-                } catch (const std::exception& e) {
-                    std::cerr << "Warning: Invalid number for top_messages. Using default " << n << std::endl;
-                }
+        if (!cliOptions.enabledStatistics.empty()) {
+            // Collectors are configured via parsed settings; reset them and
+            // run statistics only on the final filtered entry set.
+            analyzer.resetStatisticCollectors();
+            for (const auto& entry : filteredEntries) {
+                analyzer.processEntryForStatistics(entry);
             }
-            analyzer.addStatisticCollector(std::make_shared<TopMessagesCollector>(n));
-        } else if (statName == "entry_rate") {
-            analyzer.addStatisticCollector(std::make_shared<EntryRateCollector>());
-        } else {
-            std::cerr << "Warning: Unknown statistic '" << statName << "' requested." << std::endl;
-        }
-    }
-    
-    // ... processing logs ...
 
-    // After processing all entries, run stats over the *filtered* entries
-    for(const auto& entry : filteredEntries) {
-        analyzer.processEntryForStatistics(entry);
-    }
-
-    if (!cliOptions.enabledStatistics.empty()) {
-        *outputStream << "\n--- Statistics ---\n";
-        auto reports = analyzer.getAllStatisticReports();
-        for (const auto& reportPair : reports) {
-            *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << std::endl;
+            *outputStream << "\n--- Statistics ---\n";
+            auto reports = analyzer.getAllStatisticReports();
+            for (const auto& reportPair : reports) {
+                *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << std::endl;
+            }
         }
-    }
 }
 
     return 0;
