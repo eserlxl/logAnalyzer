@@ -147,34 +147,35 @@ LogAnalyzer::~LogAnalyzer() {
 }
 
 ErrorCode::Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& settings) {
-    std::unique_lock<std::shared_mutex> lock(stateMutex_); // Use unique_lock for modifying methods
-    currentSettings_ = settings; // Assign directly, no move as settings is const&
-    customLogLevelMapping_ = settings.customLogLevelMappings; // Update LogAnalyzer's own mapping
-    
-    // Clear existing collectors and create new ones based on the updated settings
-    collectors_.clear();
-    for (const auto& config : currentSettings_.statisticConfigs) {
+    auto newCustomLogLevelMapping = settings.customLogLevelMappings;
+    std::vector<std::shared_ptr<IStatisticCollector>> newCollectors;
+    newCollectors.reserve(settings.statisticConfigs.size());
+    for (const auto& config : settings.statisticConfigs) {
         if (auto collector = createStatisticCollector(config)) {
-            collectors_.push_back(collector);
+            newCollectors.push_back(collector);
         }
     }
 
     auto parser_or_error = DefaultLogParser::create(
-        currentSettings_.lineParsePattern, 
-        currentSettings_.fieldMappings, 
-        customLogLevelMapping_, // Use LogAnalyzer's own mapping
-        currentSettings_.logEntryStartPattern, 
-        currentSettings_.caseSensitiveParsing, // Pass caseSensitiveParsing
-        currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
-        currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
+        settings.lineParsePattern,
+        settings.fieldMappings,
+        newCustomLogLevelMapping,
+        settings.logEntryStartPattern,
+        settings.caseSensitiveParsing,
+        settings.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+        settings.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
         true, // threadSafe: LogAnalyzer should use a thread-safe parser
         std::nullopt // errorHandler: No specific error handler for now, default to internal logging
     );
     if (parser_or_error.has_value()) {
+        std::unique_lock<std::shared_mutex> lock(stateMutex_);
+        currentSettings_ = settings;
+        customLogLevelMapping_ = std::move(newCustomLogLevelMapping);
+        collectors_ = std::move(newCollectors);
         currentParser_ = std::move(parser_or_error.value());
         return {};
     } else {
-        return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Failed to create parser with new settings."));
+        return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Failed to create parser with new settings: " + parser_or_error.error().message));
     }
 }
 
@@ -191,6 +192,7 @@ void LogAnalyzer::clear() {
 
 void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel) {
     std::unique_lock<std::shared_mutex> lock(customLogLevelMappingMutex_); // Use specific mutex for this map
+    auto previousMapping = customLogLevelMapping_;
     customLogLevelMapping_[std::string(levelString)] = mappedLevel;
     // Recreate the parser with the updated customLogLevelMapping_
     // This assumes that other settings (pattern, fieldMappings) are not changing,
@@ -210,10 +212,9 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
     if (parser_or_error.has_value()) {
         currentParser_ = std::move(parser_or_error.value());
     } else {
-        // If updating custom log levels breaks the parser, we should report it.
-        // For now, print error and keep old parser. Or throw. Throwing is safer.
-        std::cerr << "Error: Failed to re-create parser after updating custom log levels: " << parser_or_error.error().message << std::endl;
-        throw std::runtime_error("Failed to re-create parser after updating custom log levels: " + parser_or_error.error().message);
+        customLogLevelMapping_ = std::move(previousMapping);
+        std::cerr << "Warning: Failed to re-create parser after updating custom log levels: "
+                  << parser_or_error.error().message << ". Keeping previous parser and mappings." << std::endl;
     }
 }
 

@@ -27,6 +27,17 @@ TEST_F(LogAnalyzerTest, SetCustomLogLevelMapping) {
     SUCCEED();
 }
 
+TEST_F(LogAnalyzerTest, SetCustomLogLevelMappingDoesNotThrowAfterRejectedSettings) {
+    LogAnalyzerSettings invalidSettings;
+    invalidSettings.lineParsePattern = "[";
+    auto setResult = analyzer.setSettings(invalidSettings);
+    ASSERT_FALSE(setResult.has_value());
+
+    EXPECT_NO_THROW({
+        analyzer.setCustomLogLevelMapping("VERBOSE", LogLevel::DEBUG);
+    });
+}
+
 TEST_F(LogAnalyzerTest, DefaultLogLevelMapping) {
     SUCCEED();
 }
@@ -43,6 +54,16 @@ TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {
     auto result = analyzer.setSettings(settings);
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidRegex);
+
+    const std::string filePath = "test_set_settings_rollback.log";
+    std::ofstream ofs(filePath);
+    ofs << "2023-01-01 10:00:00 INFO: still-usable\n";
+    ofs.close();
+
+    auto loadResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
+    EXPECT_EQ(loadResult->successfulParses, 1);
 }
 
 TEST_F(LogAnalyzerTest, GetFilteredEntriesInvalidRegex) {
