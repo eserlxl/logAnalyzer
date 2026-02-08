@@ -32,7 +32,8 @@ LogReader::LogReader(LogAnalyzer& analyzer) : analyzer_(analyzer) {}
 // Assumes analyzer_.stateMutex_ is already locked (unique_lock) by the caller.
 LogReader::ScopedLogSettings::ScopedLogSettings(LogAnalyzer& analyzer, const std::string& pattern_val, LogReader& reader)
     : analyzer_(analyzer), reader_(reader), restorationError_(std::nullopt), settingsRestored_(false) {
-    originalSettings_ = analyzer_.getSettings(); // Get original settings (under lock)
+    // stateMutex_ is already held by caller; avoid re-locking through getSettings().
+    originalSettings_ = analyzer_.currentSettings_;
     LogAnalyzerSettings tempSettings = originalSettings_;
 
     if (pattern_val == DEFAULT_LOG_REGEX_PATTERN_SV) {
