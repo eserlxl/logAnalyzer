@@ -18,7 +18,7 @@
 | Area | Score (0-10) | Evidence |
 |---|---:|---|
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
-| Correctness / edge-case handling | 8.2 | Good filter/type handling and multiline parser tests exist; analyzer load path uses `processLine()`, descending sort uses strict ordering semantics, query parsing is implemented for `--expression`, stream ingestion now provides best-effort progress callback reporting for seekable streams (`src/analyzer/IO.cpp`, `tests/analyzer/LogWriter.cpp`, commit `93baf2a`) with cancellation-safe final-status signaling (no misleading final `completed` event after cancellation in commit `6be927e`), and concurrent append/stream lost-update behavior was fixed by atomic merge under unique lock (`src/analyzer/Log/Loader.cpp`, `src/analyzer/Streaming.cpp`, commit `17a85b4`). |
+| Correctness / edge-case handling | 8.3 | Good filter/type handling and multiline parser tests exist; analyzer load path uses `processLine()`, descending sort uses strict ordering semantics, query parsing is implemented for `--expression`, stream ingestion now provides best-effort progress callback reporting for seekable streams (`src/analyzer/IO.cpp`, `tests/analyzer/LogWriter.cpp`, commit `93baf2a`) with cancellation-safe final-status signaling (no misleading final `completed` event after cancellation in commit `6be927e`), append/stream stats collection is now preserved even across move-based merge paths with explicit regression coverage (`src/analyzer/Log/Loader.cpp`, `src/analyzer/Streaming.cpp`, `tests/analyzer/Core.cpp`, commit `6ee4c3f`), and concurrent append/stream lost-update behavior was fixed by atomic merge under unique lock (`src/analyzer/Log/Loader.cpp`, `src/analyzer/Streaming.cpp`, commit `17a85b4`). |
 | Error handling consistency | 9.0 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, parser throw mode returns structured `Result` errors (commit `3ce6b12`), settings updates roll back safely (commit `074892a`), and constructors now avoid explicit fallback-init throws (commit `a4d9101`). |
 | Performance risks | 7.2 | Stream mode exists; regex caches present; noisy unconditional export debug dumps were removed (commit `2dc97f8`), parse pipeline copies were reduced via move-based entry handling (commit `055d6e8`), and append/stream merge paths now use ordered fast-paths to avoid full merge work when ranges are already non-overlapping (commit `8b4d35c`). Remaining cost driver is non-stream load-and-replace full sort for large datasets. |
 | Test quality | 9.1 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency includes deterministic snapshot/load coverage, concurrent append/filter/export checks, concurrent `loadAsync` filter/export stress coverage, concurrent multiline `analyzeStream` isolation checks, and explicit concurrent dual-append preservation coverage (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`, `51d85c3`, `6a63d62`, `17a85b4`), plus direct JsonLogParser tests (commit `ade5392`). |
@@ -287,6 +287,11 @@ Configure/build:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
 - Post-fix verification (progress callback cancellation-completion semantics): SUCCESS
+  Commands:
+  - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
+- Post-fix verification (append/stream stats collection preserved across move-merge paths): SUCCESS
   Commands:
   - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
   - cmake --build build --parallel
