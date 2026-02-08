@@ -149,7 +149,7 @@ TEST_F(LogAnalyzerTest, ExportAsJsonEdgeCases) {
 }
 
 TEST_F(LogAnalyzerTest, AppendCorrectness) {
-    std::string logContent1 = "2023-01-01 10:00:00 INFO Entry 1\n";
+    std::string logContent1 = "2023-01-01 10:00:00 INFO: Entry 1\n";
     std::string filePath1 = "test_append_1.log";
     std::ofstream ofs1(filePath1);
     ofs1 << logContent1;
