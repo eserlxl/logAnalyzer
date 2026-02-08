@@ -21,7 +21,7 @@
 | Correctness / edge-case handling | 7.5 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, descending sort now uses strict ordering semantics, and query parsing is implemented for `--expression` with parser tests (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `src/filter/Parser.cpp`, `tests/filter/Iteration15.cpp`). |
 | Error handling consistency | 8.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, parser throw mode returns structured `Result` errors (commit `3ce6b12`), and settings updates now roll back safely without leaving partial invalid state (commit `074892a`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
-| Test quality | 8.5 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency now includes deterministic snapshot/load coverage and concurrent append/filter/export stability checks (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`), and direct JsonLogParser tests were added (commit `ade5392`). |
+| Test quality | 9.0 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency now includes deterministic snapshot/load coverage, concurrent append/filter/export checks, and concurrent `loadAsync` with filter/export stress coverage (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`, `51d85c3`), and direct JsonLogParser tests were added (commit `ade5392`). |
 | Build hygiene | 9.0 | Strict warnings-as-errors in CMake (`CMakeLists.txt`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy now supports system packages, optional fetch, plus hermetic offline mirror mode (`LOGANALYZER_OFFLINE_DEPS`, commit `624536a`). |
 | API hygiene | 7.0 | Public API header is broad, but analyzer state access now uses thread-safe snapshots for both explicit snapshot APIs and reference-returning accessors (`src/analyzer/IO.cpp`, commits `17ef73c`, `645a17e`). |
 
@@ -69,14 +69,15 @@
 - Resolution: Fixed in commit `645a17e`; `getEntries()`, `getLastReport()`, and `getEntriesView()` now return thread-local snapshots rather than aliases to shared mutable state, with regression coverage in `tests/analyzer/Core.cpp`.
 - Follow-up: Continue using explicit snapshot APIs for clarity in performance-sensitive call paths.
 
-6. **Concurrency behavior largely untested (Partially mitigated)**  
+6. **Concurrency behavior largely untested (Further mitigated)**  
 - Severity: Medium  
 - Likelihood: High  
 - Where: `tests/analyzer/Core.cpp:108`  
 - Why it matters: Real-world async/stream use can race; current tests don’t validate concurrent access correctness.  
 - Mitigation progress: Added deterministic concurrent snapshot-read/load test in commit `9a69617`.
 - Mitigation progress: Added concurrent append + filter/export stability coverage in commit `9e47304`.
-- Minimal mitigation idea: Expand further to stress concurrent stream parsing and export under larger datasets.
+- Mitigation progress: Added concurrent `loadAsync` + filter/export stress coverage in commit `51d85c3`.
+- Minimal mitigation idea: Add dedicated long-running stress/fuzz job for high-contention scenarios in CI.
 
 7. **Fresh builds depend on live network FetchContent (Resolved)**  
 - Severity: Medium  
@@ -168,6 +169,10 @@ Configure/build:
   Commands:
   - cmake -S . -B /tmp/loganalyzer-offline-check -DLOGANALYZER_OFFLINE_DEPS=ON -DLOGANALYZER_FETCH_DEPS=ON -DLOGANALYZER_DEPS_MIRROR_DIR=/tmp/does-not-exist
   - Verified expected configure-time failure with actionable dependency guidance (no network attempt required)
+- Post-fix verification (loadAsync/filter/export concurrency coverage): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
 
 Warnings:
 - warning count: 0
