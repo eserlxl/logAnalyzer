@@ -13,6 +13,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(LOGANALYZER_FETCH_DEPS "Fetch third-party dependencies with FetchContent when not found locally" ON)
+option(LOGANALYZER_OFFLINE_DEPS "Disallow network dependency fetches; use system packages or local mirror/source dirs" OFF)
+set(LOGANALYZER_DEPS_MIRROR_DIR "" CACHE PATH "Local mirror root containing nlohmann_json/, cli11/, and googletest/ source trees")
+set(LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR "" CACHE PATH "Local source directory override for nlohmann_json")
+set(LOGANALYZER_CLI11_SOURCE_DIR "" CACHE PATH "Local source directory override for CLI11")
+set(LOGANALYZER_GTEST_SOURCE_DIR "" CACHE PATH "Local source directory override for googletest")
 
 include(FetchContent)
 include(CMakePackageConfigHelpers)
@@ -21,11 +26,30 @@ include(CMakePackageConfigHelpers)
 find_package(nlohmann_json 3.11.3 QUIET CONFIG)
 if(NOT TARGET nlohmann_json::nlohmann_json)
     if(LOGANALYZER_FETCH_DEPS)
-        FetchContent_Declare(
-            nlohmann_json
-            GIT_REPOSITORY https://github.com/nlohmann/json.git
-            GIT_TAG v3.11.3
-        )
+        set(_nlohmann_json_source_dir "")
+        if(LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR)
+            if(NOT EXISTS "${LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR}/CMakeLists.txt")
+                message(FATAL_ERROR "LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR does not contain CMakeLists.txt: ${LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR}")
+            endif()
+            set(_nlohmann_json_source_dir "${LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR}")
+        elseif(LOGANALYZER_DEPS_MIRROR_DIR AND EXISTS "${LOGANALYZER_DEPS_MIRROR_DIR}/nlohmann_json/CMakeLists.txt")
+            set(_nlohmann_json_source_dir "${LOGANALYZER_DEPS_MIRROR_DIR}/nlohmann_json")
+        endif()
+
+        if(_nlohmann_json_source_dir)
+            FetchContent_Declare(
+                nlohmann_json
+                SOURCE_DIR "${_nlohmann_json_source_dir}"
+            )
+        elseif(LOGANALYZER_OFFLINE_DEPS)
+            message(FATAL_ERROR "nlohmann_json was not found and offline mode is enabled. Provide system package, LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR, or LOGANALYZER_DEPS_MIRROR_DIR.")
+        else()
+            FetchContent_Declare(
+                nlohmann_json
+                GIT_REPOSITORY https://github.com/nlohmann/json.git
+                GIT_TAG v3.11.3
+            )
+        endif()
         FetchContent_MakeAvailable(nlohmann_json)
     else()
         message(FATAL_ERROR "nlohmann_json was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")
@@ -36,11 +60,30 @@ endif()
 find_package(CLI11 2.6.0 QUIET CONFIG)
 if(NOT TARGET CLI11::CLI11)
     if(LOGANALYZER_FETCH_DEPS)
-        FetchContent_Declare(
-            cli11
-            GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-            GIT_TAG v2.6.0
-        )
+        set(_cli11_source_dir "")
+        if(LOGANALYZER_CLI11_SOURCE_DIR)
+            if(NOT EXISTS "${LOGANALYZER_CLI11_SOURCE_DIR}/CMakeLists.txt")
+                message(FATAL_ERROR "LOGANALYZER_CLI11_SOURCE_DIR does not contain CMakeLists.txt: ${LOGANALYZER_CLI11_SOURCE_DIR}")
+            endif()
+            set(_cli11_source_dir "${LOGANALYZER_CLI11_SOURCE_DIR}")
+        elseif(LOGANALYZER_DEPS_MIRROR_DIR AND EXISTS "${LOGANALYZER_DEPS_MIRROR_DIR}/cli11/CMakeLists.txt")
+            set(_cli11_source_dir "${LOGANALYZER_DEPS_MIRROR_DIR}/cli11")
+        endif()
+
+        if(_cli11_source_dir)
+            FetchContent_Declare(
+                cli11
+                SOURCE_DIR "${_cli11_source_dir}"
+            )
+        elseif(LOGANALYZER_OFFLINE_DEPS)
+            message(FATAL_ERROR "CLI11 was not found and offline mode is enabled. Provide system package, LOGANALYZER_CLI11_SOURCE_DIR, or LOGANALYZER_DEPS_MIRROR_DIR.")
+        else()
+            FetchContent_Declare(
+                cli11
+                GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+                GIT_TAG v2.6.0
+            )
+        endif()
         FetchContent_MakeAvailable(cli11)
     else()
         message(FATAL_ERROR "CLI11 was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")
@@ -51,13 +94,32 @@ endif()
 find_package(GTest 1.14.0 QUIET CONFIG)
 if(NOT TARGET GTest::gtest AND NOT TARGET gtest)
     if(LOGANALYZER_FETCH_DEPS)
-        FetchContent_Declare(
-            googletest
-            GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG v1.14.0
-        )
+        set(_gtest_source_dir "")
+        if(LOGANALYZER_GTEST_SOURCE_DIR)
+            if(NOT EXISTS "${LOGANALYZER_GTEST_SOURCE_DIR}/CMakeLists.txt")
+                message(FATAL_ERROR "LOGANALYZER_GTEST_SOURCE_DIR does not contain CMakeLists.txt: ${LOGANALYZER_GTEST_SOURCE_DIR}")
+            endif()
+            set(_gtest_source_dir "${LOGANALYZER_GTEST_SOURCE_DIR}")
+        elseif(LOGANALYZER_DEPS_MIRROR_DIR AND EXISTS "${LOGANALYZER_DEPS_MIRROR_DIR}/googletest/CMakeLists.txt")
+            set(_gtest_source_dir "${LOGANALYZER_DEPS_MIRROR_DIR}/googletest")
+        endif()
+
         # For Windows: Prevent overriding the parent project's compiler/linker settings
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        if(_gtest_source_dir)
+            FetchContent_Declare(
+                googletest
+                SOURCE_DIR "${_gtest_source_dir}"
+            )
+        elseif(LOGANALYZER_OFFLINE_DEPS)
+            message(FATAL_ERROR "GTest was not found and offline mode is enabled. Provide system package, LOGANALYZER_GTEST_SOURCE_DIR, or LOGANALYZER_DEPS_MIRROR_DIR.")
+        else()
+            FetchContent_Declare(
+                googletest
+                GIT_REPOSITORY https://github.com/google/googletest.git
+                GIT_TAG v1.14.0
+            )
+        endif()
         FetchContent_MakeAvailable(googletest)
     else()
         message(FATAL_ERROR "GTest was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")

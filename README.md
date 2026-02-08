@@ -66,6 +66,14 @@ Follow these steps to get `logAnalyzer` running on your system.
     cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DLOGANALYZER_FETCH_DEPS=OFF
     ```
 
+    For hermetic/offline builds with a local mirror of dependency sources:
+    ```bash
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release \
+      -DLOGANALYZER_OFFLINE_DEPS=ON \
+      -DLOGANALYZER_DEPS_MIRROR_DIR=/path/to/deps-mirror
+    ```
+    Expected mirror layout: `/path/to/deps-mirror/{nlohmann_json,cli11,googletest}` (each containing a `CMakeLists.txt`).
+
     The executable will be located at `build/logAnalyzer`.
 
 3.  **Install (Optional):**
