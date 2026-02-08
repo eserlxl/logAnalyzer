@@ -79,6 +79,7 @@
 - Mitigation progress: Added concurrent `loadAsync` + filter/export stress coverage in commit `51d85c3`.
 - Mitigation progress: `analyzeStream()` now clones parser state per invocation and has concurrent multiline regression coverage in commit `6a63d62`.
 - Mitigation progress: CI now runs repeated `analyzer_Core` executions with `ctest --repeat until-fail` in commit `075f68b` to detect flaky/racy behavior continuously.
+- Mitigation progress: `streamIn()` lock boundary now covers `entries_.size()` used for merge reservation, removing a concrete read-race in commit `fc3f674`.
 - Minimal mitigation idea: Add dedicated long-running stress/fuzz job for high-contention scenarios in CI.
 
 7. **Fresh builds depend on live network FetchContent (Resolved)**  
@@ -182,6 +183,10 @@ Configure/build:
 - Post-fix verification (repeat stability gate for concurrency suite): SUCCESS
   Commands:
   - ctest --test-dir build --output-on-failure --repeat until-fail:10 -R analyzer_Core
+- Post-fix verification (streamIn race fix): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
