@@ -214,6 +214,43 @@ TEST_F(LogAnalyzerTest, ConcurrentAppendAndFilterIsStable) {
     EXPECT_LE(observedMax, finalEntries.size());
 }
 
+TEST_F(LogAnalyzerTest, ConcurrentAppendFromTwoThreadsPreservesAllEntries) {
+    const std::string filePath1 = "test_concurrent_append_threads_1.log";
+    const std::string filePath2 = "test_concurrent_append_threads_2.log";
+
+    {
+        std::ofstream ofs(filePath1);
+        for (int i = 0; i < 120; ++i) {
+            ofs << "2023-01-01 10:10:" << (i % 60 < 10 ? "0" : "") << (i % 60)
+                << " INFO: thread-a-" << i << "\n";
+        }
+    }
+    {
+        std::ofstream ofs(filePath2);
+        for (int i = 0; i < 130; ++i) {
+            ofs << "2023-01-01 10:20:" << (i % 60 < 10 ? "0" : "") << (i % 60)
+                << " INFO: thread-b-" << i << "\n";
+        }
+    }
+
+    auto f1 = std::async(std::launch::async, [&]() {
+        return analyzer.append(filePath1, CLIConfig::ParserErrorAction::Warn);
+    });
+    auto f2 = std::async(std::launch::async, [&]() {
+        return analyzer.append(filePath2, CLIConfig::ParserErrorAction::Warn);
+    });
+
+    auto r1 = f1.get();
+    auto r2 = f2.get();
+    std::remove(filePath1.c_str());
+    std::remove(filePath2.c_str());
+    ASSERT_TRUE(r1.has_value()) << r1.error().toString();
+    ASSERT_TRUE(r2.has_value()) << r2.error().toString();
+
+    auto snapshot = analyzer.getEntriesSnapshot();
+    EXPECT_EQ(snapshot.size(), 250);
+}
+
 TEST_F(LogAnalyzerTest, InvalidStatisticConfigDoesNotThrowOnSetSettings) {
     LogAnalyzerSettings settings;
     settings.statisticConfigs = {

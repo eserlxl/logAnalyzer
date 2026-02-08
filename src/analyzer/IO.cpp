@@ -44,6 +44,30 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
     AnalysisReport report;
     report.status = ParseError::SUCCESS;
 
+    std::unique_ptr<ILogParser> parser;
+    {
+        std::shared_lock<std::shared_mutex> lock(stateMutex_);
+        if (!currentParser_) {
+            report.status = ParseError::UNKNOWN_ERROR;
+            report.parseErrors.emplace_back(LogParseError{
+                ParseError::UNKNOWN_ERROR,
+                "Parser is not initialized",
+                0
+            });
+            return {std::move(parsedEntries), report};
+        }
+        parser = currentParser_->clone();
+    }
+    if (!parser) {
+        report.status = ParseError::UNKNOWN_ERROR;
+        report.parseErrors.emplace_back(LogParseError{
+            ParseError::UNKNOWN_ERROR,
+            "Failed to clone parser",
+            0
+        });
+        return {std::move(parsedEntries), report};
+    }
+
     std::string line;
     size_t lineNumber = 0;
     while (std::getline(is, line)) {
@@ -56,7 +80,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
 
         std::optional<ErrorCode::Result<LogEntry>> parseResultOpt;
         try {
-            parseResultOpt = currentParser_->processLine(line, lineNumber, sourceIdentifier);
+            parseResultOpt = parser->processLine(line, lineNumber, sourceIdentifier);
         } catch (const std::exception& e) {
             report.parseErrors.emplace_back(LogParseError{
                 ParseError::PARTIAL_FAILURE,
@@ -65,7 +89,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             });
             if (errorAction == CLIConfig::ParserErrorAction::Throw) {
                 report.status = ParseError::UNKNOWN_ERROR;
-                return {parsedEntries, report};
+                return {std::move(parsedEntries), report};
             }
             continue;
         }
@@ -88,7 +112,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
 
     std::vector<ErrorCode::Result<LogEntry>> flushResults;
     try {
-        flushResults = currentParser_->flushRemaining();
+        flushResults = parser->flushRemaining();
     } catch (const std::exception& e) {
         report.parseErrors.emplace_back(LogParseError{
             ParseError::PARTIAL_FAILURE,
@@ -97,7 +121,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
         });
         if (errorAction == CLIConfig::ParserErrorAction::Throw) {
             report.status = ParseError::UNKNOWN_ERROR;
-            return {parsedEntries, report};
+            return {std::move(parsedEntries), report};
         }
     }
     for (auto& result : flushResults) {
@@ -118,7 +142,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
         report.status = ParseError::PARTIAL_FAILURE;
     }
     
-    return {parsedEntries, report};
+    return {std::move(parsedEntries), report};
 }
 
 const std::vector<LogEntry>& LogAnalyzer::getEntries() const {

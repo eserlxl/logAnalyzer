@@ -43,9 +43,9 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
         return report;
     }
 
-    std::vector<LogEntry> mergedEntries;
-    { // Scope for shared_lock to read entries_
-        std::shared_lock<std::shared_mutex> sharedLock(stateMutex_);
+    { // Scope for unique_lock to modify entries_ and process stats atomically
+        std::unique_lock<std::shared_mutex> uniqueLock(stateMutex_);
+        std::vector<LogEntry> mergedEntries;
         mergedEntries.reserve(entries_.size() + newEntries.size());
         std::merge(entries_.begin(), entries_.end(),
                    newEntries.begin(), newEntries.end(),
@@ -53,12 +53,8 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
                    [](const LogEntry& a, const LogEntry& b) {
                        return a.timestamp < b.timestamp;
                    });
-    } // shared_lock is released here
+        entries_.swap(mergedEntries);
 
-    { // Scope for unique_lock to modify entries_ and process stats
-        std::unique_lock<std::shared_mutex> uniqueLock(stateMutex_);
-        entries_.swap(mergedEntries); // Modify entries_ under unique lock
-        
         // Process statistics for the newly added entries. This modifies statistics_,
         // so it must be within the unique lock scope.
         for (const auto& entry : newEntries) {

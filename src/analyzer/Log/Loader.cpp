@@ -31,7 +31,6 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(
     std::optional<CancellationToken*> cancellationToken,
     std::optional<ProgressCallback> progressCallback
 ) {
-    std::unique_lock<std::shared_mutex> lock(stateMutex_);
     if (!std::filesystem::exists(filePath)) {
         return std::unexpected(ErrorCode::Error::fileNotFound(filePath));
     }
@@ -40,20 +39,24 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(
         return std::unexpected(ErrorCode::Error::fileNotReadable(filePath));
     }
 
-    entries_.clear();
     auto [parsedEntries, report] = parseAndReport(file, filePath, errorAction, cancellationToken, progressCallback);
-    entries_ = std::move(parsedEntries);
-    
-    // Process statistics for all newly loaded entries
-    for (const auto& entry : entries_) {
-        processEntryForStatistics(entry);
-    }
-    
-    std::sort(entries_.begin(), entries_.end(), [](const LogEntry& a, const LogEntry& b) {
+
+    std::sort(parsedEntries.begin(), parsedEntries.end(), [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
-    lastReport = report;
+    {
+        std::unique_lock<std::shared_mutex> lock(stateMutex_);
+        entries_ = std::move(parsedEntries);
+
+        // Process statistics for all newly loaded entries
+        for (const auto& entry : entries_) {
+            processEntryForStatistics(entry);
+        }
+
+        lastReport = report;
+    }
+
     return report;
 }
 
@@ -230,23 +233,18 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::append(
         return report;
     }
 
-    std::vector<LogEntry> mergedEntries;
-    mergedEntries.reserve(entries_.size() + newEntries.size());
-
-    { // Scope for shared_lock to read entries_
-        std::shared_lock<std::shared_mutex> sharedLock(stateMutex_);
+    { // Scope for unique_lock to modify entries_ and process stats atomically
+        std::unique_lock<std::shared_mutex> uniqueLock(stateMutex_);
+        std::vector<LogEntry> mergedEntries;
+        mergedEntries.reserve(entries_.size() + newEntries.size());
         std::merge(entries_.begin(), entries_.end(),
                    newEntries.begin(), newEntries.end(),
                    std::back_inserter(mergedEntries),
                    [](const LogEntry& a, const LogEntry& b) {
                        return a.timestamp < b.timestamp;
                    });
-    } // shared_lock is released here
+        entries_.swap(mergedEntries);
 
-    { // Scope for unique_lock to modify entries_ and process stats
-        std::unique_lock<std::shared_mutex> uniqueLock(stateMutex_);
-        entries_.swap(mergedEntries); // Modify entries_ under unique lock
-        
         // Process statistics for the newly added entries. This modifies statistics_,
         // so it must be within the unique lock scope.
         for (const auto& entry : newEntries) {
