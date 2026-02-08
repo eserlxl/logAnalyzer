@@ -100,6 +100,24 @@ logAnalyzer [input-file] [options]
 
 For a deep dive into all functionalities and more detailed examples, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
 
+### Advanced Filtering and Parsing
+
+- **Expression filter**:
+  ```bash
+  logAnalyzer app.log --expression "level >= WARNING AND message contains 'timeout'"
+  ```
+- **Multi-line entry parsing**:
+  ```bash
+  logAnalyzer app.log \
+    --pattern "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) (\\w+): ([\\s\\S]*)$" \
+    --multiline-start-pattern "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} \\w+:" \
+    --max-multiline-buffer 10MB
+  ```
+- **Parse error behavior**:
+  ```bash
+  logAnalyzer app.log --on-parse-error warn
+  ```
+
 ## ⚙️ Configuration
 
 `logAnalyzer` supports extensive configuration via command-line arguments or a JSON configuration file. Command-line arguments always override settings from a configuration file.
