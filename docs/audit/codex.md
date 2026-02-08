@@ -667,6 +667,11 @@ Configure/build:
   - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
+- Post-fix verification (human-readable size parser rejects malformed whitespace/exponent forms): SUCCESS
+  Commands:
+  - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
