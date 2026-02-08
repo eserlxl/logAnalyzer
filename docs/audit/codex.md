@@ -22,7 +22,7 @@
 | Error handling consistency | 6.5 | `ErrorCode::Result` is used widely; stats collector construction and stats JSON parsing no longer rely on exceptions for malformed config, and analyzer now guards parser throw paths by converting exceptions to report errors (`src/analyzer/IO.cpp`). Remaining throw sources are inside parser implementations. |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 6.5 | 49 passing tests with good breadth; strong parser/filter/export coverage. Gaps: concurrency is placeholder (`tests/analyzer/Core.cpp:108`), parseQuery is expected unimplemented (`tests/filter/Iteration15.cpp:142`), no direct JsonLogParser-focused tests observed. |
-| Build hygiene | 7.0 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration. Weakness: dependency fetch requires network on fresh configure (offline failure), no visible CI config (`.github` absent). |
+| Build hygiene | 8.0 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, and CI workflow added (`.github/workflows/ci.yml`, commit `9793584`). Remaining weakness: dependency fetch requires network on fresh configure. |
 | API hygiene | 6.0 | Public API header is broad, but thread-safe snapshot accessors were added for analyzer state (`include/analyzer/Core.h`, `src/analyzer/IO.cpp`, commit `17ef73c`). Legacy reference-returning accessors still exist. |
 
 ## Risk register
