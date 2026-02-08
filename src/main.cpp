@@ -269,12 +269,23 @@ int main(int argc, char *argv[]) {
         const SortOrder sortOrder = cliOptions.sortOrder.value_or(SortOrder::ASCENDING);
         if (sortBy != SortBy::TIMESTAMP || sortOrder != SortOrder::ASCENDING) {
             std::sort(filteredEntries.begin(), filteredEntries.end(), [&](const LogEntry& a, const LogEntry& b) {
-                if (sortBy == SortBy::TIMESTAMP) {
-                    return sortOrder == SortOrder::ASCENDING ? a.timestamp < b.timestamp : a.timestamp > b.timestamp;
-                } else if (sortBy == SortBy::LEVEL) {
-                    return sortOrder == SortOrder::ASCENDING ? a.level < b.level : a.level > b.level;
-                } else { // MESSAGE
-                    return sortOrder == SortOrder::ASCENDING ? a.message < b.message : a.message > b.message;
+                auto less = [&](const auto& lhs, const auto& rhs) {
+                    return sortOrder == SortOrder::ASCENDING ? lhs < rhs : lhs > rhs;
+                };
+
+                switch (sortBy) {
+                    case SortBy::TIMESTAMP:
+                        return less(a.timestamp, b.timestamp);
+                    case SortBy::LEVEL:
+                        return less(a.level, b.level);
+                    case SortBy::MESSAGE:
+                        return less(a.message, b.message);
+                    case SortBy::SOURCE:
+                        return less(a.sourceFile, b.sourceFile);
+                    case SortBy::THREAD_ID:
+                        return less(a.threadId, b.threadId);
+                    default:
+                        return less(a.message, b.message);
                 }
             });
         }
