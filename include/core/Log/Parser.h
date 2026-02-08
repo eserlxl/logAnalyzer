@@ -5,7 +5,6 @@
 #define LOG_PARSER_H
 
 #include "core/Log/Types.h" // Includes LogEntryField, FieldMapping, etc.
-#include "config/CLI.h" // For CLIConfig::ParserErrorAction
 #include "core/Error.h" // For Error struct and Result alias
 #include "core/CiLess.h" // For LogAnalyzer::LogAnalyzerInternal::ci_less
 #include <functional>
@@ -92,7 +91,7 @@ public:
         const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
         std::optional<std::string> logEntryStartPattern, // Reverted to string
         std::optional<bool> caseSensitive, // NEW: Case sensitivity for regex
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         size_t maxMultiLineBufferSize,
         bool enableMessageKvParsing, // New parameter: Explicitly enable legacy KV parsing in MESSAGE field
         std::optional<std::function<void(const std::string&)>> warningLogger = std::nullopt // New: Configurable warning logger
@@ -107,7 +106,7 @@ public:
         std::optional<std::regex> compiledLogEntryStartRegex, // The compiled start regex
         std::optional<std::string> logEntryStartPatternString, // The original start regex string
         std::optional<bool> caseSensitive, // NEW
-        CLIConfig::ParserErrorAction errorAction,
+        ParserErrorAction errorAction,
         size_t maxMultiLineBufferSize,
         bool enableMessageKvParsing, // New parameter
         std::optional<std::function<void(const std::string&)>> warningLogger = std::nullopt // New parameter
@@ -167,7 +166,7 @@ public:
 
     static const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> DEFAULT_LEVEL_MAPPINGS;
 
-    CLIConfig::ParserErrorAction _parserErrorAction; // New: To store the error action
+    ParserErrorAction _parserErrorAction; // New: To store the error action
 
 private:
 

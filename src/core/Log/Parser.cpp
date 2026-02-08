@@ -7,7 +7,6 @@
 
 #include "utils/Time.h"
 #include "utils/String.h"
-#include "config/CLI.h" // For CLIConfig::ParserErrorAction
 #include <iostream>
 #include <stdexcept>
 
@@ -35,7 +34,7 @@ ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
     std::optional<std::string> logEntryStartPattern,
     std::optional<bool> caseSensitive,
-    CLIConfig::ParserErrorAction errorAction,
+    ParserErrorAction errorAction,
     size_t maxMultiLineBufferSize,
     bool enableMessageKvParsing,
     std::optional<std::function<void(const std::string&)>> warningLogger) {
@@ -88,7 +87,7 @@ DefaultLogParser::DefaultLogParser(
     std::optional<std::regex> compiledLogEntryStartRegex,
     std::optional<std::string> logEntryStartPatternString,
     std::optional<bool> caseSensitive,
-    CLIConfig::ParserErrorAction errorAction,
+    ParserErrorAction errorAction,
     size_t maxMultiLineBufferSize,
     bool enableMessageKvParsing,
     std::optional<std::function<void(const std::string&)>> warningLogger
@@ -301,7 +300,7 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, s
         return result;
     }
 
-    if (_parserErrorAction == CLIConfig::ParserErrorAction::Throw) {
+    if (_parserErrorAction == ParserErrorAction::Throw) {
         return std::unexpected(result.error());
     }
 
@@ -323,9 +322,9 @@ LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEnt
     if (parseResult.error().code == Code::BufferLimitExceeded && !currentLogEntryBuffer.empty()) {
         partialEntry.message = currentLogEntryBuffer;
     } else {
-        if (_parserErrorAction == CLIConfig::ParserErrorAction::Ignore) {
+        if (_parserErrorAction == ParserErrorAction::Ignore) {
             partialEntry.message = "Parse ignored: " + std::string(originalLine);
-        } else if (_parserErrorAction == CLIConfig::ParserErrorAction::Throw) {
+        } else if (_parserErrorAction == ParserErrorAction::Throw) {
             partialEntry.message = "Parse failed (throw): " + std::string(originalLine);
         } else { // Warn
             partialEntry.message = "Parse failed (warn): " + std::string(originalLine);
@@ -335,7 +334,7 @@ LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEnt
     partialEntry.sourceLineNumber = lineNumber;
     partialEntry.parsingErrors.push_back(parseResult.error());
 
-    if (_parserErrorAction == CLIConfig::ParserErrorAction::Warn) {
+    if (_parserErrorAction == ParserErrorAction::Warn) {
         if (_warningLogger) {
             _warningLogger.value()("Warning: Failed to parse line " + std::to_string(lineNumber) + " in " + sourceFile + ": " + parseResult.error().message);
         } else {
@@ -455,7 +454,6 @@ void DefaultLogParser::processStream(
         onEntry(result);
     }
 }
-
 
 
 

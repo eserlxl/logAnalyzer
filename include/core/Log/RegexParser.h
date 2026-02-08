@@ -16,7 +16,7 @@ public:
     RegexLogParser(const std::string& pattern,
                    const std::vector<FieldMapping>& fieldMappings,
                    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
-                   CLIConfig::ParserErrorAction errorAction);
+                   ParserErrorAction errorAction);
 
     ErrorCode::Result<LogEntry> parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const override;
     std::unique_ptr<ILogParser> clone() const override;
@@ -26,7 +26,7 @@ private:
     std::regex logRegex;
     std::vector<FieldMapping> fieldMappings;
     std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLevelMappings;
-    CLIConfig::ParserErrorAction parserErrorAction;
+    ParserErrorAction parserErrorAction;
 };
 
 #endif // REGEX_LOG_PARSER_H

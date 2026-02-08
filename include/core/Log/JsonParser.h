@@ -10,7 +10,7 @@
 class JsonLogParser : public ILogParser {
 public:
     JsonLogParser(const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
-                  CLIConfig::ParserErrorAction errorAction,
+                  ParserErrorAction errorAction,
                   std::optional<std::function<void(const std::string&)>> warningLogger = std::nullopt);
 
     // ILogParser overrides
@@ -35,7 +35,7 @@ public:
 
 private:
     const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLevelMappings_;
-    CLIConfig::ParserErrorAction parserErrorAction_;
+    ParserErrorAction parserErrorAction_;
     std::optional<std::function<void(const std::string&)>> warningLogger_;
     std::vector<FieldMapping> emptyFieldMappings_; // JSON parser doesn't use traditional FieldMappings
 

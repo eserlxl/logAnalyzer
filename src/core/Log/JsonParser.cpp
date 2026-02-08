@@ -4,13 +4,15 @@
 #include "core/Log/JsonParser.h"
 #include "utils/Time.h" // For Utils::parseTimestamp
 #include "utils/String.h" // For Utils::contains
+#include "utils/Core.h" // For Utils::generateLogEntryId
+#include <iostream> // For std::cerr
 #include <sstream> // For std::stringstream
 
 // For nlohmann::json_object_t
 #include <nlohmann/json.hpp>
 
 JsonLogParser::JsonLogParser(const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
-                             CLIConfig::ParserErrorAction errorAction,
+                             ParserErrorAction errorAction,
                              std::optional<std::function<void(const std::string&)>> warningLogger)
     : customLevelMappings_(levelMappings),
       parserErrorAction_(errorAction),
@@ -109,7 +111,7 @@ ErrorCode::Result<LogEntry> JsonLogParser::parseLine(std::string_view line, size
     }
 
     if (entry.hasParsingErrors()) {
-        if (parserErrorAction_ == CLIConfig::ParserErrorAction::Throw) {
+        if (parserErrorAction_ == ParserErrorAction::Throw) {
             return std::unexpected(entry.parsingErrors.front());
         }
         return applyParserErrorAction(std::unexpected(entry.parsingErrors.front()), line, lineNumber, sourceFile);
@@ -159,7 +161,7 @@ LogEntry JsonLogParser::applyParserErrorAction(const ErrorCode::Result<LogEntry>
     std::string errorMessage = "Error parsing line " + std::to_string(lineNumber) + " in " + sourceFile + ": " + error.message;
 
     switch (parserErrorAction_) {
-        case CLIConfig::ParserErrorAction::Ignore: {
+        case ParserErrorAction::Ignore: {
             LogEntry errorEntry;
             errorEntry.sourceFile = sourceFile;
             errorEntry.sourceLineNumber = lineNumber;
@@ -168,7 +170,7 @@ LogEntry JsonLogParser::applyParserErrorAction(const ErrorCode::Result<LogEntry>
             errorEntry.parsingErrors.push_back(error);
             return errorEntry;
         }
-        case CLIConfig::ParserErrorAction::Warn: {
+        case ParserErrorAction::Warn: {
             if (warningLogger_) {
                 (*warningLogger_)(errorMessage + " Line content: " + std::string(originalLine));
             } else {
@@ -183,7 +185,7 @@ LogEntry JsonLogParser::applyParserErrorAction(const ErrorCode::Result<LogEntry>
             errorEntry.parsingErrors.push_back(error);
             return errorEntry;
         }
-        case CLIConfig::ParserErrorAction::Throw: {
+        case ParserErrorAction::Throw: {
             LogEntry errorEntry;
             errorEntry.sourceFile = sourceFile;
             errorEntry.sourceLineNumber = lineNumber;
