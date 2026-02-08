@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "tests/include/CLI.h"
-#include "filter/ConcreteFilters.h" // For CompositeFilter
+#include "filter/Types.h"
 #include "core/Log/Types.h" // For LogLevel
 #include "utils/Time.h" // For Utils::parseTime
 
@@ -84,7 +84,7 @@ TEST_F(CLIConfigTest, FilterLogic) {
     ASSERT_TRUE(result.has_value());
     auto& options = result.value().second;
     ASSERT_TRUE(options.filterLogic.has_value());
-    ASSERT_EQ(options.filterLogic.value(), CompositeFilter::Logic::OR);
+    ASSERT_EQ(options.filterLogic.value(), FilterLogicalOperator::OR);
 }
 
 TEST_F(CLIConfigTest, ComplexFilterExpression) {

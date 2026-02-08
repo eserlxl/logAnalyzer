@@ -5,8 +5,7 @@
 #define CONFIG_COMMON_TYPES_H
 
 #include "core/Log/Types.h" // For LogLevel
-#include "filter/Types.h"  // For SortBy, SortOrder
-#include "filter/Core.h"   // For CompositeFilter::Logic
+#include "filter/Types.h"  // For SortBy, SortOrder, FilterLogicalOperator
 #include "core/CiLess.h" // For LogAnalyzerInternal::ci_less
 
 #include <map>
@@ -26,9 +25,9 @@ namespace Config {
         {"UNKNOWN", LogLevel::UNKNOWN}
     };
 
-    // Case-insensitive map for Filter Logic strings
-    const static std::map<std::string, filter::CompositeFilter::Logic, LogAnalyzerInternal::ci_less> FilterLogicMap = {
-        {"AND", filter::CompositeFilter::Logic::AND}, {"OR", filter::CompositeFilter::Logic::OR}
+    // Case-insensitive map for filter expression logic strings
+    const static std::map<std::string, filter::FilterLogicalOperator, LogAnalyzerInternal::ci_less> FilterLogicMap = {
+        {"AND", filter::FilterLogicalOperator::AND}, {"OR", filter::FilterLogicalOperator::OR}
     };
 
     // Case-insensitive map for SortBy strings

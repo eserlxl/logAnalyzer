@@ -5,8 +5,7 @@
 #define CLICONFIG_H
 
 #include "core/Log/Types.h" // For LogLevel
-#include "filter/Types.h" // For SortBy, SortOrder
-#include "filter/Core.h"   // For CompositeFilter::Logic
+#include "filter/Types.h" // For SortBy, SortOrder, FilterLogicalOperator
 #include "config/Settings.h" // To return a populated LogAnalyzerSettings object
 #include "config/CommonTypes.h" // For shared types and maps
 #include "core/Error.h"    // For Error struct and Result alias
@@ -37,7 +36,7 @@ public:
         bool keywordCaseSensitive = false;
         std::vector<std::string> regexPatterns;
         std::vector<std::string> excludeRegexPatterns;
-        std::optional<filter::CompositeFilter::Logic> filterLogic;
+        std::optional<filter::FilterLogicalOperator> filterLogic;
         std::optional<std::chrono::system_clock::time_point> startTime;
         std::optional<std::chrono::system_clock::time_point> endTime;
         std::optional<std::chrono::microseconds> duration;

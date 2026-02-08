@@ -28,6 +28,14 @@
 using json = nlohmann::json;
 using namespace filter;
 
+namespace {
+CompositeFilter::Logic toCompositeLogic(filter::FilterLogicalOperator op) {
+    return op == filter::FilterLogicalOperator::OR
+        ? CompositeFilter::Logic::OR
+        : CompositeFilter::Logic::AND;
+}
+} // namespace
+
 int main(int argc, char *argv[]) {
     auto expectedConfig = CLIConfig::parseCLI(argc, argv);
     if (!expectedConfig) {
@@ -58,7 +66,9 @@ int main(int argc, char *argv[]) {
     std::optional<filter::FilterExpression> parsedExpression;
 
     // Inclusion filters
-    auto inclusionFilters = std::make_shared<CompositeFilter>(cliOptions.filterLogic.value_or(CompositeFilter::Logic::AND));
+    const CompositeFilter::Logic inclusionLogic =
+        toCompositeLogic(cliOptions.filterLogic.value_or(filter::FilterLogicalOperator::AND));
+    auto inclusionFilters = std::make_shared<CompositeFilter>(inclusionLogic);
     if (cliOptions.minLogLevel.has_value()) inclusionFilters->add(std::make_shared<MinLevelFilter>(*cliOptions.minLogLevel));
     if (!cliOptions.filterLevels.empty()) {
         auto levelSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
@@ -66,12 +76,12 @@ int main(int argc, char *argv[]) {
         inclusionFilters->add(levelSet);
     }
     if (!cliOptions.filterKeywords.empty()) {
-        auto keywordSet = std::make_shared<CompositeFilter>(cliOptions.filterLogic.value_or(CompositeFilter::Logic::AND));
+        auto keywordSet = std::make_shared<CompositeFilter>(inclusionLogic);
         for (const auto& keyword : cliOptions.filterKeywords) keywordSet->add(std::make_shared<KeywordFilter>(keyword, cliOptions.keywordCaseSensitive));
         inclusionFilters->add(keywordSet);
     }
     if (!cliOptions.regexPatterns.empty()) {
-        auto regexSet = std::make_shared<CompositeFilter>(cliOptions.filterLogic.value_or(CompositeFilter::Logic::AND));
+        auto regexSet = std::make_shared<CompositeFilter>(inclusionLogic);
         for (const auto& regex : cliOptions.regexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
             if (!regexFilterResult.has_value()) {
