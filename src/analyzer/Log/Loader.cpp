@@ -235,15 +235,34 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::append(
 
     { // Scope for unique_lock to modify entries_ and process stats atomically
         std::unique_lock<std::shared_mutex> uniqueLock(stateMutex_);
-        std::vector<LogEntry> mergedEntries;
-        mergedEntries.reserve(entries_.size() + newEntries.size());
-        std::merge(entries_.begin(), entries_.end(),
-                   newEntries.begin(), newEntries.end(),
-                   std::back_inserter(mergedEntries),
-                   [](const LogEntry& a, const LogEntry& b) {
-                       return a.timestamp < b.timestamp;
-                   });
-        entries_.swap(mergedEntries);
+        if (entries_.empty()) {
+            entries_ = std::move(newEntries);
+        } else if (entries_.back().timestamp <= newEntries.front().timestamp) {
+            entries_.reserve(entries_.size() + newEntries.size());
+            entries_.insert(entries_.end(),
+                            std::make_move_iterator(newEntries.begin()),
+                            std::make_move_iterator(newEntries.end()));
+        } else if (newEntries.back().timestamp <= entries_.front().timestamp) {
+            std::vector<LogEntry> mergedEntries;
+            mergedEntries.reserve(entries_.size() + newEntries.size());
+            mergedEntries.insert(mergedEntries.end(),
+                                 std::make_move_iterator(newEntries.begin()),
+                                 std::make_move_iterator(newEntries.end()));
+            mergedEntries.insert(mergedEntries.end(),
+                                 std::make_move_iterator(entries_.begin()),
+                                 std::make_move_iterator(entries_.end()));
+            entries_.swap(mergedEntries);
+        } else {
+            std::vector<LogEntry> mergedEntries;
+            mergedEntries.reserve(entries_.size() + newEntries.size());
+            std::merge(entries_.begin(), entries_.end(),
+                       newEntries.begin(), newEntries.end(),
+                       std::back_inserter(mergedEntries),
+                       [](const LogEntry& a, const LogEntry& b) {
+                           return a.timestamp < b.timestamp;
+                       });
+            entries_.swap(mergedEntries);
+        }
 
         // Process statistics for the newly added entries. This modifies statistics_,
         // so it must be within the unique lock scope.
