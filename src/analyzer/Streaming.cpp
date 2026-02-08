@@ -28,7 +28,7 @@
 ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
     std::istream& is, 
     const std::string& sourceIdentifier, 
-    CLIConfig::ParserErrorAction errorAction,
+    ParserErrorAction errorAction,
     std::optional<CancellationToken*> cancellationToken,
     std::optional<ProgressCallback> progressCallback
 ) {
@@ -84,7 +84,7 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
     return report;
 }
 
-ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction) {
     std::unique_ptr<ILogParser> streamParser;
     {
         std::shared_lock<std::shared_mutex> lock(stateMutex_);
@@ -119,14 +119,14 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
             try {
                 parseResultOpt = streamParser->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
             } catch (const std::exception& e) {
-                if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+                if (errorAction == ParserErrorAction::Throw) {
                     return std::unexpected(ErrorCode::Error::unexpected(
                         "Exception while parsing line " + std::to_string(lineNumber) + " in " + filePath + ": " + e.what()));
                 }
-                if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+                if (errorAction == ParserErrorAction::Warn) {
                     std::cerr << "Warning: Exception while parsing line " << lineNumber << " in " << filePath << ": " << e.what() << std::endl;
                 }
-                if (errorAction != CLIConfig::ParserErrorAction::Ignore) {
+                if (errorAction != ParserErrorAction::Ignore) {
                     LogEntry partialEntry;
                     partialEntry.level = LogLevel::UNKNOWN;
                     partialEntry.message = line;
@@ -150,10 +150,10 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
                         break;
                     }
                 } else {
-                    if(errorAction == CLIConfig::ParserErrorAction::Warn) {
+                    if(errorAction == ParserErrorAction::Warn) {
                         std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.error().message << std::endl;
                     }
-                     if(errorAction != CLIConfig::ParserErrorAction::Ignore) {
+                     if(errorAction != ParserErrorAction::Ignore) {
                         LogEntry partialEntry;
                         partialEntry.level = LogLevel::UNKNOWN;
                         partialEntry.message = line;
@@ -173,11 +173,11 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
         try {
             flushResults = streamParser->flushRemaining();
         } catch (const std::exception& e) {
-            if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+            if (errorAction == ParserErrorAction::Throw) {
                 return std::unexpected(ErrorCode::Error::unexpected(
                     "Exception while flushing parser buffer for " + filePath + ": " + e.what()));
             }
-            if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+            if (errorAction == ParserErrorAction::Warn) {
                 std::cerr << "Warning: Exception while flushing parser buffer for " << filePath << ": " << e.what() << std::endl;
             }
             flushResults.clear();
@@ -191,7 +191,7 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
                     break;
                 }
             } else {
-                 if(errorAction == CLIConfig::ParserErrorAction::Warn) {
+                 if(errorAction == ParserErrorAction::Warn) {
                     std::cerr << "Warning: Failed to parse remaining buffer for " << filePath << ": " << result.error().message << std::endl;
                 }
             }
@@ -220,7 +220,7 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
         return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
     }
 
-    auto result = analyzeStream(filePaths, entryCallback, CLIConfig::ParserErrorAction::Warn);
+    auto result = analyzeStream(filePaths, entryCallback, ParserErrorAction::Warn);
 
     if (auto res = setSettings(oldSettings); !res) {
         std::cerr << "Error restoring settings: " << res.error().message << std::endl;

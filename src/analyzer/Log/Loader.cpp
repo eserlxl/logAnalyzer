@@ -27,7 +27,7 @@
 
 ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(
     const std::string& filePath, 
-    CLIConfig::ParserErrorAction errorAction,
+    ParserErrorAction errorAction,
     std::optional<CancellationToken*> cancellationToken,
     std::optional<ProgressCallback> progressCallback
 ) {
@@ -93,7 +93,7 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string&
     }
 
     // Load the file using the temporary settings. This call returns ErrorCode::Result<AnalysisReport>.
-    auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto reportResult = loadAndReplace(filePath, ParserErrorAction::Warn);
 
     // Restore original settings. This must happen regardless of whether loading succeeded or failed.
     if (auto res = setSettings(oldSettings); !res) {
@@ -118,7 +118,7 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string&
 
 ErrorCode::Result<AnalysisReport> LogAnalyzer::load(
     const std::string& filePath, 
-    CLIConfig::ParserErrorAction errorAction,
+    ParserErrorAction errorAction,
     std::optional<CancellationToken*> cancellationToken,
     std::optional<ProgressCallback> progressCallback
 ) {
@@ -145,7 +145,7 @@ std::expected<void, LogParseError> LogAnalyzer::load(const std::string& filePath
         return std::unexpected(LogParseError{ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
     }
 
-    auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto reportResult = loadAndReplace(filePath, ParserErrorAction::Warn);
 
     if (auto res = setSettings(oldSettings); !res) {
         std::cerr << "Error restoring settings: " << res.error().message << std::endl;
@@ -168,7 +168,7 @@ std::expected<void, LogParseError> LogAnalyzer::load(const std::string& filePath
 
 std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(
     const std::string& filePath, 
-    CLIConfig::ParserErrorAction errorAction,
+    ParserErrorAction errorAction,
     std::shared_ptr<CancellationToken> cancellationToken,
     std::optional<ProgressCallback> progressCallback
 ) {
@@ -201,7 +201,7 @@ std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std:
             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, res.error().message));
         }
 
-        auto reportResult = loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+        auto reportResult = loadAndReplace(filePath, ParserErrorAction::Warn);
 
         if (auto res = setSettings(oldSettings); !res) {
             std::cerr << "Error restoring settings: " << res.error().message << std::endl;
@@ -213,7 +213,7 @@ std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std:
 
 ErrorCode::Result<AnalysisReport> LogAnalyzer::append(
     const std::string& filePath, 
-    CLIConfig::ParserErrorAction errorAction,
+    ParserErrorAction errorAction,
     std::optional<CancellationToken*> cancellationToken,
     std::optional<ProgressCallback> progressCallback
 ) {
@@ -293,7 +293,7 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
     }
 
     // Corrected call to the other append overload which returns ErrorCode::Result<AnalysisReport>.
-    auto reportResult = append(filePath, CLIConfig::ParserErrorAction::Warn);
+    auto reportResult = append(filePath, ParserErrorAction::Warn);
 
     // Restore original settings. Log errors if they occur, but prioritize the outcome of append.
     if (auto res = setSettings(oldSettings); !res) {

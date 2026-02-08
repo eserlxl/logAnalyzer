@@ -80,7 +80,7 @@ void LogReader::setDefaultFieldMappings(LogAnalyzerSettings& settings) {
 }
 
 // Private helper for parsing
-std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogParser* parser, std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
+std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogParser* parser, std::istream& is, const std::string& sourceIdentifier, ParserErrorAction errorAction) {
     std::vector<LogEntry> parsedEntries;
     AnalysisReport report;
     report.status = ParseError::SUCCESS;
@@ -98,9 +98,9 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogP
             parsedEntries.push_back(entry);
             report.successfulParses++;
         } else {
-            if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+            if (errorAction == ParserErrorAction::Warn) {
                 std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResult.error().message << std::endl;
-            } else if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+            } else if (errorAction == ParserErrorAction::Throw) {
                 // This will be handled by the caller by checking the Result
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber, parseResult.error()});
@@ -115,7 +115,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogP
             parsedEntries.push_back(entry);
             report.successfulParses++;
         } else {
-            if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+            if (errorAction == ParserErrorAction::Warn) {
                  std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << std::endl;
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.error().message, 0, result.error()});
@@ -132,7 +132,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogP
 // Private helper to perform load and replace logic.
 // Assumes analyzer_.stateMutex_ is already locked (unique_lock) by the caller.
 // The parser passed is expected to be stable for the duration of this call.
-ErrorCode::Result<AnalysisReport> LogReader::doLoadAndReplace(ILogParser* parser, const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogReader::doLoadAndReplace(ILogParser* parser, const std::string& filePath, ParserErrorAction errorAction) {
     if (!std::filesystem::exists(filePath)) {
         return std::unexpected(ErrorCode::Error::fileNotFound(filePath));
     }
@@ -164,7 +164,7 @@ ErrorCode::Result<AnalysisReport> LogReader::doLoadAndReplace(ILogParser* parser
 // Private helper to perform append logic.
 // Assumes analyzer_.stateMutex_ is already locked (unique_lock) by the caller.
 // The parser passed is expected to be stable for the duration of this call.
-ErrorCode::Result<AnalysisReport> LogReader::doAppend(ILogParser* parser, const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogReader::doAppend(ILogParser* parser, const std::string& filePath, ParserErrorAction errorAction) {
     if (!std::filesystem::exists(filePath)) {
         return std::unexpected(ErrorCode::Error::fileNotFound(filePath));
     }
@@ -209,7 +209,7 @@ ErrorCode::Result<AnalysisReport> LogReader::doAppend(ILogParser* parser, const 
 // Private helper to perform analyzeStream logic.
 // Assumes analyzer_.stateMutex_ is already locked (shared_lock or unique_lock) by the caller.
 // The parser passed is expected to be stable for the duration of this call.
-ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction) {
     for (const auto& filePath : filePaths) {
         std::istream* input;
         std::ifstream file;
@@ -239,10 +239,10 @@ ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, c
                         break;
                     }
                 } else {
-                    if(errorAction == CLIConfig::ParserErrorAction::Warn) {
+                    if(errorAction == ParserErrorAction::Warn) {
                         std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.error().message << std::endl;
                     }
-                     if(errorAction != CLIConfig::ParserErrorAction::Ignore) {
+                     if(errorAction != ParserErrorAction::Ignore) {
                         LogEntry partialEntry;
                         partialEntry.level = LogLevel::UNKNOWN;
                         partialEntry.message = line;
@@ -269,7 +269,7 @@ ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, c
                     break;
                 }
             } else {
-                 if(errorAction == CLIConfig::ParserErrorAction::Warn) {
+                 if(errorAction == ParserErrorAction::Warn) {
                     std::cerr << "Warning: Failed to parse remaining buffer for " << filePath << ": " << result.error().message << std::endl;
                 }
             }
@@ -282,7 +282,7 @@ ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, c
 }
 
 // Public methods for loading/replacing/appending
-ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& filePath, ParserErrorAction errorAction) {
     std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Acquire unique lock at start
     ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
     return doLoadAndReplace(currentParser, filePath, errorAction);
@@ -297,7 +297,7 @@ ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& f
     }
 
     ILogParser* currentParser = analyzer_.getCurrentParser();
-    auto reportResult = doLoadAndReplace(currentParser, filePath, CLIConfig::ParserErrorAction::Warn);
+    auto reportResult = doLoadAndReplace(currentParser, filePath, ParserErrorAction::Warn);
 
     if (scopedSettings.getRestorationError().has_value()) {
         if (reportResult.has_value()) {
@@ -316,7 +316,7 @@ ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& f
     return reportResult;
 }
 
-ErrorCode::Result<AnalysisReport> LogReader::load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogReader::load(const std::string& filePath, ParserErrorAction errorAction) {
     auto reportResult = loadAndReplace(filePath, errorAction);
     if (!reportResult) {
         // No need to convert error type as load() returns ErrorCode::Result<AnalysisReport>
@@ -334,7 +334,7 @@ std::expected<void, LogParseError> LogReader::load(const std::string& filePath, 
     }
 
     ILogParser* currentParser = analyzer_.getCurrentParser();
-    auto reportResult = doLoadAndReplace(currentParser, filePath, CLIConfig::ParserErrorAction::Warn);
+    auto reportResult = doLoadAndReplace(currentParser, filePath, ParserErrorAction::Warn);
 
     if (scopedSettings.getRestorationError().has_value()) {
         // If restoration failed, return an error indicating that.
@@ -351,7 +351,7 @@ std::expected<void, LogParseError> LogReader::load(const std::string& filePath, 
     return {};
 }
 
-std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::string& filePath, ParserErrorAction errorAction) {
     // Use std::launch::async to ensure it runs in a separate thread
     // The synchronous load method will acquire its own lock.
     return std::async(std::launch::async, [this, filePath, errorAction]() {
@@ -369,7 +369,7 @@ std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::s
         }
 
         ILogParser* currentParser = analyzer_.getCurrentParser();
-        auto reportResult = doLoadAndReplace(currentParser, filePath, CLIConfig::ParserErrorAction::Warn);
+        auto reportResult = doLoadAndReplace(currentParser, filePath, ParserErrorAction::Warn);
 
         if (scopedSettings.getRestorationError().has_value()) {
             if (reportResult.has_value()) {
@@ -386,7 +386,7 @@ std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::s
     });
 }
 
-ErrorCode::Result<AnalysisReport> LogReader::streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogReader::streamIn(std::istream& is, const std::string& sourceIdentifier, ParserErrorAction errorAction) {
     std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Acquire unique lock at start (High-risk 1)
     ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
 
@@ -423,7 +423,7 @@ ErrorCode::Result<AnalysisReport> LogReader::streamIn(std::istream& is, const st
     return report;
 }
 
-ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction) {
     std::shared_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Shared lock for reading parser state (High-risk 1)
     ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
 
@@ -439,7 +439,7 @@ std::expected<void, LogParseError> LogReader::analyzeStream(const std::vector<st
     }
 
     ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser after settings are applied
-    auto result = doAnalyzeStreamInternal(currentParser, filePaths, entryCallback, CLIConfig::ParserErrorAction::Warn);
+    auto result = doAnalyzeStreamInternal(currentParser, filePaths, entryCallback, ParserErrorAction::Warn);
 
     if (scopedSettings.getRestorationError().has_value()) {
         // If restoration failed, return an error indicating that.
@@ -453,7 +453,7 @@ std::expected<void, LogParseError> LogReader::analyzeStream(const std::vector<st
     return {};
 }
 
-ErrorCode::Result<AnalysisReport> LogReader::append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction) {
+ErrorCode::Result<AnalysisReport> LogReader::append(const std::string& filePath, ParserErrorAction errorAction) {
     std::unique_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Acquire unique lock at start
     ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
     return doAppend(currentParser, filePath, errorAction);
@@ -468,7 +468,7 @@ std::expected<void, LogParseError> LogReader::append(const std::string& filePath
     }
 
     ILogParser* currentParser = analyzer_.getCurrentParser();
-    auto reportResult = doAppend(currentParser, filePath, CLIConfig::ParserErrorAction::Warn);
+    auto reportResult = doAppend(currentParser, filePath, ParserErrorAction::Warn);
 
     if (scopedSettings.getRestorationError().has_value()) {
         // If restoration failed, return an error indicating that.

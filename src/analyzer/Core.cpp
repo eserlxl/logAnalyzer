@@ -45,7 +45,7 @@ LogAnalyzer::LogAnalyzer()
         customLogLevelMapping_,
         currentSettings_.logEntryStartPattern,
         currentSettings_.caseSensitiveParsing,
-        currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+        currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
         currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
         true,
         std::nullopt
@@ -65,7 +65,7 @@ LogAnalyzer::LogAnalyzer()
             customLogLevelMapping_,
             currentSettings_.logEntryStartPattern,
             currentSettings_.caseSensitiveParsing,
-            currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+            currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
             currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
             true,
             std::nullopt
@@ -100,7 +100,7 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
         customLogLevelMapping_,
         currentSettings_.logEntryStartPattern,
         currentSettings_.caseSensitiveParsing,
-        currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+        currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
         currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
         true,
         std::nullopt
@@ -119,7 +119,7 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
             customLogLevelMapping_,
             currentSettings_.logEntryStartPattern,
             currentSettings_.caseSensitiveParsing,
-            currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+            currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
             currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
             true,
             std::nullopt
@@ -168,7 +168,7 @@ ErrorCode::Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& sett
         newCustomLogLevelMapping,
         settings.logEntryStartPattern,
         settings.caseSensitiveParsing,
-        settings.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+        settings.parserErrorAction.value_or(ParserErrorAction::Warn),
         settings.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
         true, // threadSafe: LogAnalyzer should use a thread-safe parser
         std::nullopt // errorHandler: No specific error handler for now, default to internal logging
@@ -209,7 +209,7 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
         customLogLevelMapping_,
         currentSettings_.logEntryStartPattern,
         currentSettings_.caseSensitiveParsing, // Pass caseSensitiveParsing
-        currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+        currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
         currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
         true, // threadSafe: LogAnalyzer should use a thread-safe parser
         std::nullopt // errorHandler: No specific error handler for now, default to internal logging

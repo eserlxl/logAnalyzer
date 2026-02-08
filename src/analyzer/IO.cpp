@@ -35,7 +35,7 @@ void LogAnalyzer::setDefaultFieldMappings(LogAnalyzerSettings& settings) {
 std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
     std::istream& is, 
     const std::string& sourceIdentifier, 
-    CLIConfig::ParserErrorAction errorAction,
+    ParserErrorAction errorAction,
     std::optional<CancellationToken*> cancellationToken,
     std::optional<ProgressCallback> progressCallback
 ) {
@@ -87,7 +87,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
                 std::string("Exception while parsing line: ") + e.what(),
                 lineNumber
             });
-            if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+            if (errorAction == ParserErrorAction::Throw) {
                 report.status = ParseError::UNKNOWN_ERROR;
                 return {std::move(parsedEntries), report};
             }
@@ -103,7 +103,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             parsedEntries.push_back(std::move(entry));
             report.successfulParses++;
         } else {
-            if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+            if (errorAction == ParserErrorAction::Warn) {
                 std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResultOpt->error().message << std::endl;
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResultOpt->error().message, lineNumber});
@@ -119,7 +119,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             std::string("Exception while flushing parser buffer: ") + e.what(),
             0
         });
-        if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+        if (errorAction == ParserErrorAction::Throw) {
             report.status = ParseError::UNKNOWN_ERROR;
             return {std::move(parsedEntries), report};
         }
@@ -131,7 +131,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             parsedEntries.push_back(std::move(entry));
             report.successfulParses++;
         } else {
-            if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+            if (errorAction == ParserErrorAction::Warn) {
                  std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << std::endl;
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.error().message, 0});

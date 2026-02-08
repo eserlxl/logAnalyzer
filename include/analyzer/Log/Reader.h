@@ -4,9 +4,8 @@
 #ifndef LOGANALYZER_ANALYZER_LOGREADER_H
 #define LOGANALYZER_ANALYZER_LOGREADER_H
 
-#include "config/CLI.h"
+#include "config/Core.h"
 #include "core/Log/Types.h"
-#include <future>
 #include <future>
 #include <string>
 #include <vector>
@@ -19,20 +18,20 @@ class LogReader {
 public:
     explicit LogReader(LogAnalyzer& analyzer);
 
-    ErrorCode::Result<AnalysisReport> loadAndReplace(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> loadAndReplace(const std::string& filePath, ParserErrorAction errorAction);
     ErrorCode::Result<AnalysisReport> loadAndReplace(const std::string& filePath, const std::string& pattern);
     
-    ErrorCode::Result<AnalysisReport> load(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> load(const std::string& filePath, ParserErrorAction errorAction);
     std::expected<void, LogParseError> load(const std::string& filePath, const std::string& pattern);
     
-    std::future<ErrorCode::Result<AnalysisReport>> loadAsync(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
+    std::future<ErrorCode::Result<AnalysisReport>> loadAsync(const std::string& filePath, ParserErrorAction errorAction);
     std::future<ErrorCode::Result<AnalysisReport>> loadAsync(const std::string& filePath, const std::string& pattern);
 
-    ErrorCode::Result<AnalysisReport> append(const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> append(const std::string& filePath, ParserErrorAction errorAction);
     std::expected<void, LogParseError> append(const std::string& filePath, const std::string& pattern);
     
-    ErrorCode::Result<AnalysisReport> streamIn(std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
-    ErrorCode::Result<void> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> streamIn(std::istream& is, const std::string& sourceIdentifier, ParserErrorAction errorAction);
+    ErrorCode::Result<void> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction);
     std::expected<void, LogParseError> analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern);
 
 private:
@@ -59,12 +58,12 @@ private:
     };
     
     // Private helpers that assume locks are held by the caller
-    ErrorCode::Result<AnalysisReport> doLoadAndReplace(ILogParser* parser, const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
-    ErrorCode::Result<AnalysisReport> doAppend(ILogParser* parser, const std::string& filePath, CLIConfig::ParserErrorAction errorAction);
-    ErrorCode::Result<void> doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> doLoadAndReplace(ILogParser* parser, const std::string& filePath, ParserErrorAction errorAction);
+    ErrorCode::Result<AnalysisReport> doAppend(ILogParser* parser, const std::string& filePath, ParserErrorAction errorAction);
+    ErrorCode::Result<void> doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction);
     
     void setDefaultFieldMappings(LogAnalyzerSettings& settings);
-    std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(ILogParser* parser, std::istream& is, const std::string& sourceIdentifier, CLIConfig::ParserErrorAction errorAction);
+    std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(ILogParser* parser, std::istream& is, const std::string& sourceIdentifier, ParserErrorAction errorAction);
 };
 
 #endif // LOGANALYZER_ANALYZER_LOGREADER_H
