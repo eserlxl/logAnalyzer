@@ -44,7 +44,7 @@ Follow these steps to get `logAnalyzer` running on your system.
 ### Prerequisites
 
 -   **C++ Compiler**: C++23 compatible (GCC 13+ or Clang 16+).
--   **Build System**: CMake (4.2.3+).
+-   **Build System**: CMake (3.14+).
 -   **Version Control**: Git.
 
 ### Installation
@@ -61,7 +61,7 @@ Follow these steps to get `logAnalyzer` running on your system.
     cmake --build build --parallel
     ```
 
-    The executable will be located at `build/bin/logAnalyzer`.
+    The executable will be located at `build/logAnalyzer`.
 
 3.  **Install (Optional):**
     To install `logAnalyzer` to your system path:
