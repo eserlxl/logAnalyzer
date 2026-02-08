@@ -73,7 +73,10 @@ LogAnalyzer::LogAnalyzer()
         if (!fallback_or_error.has_value()) {
             std::cerr << "Fatal Error: Failed to initialize fallback parser in default constructor: "
                       << fallback_or_error.error().message << std::endl;
-            throw std::runtime_error("LogParser initialization failed: " + fallback_or_error.error().message);
+            // Keep object constructible; operational APIs return structured errors
+            // when parser initialization is unavailable.
+            currentParser_.reset();
+            return;
         }
         currentParser_ = std::move(fallback_or_error.value());
     }
@@ -124,7 +127,10 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
         if (!fallback_or_error.has_value()) {
             std::cerr << "Fatal Error: Failed to initialize fallback parser in settings constructor: "
                       << fallback_or_error.error().message << std::endl;
-            throw std::runtime_error("LogParser initialization failed: " + fallback_or_error.error().message);
+            // Keep object constructible; operational APIs return structured errors
+            // when parser initialization is unavailable.
+            currentParser_.reset();
+            return;
         }
         currentParser_ = std::move(fallback_or_error.value());
     }
