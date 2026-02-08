@@ -8,9 +8,9 @@
 #include "filter/Core.h"
 #include "core/Error.h"
 #include "config/CLI.h"
-#include "stats/Core.h"
 #include "core/CiLess.h"
 #include "core/Log/IParserFactory.h"
+#include <nlohmann/json_fwd.hpp>
 
 #include <atomic>
 #include <future>
@@ -33,6 +33,8 @@
 class LogReader;
 class LogWriter;
 class ILogParser;
+class IStatisticCollector;
+struct StatisticConfig;
 
 #include "config/Core.h"
 
@@ -222,7 +224,7 @@ public:
     // New: Process a range of entries for statistics
     void processEntriesForStatistics(std::span<const LogEntry> entries); 
     void processEntriesForStatistics(std::generator<const LogEntry&> entries);
-    std::map<std::string, json> getAllStatisticReports() const;
+    std::map<std::string, nlohmann::json> getAllStatisticReports() const;
 
     ILogParser* getCurrentParser() const { return currentParser_.get(); }
 
