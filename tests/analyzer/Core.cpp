@@ -203,6 +203,23 @@ TEST_F(LogAnalyzerTest, AppendCorrectness) {
     std::remove(filePath1.c_str());
 }
 
+TEST_F(LogAnalyzerTest, AppendUpdatesLastReportSnapshot) {
+    const std::string filePath = "test_append_last_report.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "2023-01-01 10:00:00 INFO: Entry 1\n";
+        ofs << "2023-01-01 10:01:00 ERROR: Entry 2\n";
+    }
+
+    auto appendResult = analyzer.append(filePath, ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(appendResult.has_value()) << appendResult.error().toString();
+
+    const auto reportSnapshot = analyzer.getLastReportSnapshot();
+    EXPECT_EQ(reportSnapshot.successfulParses, appendResult->successfulParses);
+    EXPECT_EQ(reportSnapshot.status, appendResult->status);
+}
+
 TEST_F(LogAnalyzerTest, AppendUpdatesStatisticsWhenAnalyzerStartsEmpty) {
     analyzer.addStatisticCollector(std::make_shared<LogLevelCountCollector>());
 
@@ -241,6 +258,19 @@ TEST_F(LogAnalyzerTest, StreamInUpdatesStatisticsWhenAnalyzerStartsEmpty) {
     ASSERT_EQ(report["total_entries"], 2);
     ASSERT_EQ(report["counts"]["INFO"], 1);
     ASSERT_EQ(report["counts"]["WARNING"], 1);
+}
+
+TEST_F(LogAnalyzerTest, StreamInUpdatesLastReportSnapshot) {
+    std::stringstream ss;
+    ss << "2023-01-01 10:00:00 INFO: Stream entry 1\n";
+    ss << "2023-01-01 10:01:00 WARNING: Stream entry 2\n";
+
+    auto streamResult = analyzer.streamIn(ss, "report_stream", ParserErrorAction::Warn);
+    ASSERT_TRUE(streamResult.has_value()) << streamResult.error().toString();
+
+    const auto reportSnapshot = analyzer.getLastReportSnapshot();
+    EXPECT_EQ(reportSnapshot.successfulParses, streamResult->successfulParses);
+    EXPECT_EQ(reportSnapshot.status, streamResult->status);
 }
 
 TEST_F(LogAnalyzerTest, LoadAndReplaceResetsStatisticsToCurrentDataset) {

@@ -232,6 +232,8 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::append(
 
     // H1: Check if newEntries is empty AFTER sorting, before acquiring locks.
     if (newEntries.empty()) {
+        std::unique_lock<std::shared_mutex> uniqueLock(stateMutex_);
+        lastReport = report;
         return report;
     }
 
@@ -270,6 +272,7 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::append(
                        });
             entries_.swap(mergedEntries);
         }
+        lastReport = report;
     } // unique_lock is released here
 
     return report;
