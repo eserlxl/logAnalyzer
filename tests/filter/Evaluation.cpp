@@ -70,6 +70,14 @@ TEST_F(FilterTestFixture, EvaluateNumericComparison) {
     auto entry_bad_num = createLogEntry(LogLevel::ERROR, "Bad data", "data.log", {{"value", "not_a_number"}});
     auto expr_bad_num = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123", FilterValueType::INT, true, "value");
     ASSERT_FALSE(expr_bad_num.evaluate(entry_bad_num).has_value()); // Expecting failure due to conversion
+
+    // Trailing characters should not be partially accepted as integers.
+    auto entry_partial_num = createLogEntry(LogLevel::ERROR, "Partial int", "data.log", {{"value", "123abc"}});
+    auto expr_partial_num = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123", FilterValueType::INT, true, "value");
+    ASSERT_FALSE(expr_partial_num.evaluate(entry_partial_num).has_value());
+
+    auto expr_partial_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123abc", FilterValueType::INT, true, "response_time_ms");
+    ASSERT_FALSE(expr_partial_cond.evaluate(entry).has_value());
 }
 
 TEST_F(FilterTestFixture, EvaluateDoubleComparison) {
@@ -99,6 +107,14 @@ TEST_F(FilterTestFixture, EvaluateDoubleComparison) {
     auto entry_bad_double = createLogEntry(LogLevel::ERROR, "Bad double data", "data.log", {{"value", "not_a_double"}});
     auto expr_bad_double = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.23", FilterValueType::FLOAT, true, "value");
     ASSERT_FALSE(expr_bad_double.evaluate(entry_bad_double).has_value()); // Expecting failure due to conversion
+
+    // Trailing characters should not be partially accepted as floats.
+    auto entry_partial_double = createLogEntry(LogLevel::ERROR, "Partial double data", "data.log", {{"value", "1.23ms"}});
+    auto expr_partial_double = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.23", FilterValueType::FLOAT, true, "value");
+    ASSERT_FALSE(expr_partial_double.evaluate(entry_partial_double).has_value());
+
+    auto expr_partial_double_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.456789ms", FilterValueType::FLOAT, true, "result");
+    ASSERT_FALSE(expr_partial_double_cond.evaluate(entry).has_value());
 }
 
 

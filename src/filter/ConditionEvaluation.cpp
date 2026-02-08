@@ -8,6 +8,7 @@
 #include "utils/String.h"
 #include "utils/Version.h"
 #include "utils/IpAddress.h"
+#include <charconv>
 #include <regex>
 #include <chrono>
 #include <limits>
@@ -25,6 +26,31 @@ std::optional<bool> stringToBool(const std::string& s) {
     if (lowerS == "true" || lowerS == "1" || lowerS == "t" || lowerS == "yes") return true;
     if (lowerS == "false" || lowerS == "0" || lowerS == "f" || lowerS == "no") return false;
     return std::nullopt;
+}
+
+bool tryParseStrictInt64(std::string_view value, long long& out) {
+    if (value.empty()) {
+        return false;
+    }
+    auto [ptr, ec] = std::from_chars(value.data(), value.data() + value.size(), out);
+    return ec == std::errc{} && ptr == value.data() + value.size();
+}
+
+bool tryParseStrictLongDouble(std::string_view value, long double& out) {
+    if (value.empty()) {
+        return false;
+    }
+    try {
+        size_t idx = 0;
+        const auto tmp = std::stold(std::string(value), &idx);
+        if (idx != value.size()) {
+            return false;
+        }
+        out = tmp;
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 } // namespace
 
@@ -161,10 +187,7 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
         case FilterValueType::INT: {
             long long fieldNum;
             long long condNum;
-            try {
-                fieldNum = std::stoll(fieldValue);
-                condNum = std::stoll(condValue);
-            } catch (...) {
+            if (!tryParseStrictInt64(fieldValue, fieldNum) || !tryParseStrictInt64(condValue, condNum)) {
                 return std::unexpected(ErrorCode::Error(Code::ConversionError, "Integer conversion failed."));
             }
             switch (cond.op) {
@@ -182,10 +205,7 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
         case FilterValueType::DOUBLE: {
             long double fieldNum;
             long double condNum;
-            try {
-                fieldNum = std::stold(fieldValue);
-                condNum = std::stold(condValue);
-            } catch (...) {
+            if (!tryParseStrictLongDouble(fieldValue, fieldNum) || !tryParseStrictLongDouble(condValue, condNum)) {
                 return std::unexpected(ErrorCode::Error(Code::ConversionError, "Floating-point conversion failed."));
             }
             
