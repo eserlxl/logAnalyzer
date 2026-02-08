@@ -75,6 +75,9 @@ namespace {
                 }
                 
                 if (key == "type") {
+                    if (typeFound) {
+                        return std::nullopt;
+                    }
                     auto type = Utils::stringToStatisticType(value);
                     if (type) {
                         config.type = *type;
@@ -92,6 +95,9 @@ namespace {
                 trimInPlace(token);
                 auto type = Utils::stringToStatisticType(token);
                 if (type) {
+                    if (typeFound) {
+                        return std::nullopt;
+                    }
                     config.type = *type;
                     typeFound = true;
                 } else {
