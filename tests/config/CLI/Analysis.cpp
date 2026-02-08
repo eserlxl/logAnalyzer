@@ -12,6 +12,15 @@ TEST_F(CLIConfigTest, EnabledStatistics) {
     ASSERT_EQ(options.enabledStatistics[1], "top_messages:5");
 }
 
+TEST_F(CLIConfigTest, LegacyTopMessagesWithWhitespaceValue) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "top_messages: 7 "});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TOP_MESSAGES);
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("top_n"), "7");
+}
+
 TEST_F(CLIConfigTest, StatisticConfigWithWhitespace) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", " type = top_messages , top_n = 7 "});
     ASSERT_TRUE(result.has_value());
@@ -37,6 +46,12 @@ TEST_F(CLIConfigTest, StatisticConfigRejectsEmptyParamKey) {
 
 TEST_F(CLIConfigTest, StatisticConfigRejectsDuplicateTypeDeclaration) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=top_messages,entry_rate"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, StatisticConfigRejectsInvalidLegacyTopMessagesValue) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "top_messages:not_a_number"});
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }

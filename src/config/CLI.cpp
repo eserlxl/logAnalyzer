@@ -42,8 +42,15 @@ namespace {
         
         // Handle legacy top_messages:N
         if (normalized.find("top_messages:") == 0) {
+            std::string topN = normalized.substr(13);
+            trimInPlace(topN);
+            if (topN.empty() || !std::all_of(topN.begin(), topN.end(), [](unsigned char c) {
+                    return std::isdigit(c) != 0;
+                })) {
+                return std::nullopt;
+            }
             config.type = StatisticType::TOP_MESSAGES;
-            config.params["top_n"] = normalized.substr(13);
+            config.params["top_n"] = topN;
             return config;
         }
 
