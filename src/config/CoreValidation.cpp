@@ -17,6 +17,12 @@ std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
         return std::nullopt;
     }
     std::string field(rawField);
+    const auto first = field.find_first_not_of(" \t");
+    if (first == std::string::npos) {
+        return std::nullopt;
+    }
+    const auto last = field.find_last_not_of(" \t");
+    field = field.substr(first, last - first + 1);
     std::transform(field.begin(), field.end(), field.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c));
     });

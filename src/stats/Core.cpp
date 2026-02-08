@@ -30,6 +30,12 @@ std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
         return std::nullopt;
     }
     std::string field(rawField);
+    const auto first = field.find_first_not_of(" \t");
+    if (first == std::string::npos) {
+        return std::nullopt;
+    }
+    const auto last = field.find_last_not_of(" \t");
+    field = field.substr(first, last - first + 1);
     std::transform(field.begin(), field.end(), field.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c));
     });
@@ -43,6 +49,16 @@ std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
     if (field == "host") return "host";
     if (field == "custom" || field == "custom_fields" || field == "customfields") return "customFields";
     return std::nullopt;
+}
+
+void trimInPlace(std::string& value) {
+    const auto first = value.find_first_not_of(" \t");
+    if (first == std::string::npos) {
+        value.clear();
+        return;
+    }
+    const auto last = value.find_last_not_of(" \t");
+    value = value.substr(first, last - first + 1);
 }
 
 } // namespace
@@ -296,8 +312,16 @@ namespace Statistics {
                 }
                 const std::string targetField = *targetFieldOpt;
                 if (targetField == "customFields" && config.params.count("custom_field_key")) {
-                    return std::make_unique<FieldValueCountCollector>(targetField, config.params.at("custom_field_key"));
+                    std::string customFieldKey = config.params.at("custom_field_key");
+                    trimInPlace(customFieldKey);
+                    if (customFieldKey.empty()) {
+                        return nullptr;
+                    }
+                    return std::make_unique<FieldValueCountCollector>(targetField, customFieldKey);
                 } else {
+                    if (targetField == "customFields") {
+                        return nullptr;
+                    }
                     return std::make_unique<FieldValueCountCollector>(targetField);
                 }
             }
@@ -317,8 +341,16 @@ namespace Statistics {
                 }
                 const std::string targetField = *targetFieldOpt;
                 if (targetField == "customFields" && config.params.count("custom_field_key")) {
-                    return std::make_unique<TopNFieldValuesCollector>(topN, targetField, config.params.at("custom_field_key"));
+                    std::string customFieldKey = config.params.at("custom_field_key");
+                    trimInPlace(customFieldKey);
+                    if (customFieldKey.empty()) {
+                        return nullptr;
+                    }
+                    return std::make_unique<TopNFieldValuesCollector>(topN, targetField, customFieldKey);
                 } else {
+                    if (targetField == "customFields") {
+                        return nullptr;
+                    }
                     return std::make_unique<TopNFieldValuesCollector>(topN, targetField);
                 }
             }

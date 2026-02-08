@@ -39,6 +39,12 @@ std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
         return std::nullopt;
     }
     std::string field(rawField);
+    const auto first = field.find_first_not_of(" \t");
+    if (first == std::string::npos) {
+        return std::nullopt;
+    }
+    const auto last = field.find_last_not_of(" \t");
+    field = field.substr(first, last - first + 1);
     std::transform(field.begin(), field.end(), field.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c));
     });
@@ -52,6 +58,16 @@ std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
     if (field == "host") return "host";
     if (field == "custom" || field == "custom_fields" || field == "customfields") return "customFields";
     return std::nullopt;
+}
+
+void trimInPlace(std::string& value) {
+    const auto first = value.find_first_not_of(" \t");
+    if (first == std::string::npos) {
+        value.clear();
+        return;
+    }
+    const auto last = value.find_last_not_of(" \t");
+    value = value.substr(first, last - first + 1);
 }
 
 } // namespace
@@ -145,6 +161,7 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             auto itCustomFieldKey = config.params.find("custom_field_key");
             if (itCustomFieldKey != config.params.end()) {
                 customFieldKey = itCustomFieldKey->second;
+                trimInPlace(customFieldKey);
             }
 
             if (targetField.empty()) {
@@ -169,6 +186,7 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             auto itCustomFieldKey = config.params.find("custom_field_key");
             if (itCustomFieldKey != config.params.end()) {
                 customFieldKey = itCustomFieldKey->second;
+                trimInPlace(customFieldKey);
             }
 
             if (targetField.empty()) {

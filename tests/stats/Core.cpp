@@ -194,6 +194,15 @@ TEST_F(StatisticsTest, CreateCollectorFactoryRejectsMalformedTopNForTopNFieldVal
     ASSERT_EQ(invalidCollector, nullptr);
 }
 
+TEST_F(StatisticsTest, CreateCollectorFactoryRejectsWhitespaceOnlyCustomFieldKey) {
+    StatisticConfig invalidConfig;
+    invalidConfig.type = StatisticType::FIELD_VALUE_COUNT;
+    invalidConfig.params["target_field"] = "custom_fields";
+    invalidConfig.params["custom_field_key"] = "   ";
+    auto invalidCollector = Statistics::createCollector(invalidConfig);
+    ASSERT_EQ(invalidCollector, nullptr);
+}
+
 TEST_F(StatisticsTest, CreateCollectorFactoryDefaultsMalformedTopNForTopMessages) {
     StatisticConfig config;
     config.type = StatisticType::TOP_MESSAGES;

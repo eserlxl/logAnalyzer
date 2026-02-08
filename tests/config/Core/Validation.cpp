@@ -180,6 +180,14 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_CaseInsensi
     EXPECT_TRUE(errors.empty()) << "Validation should pass with case-insensitive target_field. Error: " << (errors.empty() ? "" : errors[0]);
 }
 
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_TargetFieldWithOuterWhitespace) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "  source_file  "}}}
+    };
+    errors = settings.validate();
+    EXPECT_TRUE(errors.empty()) << "Validation should trim target_field whitespace. Error: " << (errors.empty() ? "" : errors[0]);
+}
+
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCount_MissingCustomFieldKey) {
     settings.statisticConfigs = {
         StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "customFields"}}}
