@@ -39,7 +39,7 @@
 - Likelihood: High  
 - Where found: `src/filter/Parser.cpp`, `src/main.cpp`  
 - Resolution: Fixed in commit `5cc4c4d`; recursive-descent parsing is now implemented and `--expression` is applied in both stream and non-stream filtering paths.
-- Follow-up: Extend parser coverage for additional operator aliases and malformed-expression diagnostics as grammar evolves.
+- Follow-up: Completed in commit `bf6dbb2`; parser now supports logical aliases (`&&`, `||`, `!`) and has regression coverage for malformed-expression diagnostics.
 
 3. **Descending sort comparator can violate strict weak ordering (Resolved)**  
 - Severity: High  
@@ -230,6 +230,10 @@ Configure/build:
   - cmake -S . -B build-tsan -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" -DLOGANALYZER_OFFLINE_DEPS=ON -DLOGANALYZER_FETCH_DEPS=ON -DLOGANALYZER_DEPS_MIRROR_DIR=/tmp/loganalyzer-mirror-tsan
   - cmake --build build-tsan --parallel --target analyzer_Core
   - TSAN_OPTIONS=halt_on_error=1 ./build-tsan/tests/analyzer_Core --gtest_brief=1
+- Post-fix verification (query alias parsing + malformed diagnostics coverage): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R filter_Iteration15
 
 Warnings:
 - warning count: 0
