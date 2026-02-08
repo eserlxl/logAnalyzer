@@ -3,9 +3,36 @@
 
 #include "config/Settings.h"
 #include "config/Utils.h"
+#include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <regex>
 #include <set>
+#include <optional>
+
+namespace {
+
+std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
+    if (rawField.empty()) {
+        return std::nullopt;
+    }
+    std::string field(rawField);
+    std::transform(field.begin(), field.end(), field.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    if (field == "level") return "level";
+    if (field == "message") return "message";
+    if (field == "source" || field == "source_file" || field == "sourcefile") return "sourceFile";
+    if (field == "timestamp" || field == "time") return "timestamp";
+    if (field == "line" || field == "line_number" || field == "linenumber") return "lineNumber";
+    if (field == "thread" || field == "thread_id" || field == "threadid" || field == "tid") return "threadId";
+    if (field == "module") return "module";
+    if (field == "host") return "host";
+    if (field == "custom" || field == "custom_fields" || field == "customfields") return "customFields";
+    return std::nullopt;
+}
+
+} // namespace
 
 std::vector<std::string> LogAnalyzerSettings::validate() const {
     std::vector<std::string> errors;
@@ -86,10 +113,6 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
     }
 
     // Validate statistic configurations
-    const std::set<std::string, LogAnalyzerInternal::ci_less> validTargetFields = {
-        "timestamp", "level", "message", "source_file", "lineNumber", "pid", "tid", "customFields"
-    };
-
     for (const auto& sc : statisticConfigs) {
         if (sc.type == StatisticType::UNKNOWN) {
             errors.push_back("StatisticConfig has an unrecognized type.");
@@ -118,9 +141,10 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
                 errors.push_back("Statistic '" + typeStr + "' requires a 'target_field' parameter.");
             } else {
                 const std::string& targetField = it_target_field->second;
-                if (validTargetFields.find(targetField) == validTargetFields.end()) {
+                const auto normalizedTargetField = normalizeTargetFieldName(targetField);
+                if (!normalizedTargetField) {
                     errors.push_back("Invalid 'target_field' value '" + targetField + "' for statistic '" + typeStr + "'.");
-                } else if (targetField == "customFields") {
+                } else if (*normalizedTargetField == "customFields") {
                     auto it_custom_field_key = sc.params.find(std::string(config_keys::CUSTOM_FIELD_KEY));
                     if (it_custom_field_key == sc.params.end()) {
                         errors.push_back("Statistic '" + typeStr + "' with target_field 'customFields' requires a 'custom_field_key' parameter.");

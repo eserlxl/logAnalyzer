@@ -160,6 +160,15 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_InvalidTargetField) {
     EXPECT_THAT(errors[0], testing::HasSubstr("Invalid 'target_field' value 'non_existent_field'"));
 }
 
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_DeprecatedPidAliasRejected) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "pid"}}}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("Invalid 'target_field' value 'pid'"));
+}
+
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_CaseInsensitiveTargetField) {
     settings.statisticConfigs = {
         StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {

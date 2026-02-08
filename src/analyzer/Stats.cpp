@@ -4,9 +4,11 @@
 #include "analyzer/Core.h"
 #include "stats/Core.h"
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <vector>
 #include <map>
 #include <nlohmann/json.hpp>
@@ -30,6 +32,26 @@ bool tryParseStrictPositiveInt(std::string_view value, int& parsedValue) {
     }
     parsedValue = parsed;
     return true;
+}
+
+std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
+    if (rawField.empty()) {
+        return std::nullopt;
+    }
+    std::string field(rawField);
+    std::transform(field.begin(), field.end(), field.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    if (field == "level") return "level";
+    if (field == "message") return "message";
+    if (field == "source" || field == "source_file" || field == "sourcefile") return "sourceFile";
+    if (field == "timestamp" || field == "time") return "timestamp";
+    if (field == "line" || field == "line_number" || field == "linenumber") return "lineNumber";
+    if (field == "thread" || field == "thread_id" || field == "threadid" || field == "tid") return "threadId";
+    if (field == "module") return "module";
+    if (field == "host") return "host";
+    if (field == "custom" || field == "custom_fields" || field == "customfields") return "customFields";
+    return std::nullopt;
 }
 
 } // namespace
@@ -115,7 +137,10 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             // Extract common parameters first if not already done
             auto itTargetField = config.params.find("target_field");
             if (itTargetField != config.params.end()) {
-                targetField = itTargetField->second;
+                auto normalized = normalizeTargetFieldName(itTargetField->second);
+                if (normalized) {
+                    targetField = *normalized;
+                }
             }
             auto itCustomFieldKey = config.params.find("custom_field_key");
             if (itCustomFieldKey != config.params.end()) {
@@ -136,7 +161,10 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             // Extract common parameters first if not already done
             auto itTargetField = config.params.find("target_field");
             if (itTargetField != config.params.end()) {
-                targetField = itTargetField->second;
+                auto normalized = normalizeTargetFieldName(itTargetField->second);
+                if (normalized) {
+                    targetField = *normalized;
+                }
             }
             auto itCustomFieldKey = config.params.find("custom_field_key");
             if (itCustomFieldKey != config.params.end()) {

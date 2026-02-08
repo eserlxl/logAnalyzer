@@ -3,8 +3,10 @@
 
 #include "stats/Core.h"
 #include <algorithm>
+#include <cctype>
 #include <charconv>
 #include <vector>
+#include <optional>
 
 namespace {
 
@@ -21,6 +23,26 @@ bool tryParseStrictPositiveInt(std::string_view value, int& parsedValue) {
     }
     parsedValue = parsed;
     return true;
+}
+
+std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
+    if (rawField.empty()) {
+        return std::nullopt;
+    }
+    std::string field(rawField);
+    std::transform(field.begin(), field.end(), field.begin(), [](unsigned char c) {
+        return static_cast<char>(std::tolower(c));
+    });
+    if (field == "level") return "level";
+    if (field == "message") return "message";
+    if (field == "source" || field == "source_file" || field == "sourcefile") return "sourceFile";
+    if (field == "timestamp" || field == "time") return "timestamp";
+    if (field == "line" || field == "line_number" || field == "linenumber") return "lineNumber";
+    if (field == "thread" || field == "thread_id" || field == "threadid" || field == "tid") return "threadId";
+    if (field == "module") return "module";
+    if (field == "host") return "host";
+    if (field == "custom" || field == "custom_fields" || field == "customfields") return "customFields";
+    return std::nullopt;
 }
 
 } // namespace
@@ -118,10 +140,10 @@ json LogLevelCountCollector::generateReport() const {
 
 // FieldValueCountCollector implementation
 FieldValueCountCollector::FieldValueCountCollector(const std::string& targetFieldName)
-    : _targetFieldName(targetFieldName) {}
+    : _targetFieldName(normalizeTargetFieldName(targetFieldName).value_or(targetFieldName)) {}
 
 FieldValueCountCollector::FieldValueCountCollector(const std::string& targetFieldName, const std::string& customFieldKey)
-    : _targetFieldName(targetFieldName), _customFieldKey(customFieldKey) {}
+    : _targetFieldName(normalizeTargetFieldName(targetFieldName).value_or(targetFieldName)), _customFieldKey(customFieldKey) {}
 
 std::string FieldValueCountCollector::getFieldValueAsString(const LogEntry& entry) const {
     if (_targetFieldName == "level") {
@@ -131,6 +153,16 @@ std::string FieldValueCountCollector::getFieldValueAsString(const LogEntry& entr
         return entry.message;
     } else if (_targetFieldName == "sourceFile") {
         return entry.sourceFile;
+    } else if (_targetFieldName == "timestamp" && entry.timestamp.has_value()) {
+        return Utils::formatTimestamp(*entry.timestamp);
+    } else if (_targetFieldName == "lineNumber" && entry.sourceLineNumber.has_value()) {
+        return std::to_string(*entry.sourceLineNumber);
+    } else if (_targetFieldName == "threadId" && entry.threadId.has_value()) {
+        return *entry.threadId;
+    } else if (_targetFieldName == "module" && entry.module.has_value()) {
+        return *entry.module;
+    } else if (_targetFieldName == "host" && entry.host.has_value()) {
+        return *entry.host;
     } else if (_targetFieldName == "customFields" && !_customFieldKey.empty()) {
         auto it = entry.customFields.find(_customFieldKey);
         if (it != entry.customFields.end()) {
@@ -161,10 +193,10 @@ json FieldValueCountCollector::generateReport() const {
 
 // TopNFieldValuesCollector implementation
 TopNFieldValuesCollector::TopNFieldValuesCollector(int topN, const std::string& targetFieldName)
-    : _topN(topN), _targetFieldName(targetFieldName) {}
+    : _topN(topN), _targetFieldName(normalizeTargetFieldName(targetFieldName).value_or(targetFieldName)) {}
 
 TopNFieldValuesCollector::TopNFieldValuesCollector(int topN, const std::string& targetFieldName, const std::string& customFieldKey)
-    : _topN(topN), _targetFieldName(targetFieldName), _customFieldKey(customFieldKey) {}
+    : _topN(topN), _targetFieldName(normalizeTargetFieldName(targetFieldName).value_or(targetFieldName)), _customFieldKey(customFieldKey) {}
 
 std::string TopNFieldValuesCollector::getFieldValueAsString(const LogEntry& entry) const {
     if (_targetFieldName == "level") {
@@ -174,6 +206,16 @@ std::string TopNFieldValuesCollector::getFieldValueAsString(const LogEntry& entr
         return entry.message;
     } else if (_targetFieldName == "sourceFile") {
         return entry.sourceFile;
+    } else if (_targetFieldName == "timestamp" && entry.timestamp.has_value()) {
+        return Utils::formatTimestamp(*entry.timestamp);
+    } else if (_targetFieldName == "lineNumber" && entry.sourceLineNumber.has_value()) {
+        return std::to_string(*entry.sourceLineNumber);
+    } else if (_targetFieldName == "threadId" && entry.threadId.has_value()) {
+        return *entry.threadId;
+    } else if (_targetFieldName == "module" && entry.module.has_value()) {
+        return *entry.module;
+    } else if (_targetFieldName == "host" && entry.host.has_value()) {
+        return *entry.host;
     } else if (_targetFieldName == "customFields" && !_customFieldKey.empty()) {
         auto it = entry.customFields.find(_customFieldKey);
         if (it != entry.customFields.end()) {
@@ -248,7 +290,11 @@ namespace Statistics {
                     // Error: target_field is required. Return nullptr to indicate failure.
                     return nullptr; 
                 }
-                std::string targetField = config.params.at("target_field");
+                const auto targetFieldOpt = normalizeTargetFieldName(config.params.at("target_field"));
+                if (!targetFieldOpt) {
+                    return nullptr;
+                }
+                const std::string targetField = *targetFieldOpt;
                 if (targetField == "customFields" && config.params.count("custom_field_key")) {
                     return std::make_unique<FieldValueCountCollector>(targetField, config.params.at("custom_field_key"));
                 } else {
@@ -265,7 +311,11 @@ namespace Statistics {
                     return nullptr;
                 }
                 
-                std::string targetField = config.params.at("target_field");
+                const auto targetFieldOpt = normalizeTargetFieldName(config.params.at("target_field"));
+                if (!targetFieldOpt) {
+                    return nullptr;
+                }
+                const std::string targetField = *targetFieldOpt;
                 if (targetField == "customFields" && config.params.count("custom_field_key")) {
                     return std::make_unique<TopNFieldValuesCollector>(topN, targetField, config.params.at("custom_field_key"));
                 } else {

@@ -80,6 +80,39 @@ TEST_F(StatisticsTest, FieldValueCountCollectorForCustomField) {
     EXPECT_EQ(report["counts"]["C"], 1);
 }
 
+TEST_F(StatisticsTest, FieldValueCountCollectorSupportsSourceAliases) {
+    FieldValueCountCollector collector("source_file");
+    for (const auto& entry : entries) {
+        collector.collect(entry);
+    }
+    json report = collector.generateReport();
+
+    ASSERT_EQ(report["name"], "field_value_count_sourceFile");
+    ASSERT_EQ(report["target_field"], "sourceFile");
+    ASSERT_EQ(report["total_unique_values"], 3);
+    EXPECT_EQ(report["counts"]["main.cpp"], 3);
+    EXPECT_EQ(report["counts"]["worker.cpp"], 2);
+    EXPECT_EQ(report["counts"]["network.cpp"], 2);
+}
+
+TEST_F(StatisticsTest, TopNFieldValuesCollectorSupportsThreadIdAlias) {
+    entries[0].threadId = "t1";
+    entries[1].threadId = "t2";
+    entries[2].threadId = "t1";
+    entries[3].threadId = "t3";
+    entries[4].threadId = "t2";
+    entries[5].threadId = "t2";
+    entries[6].threadId = "t1";
+
+    TopNFieldValuesCollector collector(2, "thread_id");
+    for (const auto& entry : entries) {
+        collector.collect(entry);
+    }
+    json report = collector.generateReport();
+    ASSERT_EQ(report["target_field"], "threadId");
+    ASSERT_EQ(report["values"].size(), 2);
+}
+
 TEST_F(StatisticsTest, TopNFieldValuesCollectorForMessage) {
     TopNFieldValuesCollector collector(2, "message");
     for (const auto& entry : entries) {
@@ -137,6 +170,13 @@ TEST_F(StatisticsTest, CreateCollectorFactory) {
     auto topNCollector = Statistics::createCollector(topNConfig);
     ASSERT_NE(topNCollector, nullptr);
     EXPECT_EQ(topNCollector->getName(), "top_n_field_values_message");
+
+    StatisticConfig aliasConfig;
+    aliasConfig.type = StatisticType::FIELD_VALUE_COUNT;
+    aliasConfig.params["target_field"] = "SOURCE_FILE";
+    auto aliasCollector = Statistics::createCollector(aliasConfig);
+    ASSERT_NE(aliasCollector, nullptr);
+    EXPECT_EQ(aliasCollector->getName(), "field_value_count_sourceFile");
 
     // Test creating a collector with missing required params
     StatisticConfig invalidConfig;
