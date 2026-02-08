@@ -22,7 +22,7 @@
 | Error handling consistency | 6.5 | `ErrorCode::Result` is used widely; stats collector construction and stats JSON parsing no longer rely on exceptions for malformed config, and analyzer now guards parser throw paths by converting exceptions to report errors (`src/analyzer/IO.cpp`). Remaining throw sources are inside parser implementations. |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 6.5 | 49 passing tests with good breadth; strong parser/filter/export coverage. Gaps: concurrency is placeholder (`tests/analyzer/Core.cpp:108`), parseQuery is expected unimplemented (`tests/filter/Iteration15.cpp:142`), no direct JsonLogParser-focused tests observed. |
-| Build hygiene | 8.0 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, and CI workflow added (`.github/workflows/ci.yml`, commit `9793584`). Remaining weakness: dependency fetch requires network on fresh configure. |
+| Build hygiene | 8.5 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy improved with system-package fallback plus optional fetch (`LOGANALYZER_FETCH_DEPS`, commit `fb4597d`). |
 | API hygiene | 6.0 | Public API header is broad, but thread-safe snapshot accessors were added for analyzer state (`include/analyzer/Core.h`, `src/analyzer/IO.cpp`, commit `17ef73c`). Legacy reference-returning accessors still exist. |
 
 ## Risk register
@@ -77,7 +77,8 @@
 - Likelihood: High  
 - Where: `CMakeLists.txt:17`, `CMakeLists.txt:25`, `CMakeLists.txt:34`  
 - Why it matters: Reproducibility and CI reliability suffer in restricted environments; I could not configure a fresh new build dir offline.  
-- Minimal mitigation idea: Define an offline build path (mirrors/vendor/cache policy) in docs and CI.
+- Mitigation progress: System dependency fallback and configurable fetch behavior were added in commit `fb4597d` (`-DLOGANALYZER_FETCH_DEPS=OFF` for preinstalled deps).
+- Minimal mitigation idea: Add a fully vendored/mirrored dependency mode for hermetic offline CI.
 
 8. **Public API install incomplete for “C++ API” consumers**  
 - Severity: Medium  
