@@ -124,6 +124,15 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_NegativeTopN) {
     EXPECT_THAT(errors[0], testing::HasSubstr("must be a positive integer."));
 }
 
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNRejectsTrailingCharacters) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_MESSAGES, {{std::string(config_keys::TOP_N), "5abc"}}}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("must be a positive integer."));
+}
+
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCount_MissingTargetField) {
     settings.statisticConfigs = {
         StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {}}
@@ -211,6 +220,15 @@ TEST_F(ConfigValidationTest, ValidateFilterRule_ValueTypeMismatch_GreaterThanNot
     errors = settings.validate();
     ASSERT_EQ(errors.size(), 1);
     EXPECT_THAT(errors[0], testing::HasSubstr("requires a numeric value, but got 'abc'"));
+}
+
+TEST_F(ConfigValidationTest, ValidateFilterRule_ValueTypeMismatch_TrailingCharacters) {
+    settings.filterRules.push_back(
+        {LogEntryField::ID, FilterOperator::GREATER_THAN, "12abc"}
+    );
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a numeric value, but got '12abc'"));
 }
 
 TEST_F(ConfigValidationTest, ValidateValidSettings) {

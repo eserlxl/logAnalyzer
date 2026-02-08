@@ -3,11 +3,32 @@
 
 #include "config/Settings.h"
 #include "config/Utils.h"
+#include <charconv>
 #include <regex>
 #include <set>
 
 std::vector<std::string> LogAnalyzerSettings::validate() const {
     std::vector<std::string> errors;
+    const auto isStrictInteger = [](const std::string& value) {
+        if (value.empty()) {
+            return false;
+        }
+        long long parsed = 0;
+        const char* begin = value.data();
+        const char* end = begin + value.size();
+        auto [ptr, ec] = std::from_chars(begin, end, parsed);
+        return ec == std::errc{} && ptr == end;
+    };
+    const auto isStrictPositiveInteger = [](const std::string& value) {
+        if (value.empty()) {
+            return false;
+        }
+        int parsed = 0;
+        const char* begin = value.data();
+        const char* end = begin + value.size();
+        auto [ptr, ec] = std::from_chars(begin, end, parsed);
+        return ec == std::errc{} && ptr == end && parsed > 0;
+    };
 
     // Validate regex patterns
     try {
@@ -48,9 +69,7 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
             if (fr.field == LogEntryField::ID || fr.field == LogEntryField::LINE_NUMBER ||
                 fr.field == LogEntryField::THREAD_ID)
             {
-                try {
-                    std::stoll(fr.value);
-                } catch (const std::invalid_argument&) {
+                if (!isStrictInteger(fr.value)) {
                     errors.push_back("FilterRule operator for field '" + Utils::logEntryFieldToString(fr.field) +
                                      "' requires a numeric value, but got '" + fr.value + "'.");
                 }
@@ -88,11 +107,7 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
             if (!has_top_n) {
                 errors.push_back("Statistic '" + typeStr + "' requires a 'top_n' parameter.");
             } else {
-                try {
-                    if (std::stoi(it_top_n->second) <= 0) {
-                        errors.push_back("Parameter 'top_n' for statistic '" + typeStr + "' must be a positive integer.");
-                    }
-                } catch (...) {
+                if (!isStrictPositiveInteger(it_top_n->second)) {
                     errors.push_back("Parameter 'top_n' for statistic '" + typeStr + "' must be a positive integer.");
                 }
             }
