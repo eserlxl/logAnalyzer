@@ -22,7 +22,7 @@
 | Error handling consistency | 8.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, parser throw mode returns structured `Result` errors (commit `3ce6b12`), and settings updates now roll back safely without leaving partial invalid state (commit `074892a`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 8.5 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency now includes deterministic snapshot/load coverage and concurrent append/filter/export stability checks (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`), and direct JsonLogParser tests were added (commit `ade5392`). |
-| Build hygiene | 8.5 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy improved with system-package fallback plus optional fetch (`LOGANALYZER_FETCH_DEPS`, commit `fb4597d`). |
+| Build hygiene | 9.0 | Strict warnings-as-errors in CMake (`CMakeLists.txt`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy now supports system packages, optional fetch, plus hermetic offline mirror mode (`LOGANALYZER_OFFLINE_DEPS`, commit `624536a`). |
 | API hygiene | 7.0 | Public API header is broad, but analyzer state access now uses thread-safe snapshots for both explicit snapshot APIs and reference-returning accessors (`src/analyzer/IO.cpp`, commits `17ef73c`, `645a17e`). |
 
 ## Risk register
@@ -78,13 +78,12 @@
 - Mitigation progress: Added concurrent append + filter/export stability coverage in commit `9e47304`.
 - Minimal mitigation idea: Expand further to stress concurrent stream parsing and export under larger datasets.
 
-7. **Fresh builds depend on live network FetchContent**  
+7. **Fresh builds depend on live network FetchContent (Resolved)**  
 - Severity: Medium  
 - Likelihood: High  
-- Where: `CMakeLists.txt:17`, `CMakeLists.txt:25`, `CMakeLists.txt:34`  
-- Why it matters: Reproducibility and CI reliability suffer in restricted environments; I could not configure a fresh new build dir offline.  
-- Mitigation progress: System dependency fallback and configurable fetch behavior were added in commit `fb4597d` (`-DLOGANALYZER_FETCH_DEPS=OFF` for preinstalled deps).
-- Minimal mitigation idea: Add a fully vendored/mirrored dependency mode for hermetic offline CI.
+- Where: `CMakeLists.txt`, `README.md`  
+- Resolution: Fixed in commit `624536a`; offline mirror mode was added (`LOGANALYZER_OFFLINE_DEPS`, `LOGANALYZER_DEPS_MIRROR_DIR`, per-dependency source overrides), enabling hermetic configuration without network fetch.
+- Follow-up: Add a CI job using `LOGANALYZER_OFFLINE_DEPS=ON` with a prepared mirror cache.
 
 8. **Public API install incomplete for “C++ API” consumers (Resolved)**  
 - Severity: Medium  
@@ -119,7 +118,7 @@ Repository structure verification:
 - tests/{...}: PRESENT with subsystem coverage
 
 Configure/build:
-- Fresh new build dir configure: FAILED (offline FetchContent dependency fetch could not resolve github.com)
+- Fresh new build dir configure (offline mode + missing mirror): FAILED as expected with explicit offline dependency error
 - Configure using existing build tree (Debug): SUCCESS
   Command: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 - Clean rebuild: SUCCESS
@@ -165,6 +164,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (offline mirror dependency mode behavior): SUCCESS
+  Commands:
+  - cmake -S . -B /tmp/loganalyzer-offline-check -DLOGANALYZER_OFFLINE_DEPS=ON -DLOGANALYZER_FETCH_DEPS=ON -DLOGANALYZER_DEPS_MIRROR_DIR=/tmp/does-not-exist
+  - Verified expected configure-time failure with actionable dependency guidance (no network attempt required)
 
 Warnings:
 - warning count: 0
@@ -188,8 +191,7 @@ Tests:
 ## Reality check vs README
 
 **Claims not clearly supported by code/tests**
-- CMake prerequisite/version mismatch has been resolved in commit `0309f10` (README now matches `cmake_minimum_required` and executable output path).
-- C++ API install packaging gap is resolved in commit `43ebdec` (targets export + package config/version installed and validated via external consumer build).
+- No material mismatches found for previously audited claims; prior README/CMake/API packaging gaps are closed in commits `0309f10`, `43ebdec`, and `624536a`.
 
 **Features present but under-documented in README**
 - Advanced parser and expression options are now surfaced in README (commit `47e4cbc`), including `--expression`, `--multiline-start-pattern`, `--max-multiline-buffer`, and `--on-parse-error`.
