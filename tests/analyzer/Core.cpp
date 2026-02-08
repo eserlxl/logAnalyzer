@@ -188,6 +188,35 @@ TEST_F(LogAnalyzerTest, LoadAndReplaceSupportsMultilineEntries) {
     EXPECT_EQ(entries[1].message, "Entry two");
 }
 
+TEST_F(LogAnalyzerTest, LoadAndReplaceDoesNotThrowWhenParserConfiguredToThrow) {
+    LogAnalyzerSettings settings;
+    settings.lineParsePattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): (.*)$)";
+    settings.fieldMappings = {
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional<size_t>(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional<size_t>(3), {}}
+    };
+    settings.parserErrorAction = CLIConfig::ParserErrorAction::Throw;
+
+    auto settingsResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
+
+    const std::string filePath = "test_throw_parser_action.log";
+    std::ofstream ofs(filePath);
+    ofs << "this line does not match parser pattern\n";
+    ofs.close();
+
+    ErrorCode::Result<AnalysisReport> loadResult;
+    EXPECT_NO_THROW({
+        loadResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Throw);
+    });
+    std::remove(filePath.c_str());
+
+    ASSERT_TRUE(loadResult.has_value());
+    EXPECT_EQ(loadResult->status, ParseError::UNKNOWN_ERROR);
+    ASSERT_FALSE(loadResult->parseErrors.empty());
+}
+
 class FilterExpressionTest : public ::testing::Test {
 protected:
     void SetUp() override {

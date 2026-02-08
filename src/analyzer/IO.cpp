@@ -54,7 +54,21 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
         lineNumber++;
         report.linesProcessed++;
 
-        auto parseResultOpt = currentParser_->processLine(line, lineNumber, sourceIdentifier);
+        std::optional<ErrorCode::Result<LogEntry>> parseResultOpt;
+        try {
+            parseResultOpt = currentParser_->processLine(line, lineNumber, sourceIdentifier);
+        } catch (const std::exception& e) {
+            report.parseErrors.emplace_back(LogParseError{
+                ParseError::PARTIAL_FAILURE,
+                std::string("Exception while parsing line: ") + e.what(),
+                lineNumber
+            });
+            if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+                report.status = ParseError::UNKNOWN_ERROR;
+                return {parsedEntries, report};
+            }
+            continue;
+        }
         if (!parseResultOpt.has_value()) {
             continue;
         }
@@ -73,7 +87,20 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
         }
     }
 
-    auto flushResults = currentParser_->flushRemaining();
+    std::vector<ErrorCode::Result<LogEntry>> flushResults;
+    try {
+        flushResults = currentParser_->flushRemaining();
+    } catch (const std::exception& e) {
+        report.parseErrors.emplace_back(LogParseError{
+            ParseError::PARTIAL_FAILURE,
+            std::string("Exception while flushing parser buffer: ") + e.what(),
+            0
+        });
+        if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+            report.status = ParseError::UNKNOWN_ERROR;
+            return {parsedEntries, report};
+        }
+    }
     for (const auto& result : flushResults) {
         if (result.has_value()) {
             LogEntry entry = result.value();
