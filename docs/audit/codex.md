@@ -8,6 +8,7 @@
 - Descending sort comparator strict-order bug has been fixed in commit `f76b95e` in both sorted-filter paths, with regression coverage in analyzer tests (`src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`).
 - Statistic collector creation now avoids runtime exceptions on invalid collector params (commit `7e7e68e`), reducing crash risk in constructor/settings flows (`src/analyzer/Stats.cpp`, `tests/analyzer/Core.cpp`).
 - Statistic JSON deserialization now avoids throw-based control flow by mapping malformed/unknown types to `UNKNOWN` for downstream validation (commit `4dd1531`; `include/stats/Core.h`, `tests/config/Core/Json.cpp`).
+- Analyzer parsing pipeline now catches parser exceptions and converts them into structured `AnalysisReport` errors instead of propagating throws (commit `15eb077`; `src/analyzer/IO.cpp`, `tests/analyzer/Core.cpp`).
 - Error model is mixed (`Result` + exceptions), including throws in parser/stats constructors and paths (`src/core/Log/Parser.cpp:322`, `src/analyzer/Stats.cpp:72`).
 - README/product claim gaps have narrowed; query parsing is now implemented and wired into `--expression` filtering (commit `5cc4c4d`).
 - Overall: solid foundation with real strengths, but several high-likelihood correctness and maintainability risks remain.
@@ -18,7 +19,7 @@
 |---|---:|---|
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
 | Correctness / edge-case handling | 7.5 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, descending sort now uses strict ordering semantics, and query parsing is implemented for `--expression` with parser tests (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `src/filter/Parser.cpp`, `tests/filter/Iteration15.cpp`). |
-| Error handling consistency | 6.0 | `ErrorCode::Result` is used widely; stats collector construction and stats JSON parsing no longer rely on exceptions for malformed config. Remaining throw paths are primarily parser action paths (`src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`). |
+| Error handling consistency | 6.5 | `ErrorCode::Result` is used widely; stats collector construction and stats JSON parsing no longer rely on exceptions for malformed config, and analyzer now guards parser throw paths by converting exceptions to report errors (`src/analyzer/IO.cpp`). Remaining throw sources are inside parser implementations. |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 6.5 | 49 passing tests with good breadth; strong parser/filter/export coverage. Gaps: concurrency is placeholder (`tests/analyzer/Core.cpp:108`), parseQuery is expected unimplemented (`tests/filter/Iteration15.cpp:142`), no direct JsonLogParser-focused tests observed. |
 | Build hygiene | 7.0 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration. Weakness: dependency fetch requires network on fresh configure (offline failure), no visible CI config (`.github` absent). |
@@ -53,7 +54,7 @@
 - Where: `src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`, `src/analyzer/Core.cpp:60`  
 - Why it matters: Unexpected throws can bypass expected error-handling paths and terminate CLI/library consumers.  
 - Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`.
-- Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`, and `include/stats/Core.h` JSON deserialization was hardened in commit `4dd1531` to avoid throwing on malformed statistic type/config fields.
+- Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`, `include/stats/Core.h` JSON deserialization was hardened in commit `4dd1531`, and analyzer parsing now catches parser exceptions in commit `15eb077`.
 - Minimal mitigation idea: Define and document one error boundary policy (no-throw across public API, or explicit throw boundaries) and test for it.
 
 5. **Thread-safety contract leak via returned references after lock release**  
