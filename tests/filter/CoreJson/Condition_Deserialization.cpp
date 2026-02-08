@@ -92,6 +92,19 @@ TEST_F(FilterJsonTest, FromJsonSuccessLegacyValueTypeInt) {
     EXPECT_EQ(fc.valueType, FilterValueType::INT);
 }
 
+TEST_F(FilterJsonTest, FromJsonSuccessLegacyValueTypeIntLogLevel) {
+    nlohmann::json j = {
+        {"field", "level"},
+        {"op", "EQUALS"},
+        {"value", "ERROR"},
+        {"value_type", 11}, // Legacy integer for LOG_LEVEL
+    };
+    FilterCondition fc;
+    auto result = from_json(j, fc);
+    ASSERT_TRUE(result.has_value()) << result.error().message;
+    EXPECT_EQ(fc.valueType, FilterValueType::LOG_LEVEL);
+}
+
 TEST_F(FilterJsonTest, FromJsonFailureFieldIsCustomLiteral) {
     nlohmann::json j = {
         {"field", "CUSTOM"},

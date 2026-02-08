@@ -267,7 +267,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         // For backward compatibility
         std::cerr << "Warning: Using integer for 'value_type' is deprecated and may be removed in future versions. Please use string representations.\n";
         int vt_int = vtJson.get<int>();
-        if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::FLOAT)) {
+        if (vt_int >= static_cast<int>(FilterValueType::STRING) && vt_int <= static_cast<int>(FilterValueType::LOG_LEVEL)) {
             fc.valueType = static_cast<FilterValueType>(vt_int);
         } else {
             return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer for 'value_type'.", current_path, "value_type"));
