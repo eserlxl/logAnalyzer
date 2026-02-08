@@ -54,15 +54,28 @@ inline void from_json(const json& j, StatisticConfig& sc) {
     sc.type = StatisticType::UNKNOWN;
     sc.params.clear();
 
-    if (j.contains("type")) {
-        sc.type = j.at("type").get<StatisticType>();
+    if (!j.is_object()) {
+        return;
     }
-    
-    if (j.contains("params")) {
-        if (j.at("params").is_object()) {
-            j.at("params").get_to(sc.params);
-        } else {
+
+    if (auto typeIt = j.find("type"); typeIt != j.end()) {
+        typeIt->get_to(sc.type);
+    }
+
+    if (auto paramsIt = j.find("params"); paramsIt != j.end()) {
+        if (!paramsIt->is_object()) {
             sc.type = StatisticType::UNKNOWN;
+            return;
+        }
+
+        for (auto it = paramsIt->begin(); it != paramsIt->end(); ++it) {
+            if (!it.value().is_string()) {
+                // Keep parser no-throw: invalidate the config and let validation report it.
+                sc.type = StatisticType::UNKNOWN;
+                sc.params.clear();
+                return;
+            }
+            sc.params[it.key()] = it.value().get<std::string>();
         }
     }
 }

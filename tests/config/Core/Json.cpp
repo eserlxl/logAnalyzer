@@ -181,6 +181,20 @@ TEST_F(LogAnalyzerConfigTest, FromJsonMalformedInternalStructures) {
         testing::HasSubstr("StatisticConfig has an unrecognized type.")
     ));
 
+    // Malformed StatisticConfig params (non-string value) should be reported as
+    // invalid config, not as a thrown JSON parsing error from helpers.
+    std::string jsonContent4b = R"({
+        "lineParsePattern": ".*",
+        "statisticConfigs": [
+            {"type": "COUNT_BY_LEVEL", "params": {"top_n": 5}}
+        ],
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result4b = LogAnalyzerSettings::fromJson(jsonContent4b);
+    ASSERT_FALSE(result4b.has_value());
+    ASSERT_THAT(result4b.error(), testing::Contains(testing::HasSubstr("StatisticConfig has an unrecognized type.")));
+    ASSERT_THAT(result4b.error(), testing::Not(testing::Contains(testing::HasSubstr("Error parsing 'statisticConfigs':"))));
+
     // Malformed rootFilterExpression (invalid operator)
     std::string jsonContent5 = R"({
         "lineParsePattern": ".*",
