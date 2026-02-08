@@ -8,16 +8,27 @@
 #include "stats/Core.h"
 #include <algorithm>
 #include <map>
+#include <cctype>
 #include <filesystem>
 #include <string>
 #include <optional>
 
 namespace Utils {
 
+namespace {
+
+void toUpperInPlaceAsciiSafe(std::string& value) {
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+        return static_cast<char>(std::toupper(c));
+    });
+}
+
+} // namespace
+
 // LogLevel functions (now correctly declared in LogTypes.h within Utils namespace)
 LogLevel stringToLogLevel(const std::string &levelStr) {
     std::string upperLevelStr = levelStr;
-    std::transform(upperLevelStr.begin(), upperLevelStr.end(), upperLevelStr.begin(), ::toupper);
+    toUpperInPlaceAsciiSafe(upperLevelStr);
 
     if (upperLevelStr == "TRACE") return LogLevel::TRACE;
     if (upperLevelStr == "DEBUG") return LogLevel::DEBUG;
@@ -118,7 +129,7 @@ std::string exportFormatToString(ExportFormat format) {
 
 std::optional<ExportFormat> stringToExportFormat(const std::string& formatStr) {
     std::string upperFormatStr = formatStr;
-    std::transform(upperFormatStr.begin(), upperFormatStr.end(), upperFormatStr.begin(), ::toupper);
+    toUpperInPlaceAsciiSafe(upperFormatStr);
 
     if (upperFormatStr == "PLAINTEXT" || upperFormatStr == "TEXT") return ExportFormat::PLAINTEXT;
     if (upperFormatStr == "JSON") return ExportFormat::JSON;
@@ -142,7 +153,7 @@ std::string statisticTypeToString(StatisticType type) {
 
 std::optional<StatisticType> stringToStatisticType(const std::string& typeStr) {
     std::string upperTypeStr = typeStr;
-    std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
+    toUpperInPlaceAsciiSafe(upperTypeStr);
 
     if (upperTypeStr == "UNIQUE_MESSAGES") return StatisticType::UNIQUE_MESSAGES;
     if (upperTypeStr == "TOP_MESSAGES") return StatisticType::TOP_MESSAGES;
@@ -165,7 +176,7 @@ std::string patternTypeToString(PatternType type) {
 
 std::optional<PatternType> stringToPatternType(const std::string& typeStr) {
     std::string upperTypeStr = typeStr;
-    std::transform(upperTypeStr.begin(), upperTypeStr.end(), upperTypeStr.begin(), ::toupper);
+    toUpperInPlaceAsciiSafe(upperTypeStr);
 
     if (upperTypeStr == "LITERAL") return PatternType::Literal;
     if (upperTypeStr == "REGEX") return PatternType::Regex;
@@ -186,7 +197,7 @@ std::string parseErrorToString(ParseError error) {
 
 std::optional<ParseError> stringToParseError(const std::string& errorStr) {
     std::string upperErrorStr = errorStr;
-    std::transform(upperErrorStr.begin(), upperErrorStr.end(), upperErrorStr.begin(), ::toupper);
+    toUpperInPlaceAsciiSafe(upperErrorStr);
 
     if (upperErrorStr == "SUCCESS") return ParseError::SUCCESS;
     if (upperErrorStr == "PARTIAL FAILURE" || upperErrorStr == "PARTIAL_FAILURE") return ParseError::PARTIAL_FAILURE;
@@ -209,7 +220,7 @@ std::string sortByToString(filter::SortBy sort) {
 
 std::optional<filter::SortBy> stringToSortBy(const std::string& sortStr) {
     std::string upperSortStr = sortStr;
-    std::transform(upperSortStr.begin(), upperSortStr.end(), upperSortStr.begin(), ::toupper);
+    toUpperInPlaceAsciiSafe(upperSortStr);
 
     if (upperSortStr == "TIMESTAMP" || upperSortStr == "TIME") return filter::SortBy::TIMESTAMP;
     if (upperSortStr == "LEVEL") return filter::SortBy::LEVEL;
@@ -230,7 +241,7 @@ std::string sortOrderToString(filter::SortOrder order) {
 
 std::optional<filter::SortOrder> stringToSortOrder(const std::string& orderStr) {
     std::string upperOrderStr = orderStr;
-    std::transform(upperOrderStr.begin(), upperOrderStr.end(), upperOrderStr.begin(), ::toupper);
+    toUpperInPlaceAsciiSafe(upperOrderStr);
 
     if (upperOrderStr == "ASCENDING" || upperOrderStr == "ASC") return filter::SortOrder::ASCENDING;
     if (upperOrderStr == "DESCENDING" || upperOrderStr == "DESC") return filter::SortOrder::DESCENDING;
@@ -263,7 +274,7 @@ std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view 
         } else {
             val = std::stod(s.substr(0, unitPos));
             std::string unit = s.substr(unitPos);
-            std::transform(unit.begin(), unit.end(), unit.begin(), ::toupper);
+            toUpperInPlaceAsciiSafe(unit);
 
             if (unit == "B" || unit == "BYTES") multiplier = 1;
             else if (unit == "K" || unit == "KB") multiplier = 1024;

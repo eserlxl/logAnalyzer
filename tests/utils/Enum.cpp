@@ -169,6 +169,17 @@ TEST(UtilsEnumConversionTest, StringToSortOrder) {
     EXPECT_FALSE(Utils::stringToSortOrder("RANDOM").has_value());
 }
 
+TEST(UtilsEnumConversionTest, HighBitInputIsHandledSafely) {
+    const std::string highBit(1, static_cast<char>(0xFF));
+    EXPECT_EQ(Utils::stringToLogLevel(highBit), LogLevel::UNKNOWN);
+    EXPECT_FALSE(Utils::stringToExportFormat(highBit).has_value());
+    EXPECT_FALSE(Utils::stringToStatisticType(highBit).has_value());
+    EXPECT_FALSE(Utils::stringToPatternType(highBit).has_value());
+    EXPECT_FALSE(Utils::stringToParseError(highBit).has_value());
+    EXPECT_FALSE(Utils::stringToSortBy(highBit).has_value());
+    EXPECT_FALSE(Utils::stringToSortOrder(highBit).has_value());
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
