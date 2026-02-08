@@ -14,6 +14,7 @@
 #include <chrono>
 #include <atomic>
 #include <thread>
+#include <map>
 
 using namespace filter;
 
@@ -315,6 +316,83 @@ TEST_F(LogAnalyzerTest, SortedFilteredEntriesDescendingUsesStrictComparator) {
     EXPECT_EQ(sorted.back().message, "alpha");
     for (size_t i = 1; i < sorted.size(); ++i) {
         EXPECT_GE(sorted[i - 1].message, sorted[i].message);
+    }
+}
+
+TEST_F(LogAnalyzerTest, SortedFilteredEntriesMaintainOrderingAndMembershipAcrossDirections) {
+    const std::string filePath = "test_sort_properties.log";
+    std::ofstream ofs(filePath);
+    ofs << "2023-01-01 10:00:00 INFO: beta\n";
+    ofs << "2023-01-01 10:00:01 ERROR: alpha\n";
+    ofs << "2023-01-01 10:00:02 WARNING: alpha\n";
+    ofs << "2023-01-01 10:00:03 DEBUG: gamma\n";
+    ofs << "2023-01-01 10:00:04 INFO: beta\n";
+    ofs << "2023-01-01 10:00:05 ERROR: delta\n";
+    ofs.close();
+
+    auto loadResult = analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
+
+    auto entryId = [](const LogEntry& e) {
+        const auto ts = e.timestamp.has_value()
+            ? std::to_string(e.timestamp->time_since_epoch().count())
+            : std::string("no-ts");
+        return ts + "|" +
+               std::to_string(static_cast<int>(e.level)) + "|" + e.sourceFile + "|" + e.message;
+    };
+
+    auto lessByField = [](const LogEntry& lhs, const LogEntry& rhs, SortBy key) {
+        switch (key) {
+            case SortBy::TIMESTAMP:
+                return lhs.timestamp < rhs.timestamp;
+            case SortBy::LEVEL:
+                return lhs.level < rhs.level;
+            case SortBy::MESSAGE:
+                return lhs.message < rhs.message;
+            case SortBy::SOURCE:
+                return lhs.sourceFile < rhs.sourceFile;
+            case SortBy::THREAD_ID:
+                if (lhs.threadId.has_value() && rhs.threadId.has_value()) {
+                    return *lhs.threadId < *rhs.threadId;
+                }
+                return lhs.threadId.has_value() < rhs.threadId.has_value();
+        }
+        return false;
+    };
+
+    const std::vector<SortBy> sortKeys = {
+        SortBy::TIMESTAMP,
+        SortBy::LEVEL,
+        SortBy::MESSAGE,
+        SortBy::SOURCE,
+        SortBy::THREAD_ID
+    };
+
+    FilterExpression allEntries;
+    for (const auto sortBy : sortKeys) {
+        const auto ascending = analyzer.getSortedFilteredEntries(allEntries, sortBy, SortOrder::ASCENDING);
+        const auto descending = analyzer.getSortedFilteredEntries(allEntries, sortBy, SortOrder::DESCENDING);
+
+        ASSERT_EQ(ascending.size(), descending.size()) << "Sort key: " << static_cast<int>(sortBy);
+        ASSERT_EQ(ascending.size(), 6u) << "Sort key: " << static_cast<int>(sortBy);
+
+        for (size_t i = 1; i < ascending.size(); ++i) {
+            EXPECT_FALSE(lessByField(ascending[i], ascending[i - 1], sortBy)) << "Sort key: " << static_cast<int>(sortBy);
+        }
+        for (size_t i = 1; i < descending.size(); ++i) {
+            EXPECT_FALSE(lessByField(descending[i - 1], descending[i], sortBy)) << "Sort key: " << static_cast<int>(sortBy);
+        }
+
+        std::map<std::string, size_t> ascCounts;
+        std::map<std::string, size_t> descCounts;
+        for (const auto& e : ascending) {
+            ++ascCounts[entryId(e)];
+        }
+        for (const auto& e : descending) {
+            ++descCounts[entryId(e)];
+        }
+        EXPECT_EQ(ascCounts, descCounts) << "Sort key: " << static_cast<int>(sortBy);
     }
 }
 
