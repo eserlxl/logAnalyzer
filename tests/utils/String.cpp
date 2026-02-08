@@ -352,3 +352,8 @@ TEST_F(StringUtilsTest, ParseHumanReadableSizeRejectsOverflow) {
     const std::string oversizedKb = std::to_string(std::numeric_limits<size_t>::max() / 1024u + 1u) + "KB";
     EXPECT_FALSE(Utils::parseHumanReadableSize(oversizedKb).has_value());
 }
+
+TEST_F(StringUtilsTest, ParseHumanReadableSizeRejectsMalformedNumericPart) {
+    EXPECT_FALSE(Utils::parseHumanReadableSize("1..5KB").has_value());
+    EXPECT_FALSE(Utils::parseHumanReadableSize("1.2.3").has_value());
+}

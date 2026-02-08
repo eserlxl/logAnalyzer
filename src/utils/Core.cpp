@@ -275,9 +275,18 @@ std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view 
 
     try {
         if (unitPos == std::string::npos) {
-            val = std::stod(s);
+            size_t idx = 0;
+            val = std::stod(s, &idx);
+            if (idx != s.size()) {
+                return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
+            }
         } else {
-            val = std::stod(s.substr(0, unitPos));
+            const std::string numberPart = s.substr(0, unitPos);
+            size_t idx = 0;
+            val = std::stod(numberPart, &idx);
+            if (idx != numberPart.size()) {
+                return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
+            }
             std::string unit = s.substr(unitPos);
             toUpperInPlaceAsciiSafe(unit);
 
