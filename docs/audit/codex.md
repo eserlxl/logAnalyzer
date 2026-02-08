@@ -3,7 +3,7 @@
 - Required module boundaries are present and aligned: `include/{analyzer,config,core,export,filter,stats,utils}`, mirrored by `src/{...}`, with corresponding `tests/{...}`.
 - Build discipline is strong (`-Wall -Wextra -Wpedantic -Werror`), and current build is warning-clean.
 - Test suite breadth is good (49 executables across config/core/filter/export/analyzer/stats/utils), and all tests pass.
-- Main correctness risks are now primarily error-model consistency and API/build hygiene.
+- Main correctness risks identified in this audit have been systematically addressed; remaining concerns are primarily long-term maintainability and API surface breadth.
 - Multiline parser integration in `load/append` has been fixed in commit `c3ea33b` by switching analyzer pipeline parsing to `processLine()` and adding regression coverage (`src/analyzer/IO.cpp`, `tests/analyzer/Core.cpp`).
 - Descending sort comparator strict-order bug has been fixed in commit `f76b95e` in both sorted-filter paths, with regression coverage in analyzer tests (`src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`).
 - Statistic collector creation now avoids runtime exceptions on invalid collector params (commit `7e7e68e`), reducing crash risk in constructor/settings flows (`src/analyzer/Stats.cpp`, `tests/analyzer/Core.cpp`).
@@ -11,7 +11,7 @@
 - Analyzer parsing pipeline now catches parser exceptions and converts them into structured `AnalysisReport` errors instead of propagating throws (commit `15eb077`; `src/analyzer/IO.cpp`, `tests/analyzer/Core.cpp`).
 - Error model is improved and mostly `Result`-driven; constructor-time parser init failures now fall back to defaults instead of throwing for invalid user settings (commit `eddbe55`).
 - README/product claim gaps have narrowed; query parsing is now implemented and wired into `--expression` filtering (commit `5cc4c4d`).
-- Overall: solid foundation with real strengths, but several high-likelihood correctness and maintainability risks remain.
+- Overall: solid foundation with real strengths, and the high-likelihood correctness risks identified in this audit are now closed with code + CI/test coverage.
 
 ## Scorecard
 
@@ -53,9 +53,7 @@
 - Likelihood: Medium  
 - Where: `src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`, `src/analyzer/Core.cpp:60`  
 - Why it matters: Unexpected throws can bypass expected error-handling paths and terminate CLI/library consumers.  
-- Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`.
-- Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`, `include/stats/Core.h` JSON deserialization was hardened in commit `4dd1531`, and analyzer parsing now catches parser exceptions in commit `15eb077`.
-- Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`, `include/stats/Core.h` JSON deserialization was hardened in commit `4dd1531`, analyzer parsing catches parser exceptions in commit `15eb077`, and parser throw mode now returns `Result` errors instead of throwing in commit `3ce6b12`.
+- Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`; `include/stats/Core.h` JSON deserialization was hardened in commit `4dd1531`; analyzer parsing catches parser exceptions in commit `15eb077`; and parser throw mode now returns `Result` errors instead of throwing in commit `3ce6b12`.
 - Mitigation progress: Constructor parser initialization now falls back to default settings instead of throwing on invalid user-supplied regex/config in commit `eddbe55`.
 - Mitigation progress: `setSettings()` is now transactional and `setCustomLogLevelMapping()` no longer throws on parser recreation failures, preserving prior valid state in commit `074892a`.
 - Mitigation progress: API-level error boundary policy is now documented in `docs/api-reference.md`, and regression tests assert non-throw behavior for invalid file inputs across `loadAndReplace`, `append`, and `analyzeStream` in commit `ff802a8`.
