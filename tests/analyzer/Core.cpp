@@ -399,6 +399,41 @@ TEST_F(LogAnalyzerTest, ConcurrentSnapshotAccessDuringLoad) {
     EXPECT_GE(analyzer.getEntriesSnapshot().size(), 250);
 }
 
+TEST_F(LogAnalyzerTest, ConcurrentLoadAsyncWithFilterAndExport) {
+    const std::string filePath = "test_concurrent_async_filter_export.log";
+    std::ofstream ofs(filePath);
+    for (int i = 0; i < 1000; ++i) {
+        ofs << "2023-01-01 12:00:" << (i % 60 < 10 ? "0" : "") << (i % 60)
+            << " INFO: async-msg-" << i << "\n";
+    }
+    ofs.close();
+
+    auto futureLoad = analyzer.loadAsync(filePath, CLIConfig::ParserErrorAction::Warn);
+
+    auto cond = FilterCondition::createString(LogEntryField::LEVEL, FilterOperator::NOT_EQUALS, "NONE");
+    ASSERT_TRUE(cond.has_value());
+    FilterExpression all(*cond);
+
+    for (int i = 0; i < 500 && futureLoad.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready; ++i) {
+        auto filtered = analyzer.getFilteredEntries(all);
+        ASSERT_TRUE(filtered.has_value()) << filtered.error().toString();
+
+        std::stringstream jsonOut;
+        ASSERT_NO_THROW(analyzer.exportAsJson(jsonOut, all, false));
+        ASSERT_NO_THROW((void)nlohmann::json::parse(jsonOut.str()));
+
+        std::stringstream csvOut;
+        ASSERT_NO_THROW(analyzer.exportAsCsv(csvOut, all, true));
+        ASSERT_FALSE(csvOut.str().empty());
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    auto result = futureLoad.get();
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    EXPECT_EQ(analyzer.getEntriesSnapshot().size(), 1000);
+}
+
 class FilterExpressionTest : public ::testing::Test {
 protected:
     void SetUp() override {
