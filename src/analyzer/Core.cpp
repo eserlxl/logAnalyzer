@@ -39,25 +39,43 @@ LogAnalyzer::LogAnalyzer()
       logReader_(std::make_unique<LogReader>(*this)),
       logWriter_(std::make_unique<LogWriter>(*this))
 {
-    // Need to explicitly construct parser using the factory method
     auto parser_or_error = DefaultLogParser::create(
         currentSettings_.lineParsePattern,
         currentSettings_.fieldMappings,
-        customLogLevelMapping_, // Use LogAnalyzer's own mapping
+        customLogLevelMapping_,
         currentSettings_.logEntryStartPattern,
-        currentSettings_.caseSensitiveParsing, // Pass caseSensitiveParsing
+        currentSettings_.caseSensitiveParsing,
         currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
         currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
-        true, // threadSafe: LogAnalyzer should use a thread-safe parser,
-        std::nullopt // errorHandler: No specific error handler for now, default to internal logging
+        true,
+        std::nullopt
     );
 
     if (parser_or_error.has_value()) {
         currentParser_ = std::move(parser_or_error.value());
     } else {
-        // Log an error and throw an exception, as a constructor cannot return std::unexpected
-        std::cerr << "Fatal Error: Failed to initialize LogParser in LogAnalyzer default constructor: " << parser_or_error.error().message << std::endl;
-        throw std::runtime_error("LogParser initialization failed: " + parser_or_error.error().message);
+        // Fallback to known-good defaults so construction remains no-throw for user input issues.
+        std::cerr << "Warning: Failed to initialize parser with current settings in default constructor: "
+                  << parser_or_error.error().message << ". Falling back to built-in defaults." << std::endl;
+        currentSettings_ = LogAnalyzerSettings{};
+        customLogLevelMapping_ = currentSettings_.customLogLevelMappings;
+        auto fallback_or_error = DefaultLogParser::create(
+            currentSettings_.lineParsePattern,
+            currentSettings_.fieldMappings,
+            customLogLevelMapping_,
+            currentSettings_.logEntryStartPattern,
+            currentSettings_.caseSensitiveParsing,
+            currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+            currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
+            true,
+            std::nullopt
+        );
+        if (!fallback_or_error.has_value()) {
+            std::cerr << "Fatal Error: Failed to initialize fallback parser in default constructor: "
+                      << fallback_or_error.error().message << std::endl;
+            throw std::runtime_error("LogParser initialization failed: " + fallback_or_error.error().message);
+        }
+        currentParser_ = std::move(fallback_or_error.value());
     }
 
     for (const auto& config : currentSettings_.statisticConfigs) {
@@ -73,28 +91,45 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
       logReader_(std::make_unique<LogReader>(*this)),
       logWriter_(std::make_unique<LogWriter>(*this))
 {
-    // Need to explicitly construct parser using the factory method
     auto parser_or_error = DefaultLogParser::create(
         currentSettings_.lineParsePattern,
         currentSettings_.fieldMappings,
-        customLogLevelMapping_, // Use LogAnalyzer's own mapping
+        customLogLevelMapping_,
         currentSettings_.logEntryStartPattern,
-        currentSettings_.caseSensitiveParsing, // Pass caseSensitiveParsing
+        currentSettings_.caseSensitiveParsing,
         currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
         currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
-        true, // threadSafe: LogAnalyzer should use a thread-safe parser
-        std::nullopt // errorHandler: No specific error handler for now, default to internal logging
+        true,
+        std::nullopt
     );
 
     if (parser_or_error.has_value()) {
         currentParser_ = std::move(parser_or_error.value());
     } else {
-        // Log an error and throw an exception, as a constructor cannot return std::unexpected
-        std::cerr << "Fatal Error: Failed to initialize LogParser in LogAnalyzer settings constructor: " << parser_or_error.error().message << std::endl;
-        throw std::runtime_error("LogParser initialization failed: " + parser_or_error.error().message);
+        std::cerr << "Warning: Failed to initialize parser in settings constructor: "
+                  << parser_or_error.error().message << ". Falling back to built-in defaults." << std::endl;
+        currentSettings_ = LogAnalyzerSettings{};
+        customLogLevelMapping_ = currentSettings_.customLogLevelMappings;
+        auto fallback_or_error = DefaultLogParser::create(
+            currentSettings_.lineParsePattern,
+            currentSettings_.fieldMappings,
+            customLogLevelMapping_,
+            currentSettings_.logEntryStartPattern,
+            currentSettings_.caseSensitiveParsing,
+            currentSettings_.parserErrorAction.value_or(CLIConfig::ParserErrorAction::Warn),
+            currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
+            true,
+            std::nullopt
+        );
+        if (!fallback_or_error.has_value()) {
+            std::cerr << "Fatal Error: Failed to initialize fallback parser in settings constructor: "
+                      << fallback_or_error.error().message << std::endl;
+            throw std::runtime_error("LogParser initialization failed: " + fallback_or_error.error().message);
+        }
+        currentParser_ = std::move(fallback_or_error.value());
     }
 
-    for (const auto& config : settings.statisticConfigs) {
+    for (const auto& config : currentSettings_.statisticConfigs) {
         if (auto collector = createStatisticCollector(config)) {
             collectors_.push_back(collector);
         }

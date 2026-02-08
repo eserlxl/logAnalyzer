@@ -188,6 +188,27 @@ TEST(LogAnalyzerCtorTest, InvalidStatisticConfigDoesNotThrowInConstructor) {
     });
 }
 
+TEST(LogAnalyzerCtorTest, InvalidRegexSettingsFallsBackInConstructor) {
+    LogAnalyzerSettings settings;
+    settings.lineParsePattern = "[";
+
+    std::unique_ptr<LogAnalyzer> localAnalyzer;
+    EXPECT_NO_THROW({
+        localAnalyzer = std::make_unique<LogAnalyzer>(settings);
+    });
+    ASSERT_NE(localAnalyzer, nullptr);
+
+    const std::string filePath = "test_ctor_fallback.log";
+    std::ofstream ofs(filePath);
+    ofs << "2023-01-01 10:00:00 INFO: fallback works\n";
+    ofs.close();
+
+    auto loadResult = localAnalyzer->loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
+    EXPECT_EQ(loadResult->successfulParses, 1);
+}
+
 TEST_F(LogAnalyzerTest, SortedFilteredEntriesDescendingUsesStrictComparator) {
     const std::string filePath = "test_desc_sort.log";
     std::ofstream ofs(filePath);
