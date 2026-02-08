@@ -93,6 +93,33 @@ TEST_F(LogAnalyzerTest, PublicApiInvalidInputsReturnErrorsWithoutThrowing) {
     EXPECT_EQ(streamResult.error().code, Code::FileNotReadable);
 }
 
+TEST_F(LogAnalyzerTest, CancellationStatusTakesPrecedenceOverParseErrors) {
+    const std::string filePath = "test_cancel_precedence.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "malformed line without expected format\n";
+        ofs << "2023-01-01 10:00:00 INFO: should-not-be-fully-processed\n";
+    }
+
+    CancellationToken token;
+    bool cancelIssued = false;
+    auto result = analyzer.loadAndReplace(
+        filePath,
+        ParserErrorAction::Throw,
+        &token,
+        ProgressCallback([&](double progress, std::string_view) {
+            if (!cancelIssued && progress > 0.0) {
+                token.cancel();
+                cancelIssued = true;
+            }
+        }));
+    std::remove(filePath.c_str());
+
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    EXPECT_EQ(result->status, ParseError::CANCELLED);
+    EXPECT_TRUE(cancelIssued);
+}
+
 TEST_F(LogAnalyzerTest, AnalyzeStreamInvalidRegexError) {
     LogAnalyzerSettings settings;
     settings.lineParsePattern = "["; // Invalid regex
