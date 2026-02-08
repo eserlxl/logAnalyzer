@@ -23,7 +23,7 @@
 | Performance risks | 7.2 | Stream mode exists; regex caches present; noisy unconditional export debug dumps were removed (commit `2dc97f8`), parse pipeline copies were reduced via move-based entry handling (commit `055d6e8`), and append/stream merge paths now use ordered fast-paths to avoid full merge work when ranges are already non-overlapping (commit `8b4d35c`). Remaining cost driver is non-stream load-and-replace full sort for large datasets. |
 | Test quality | 9.1 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency includes deterministic snapshot/load coverage, concurrent append/filter/export checks, concurrent `loadAsync` filter/export stress coverage, concurrent multiline `analyzeStream` isolation checks, and explicit concurrent dual-append preservation coverage (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`, `51d85c3`, `6a63d62`, `17a85b4`), plus direct JsonLogParser tests (commit `ade5392`). |
 | Build hygiene | 9.4 | Strict warnings-as-errors in CMake (`CMakeLists.txt`), clean ctest integration, CI now includes repeated and shuffled long-running analyzer concurrency stress runs (`.github/workflows/ci.yml`, commits `075f68b`, `113a617`), and dependency strategy supports system packages, optional fetch, plus hermetic offline mirror mode (`LOGANALYZER_OFFLINE_DEPS`, commit `624536a`). |
-| API hygiene | 7.0 | Public API header is broad, but analyzer state access now uses thread-safe snapshots for both explicit snapshot APIs and reference-returning accessors (`src/analyzer/IO.cpp`, commits `17ef73c`, `645a17e`). |
+| API hygiene | 7.3 | Public API header is still broad, but analyzer state access now uses thread-safe snapshots (`src/analyzer/IO.cpp`, commits `17ef73c`, `645a17e`) and public include bloat in `include/analyzer/Core.h` was reduced via forward declarations and dependency pruning (commit `7b6b9d2`). |
 
 ## Risk register
 
@@ -253,6 +253,11 @@ Configure/build:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
 - Post-fix verification (test data directory alignment and stale-cache recovery): SUCCESS
+  Commands:
+  - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
+- Post-fix verification (public analyzer header include-bloat reduction): SUCCESS
   Commands:
   - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
   - cmake --build build --parallel
