@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "utils/Time.h" // Include the new header
+#include "utils/String.h"
 #include <chrono> // Added for std::chrono
 #include <sstream>
 #include <iomanip>
@@ -330,17 +331,18 @@ std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const s
 
 std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseRelativeTime(const std::string& timeStr) {
     auto now = std::chrono::system_clock::now();
+    const std::string lowered = Utils::toLower(timeStr);
 
-    if (timeStr == "yesterday") {
+    if (lowered == "yesterday") {
         return now - std::chrono::days(1);
     }
-    if (timeStr == "tomorrow") {
+    if (lowered == "tomorrow") {
         return now + std::chrono::days(1);
     }
     
     std::smatch matches;
-    const std::regex ago_regex(R"((\d+\s*[a-zA-Z]+) ago)");
-    const std::regex in_regex(R"(in (\d+\s*[a-zA-Z]+))");
+    const std::regex ago_regex(R"(^(\d+\s*[a-zA-Z]+)\s+ago$)", std::regex::icase);
+    const std::regex in_regex(R"(^in\s+(\d+\s*[a-zA-Z]+)$)", std::regex::icase);
 
     if (std::regex_match(timeStr, matches, ago_regex)) {
         auto duration_str = matches[1].str();

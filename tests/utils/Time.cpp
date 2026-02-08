@@ -127,6 +127,30 @@ TEST(UtilsTime, ParseRelativeTime) {
     EXPECT_FALSE(parseRelativeTime("last week").has_value());
 }
 
+TEST(UtilsTime, ParseRelativeTimeCaseInsensitiveKeywordsAndUnits) {
+    using namespace Utils;
+
+    auto now = std::chrono::system_clock::now();
+
+    auto yesterday = parseRelativeTime("Yesterday");
+    ASSERT_TRUE(yesterday.has_value());
+    EXPECT_EQ(std::chrono::duration_cast<std::chrono::seconds>(yesterday->time_since_epoch()).count(),
+              std::chrono::duration_cast<std::chrono::seconds>((now - std::chrono::days(1)).time_since_epoch()).count());
+
+    auto tomorrow = parseRelativeTime("ToMoRrOw");
+    ASSERT_TRUE(tomorrow.has_value());
+    EXPECT_EQ(std::chrono::duration_cast<std::chrono::seconds>(tomorrow->time_since_epoch()).count(),
+              std::chrono::duration_cast<std::chrono::seconds>((now + std::chrono::days(1)).time_since_epoch()).count());
+
+    auto inUpper = parseRelativeTime("IN 10s");
+    ASSERT_TRUE(inUpper.has_value());
+    EXPECT_GE((inUpper.value() - now).count(), 10);
+
+    auto agoUpper = parseRelativeTime("10s AGO");
+    ASSERT_TRUE(agoUpper.has_value());
+    EXPECT_LE((agoUpper.value() - now).count(), -10);
+}
+
 TEST(UtilsTime, ParseAbsoluteTime) {
     using namespace Utils;
 
