@@ -637,6 +637,11 @@ Configure/build:
   - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
+- Post-fix verification (time parsing API parity, strict numeric parsing, and Unix timestamp support): SUCCESS
+  Commands:
+  - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
