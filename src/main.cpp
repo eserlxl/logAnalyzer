@@ -11,6 +11,7 @@
 #include "core/Error.h" // New: For Error struct and Result alias
 #include "filter/IFilter.h"
 #include "filter/ConcreteFilters.h"
+#include "filter/Parser.h"
 #include "filter/Types.h"
 #include "stats/Core.h" // For statistic collectors
 #include <nlohmann/json.hpp>
@@ -53,8 +54,8 @@ int main(int argc, char *argv[]) {
     bool useColors = (cliOptions.colorOption == CLIConfig::ColorOption::ALWAYS) ||
                      (cliOptions.colorOption == CLIConfig::ColorOption::AUTO && isatty(fileno(stdout)) && cliOptions.outputPath.empty());
 
-    // NOTE: The new --expression filter is not yet implemented. This will be part of the next stage.
     auto rootFilter = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
+    std::optional<filter::FilterExpression> parsedExpression;
 
     // Inclusion filters
     auto inclusionFilters = std::make_shared<CompositeFilter>(cliOptions.filterLogic.value_or(CompositeFilter::Logic::AND));
@@ -108,6 +109,27 @@ int main(int argc, char *argv[]) {
             cliOptions.endTime.value_or(std::chrono::system_clock::time_point::max())
         ));
     }
+
+    if (!cliOptions.complexFilterExpression.empty()) {
+        auto expressionResult = filter::parseQuery(cliOptions.complexFilterExpression);
+        if (!expressionResult) {
+            std::cerr << "Error: Invalid --expression filter: " << expressionResult.error().toString() << std::endl;
+            return 1;
+        }
+        parsedExpression = std::move(*expressionResult);
+    }
+
+    auto expressionMatches = [&](const LogEntry& entry) {
+        if (!parsedExpression.has_value()) {
+            return true;
+        }
+        auto evalResult = parsedExpression->evaluate(entry);
+        if (!evalResult.has_value()) {
+            std::cerr << "Warning: Failed to evaluate --expression for entry: " << evalResult.error().toString() << std::endl;
+            return false;
+        }
+        return *evalResult;
+    };
 
     if (cliOptions.streamMode) {
         if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv") {
@@ -171,7 +193,7 @@ int main(int argc, char *argv[]) {
         }
 
         auto streamEntryCallback = [&](const LogEntry &entry) {
-            if (rootFilter->matches(entry)) {
+            if (rootFilter->matches(entry) && expressionMatches(entry)) {
                  if (cliOptions.outputFormat == "text") {
                     FormattingOptions fmtOptions;
                     fmtOptions.useColor = useColors;
@@ -233,7 +255,7 @@ int main(int argc, char *argv[]) {
         }
         std::vector<LogEntry> filteredEntries;
         for (const auto& entry : analyzer.getEntries()) {
-            if (rootFilter->matches(entry)) {
+            if (rootFilter->matches(entry) && expressionMatches(entry)) {
                 filteredEntries.push_back(entry);
             }
         }

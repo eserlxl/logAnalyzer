@@ -138,9 +138,25 @@ TEST_F(FilterIteration15Test, ExpressionSimplify) {
     EXPECT_EQ(simplified.getCondition()->op, FilterOperator::CONTAINS);
 }
 
-// Test parseQuery placeholder
-TEST_F(FilterIteration15Test, ParseQueryNotImplemented) {
+TEST_F(FilterIteration15Test, ParseQuerySimpleCondition) {
     auto result = parseQuery("level = INFO");
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, Code::NotImplemented);
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+
+    LogEntry infoEntry = createEntry(LogLevel::INFO, "ok");
+    LogEntry errorEntry = createEntry(LogLevel::ERROR, "fail");
+    EXPECT_TRUE(result->evaluate(infoEntry).value_or(false));
+    EXPECT_FALSE(result->evaluate(errorEntry).value_or(true));
+}
+
+TEST_F(FilterIteration15Test, ParseQueryLogicalExpressionWithSet) {
+    auto result = parseQuery("NOT (level = DEBUG) AND message IN ('hello', 'world')");
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+
+    LogEntry matchEntry = createEntry(LogLevel::INFO, "world");
+    LogEntry blockedByNot = createEntry(LogLevel::DEBUG, "world");
+    LogEntry blockedBySet = createEntry(LogLevel::INFO, "other");
+
+    EXPECT_TRUE(result->evaluate(matchEntry).value_or(false));
+    EXPECT_FALSE(result->evaluate(blockedByNot).value_or(true));
+    EXPECT_FALSE(result->evaluate(blockedBySet).value_or(true));
 }
