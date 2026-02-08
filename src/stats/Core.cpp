@@ -3,8 +3,27 @@
 
 #include "stats/Core.h"
 #include <algorithm>
+#include <charconv>
 #include <vector>
-#include <stdexcept> // For std::stoi exception handling
+
+namespace {
+
+bool tryParseStrictPositiveInt(std::string_view value, int& parsedValue) {
+    if (value.empty()) {
+        return false;
+    }
+    int parsed = 0;
+    const char* begin = value.data();
+    const char* end = begin + value.size();
+    auto [ptr, ec] = std::from_chars(begin, end, parsed);
+    if (ec != std::errc{} || ptr != end || parsed <= 0) {
+        return false;
+    }
+    parsedValue = parsed;
+    return true;
+}
+
+} // namespace
 
 // UniqueMessagesCollector implementation
 void UniqueMessagesCollector::collect(const LogEntry& entry) {
@@ -213,14 +232,9 @@ namespace Statistics {
             case StatisticType::TOP_MESSAGES: {
                 int topN = 10; // Default value
                 if (config.params.count("top_n")) {
-                    try {
-                        const int parsedTopN = std::stoi(config.params.at("top_n"));
-                        if (parsedTopN > 0) {
-                            topN = parsedTopN;
-                        }
-                    } catch (const std::exception& e) {
-                        // Error handling for stoi. For now, proceed with default.
-                        // In a real scenario, consider logging or returning an error indicator.
+                    int parsedTopN = 0;
+                    if (tryParseStrictPositiveInt(config.params.at("top_n"), parsedTopN)) {
+                        topN = parsedTopN;
                     }
                 }
                 return std::make_unique<TopMessagesCollector>(topN);
@@ -247,13 +261,7 @@ namespace Statistics {
                     return nullptr;
                 }
                 int topN = 0;
-                try {
-                    topN = std::stoi(config.params.at("top_n"));
-                } catch (const std::exception& e) {
-                    // Error handling for stoi. Return nullptr.
-                    return nullptr;
-                }
-                if (topN <= 0) {
+                if (!tryParseStrictPositiveInt(config.params.at("top_n"), topN)) {
                     return nullptr;
                 }
                 

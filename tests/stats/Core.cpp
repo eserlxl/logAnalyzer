@@ -144,3 +144,26 @@ TEST_F(StatisticsTest, CreateCollectorFactory) {
     auto invalidCollector = Statistics::createCollector(invalidConfig);
     ASSERT_EQ(invalidCollector, nullptr);
 }
+
+TEST_F(StatisticsTest, CreateCollectorFactoryRejectsMalformedTopNForTopNFieldValues) {
+    StatisticConfig invalidConfig;
+    invalidConfig.type = StatisticType::TOP_N_FIELD_VALUES;
+    invalidConfig.params["target_field"] = "message";
+    invalidConfig.params["top_n"] = "5abc";
+    auto invalidCollector = Statistics::createCollector(invalidConfig);
+    ASSERT_EQ(invalidCollector, nullptr);
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryDefaultsMalformedTopNForTopMessages) {
+    StatisticConfig config;
+    config.type = StatisticType::TOP_MESSAGES;
+    config.params["top_n"] = "7abc";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    for (const auto& entry : entries) {
+        collector->collect(entry);
+    }
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["name"], "top_messages");
+    ASSERT_EQ(report["top_n"], 10);
+}

@@ -533,6 +533,33 @@ TEST_F(LogAnalyzerTest, NonPositiveTopNDefaultsForTopMessagesCollector) {
     ASSERT_FALSE(report["messages"].empty());
 }
 
+TEST_F(LogAnalyzerTest, MalformedTopNDefaultsForTopMessagesCollector) {
+    LogAnalyzerSettings settings;
+    settings.statisticConfigs = {
+        {StatisticType::TOP_MESSAGES, {{"top_n", "7abc"}}}
+    };
+    auto settingsResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
+
+    const std::string filePath = "test_top_n_malformed_top_messages.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "2023-01-01 10:00:00 INFO: alpha\n";
+        ofs << "2023-01-01 10:00:01 INFO: beta\n";
+        ofs << "2023-01-01 10:00:02 INFO: alpha\n";
+    }
+
+    auto loadResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
+
+    const auto reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("top_messages"));
+    const auto& report = reports.at("top_messages");
+    ASSERT_EQ(report["top_n"], 10);
+    ASSERT_FALSE(report["messages"].empty());
+}
+
 TEST_F(LogAnalyzerTest, NonPositiveTopNDefaultsForTopNFieldValuesCollector) {
     LogAnalyzerSettings settings;
     settings.statisticConfigs = {

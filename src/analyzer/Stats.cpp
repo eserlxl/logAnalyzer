@@ -4,6 +4,7 @@
 #include "analyzer/Core.h"
 #include "stats/Core.h"
 #include <algorithm>
+#include <charconv>
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -13,6 +14,25 @@
 const int DEFAULT_TOP_N_STATISTIC_VALUE = 10;
 
 using json = nlohmann::json;
+
+namespace {
+
+bool tryParseStrictPositiveInt(std::string_view value, int& parsedValue) {
+    if (value.empty()) {
+        return false;
+    }
+    int parsed = 0;
+    const char* begin = value.data();
+    const char* end = begin + value.size();
+    auto [ptr, ec] = std::from_chars(begin, end, parsed);
+    if (ec != std::errc{} || ptr != end || parsed <= 0) {
+        return false;
+    }
+    parsedValue = parsed;
+    return true;
+}
+
+} // namespace
 
 void LogAnalyzer::addStatisticCollector(std::shared_ptr<IStatisticCollector> collector) {
     if (collector) {
@@ -74,16 +94,11 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
     int topN = DEFAULT_TOP_N_STATISTIC_VALUE; // Default value
     auto itTopN = config.params.find("top_n");
     if (itTopN != config.params.end()) {
-        try {
-            const int parsedTopN = std::stoi(itTopN->second);
-            if (parsedTopN > 0) {
-                topN = parsedTopN;
-            } else {
-                std::cerr << "Warning: Non-positive 'top_n' parameter for statistic. Defaulting to " << DEFAULT_TOP_N_STATISTIC_VALUE << ".\n";
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "Warning: Invalid 'top_n' parameter for statistic. Defaulting to " << DEFAULT_TOP_N_STATISTIC_VALUE << ". Error: " << e.what() << '\n';
-            // topN remains DEFAULT_TOP_N_STATISTIC_VALUE from initialization
+        int parsedTopN = 0;
+        if (tryParseStrictPositiveInt(itTopN->second, parsedTopN)) {
+            topN = parsedTopN;
+        } else {
+            std::cerr << "Warning: Invalid 'top_n' parameter for statistic. Defaulting to " << DEFAULT_TOP_N_STATISTIC_VALUE << ".\n";
         }
     }
 
