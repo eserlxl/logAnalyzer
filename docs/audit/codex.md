@@ -91,7 +91,7 @@
 - Likelihood: High  
 - Where: `CMakeLists.txt`, `README.md`  
 - Resolution: Fixed in commit `624536a`; offline mirror mode was added (`LOGANALYZER_OFFLINE_DEPS`, `LOGANALYZER_DEPS_MIRROR_DIR`, per-dependency source overrides), enabling hermetic configuration without network fetch.
-- Follow-up: Add a CI job using `LOGANALYZER_OFFLINE_DEPS=ON` with a prepared mirror cache.
+- Follow-up: Completed in commit `b53724a`; CI now runs `Build (Offline Mirror Mode)` using a prepared mirror cache and `LOGANALYZER_OFFLINE_DEPS=ON`.
 
 8. **Public API install incomplete for “C++ API” consumers (Resolved)**  
 - Severity: Medium  
@@ -221,6 +221,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (CI offline-mirror validation path): SUCCESS
+  Commands:
+  - cmake -S . -B build-offline-mirror -DCMAKE_BUILD_TYPE=Debug -DLOGANALYZER_OFFLINE_DEPS=ON -DLOGANALYZER_FETCH_DEPS=ON -DLOGANALYZER_DEPS_MIRROR_DIR=/tmp/loganalyzer-mirror
+  - cmake --build build-offline-mirror --parallel
 
 Warnings:
 - warning count: 0
