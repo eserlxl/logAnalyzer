@@ -29,6 +29,7 @@ set(TEST_SOURCES
     "config/Merge.cpp"
     "config/Utils.cpp"
     "core/Log/Parser.cpp"
+    "core/Log/JsonParser.cpp"
     "core/Log/ParserUtilsTests.cpp"
     "core/Log/Types.cpp"
     "export/Core.cpp"
