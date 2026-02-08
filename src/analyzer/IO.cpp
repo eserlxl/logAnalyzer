@@ -73,17 +73,16 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             continue;
         }
 
-        const auto& parseResult = parseResultOpt.value();
-        if (parseResult.has_value()) {
-            LogEntry entry = parseResult.value();
+        if (parseResultOpt->has_value()) {
+            LogEntry entry = std::move(parseResultOpt->value());
             entry.sourceFile = sourceIdentifier;
-            parsedEntries.push_back(entry);
+            parsedEntries.push_back(std::move(entry));
             report.successfulParses++;
         } else {
             if (errorAction == CLIConfig::ParserErrorAction::Warn) {
-                std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResult.error().message << std::endl;
+                std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResultOpt->error().message << std::endl;
             }
-            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber});
+            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResultOpt->error().message, lineNumber});
         }
     }
 
@@ -101,11 +100,11 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             return {parsedEntries, report};
         }
     }
-    for (const auto& result : flushResults) {
+    for (auto& result : flushResults) {
         if (result.has_value()) {
-            LogEntry entry = result.value();
+            LogEntry entry = std::move(result.value());
             entry.sourceFile = sourceIdentifier;
-            parsedEntries.push_back(entry);
+            parsedEntries.push_back(std::move(entry));
             report.successfulParses++;
         } else {
             if (errorAction == CLIConfig::ParserErrorAction::Warn) {
