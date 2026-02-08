@@ -71,6 +71,7 @@ install_manifest.txt
 Makefile
 Makefile.in
 *.in
+!cmake/*.cmake.in
 *.mk
 *.make
 

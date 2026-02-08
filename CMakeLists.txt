@@ -15,6 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(LOGANALYZER_FETCH_DEPS "Fetch third-party dependencies with FetchContent when not found locally" ON)
 
 include(FetchContent)
+include(CMakePackageConfigHelpers)
 
 # nlohmann_json
 find_package(nlohmann_json 3.11.3 QUIET CONFIG)
@@ -127,7 +128,12 @@ target_include_directories(LogAnalyzerLib
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(LogAnalyzerLib PUBLIC nlohmann_json::nlohmann_json CLI11::CLI11)
+target_link_libraries(LogAnalyzerLib
+    PUBLIC
+        $<BUILD_INTERFACE:nlohmann_json::nlohmann_json>
+    PRIVATE
+        $<BUILD_INTERFACE:CLI11::CLI11>
+)
 
 if(MSVC)
     target_compile_options(LogAnalyzerLib PRIVATE /W4 /WX)
@@ -147,15 +153,42 @@ endif()
 
 # Installation
 include(GNUInstallDirs)
+set(LOGANALYZER_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/logAnalyzer")
+
 install(TARGETS logAnalyzer
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 install(TARGETS LogAnalyzerLib
+    EXPORT logAnalyzerTargets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/logAnalyzerConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfig.cmake"
+    INSTALL_DESTINATION "${LOGANALYZER_INSTALL_CMAKEDIR}"
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(EXPORT logAnalyzerTargets
+    FILE logAnalyzerTargets.cmake
+    NAMESPACE logAnalyzer::
+    DESTINATION "${LOGANALYZER_INSTALL_CMAKEDIR}"
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfigVersion.cmake"
+    DESTINATION "${LOGANALYZER_INSTALL_CMAKEDIR}"
+)
 
 # Enable testing
 enable_testing()
