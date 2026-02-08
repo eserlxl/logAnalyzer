@@ -652,6 +652,11 @@ Configure/build:
   - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
+- Post-fix verification (legacy numeric value_type supports LOG_LEVEL enum value): SUCCESS
+  Commands:
+  - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
