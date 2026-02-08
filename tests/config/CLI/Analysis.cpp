@@ -12,6 +12,17 @@ TEST_F(CLIConfigTest, EnabledStatistics) {
     ASSERT_EQ(options.enabledStatistics[1], "top_messages:5");
 }
 
+TEST_F(CLIConfigTest, StatisticConfigWithWhitespace) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", " type = top_messages , top_n = 7 "});
+    ASSERT_TRUE(result.has_value());
+    auto& [settings, options] = result.value();
+    ASSERT_EQ(options.enabledStatistics.size(), 1);
+    ASSERT_EQ(settings.statisticConfigs.size(), 1);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TOP_MESSAGES);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("top_n"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("top_n"), "7");
+}
+
 TEST_F(CLIConfigTest, TopMessagesCount) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--top-n", "20"});
     ASSERT_TRUE(result.has_value());

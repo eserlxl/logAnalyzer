@@ -10,6 +10,7 @@
 #include "stats/Core.h" // For StatisticType, StatisticConfig
 #include "utils/Version.h"
 #include <CLI/CLI.hpp>
+#include <cctype>
 #include <algorithm> // For std::transform
 #include <iostream> // For std::cerr
 #include <string_view>
@@ -22,20 +23,32 @@
 using namespace ErrorCode;
 
 namespace {
+    void trimInPlace(std::string& s) {
+        const auto first = s.find_first_not_of(" \t");
+        if (first == std::string::npos) {
+            s.clear();
+            return;
+        }
+        const auto last = s.find_last_not_of(" \t");
+        s = s.substr(first, last - first + 1);
+    }
+
     // Helper to parse extended --stats syntax (e.g., "type=TOP_MESSAGES,top_n=5")
     // or legacy syntax (e.g., "unique_messages", "top_messages:10")
     std::optional<StatisticConfig> parseStatisticConfig(const std::string& statStr) {
         StatisticConfig config;
+        std::string normalized = statStr;
+        trimInPlace(normalized);
         
         // Handle legacy top_messages:N
-        if (statStr.find("top_messages:") == 0) {
+        if (normalized.find("top_messages:") == 0) {
             config.type = StatisticType::TOP_MESSAGES;
-            config.params["top_n"] = statStr.substr(13);
+            config.params["top_n"] = normalized.substr(13);
             return config;
         }
 
         // Try to parse as legacy simple name first
-        auto legacyType = Utils::stringToStatisticType(statStr);
+        auto legacyType = Utils::stringToStatisticType(normalized);
         if (legacyType.has_value()) {
             config.type = *legacyType;
             return config;
@@ -44,16 +57,19 @@ namespace {
         // Try parsing key-value pairs
         bool typeFound = false;
         std::string token;
-        std::istringstream tokenStream(statStr);
+        std::istringstream tokenStream(normalized);
         
         while (std::getline(tokenStream, token, ',')) {
+            trimInPlace(token);
+            if (token.empty()) {
+                continue;
+            }
             auto pos = token.find('=');
             if (pos != std::string::npos) {
                 std::string key = token.substr(0, pos);
                 std::string value = token.substr(pos + 1);
-                
-                // Trim key and value? CLI11 usually handles spaces around args, but internal commas might need care. 
-                // Assuming simple parsing for now.
+                trimInPlace(key);
+                trimInPlace(value);
                 
                 if (key == "type") {
                     auto type = Utils::stringToStatisticType(value);
@@ -70,6 +86,7 @@ namespace {
             } else {
                 // Token without '=', maybe it's just the type name mixed with params? 
                 // e.g. "TOP_MESSAGES,top_n=5"
+                trimInPlace(token);
                 auto type = Utils::stringToStatisticType(token);
                 if (type) {
                     config.type = *type;
