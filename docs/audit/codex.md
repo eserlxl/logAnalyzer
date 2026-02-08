@@ -21,7 +21,7 @@
 | Correctness / edge-case handling | 7.5 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, descending sort now uses strict ordering semantics, and query parsing is implemented for `--expression` with parser tests (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `src/filter/Parser.cpp`, `tests/filter/Iteration15.cpp`). |
 | Error handling consistency | 7.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing, analyzer catches parser exceptions, and parser throw mode now returns structured `Result` errors (commit `3ce6b12`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
-| Test quality | 8.0 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency has deterministic analyzer snapshot/load coverage (`tests/analyzer/Core.cpp`, commit `9a69617`), and direct JsonLogParser tests were added (commit `ade5392`). |
+| Test quality | 8.5 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency now includes deterministic snapshot/load coverage and concurrent append/filter/export stability checks (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`), and direct JsonLogParser tests were added (commit `ade5392`). |
 | Build hygiene | 8.5 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy improved with system-package fallback plus optional fetch (`LOGANALYZER_FETCH_DEPS`, commit `fb4597d`). |
 | API hygiene | 6.0 | Public API header is broad, but thread-safe snapshot accessors were added for analyzer state (`include/analyzer/Core.h`, `src/analyzer/IO.cpp`, commit `17ef73c`). Legacy reference-returning accessors still exist. |
 
@@ -66,13 +66,14 @@
 - Mitigation progress: Thread-safe snapshot APIs were added in commit `17ef73c` (`getEntriesSnapshot()`, `getLastReportSnapshot()`).
 - Minimal mitigation idea: Migrate call sites toward snapshots and eventually deprecate raw reference-returning accessors in multithreaded contexts.
 
-6. **Concurrency behavior largely untested**  
+6. **Concurrency behavior largely untested (Partially mitigated)**  
 - Severity: Medium  
 - Likelihood: High  
 - Where: `tests/analyzer/Core.cpp:108`  
 - Why it matters: Real-world async/stream use can race; current tests don’t validate concurrent access correctness.  
 - Mitigation progress: Added deterministic concurrent snapshot-read/load test in commit `9a69617`.
-- Minimal mitigation idea: Expand to include concurrent append + filter/export scenarios.
+- Mitigation progress: Added concurrent append + filter/export stability coverage in commit `9e47304`.
+- Minimal mitigation idea: Expand further to stress concurrent stream parsing and export under larger datasets.
 
 7. **Fresh builds depend on live network FetchContent**  
 - Severity: Medium  
@@ -141,6 +142,10 @@ Configure/build:
   - cmake --install build --prefix /tmp/loganalyzer-install-test
   - cmake -S /tmp/loganalyzer-consumer -B /tmp/loganalyzer-consumer/build -DlogAnalyzer_DIR=/tmp/loganalyzer-install-test/lib/cmake/logAnalyzer
   - cmake --build /tmp/loganalyzer-consumer/build --parallel
+- Post-fix verification (concurrent append/filter/export test coverage): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
 
 Warnings:
 - warning count: 0
