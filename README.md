@@ -61,6 +61,11 @@ Follow these steps to get `logAnalyzer` running on your system.
     cmake --build build --parallel
     ```
 
+    If your environment has dependencies preinstalled and no network access, configure with:
+    ```bash
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DLOGANALYZER_FETCH_DEPS=OFF
+    ```
+
     The executable will be located at `build/logAnalyzer`.
 
 3.  **Install (Optional):**

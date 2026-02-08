@@ -12,39 +12,72 @@ endif()
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(LOGANALYZER_FETCH_DEPS "Fetch third-party dependencies with FetchContent when not found locally" ON)
+
 include(FetchContent)
 
 # nlohmann_json
-FetchContent_Declare(
-    nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.3
-)
-FetchContent_MakeAvailable(nlohmann_json)
+find_package(nlohmann_json 3.11.3 QUIET CONFIG)
+if(NOT TARGET nlohmann_json::nlohmann_json)
+    if(LOGANALYZER_FETCH_DEPS)
+        FetchContent_Declare(
+            nlohmann_json
+            GIT_REPOSITORY https://github.com/nlohmann/json.git
+            GIT_TAG v3.11.3
+        )
+        FetchContent_MakeAvailable(nlohmann_json)
+    else()
+        message(FATAL_ERROR "nlohmann_json was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")
+    endif()
+endif()
 
 # CLI11
-FetchContent_Declare(
-    cli11
-    GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
-    GIT_TAG v2.6.0
-)
-FetchContent_MakeAvailable(cli11)
+find_package(CLI11 2.6.0 QUIET CONFIG)
+if(NOT TARGET CLI11::CLI11)
+    if(LOGANALYZER_FETCH_DEPS)
+        FetchContent_Declare(
+            cli11
+            GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+            GIT_TAG v2.6.0
+        )
+        FetchContent_MakeAvailable(cli11)
+    else()
+        message(FATAL_ERROR "CLI11 was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")
+    endif()
+endif()
 
 # GoogleTest
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.14.0
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+find_package(GTest 1.14.0 QUIET CONFIG)
+if(NOT TARGET GTest::gtest AND NOT TARGET gtest)
+    if(LOGANALYZER_FETCH_DEPS)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.14.0
+        )
+        # For Windows: Prevent overriding the parent project's compiler/linker settings
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable(googletest)
+    else()
+        message(FATAL_ERROR "GTest was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")
+    endif()
+endif()
 include(GoogleTest)
 
-if(TARGET gtest)
+if(TARGET GTest::gtest AND NOT TARGET GTest::GTest)
+    add_library(GTest::GTest ALIAS GTest::gtest)
+endif()
+if(TARGET GTest::gtest_main AND NOT TARGET GTest::Main)
+    add_library(GTest::Main ALIAS GTest::gtest_main)
+endif()
+if(TARGET gtest AND NOT TARGET GTest::GTest)
     add_library(GTest::GTest ALIAS gtest)
+endif()
+if(TARGET gtest_main AND NOT TARGET GTest::Main)
     add_library(GTest::Main ALIAS gtest_main)
+endif()
 
+if(TARGET gtest)
     if(NOT MSVC)
         target_compile_options(gtest PRIVATE -Wno-character-conversion)
         if(TARGET gtest_main)
