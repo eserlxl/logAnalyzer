@@ -12,11 +12,13 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include <atomic>
+#include <cstddef>
 #include <future>
 #include <generator> // C++23 for std::generator
 #include <shared_mutex>
 #include <vector>
 #include <string>
+#include <string_view>
 #include <map>
 #include <optional>
 #include <chrono>
@@ -26,6 +28,7 @@
 #include <expected>
 #include <span>
 #include <iosfwd>
+#include <utility>
 
 
 // Forward declarations
