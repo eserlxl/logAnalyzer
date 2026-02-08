@@ -46,7 +46,7 @@
 - Likelihood: Medium  
 - Where found: `src/analyzer/Filter.cpp`  
 - Resolution: Fixed in commit `f76b95e` by implementing descending comparison as reversed strict ascending (`less(b, a)`) instead of `!less(a, b)` in both sorted-filter overloads.
-- Follow-up: Keep regression coverage in `tests/analyzer/Core.cpp` and add broader sort-property tests when expanding test depth.
+- Follow-up: Completed in commit `3daedfc`; analyzer tests now include broader sort-property coverage validating ascending/descending monotonicity and entry-set preservation across sort keys.
 
 4. **Mixed exception + `Result` error model in critical paths (Resolved)**  
 - Severity: High  
@@ -239,6 +239,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R config_Core_Json
+- Post-fix verification (sorted-filter ordering/membership property coverage): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
 
 Warnings:
 - warning count: 0
