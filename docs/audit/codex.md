@@ -32,7 +32,7 @@
 - Likelihood: High  
 - Where found: `src/analyzer/IO.cpp`, `src/core/Log/Parser.cpp`  
 - Resolution: Fixed in commit `c3ea33b`; analyzer now consumes parser output via `processLine()` and flushes buffered multiline entries correctly. Regression test added: `LoadAndReplaceSupportsMultilineEntries` in `tests/analyzer/Core.cpp`.
-- Follow-up: Keep coverage in CI to prevent regressions when parser/analyzer integration changes.
+- Follow-up: Completed in commit `eec3aab`; CI now runs a focused parser/analyzer integration regression step for multiline load and concurrent stream-parser state isolation.
 
 2. **Query-expression feature not implemented but exposed in UX/docs (Resolved)**  
 - Severity: High  
@@ -243,6 +243,9 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (parser/analyzer integration CI regression target): SUCCESS
+  Commands:
+  - ./build/tests/analyzer_Core --gtest_filter=LogAnalyzerTest.LoadAndReplaceSupportsMultilineEntries:LogAnalyzerTest.ConcurrentAnalyzeStreamUsesIndependentParserState --gtest_brief=1
 
 Warnings:
 - warning count: 0
