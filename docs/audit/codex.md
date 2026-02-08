@@ -19,7 +19,7 @@
 |---|---:|---|
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
 | Correctness / edge-case handling | 7.5 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, descending sort now uses strict ordering semantics, and query parsing is implemented for `--expression` with parser tests (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `src/filter/Parser.cpp`, `tests/filter/Iteration15.cpp`). |
-| Error handling consistency | 8.0 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, and parser throw mode now returns structured `Result` errors (commit `3ce6b12`). |
+| Error handling consistency | 8.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, parser throw mode returns structured `Result` errors (commit `3ce6b12`), and settings updates now roll back safely without leaving partial invalid state (commit `074892a`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 8.5 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency now includes deterministic snapshot/load coverage and concurrent append/filter/export stability checks (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`), and direct JsonLogParser tests were added (commit `ade5392`). |
 | Build hygiene | 8.5 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy improved with system-package fallback plus optional fetch (`LOGANALYZER_FETCH_DEPS`, commit `fb4597d`). |
@@ -57,6 +57,7 @@
 - Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`, `include/stats/Core.h` JSON deserialization was hardened in commit `4dd1531`, and analyzer parsing now catches parser exceptions in commit `15eb077`.
 - Mitigation progress: `src/analyzer/Stats.cpp` throw paths for invalid collector parameters were removed in commit `7e7e68e`, `include/stats/Core.h` JSON deserialization was hardened in commit `4dd1531`, analyzer parsing catches parser exceptions in commit `15eb077`, and parser throw mode now returns `Result` errors instead of throwing in commit `3ce6b12`.
 - Mitigation progress: Constructor parser initialization now falls back to default settings instead of throwing on invalid user-supplied regex/config in commit `eddbe55`.
+- Mitigation progress: `setSettings()` is now transactional and `setCustomLogLevelMapping()` no longer throws on parser recreation failures, preserving prior valid state in commit `074892a`.
 - Minimal mitigation idea: Define and document one error boundary policy (no-throw across public API, or explicit throw boundaries) and test for it.
 
 5. **Thread-safety contract leak via returned references after lock release (Resolved)**  
@@ -157,6 +158,10 @@ Configure/build:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
 - Post-fix verification (reference accessor snapshot safety): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (transactional settings + non-throw remap): SUCCESS
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
