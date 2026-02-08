@@ -69,7 +69,7 @@
 - Why it matters: Returning references/spans while unlocking immediately can race with concurrent mutation.  
 - Mitigation progress: Thread-safe snapshot APIs were added in commit `17ef73c` (`getEntriesSnapshot()`, `getLastReportSnapshot()`).
 - Resolution: Fixed in commit `645a17e`; `getEntries()`, `getLastReport()`, and `getEntriesView()` now return thread-local snapshots rather than aliases to shared mutable state, with regression coverage in `tests/analyzer/Core.cpp`.
-- Follow-up: Continue using explicit snapshot APIs for clarity in performance-sensitive call paths.
+- Follow-up: Completed in commit `63acf40`; non-stream CLI processing now uses `getEntriesSnapshot()` explicitly when building filtered working sets.
 
 6. **Concurrency behavior largely untested (Resolved)**  
 - Severity: Medium  
@@ -250,6 +250,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (explicit snapshot API usage in non-stream CLI path): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
