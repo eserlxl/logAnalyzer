@@ -14,6 +14,7 @@
 #include <limits>
 #include <string>
 #include <optional>
+#include <regex>
 
 namespace Utils {
 
@@ -256,47 +257,39 @@ std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view 
     }
 
     std::string s(sizeStr);
-    // Remove whitespace
-    s.erase(std::remove_if(s.begin(), s.end(), [](unsigned char c) {
-        return std::isspace(c);
-    }), s.end());
-
-    size_t unitPos = std::string::npos;
-    for (size_t i = 0; i < s.length(); ++i) {
-        const unsigned char ch = static_cast<unsigned char>(s[i]);
-        if (!std::isdigit(ch) && s[i] != '.') {
-            unitPos = i;
-            break;
-        }
+    const auto first = s.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) {
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Empty size string"));
     }
+    const auto last = s.find_last_not_of(" \t\r\n");
+    s = s.substr(first, last - first + 1);
+
+    static const std::regex sizeRegex(R"(^([0-9]+(?:\.[0-9]+)?)(?:\s*([A-Za-z]+))?$)");
+    std::smatch match;
+    if (!std::regex_match(s, match, sizeRegex)) {
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
+    }
+
+    const std::string numberPart = match[1].str();
+    std::string unit = match[2].matched ? match[2].str() : "";
 
     double val = 0.0;
     size_t multiplier = 1;
 
     try {
-        if (unitPos == std::string::npos) {
-            size_t idx = 0;
-            val = std::stod(s, &idx);
-            if (idx != s.size()) {
-                return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
-            }
-        } else {
-            const std::string numberPart = s.substr(0, unitPos);
-            size_t idx = 0;
-            val = std::stod(numberPart, &idx);
-            if (idx != numberPart.size()) {
-                return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
-            }
-            std::string unit = s.substr(unitPos);
-            toUpperInPlaceAsciiSafe(unit);
-
-            if (unit == "B" || unit == "BYTES") multiplier = 1;
-            else if (unit == "K" || unit == "KB") multiplier = 1024;
-            else if (unit == "M" || unit == "MB") multiplier = 1024 * 1024;
-            else if (unit == "G" || unit == "GB") multiplier = 1024 * 1024 * 1024;
-            else if (unit == "T" || unit == "TB") multiplier = 1024ULL * 1024 * 1024 * 1024;
-            else return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size unit: " + unit));
+        size_t idx = 0;
+        val = std::stod(numberPart, &idx);
+        if (idx != numberPart.size()) {
+            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
         }
+
+        toUpperInPlaceAsciiSafe(unit);
+        if (unit.empty() || unit == "B" || unit == "BYTES") multiplier = 1;
+        else if (unit == "K" || unit == "KB") multiplier = 1024;
+        else if (unit == "M" || unit == "MB") multiplier = 1024 * 1024;
+        else if (unit == "G" || unit == "GB") multiplier = 1024 * 1024 * 1024;
+        else if (unit == "T" || unit == "TB") multiplier = 1024ULL * 1024 * 1024 * 1024;
+        else return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size unit: " + unit));
     } catch (...) {
         return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
     }

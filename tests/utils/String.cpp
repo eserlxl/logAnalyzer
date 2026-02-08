@@ -356,4 +356,7 @@ TEST_F(StringUtilsTest, ParseHumanReadableSizeRejectsOverflow) {
 TEST_F(StringUtilsTest, ParseHumanReadableSizeRejectsMalformedNumericPart) {
     EXPECT_FALSE(Utils::parseHumanReadableSize("1..5KB").has_value());
     EXPECT_FALSE(Utils::parseHumanReadableSize("1.2.3").has_value());
+    EXPECT_FALSE(Utils::parseHumanReadableSize("1 2KB").has_value());
+    EXPECT_FALSE(Utils::parseHumanReadableSize("1e3KB").has_value());
+    EXPECT_FALSE(Utils::parseHumanReadableSize("1e3").has_value());
 }
