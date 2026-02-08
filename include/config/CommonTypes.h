@@ -7,7 +7,6 @@
 #include "core/Log/Types.h" // For LogLevel
 #include "filter/Types.h"  // For SortBy, SortOrder
 #include "filter/Core.h"   // For CompositeFilter::Logic
-#include "config/Settings.h" // For ParserErrorAction (nested enum)
 #include "core/CiLess.h" // For LogAnalyzerInternal::ci_less
 
 #include <map>
