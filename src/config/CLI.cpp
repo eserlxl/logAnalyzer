@@ -39,9 +39,10 @@ namespace {
         StatisticConfig config;
         std::string normalized = statStr;
         trimInPlace(normalized);
+        const std::string normalizedLower = Utils::toLower(normalized);
         
         // Handle legacy top_messages:N
-        if (normalized.find("top_messages:") == 0) {
+        if (normalizedLower.rfind("top_messages:", 0) == 0) {
             std::string topN = normalized.substr(13);
             trimInPlace(topN);
             if (topN.empty() || !std::all_of(topN.begin(), topN.end(), [](unsigned char c) {

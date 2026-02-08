@@ -21,6 +21,15 @@ TEST_F(CLIConfigTest, LegacyTopMessagesWithWhitespaceValue) {
     ASSERT_EQ(settings.statisticConfigs[0].params.at("top_n"), "7");
 }
 
+TEST_F(CLIConfigTest, LegacyTopMessagesCaseInsensitivePrefix) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "TOP_MESSAGES:9"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TOP_MESSAGES);
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("top_n"), "9");
+}
+
 TEST_F(CLIConfigTest, StatisticConfigWithWhitespace) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", " type = top_messages , top_n = 7 "});
     ASSERT_TRUE(result.has_value());
