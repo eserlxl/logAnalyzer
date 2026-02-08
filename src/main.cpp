@@ -254,7 +254,8 @@ int main(int argc, char *argv[]) {
             }
         }
         std::vector<LogEntry> filteredEntries;
-        for (const auto& entry : analyzer.getEntries()) {
+        const auto entriesSnapshot = analyzer.getEntriesSnapshot();
+        for (const auto& entry : entriesSnapshot) {
             if (rootFilter->matches(entry) && expressionMatches(entry)) {
                 filteredEntries.push_back(entry);
             }
