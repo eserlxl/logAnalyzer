@@ -20,7 +20,7 @@
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
 | Correctness / edge-case handling | 8.0 | Good filter/type handling and multiline parser tests exist; analyzer load path uses `processLine()`, descending sort uses strict ordering semantics, query parsing is implemented for `--expression`, and concurrent append/stream lost-update behavior was fixed by atomic merge under unique lock with regression coverage (`src/analyzer/Log/Loader.cpp`, `src/analyzer/Streaming.cpp`, commit `17a85b4`). |
 | Error handling consistency | 8.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, parser throw mode returns structured `Result` errors (commit `3ce6b12`), and settings updates now roll back safely without leaving partial invalid state (commit `074892a`). |
-| Performance risks | 6.8 | Stream mode exists; regex caches present; noisy unconditional export debug dumps were removed (commit `2dc97f8`), and parse pipeline copies were reduced via move-based entry handling (commit `055d6e8`). Remaining cost drivers are non-stream load/append full-vector merge/sort (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`). |
+| Performance risks | 7.2 | Stream mode exists; regex caches present; noisy unconditional export debug dumps were removed (commit `2dc97f8`), parse pipeline copies were reduced via move-based entry handling (commit `055d6e8`), and append/stream merge paths now use ordered fast-paths to avoid full merge work when ranges are already non-overlapping (commit `8b4d35c`). Remaining cost driver is non-stream load-and-replace full sort for large datasets. |
 | Test quality | 9.1 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency includes deterministic snapshot/load coverage, concurrent append/filter/export checks, concurrent `loadAsync` filter/export stress coverage, concurrent multiline `analyzeStream` isolation checks, and explicit concurrent dual-append preservation coverage (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`, `51d85c3`, `6a63d62`, `17a85b4`), plus direct JsonLogParser tests (commit `ade5392`). |
 | Build hygiene | 9.4 | Strict warnings-as-errors in CMake (`CMakeLists.txt`), clean ctest integration, CI now includes repeated and shuffled long-running analyzer concurrency stress runs (`.github/workflows/ci.yml`, commits `075f68b`, `113a617`), and dependency strategy supports system packages, optional fetch, plus hermetic offline mirror mode (`LOGANALYZER_OFFLINE_DEPS`, commit `624536a`). |
 | API hygiene | 7.0 | Public API header is broad, but analyzer state access now uses thread-safe snapshots for both explicit snapshot APIs and reference-returning accessors (`src/analyzer/IO.cpp`, commits `17ef73c`, `645a17e`). |
@@ -212,6 +212,10 @@ Configure/build:
 - Post-fix verification (long-running shuffled concurrency stress): SUCCESS
   Commands:
   - ./build/tests/analyzer_Core --gtest_repeat=10 --gtest_shuffle --gtest_brief=1
+- Post-fix verification (ordered append/stream merge fast-paths): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
