@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <vector>
+#include <limits>
 
 // Test suite for string utility functions
 class StringUtilsTest : public ::testing::Test {};
@@ -331,4 +332,23 @@ TEST_F(StringUtilsTest, GlobToRegex) {
     EXPECT_EQ(Utils::globToRegex(""), "^$"); // Empty glob
     EXPECT_EQ(Utils::globToRegex("*"), "^.*$"); // Only asterisk
     EXPECT_EQ(Utils::globToRegex("?"), "^.$"); // Only question mark
+}
+
+TEST_F(StringUtilsTest, ParseHumanReadableSizeBasic) {
+    auto bytes = Utils::parseHumanReadableSize("1536");
+    ASSERT_TRUE(bytes.has_value());
+    EXPECT_EQ(*bytes, 1536u);
+
+    auto kib = Utils::parseHumanReadableSize("1.5KB");
+    ASSERT_TRUE(kib.has_value());
+    EXPECT_EQ(*kib, 1536u);
+
+    auto withWhitespace = Utils::parseHumanReadableSize(" 2 MB ");
+    ASSERT_TRUE(withWhitespace.has_value());
+    EXPECT_EQ(*withWhitespace, 2u * 1024u * 1024u);
+}
+
+TEST_F(StringUtilsTest, ParseHumanReadableSizeRejectsOverflow) {
+    const std::string oversizedKb = std::to_string(std::numeric_limits<size_t>::max() / 1024u + 1u) + "KB";
+    EXPECT_FALSE(Utils::parseHumanReadableSize(oversizedKb).has_value());
 }

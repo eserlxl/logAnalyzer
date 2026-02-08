@@ -8,8 +8,10 @@
 #include "stats/Core.h"
 #include <algorithm>
 #include <map>
+#include <cmath>
 #include <cctype>
 #include <filesystem>
+#include <limits>
 #include <string>
 #include <optional>
 
@@ -255,11 +257,14 @@ std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view 
 
     std::string s(sizeStr);
     // Remove whitespace
-    s.erase(std::remove_if(s.begin(), s.end(), ::isspace), s.end());
+    s.erase(std::remove_if(s.begin(), s.end(), [](unsigned char c) {
+        return std::isspace(c);
+    }), s.end());
 
     size_t unitPos = std::string::npos;
     for (size_t i = 0; i < s.length(); ++i) {
-        if (!isdigit(s[i]) && s[i] != '.') {
+        const unsigned char ch = static_cast<unsigned char>(s[i]);
+        if (!std::isdigit(ch) && s[i] != '.') {
             unitPos = i;
             break;
         }
@@ -287,7 +292,17 @@ std::expected<size_t, ErrorCode::Error> parseHumanReadableSize(std::string_view 
         return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
     }
 
-    return static_cast<size_t>(val * multiplier);
+    if (!std::isfinite(val) || val < 0.0) {
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Invalid size number format: " + s));
+    }
+
+    const long double scaled = static_cast<long double>(val) * static_cast<long double>(multiplier);
+    if (!std::isfinite(scaled) ||
+        scaled > static_cast<long double>(std::numeric_limits<size_t>::max())) {
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Size value out of range: " + s));
+    }
+
+    return static_cast<size_t>(scaled);
 }
 
 size_t generateLogEntryId(const std::string& sourceFile, size_t lineNumber, std::string_view line) {
