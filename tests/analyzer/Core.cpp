@@ -10,6 +10,8 @@
 #include <fstream>
 #include <filesystem>
 #include <algorithm>
+#include <future>
+#include <chrono>
 
 using namespace filter;
 
@@ -245,6 +247,32 @@ TEST_F(LogAnalyzerTest, SnapshotAccessorsReturnIndependentCopies) {
     EXPECT_EQ(entriesSnapshot.size(), 1);
     EXPECT_EQ(entriesSnapshot[0].message, "first");
     EXPECT_EQ(reportSnapshot.successfulParses, 1);
+}
+
+TEST_F(LogAnalyzerTest, ConcurrentSnapshotAccessDuringLoad) {
+    const std::string filePath = "test_concurrent_snapshot.log";
+    std::ofstream ofs(filePath);
+    for (int i = 0; i < 300; ++i) {
+        ofs << "2023-01-01 10:00:" << (i % 60 < 10 ? "0" : "") << (i % 60)
+            << " INFO: message-" << i << "\n";
+    }
+    ofs.close();
+
+    auto futureLoad = std::async(std::launch::async, [&]() {
+        return analyzer.loadAndReplace(filePath, CLIConfig::ParserErrorAction::Warn);
+    });
+
+    while (futureLoad.wait_for(std::chrono::milliseconds(1)) != std::future_status::ready) {
+        auto snapshot = analyzer.getEntriesSnapshot();
+        auto report = analyzer.getLastReportSnapshot();
+        (void)snapshot.size();
+        (void)report.linesProcessed;
+    }
+
+    auto result = futureLoad.get();
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    EXPECT_GE(analyzer.getEntriesSnapshot().size(), 250);
 }
 
 class FilterExpressionTest : public ::testing::Test {
