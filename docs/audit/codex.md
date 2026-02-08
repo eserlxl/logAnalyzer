@@ -23,7 +23,7 @@
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 8.5 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency now includes deterministic snapshot/load coverage and concurrent append/filter/export stability checks (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`), and direct JsonLogParser tests were added (commit `ade5392`). |
 | Build hygiene | 8.5 | Strict warnings-as-errors in CMake (`CMakeLists.txt:98`), clean ctest integration, CI workflow added (`.github/workflows/ci.yml`, commit `9793584`), and dependency strategy improved with system-package fallback plus optional fetch (`LOGANALYZER_FETCH_DEPS`, commit `fb4597d`). |
-| API hygiene | 6.0 | Public API header is broad, but thread-safe snapshot accessors were added for analyzer state (`include/analyzer/Core.h`, `src/analyzer/IO.cpp`, commit `17ef73c`). Legacy reference-returning accessors still exist. |
+| API hygiene | 7.0 | Public API header is broad, but analyzer state access now uses thread-safe snapshots for both explicit snapshot APIs and reference-returning accessors (`src/analyzer/IO.cpp`, commits `17ef73c`, `645a17e`). |
 
 ## Risk register
 
@@ -59,13 +59,14 @@
 - Mitigation progress: Constructor parser initialization now falls back to default settings instead of throwing on invalid user-supplied regex/config in commit `eddbe55`.
 - Minimal mitigation idea: Define and document one error boundary policy (no-throw across public API, or explicit throw boundaries) and test for it.
 
-5. **Thread-safety contract leak via returned references after lock release**  
+5. **Thread-safety contract leak via returned references after lock release (Resolved)**  
 - Severity: Medium  
 - Likelihood: Medium  
 - Where: `src/analyzer/IO.cpp:95`, `src/analyzer/IO.cpp:101`, `src/analyzer/IO.cpp:106`  
 - Why it matters: Returning references/spans while unlocking immediately can race with concurrent mutation.  
 - Mitigation progress: Thread-safe snapshot APIs were added in commit `17ef73c` (`getEntriesSnapshot()`, `getLastReportSnapshot()`).
-- Minimal mitigation idea: Migrate call sites toward snapshots and eventually deprecate raw reference-returning accessors in multithreaded contexts.
+- Resolution: Fixed in commit `645a17e`; `getEntries()`, `getLastReport()`, and `getEntriesView()` now return thread-local snapshots rather than aliases to shared mutable state, with regression coverage in `tests/analyzer/Core.cpp`.
+- Follow-up: Continue using explicit snapshot APIs for clarity in performance-sensitive call paths.
 
 6. **Concurrency behavior largely untested (Partially mitigated)**  
 - Severity: Medium  
@@ -152,6 +153,10 @@ Configure/build:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R config_Core_Json
 - Post-fix verification (constructor fallback on invalid parser settings): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (reference accessor snapshot safety): SUCCESS
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
