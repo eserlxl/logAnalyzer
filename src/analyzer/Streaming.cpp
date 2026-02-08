@@ -115,7 +115,31 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
         bool shouldContinue = true;
         while (std::getline(*input, line)) {
             lineNumber++;
-            auto parseResultOpt = streamParser->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
+            std::optional<ErrorCode::Result<LogEntry>> parseResultOpt;
+            try {
+                parseResultOpt = streamParser->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
+            } catch (const std::exception& e) {
+                if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+                    return std::unexpected(ErrorCode::Error::unexpected(
+                        "Exception while parsing line " + std::to_string(lineNumber) + " in " + filePath + ": " + e.what()));
+                }
+                if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+                    std::cerr << "Warning: Exception while parsing line " << lineNumber << " in " << filePath << ": " << e.what() << std::endl;
+                }
+                if (errorAction != CLIConfig::ParserErrorAction::Ignore) {
+                    LogEntry partialEntry;
+                    partialEntry.level = LogLevel::UNKNOWN;
+                    partialEntry.message = line;
+                    partialEntry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
+                    partialEntry.id = lineNumber;
+                    if (!entryCallback(partialEntry)) {
+                        shouldContinue = false;
+                        break;
+                    }
+                }
+                continue;
+            }
+
             if (parseResultOpt.has_value()) {
                 const auto& result = parseResultOpt.value();
                 if (result.has_value()) {
@@ -145,7 +169,19 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
             if (!shouldContinue) break;
         }
         
-        auto flushResults = streamParser->flushRemaining();
+        std::vector<ErrorCode::Result<LogEntry>> flushResults;
+        try {
+            flushResults = streamParser->flushRemaining();
+        } catch (const std::exception& e) {
+            if (errorAction == CLIConfig::ParserErrorAction::Throw) {
+                return std::unexpected(ErrorCode::Error::unexpected(
+                    "Exception while flushing parser buffer for " + filePath + ": " + e.what()));
+            }
+            if (errorAction == CLIConfig::ParserErrorAction::Warn) {
+                std::cerr << "Warning: Exception while flushing parser buffer for " << filePath << ": " << e.what() << std::endl;
+            }
+            flushResults.clear();
+        }
         for (const auto& result : flushResults) {
             if (result.has_value()) {
                 LogEntry entry = result.value();

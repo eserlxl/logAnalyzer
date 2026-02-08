@@ -457,6 +457,82 @@ TEST_F(LogAnalyzerTest, LoadAndReplaceDoesNotThrowWhenParserConfiguredToThrow) {
     ASSERT_FALSE(loadResult->parseErrors.empty());
 }
 
+TEST_F(LogAnalyzerTest, AppendDoesNotThrowWhenParserConfiguredToThrow) {
+    LogAnalyzerSettings settings;
+    settings.lineParsePattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): (.*)$)";
+    settings.fieldMappings = {
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional<size_t>(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional<size_t>(3), {}}
+    };
+    settings.parserErrorAction = CLIConfig::ParserErrorAction::Throw;
+    auto settingsResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
+
+    const std::string seedFile = "test_append_throw_seed.log";
+    {
+        std::ofstream ofs(seedFile);
+        ofs << "2023-01-01 10:00:00 INFO: seed line\n";
+    }
+    auto seedLoad = analyzer.loadAndReplace(seedFile, CLIConfig::ParserErrorAction::Warn);
+    std::remove(seedFile.c_str());
+    ASSERT_TRUE(seedLoad.has_value()) << seedLoad.error().toString();
+
+    const std::string appendFile = "test_append_throw.log";
+    {
+        std::ofstream ofs(appendFile);
+        ofs << "bad line\n";
+        ofs << "2023-01-01 10:00:01 INFO: valid append line\n";
+    }
+
+    ErrorCode::Result<AnalysisReport> appendResult;
+    EXPECT_NO_THROW({
+        appendResult = analyzer.append(appendFile, CLIConfig::ParserErrorAction::Throw);
+    });
+    std::remove(appendFile.c_str());
+
+    ASSERT_TRUE(appendResult.has_value());
+    EXPECT_EQ(appendResult->status, ParseError::PARTIAL_FAILURE);
+
+    const auto entries = analyzer.getEntriesSnapshot();
+    ASSERT_EQ(entries.size(), 2u);
+    EXPECT_EQ(entries[0].message, "seed line");
+    EXPECT_EQ(entries[1].message, "valid append line");
+}
+
+TEST_F(LogAnalyzerTest, AnalyzeStreamDoesNotThrowWhenParserConfiguredToThrow) {
+    LogAnalyzerSettings settings;
+    settings.lineParsePattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): (.*)$)";
+    settings.fieldMappings = {
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional<size_t>(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional<size_t>(3), {}}
+    };
+    settings.parserErrorAction = CLIConfig::ParserErrorAction::Throw;
+    auto settingsResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
+
+    const std::string filePath = "test_analyze_stream_throw.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "bad line\n";
+        ofs << "2023-01-01 10:00:01 INFO: valid stream line\n";
+    }
+
+    size_t callbackCount = 0;
+    ErrorCode::Result<void> streamResult;
+    EXPECT_NO_THROW({
+        streamResult = analyzer.analyzeStream({filePath}, [&](const LogEntry&) {
+            ++callbackCount;
+            return true;
+        }, CLIConfig::ParserErrorAction::Throw);
+    });
+    std::remove(filePath.c_str());
+
+    ASSERT_TRUE(streamResult.has_value()) << streamResult.error().toString();
+    EXPECT_EQ(callbackCount, 2u);
+}
+
 TEST_F(LogAnalyzerTest, SnapshotAccessorsReturnIndependentCopies) {
     const std::string filePath = "test_snapshot_access.log";
     std::ofstream ofs(filePath);
