@@ -8,6 +8,7 @@
 #include "core/Error.h"
 #include "utils/String.h"
 #include "config/Core.h"
+#include "config/CLI.h"
 #include <string>
 #include <sstream>
 #include <vector>

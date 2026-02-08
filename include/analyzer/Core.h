@@ -9,7 +9,6 @@
 #include "filter/Types.h"
 #include "core/Error.h"
 #include "core/CiLess.h"
-#include "core/Log/IParserFactory.h"
 #include <nlohmann/json_fwd.hpp>
 
 #include <atomic>
@@ -33,6 +32,7 @@
 class LogReader;
 class LogWriter;
 class ILogParser;
+class ILogParserFactory;
 class IStatisticCollector;
 struct StatisticConfig;
 
