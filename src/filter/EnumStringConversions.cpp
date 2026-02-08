@@ -31,6 +31,16 @@ std::string toString(FilterOperator op) {
         case FilterOperator::STARTS_WITH: return "STARTS_WITH";
         case FilterOperator::ENDS_WITH: return "ENDS_WITH";
         case FilterOperator::REGEX: return "REGEX";
+        // Case-insensitive string
+        case FilterOperator::EQUALS_I: return "EQUALS_I";
+        case FilterOperator::NOT_EQUALS_I: return "NOT_EQUALS_I";
+        case FilterOperator::CONTAINS_I: return "CONTAINS_I";
+        case FilterOperator::NOT_CONTAINS_I: return "NOT_CONTAINS_I";
+        case FilterOperator::STARTS_WITH_I: return "STARTS_WITH_I";
+        case FilterOperator::ENDS_WITH_I: return "ENDS_WITH_I";
+        // Set-based
+        case FilterOperator::IN: return "IN";
+        case FilterOperator::NOT_IN: return "NOT_IN";
         // Presence
         case FilterOperator::IS_PRESENT: return "IS_PRESENT";
         case FilterOperator::IS_ABSENT: return "IS_ABSENT";
@@ -161,4 +171,3 @@ std::optional<SortOrder> fromStringToSortOrder(const std::string& sortOrderStr) 
 }
 
 } // namespace filter
-

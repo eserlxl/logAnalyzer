@@ -7,6 +7,7 @@
 #include "filter/Expression.h"
 #include "filter/Condition.h"
 #include "filter/Parser.h"
+#include "filter/EnumStringConversions.h"
 #include "core/Log/Types.h"
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -185,4 +186,15 @@ TEST_F(FilterIteration15Test, ParseQueryMalformedDiagnostics) {
     auto missingRhs = parseQuery("level = INFO AND");
     ASSERT_FALSE(missingRhs.has_value());
     EXPECT_THAT(missingRhs.error().message, testing::HasSubstr("Expected field name in condition."));
+}
+
+TEST_F(FilterIteration15Test, FilterOperatorToStringCoversAllIteration15Operators) {
+    EXPECT_EQ(toString(FilterOperator::EQUALS_I), "EQUALS_I");
+    EXPECT_EQ(toString(FilterOperator::NOT_EQUALS_I), "NOT_EQUALS_I");
+    EXPECT_EQ(toString(FilterOperator::CONTAINS_I), "CONTAINS_I");
+    EXPECT_EQ(toString(FilterOperator::NOT_CONTAINS_I), "NOT_CONTAINS_I");
+    EXPECT_EQ(toString(FilterOperator::STARTS_WITH_I), "STARTS_WITH_I");
+    EXPECT_EQ(toString(FilterOperator::ENDS_WITH_I), "ENDS_WITH_I");
+    EXPECT_EQ(toString(FilterOperator::IN), "IN");
+    EXPECT_EQ(toString(FilterOperator::NOT_IN), "NOT_IN");
 }
