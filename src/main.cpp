@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     const auto& [analyzerSettings, cliOptions] = expectedConfig.value();
+    const bool statisticsEnabled = !analyzerSettings.statisticConfigs.empty();
 
     LogAnalyzer analyzer(analyzerSettings); // Construct with settings
     LogWriter logWriter(analyzer); // New: Create LogWriter instance
@@ -349,7 +350,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        if (!cliOptions.enabledStatistics.empty()) {
+        if (statisticsEnabled) {
             // Collectors are configured via parsed settings; reset them and
             // run statistics only on the final filtered entry set.
             analyzer.resetStatisticCollectors();

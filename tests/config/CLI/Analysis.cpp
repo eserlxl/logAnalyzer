@@ -67,9 +67,13 @@ TEST_F(CLIConfigTest, TopMessagesCount) {
 TEST_F(CLIConfigTest, StatsWindow) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats-window", "300"});
     ASSERT_TRUE(result.has_value());
-    auto& options = result.value().second;
+    auto& [settings, options] = result.value();
     ASSERT_TRUE(options.statsWindow.has_value());
     ASSERT_EQ(options.statsWindow.value(), std::chrono::seconds(300));
+    ASSERT_EQ(settings.statisticConfigs.size(), 1);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::ENTRY_RATE);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("window"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("window"), "300s");
 }
 
 TEST_F(CLIConfigTest, FindGapsDuration) {
