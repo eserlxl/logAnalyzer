@@ -70,6 +70,9 @@ namespace {
                 std::string value = token.substr(pos + 1);
                 trimInPlace(key);
                 trimInPlace(value);
+                if (key.empty()) {
+                    return std::nullopt;
+                }
                 
                 if (key == "type") {
                     auto type = Utils::stringToStatisticType(value);

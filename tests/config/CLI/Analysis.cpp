@@ -29,6 +29,12 @@ TEST_F(CLIConfigTest, StatisticConfigRejectsUnknownBareToken) {
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }
 
+TEST_F(CLIConfigTest, StatisticConfigRejectsEmptyParamKey) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=top_messages,=7"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
 TEST_F(CLIConfigTest, TopMessagesCount) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--top-n", "20"});
     ASSERT_TRUE(result.has_value());
