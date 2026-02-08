@@ -213,7 +213,7 @@ TEST_F(LogAnalyzerTest, LoadAndReplaceDoesNotThrowWhenParserConfiguredToThrow) {
     std::remove(filePath.c_str());
 
     ASSERT_TRUE(loadResult.has_value());
-    EXPECT_EQ(loadResult->status, ParseError::UNKNOWN_ERROR);
+    EXPECT_EQ(loadResult->status, ParseError::PARTIAL_FAILURE);
     ASSERT_FALSE(loadResult->parseErrors.empty());
 }
 

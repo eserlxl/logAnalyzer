@@ -109,6 +109,9 @@ ErrorCode::Result<LogEntry> JsonLogParser::parseLine(std::string_view line, size
     }
 
     if (entry.hasParsingErrors()) {
+        if (parserErrorAction_ == CLIConfig::ParserErrorAction::Throw) {
+            return std::unexpected(entry.parsingErrors.front());
+        }
         return applyParserErrorAction(std::unexpected(entry.parsingErrors.front()), line, lineNumber, sourceFile);
     }
 
@@ -180,8 +183,15 @@ LogEntry JsonLogParser::applyParserErrorAction(const ErrorCode::Result<LogEntry>
             errorEntry.parsingErrors.push_back(error);
             return errorEntry;
         }
-        case CLIConfig::ParserErrorAction::Throw:
-            throw std::runtime_error(errorMessage); // Re-throw the parsing error
+        case CLIConfig::ParserErrorAction::Throw: {
+            LogEntry errorEntry;
+            errorEntry.sourceFile = sourceFile;
+            errorEntry.sourceLineNumber = lineNumber;
+            errorEntry.message = "THROW MODE parse error: " + std::string(originalLine);
+            errorEntry.level = LogLevel::UNKNOWN;
+            errorEntry.parsingErrors.push_back(error);
+            return errorEntry;
+        }
     }
     // Should not be reached
     LogEntry defaultErrorEntry;

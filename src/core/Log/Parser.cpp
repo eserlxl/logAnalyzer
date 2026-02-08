@@ -302,7 +302,7 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLine(std::string_view line, s
     }
 
     if (_parserErrorAction == CLIConfig::ParserErrorAction::Throw) {
-        throw ErrorCode::Error(result.error());
+        return std::unexpected(result.error());
     }
 
     return applyParserErrorAction(result, line, lineNumber, sourceFile);
@@ -318,10 +318,6 @@ LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEnt
     }
 
     // Handle error based on _parserErrorAction
-    if (_parserErrorAction == CLIConfig::ParserErrorAction::Throw) {
-        throw std::runtime_error(parseResult.error().message); // Re-throw the error
-    }
-
     LogEntry partialEntry;
     partialEntry.level = LogLevel::UNKNOWN;
     if (parseResult.error().code == Code::BufferLimitExceeded && !currentLogEntryBuffer.empty()) {
@@ -329,6 +325,8 @@ LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEnt
     } else {
         if (_parserErrorAction == CLIConfig::ParserErrorAction::Ignore) {
             partialEntry.message = "Parse ignored: " + std::string(originalLine);
+        } else if (_parserErrorAction == CLIConfig::ParserErrorAction::Throw) {
+            partialEntry.message = "Parse failed (throw): " + std::string(originalLine);
         } else { // Warn
             partialEntry.message = "Parse failed (warn): " + std::string(originalLine);
         }
@@ -457,7 +455,6 @@ void DefaultLogParser::processStream(
         onEntry(result);
     }
 }
-
 
 
 

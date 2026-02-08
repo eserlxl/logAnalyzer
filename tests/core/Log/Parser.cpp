@@ -411,7 +411,9 @@ TEST(LogParserErrorHandling, CompleteFailureActions) {
     ASSERT_TRUE(throwParserResult.has_value()) << throwParserResult.error().message;
     std::unique_ptr<ILogParser> throwParser = std::move(throwParserResult.value());
 
-    ASSERT_THROW(throwParser->parseLine(nonMatchingLogLine, lineNumber, sourceFile), Error);
+    auto throwEntryResult = throwParser->parseLine(nonMatchingLogLine, lineNumber, sourceFile);
+    ASSERT_FALSE(throwEntryResult.has_value());
+    ASSERT_EQ(throwEntryResult.error().code, Code::MalformedLogEntry);
 
     // --- Test Ignore action for complete failure ---
     auto ignoreParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, std::nullopt, CLIConfig::ParserErrorAction::Ignore, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
