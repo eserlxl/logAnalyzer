@@ -506,6 +506,60 @@ TEST_F(LogAnalyzerTest, InvalidStatisticConfigDoesNotThrowOnSetSettings) {
     });
 }
 
+TEST_F(LogAnalyzerTest, NonPositiveTopNDefaultsForTopMessagesCollector) {
+    LogAnalyzerSettings settings;
+    settings.statisticConfigs = {
+        {StatisticType::TOP_MESSAGES, {{"top_n", "0"}}}
+    };
+    auto settingsResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
+
+    const std::string filePath = "test_top_n_default_top_messages.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "2023-01-01 10:00:00 INFO: alpha\n";
+        ofs << "2023-01-01 10:00:01 INFO: beta\n";
+        ofs << "2023-01-01 10:00:02 INFO: alpha\n";
+    }
+
+    auto loadResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
+
+    const auto reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("top_messages"));
+    const auto& report = reports.at("top_messages");
+    ASSERT_EQ(report["top_n"], 10);
+    ASSERT_FALSE(report["messages"].empty());
+}
+
+TEST_F(LogAnalyzerTest, NonPositiveTopNDefaultsForTopNFieldValuesCollector) {
+    LogAnalyzerSettings settings;
+    settings.statisticConfigs = {
+        {StatisticType::TOP_N_FIELD_VALUES, {{"target_field", "message"}, {"top_n", "-2"}}}
+    };
+    auto settingsResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
+
+    const std::string filePath = "test_top_n_default_field_values.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "2023-01-01 10:00:00 INFO: alpha\n";
+        ofs << "2023-01-01 10:00:01 INFO: beta\n";
+        ofs << "2023-01-01 10:00:02 INFO: alpha\n";
+    }
+
+    auto loadResult = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
+
+    const auto reports = analyzer.getAllStatisticReports();
+    ASSERT_TRUE(reports.contains("top_n_field_values_message"));
+    const auto& report = reports.at("top_n_field_values_message");
+    ASSERT_EQ(report["top_n"], 10);
+    ASSERT_FALSE(report["values"].empty());
+}
+
 TEST(LogAnalyzerCtorTest, InvalidStatisticConfigDoesNotThrowInConstructor) {
     LogAnalyzerSettings settings;
     settings.statisticConfigs = {

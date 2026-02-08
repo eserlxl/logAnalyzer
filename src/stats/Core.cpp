@@ -214,7 +214,10 @@ namespace Statistics {
                 int topN = 10; // Default value
                 if (config.params.count("top_n")) {
                     try {
-                        topN = std::stoi(config.params.at("top_n"));
+                        const int parsedTopN = std::stoi(config.params.at("top_n"));
+                        if (parsedTopN > 0) {
+                            topN = parsedTopN;
+                        }
                     } catch (const std::exception& e) {
                         // Error handling for stoi. For now, proceed with default.
                         // In a real scenario, consider logging or returning an error indicator.
@@ -248,6 +251,9 @@ namespace Statistics {
                     topN = std::stoi(config.params.at("top_n"));
                 } catch (const std::exception& e) {
                     // Error handling for stoi. Return nullptr.
+                    return nullptr;
+                }
+                if (topN <= 0) {
                     return nullptr;
                 }
                 

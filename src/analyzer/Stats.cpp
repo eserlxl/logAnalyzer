@@ -75,7 +75,12 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
     auto itTopN = config.params.find("top_n");
     if (itTopN != config.params.end()) {
         try {
-            topN = std::stoi(itTopN->second);
+            const int parsedTopN = std::stoi(itTopN->second);
+            if (parsedTopN > 0) {
+                topN = parsedTopN;
+            } else {
+                std::cerr << "Warning: Non-positive 'top_n' parameter for statistic. Defaulting to " << DEFAULT_TOP_N_STATISTIC_VALUE << ".\n";
+            }
         } catch (const std::exception& e) {
             std::cerr << "Warning: Invalid 'top_n' parameter for statistic. Defaulting to " << DEFAULT_TOP_N_STATISTIC_VALUE << ". Error: " << e.what() << '\n';
             // topN remains DEFAULT_TOP_N_STATISTIC_VALUE from initialization
