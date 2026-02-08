@@ -15,7 +15,6 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <optional>
 #include <string>
 #include <vector>
 #include <unistd.h> // For isatty
