@@ -105,7 +105,7 @@
 - Likelihood: Medium  
 - Where: `include/stats/Core.h`, `tests/config/Core/Json.cpp`  
 - Resolution: Fixed in commit `e622f96`; `StatisticConfig::from_json` now avoids throw-prone map conversions, handles malformed `params` values with no-throw invalidation, and regression tests assert validation-oriented error messages.
-- Follow-up: Keep malformed stats-config coverage in config JSON tests as statistic parameters evolve.
+- Follow-up: Completed in commit `0134da5`; config JSON tests now cover additional malformed `params` shapes (array and nested object values) with validation-based, no-throw error reporting expectations.
 
 10. **Test data path default likely mismatched with repository layout (Resolved)**  
 - Severity: Low  
@@ -235,6 +235,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R filter_Iteration15
+- Post-fix verification (expanded malformed statistic params JSON coverage): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R config_Core_Json
 
 Warnings:
 - warning count: 0
