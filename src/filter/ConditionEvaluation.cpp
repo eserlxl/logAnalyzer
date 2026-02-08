@@ -13,6 +13,7 @@
 #include <chrono>
 #include <limits>
 #include <cmath>
+#include <cctype>
 #include <numeric>
 #include <nlohmann/json.hpp>
 #include <set>
@@ -39,6 +40,11 @@ bool tryParseStrictInt64(std::string_view value, long long& out) {
 bool tryParseStrictLongDouble(std::string_view value, long double& out) {
     if (value.empty()) {
         return false;
+    }
+    for (const char ch : value) {
+        if (std::isspace(static_cast<unsigned char>(ch))) {
+            return false;
+        }
     }
     try {
         size_t idx = 0;

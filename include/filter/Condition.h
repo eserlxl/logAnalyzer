@@ -7,6 +7,7 @@
 #include <optional>
 #include <stdexcept>
 #include <cmath>
+#include <cctype>
 #include <nlohmann/json.hpp>
 #include "core/Error.h"
 #include "core/Log/Types.h"
@@ -309,6 +310,14 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     // The validation logic below assumes value is a string. This needs to be adjusted.
     if (std::holds_alternative<std::string>(fc.value)) {
         const std::string& singleValue = std::get<std::string>(fc.value);
+        const auto hasWhitespace = [](const std::string& s) {
+            for (const char ch : s) {
+                if (std::isspace(static_cast<unsigned char>(ch))) {
+                    return true;
+                }
+            }
+            return false;
+        };
         if (fc.valueType == FilterValueType::BOOL) {
             std::string lowerVal = Utils::toLower(singleValue);
             if (lowerVal != "true" && lowerVal != "false" && lowerVal != "1" && lowerVal != "0") {
@@ -316,6 +325,9 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
             }
         } else if (fc.valueType == FilterValueType::INT) {
             try {
+                if (hasWhitespace(singleValue)) {
+                    return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid integer value: " + singleValue, current_path, "value"));
+                }
                 size_t idx;
                 std::stoll(singleValue, &idx);
                 if (idx != singleValue.length()) {
@@ -326,6 +338,9 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
             }
         } else if (fc.valueType == FilterValueType::DOUBLE || fc.valueType == FilterValueType::FLOAT) {
             try {
+                if (hasWhitespace(singleValue)) {
+                    return std::unexpected(FilterJsonUtils::makeError(Code::InvalidArgument, "Invalid float value: " + singleValue, current_path, "value"));
+                }
                 size_t idx;
                 const double parsed = std::stod(singleValue, &idx);
                 if (idx != singleValue.length() || !std::isfinite(parsed)) {

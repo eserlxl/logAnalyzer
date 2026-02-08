@@ -78,6 +78,14 @@ TEST_F(FilterTestFixture, EvaluateNumericComparison) {
 
     auto expr_partial_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123abc", FilterValueType::INT, true, "response_time_ms");
     ASSERT_FALSE(expr_partial_cond.evaluate(entry).has_value());
+
+    // Whitespace-padded integers should be rejected.
+    auto entry_space_num = createLogEntry(LogLevel::ERROR, "Space padded int", "data.log", {{"value", "123 "}});
+    auto expr_space_num = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123", FilterValueType::INT, true, "value");
+    ASSERT_FALSE(expr_space_num.evaluate(entry_space_num).has_value());
+
+    auto expr_space_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, " 123", FilterValueType::INT, true, "response_time_ms");
+    ASSERT_FALSE(expr_space_cond.evaluate(entry).has_value());
 }
 
 TEST_F(FilterTestFixture, EvaluateDoubleComparison) {
@@ -115,6 +123,14 @@ TEST_F(FilterTestFixture, EvaluateDoubleComparison) {
 
     auto expr_partial_double_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.456789ms", FilterValueType::FLOAT, true, "result");
     ASSERT_FALSE(expr_partial_double_cond.evaluate(entry).has_value());
+
+    // Whitespace-padded floating-point values should be rejected.
+    auto expr_space_double_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, " 123.456789", FilterValueType::FLOAT, true, "result");
+    ASSERT_FALSE(expr_space_double_cond.evaluate(entry).has_value());
+
+    auto entry_space_double = createLogEntry(LogLevel::ERROR, "Space padded double", "data.log", {{"value", "123.456 "}});
+    auto expr_space_double_field = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "123.456", FilterValueType::FLOAT, true, "value");
+    ASSERT_FALSE(expr_space_double_field.evaluate(entry_space_double).has_value());
 
     // Non-finite floating-point values should be rejected.
     auto expr_nan_cond = createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "nan", FilterValueType::FLOAT, true, "result");
