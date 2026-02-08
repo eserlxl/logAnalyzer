@@ -5,14 +5,13 @@
 #define LOG_ANALYZER_H
 
 #include "core/Log/Types.h"
-#include "filter/Expression.h"
-#include "filter/Types.h"
 #include "core/Error.h"
 #include "core/CiLess.h"
 #include <nlohmann/json_fwd.hpp>
 
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <future>
 #include <generator> // C++23 for std::generator
 #include <shared_mutex>
@@ -40,7 +39,10 @@ class IStatisticCollector;
 struct StatisticConfig;
 
 namespace filter {
+class FilterExpression;
 struct FilterCriteria;
+enum class SortBy : uint8_t;
+enum class SortOrder : uint8_t;
 }
 
 #include "config/Core.h"
