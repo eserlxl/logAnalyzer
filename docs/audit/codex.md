@@ -2,7 +2,7 @@
 - Project intent is clear: a C++23 log analysis tool/library with parsing, filtering, export, stats, and CLI orchestration (`src/main.cpp`, `src/analyzer/*`, `src/filter/*`, `src/export/*`, `src/stats/*`).
 - Required module boundaries are present and aligned: `include/{analyzer,config,core,export,filter,stats,utils}`, mirrored by `src/{...}`, with corresponding `tests/{...}`.
 - Build discipline is strong (`-Wall -Wextra -Wpedantic -Werror`), and current build is warning-clean.
-- Test suite breadth is good (49 executables across config/core/filter/export/analyzer/stats/utils), and all tests pass.
+- Test suite breadth is good (50 executables across config/core/filter/export/analyzer/stats/utils), and all tests pass.
 - Main correctness risks identified in this audit have been systematically addressed; remaining concerns are primarily long-term maintainability and API surface breadth.
 - Multiline parser integration in `load/append` has been fixed in commit `c3ea33b` by switching analyzer pipeline parsing to `processLine()` and adding regression coverage (`src/analyzer/IO.cpp`, `tests/analyzer/Core.cpp`).
 - Descending sort comparator strict-order bug has been fixed in commit `f76b95e` in both sorted-filter paths, with regression coverage in analyzer tests (`src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`).
