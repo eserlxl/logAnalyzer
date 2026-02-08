@@ -140,3 +140,47 @@ TEST_F(FilterTestFixture, EvaluateVersionComparesLargeNumericPrereleaseIdentifie
                     .evaluate(tiny)
                     .value_or(false));
 }
+
+TEST_F(FilterTestFixture, EvaluateVersionOrderingIgnoresBuildMetadata) {
+    auto build123 = createLogEntry(
+        LogLevel::INFO, "Build 123", "ver.log", {{"app_version", "1.2.3+build123"}});
+    auto build456 = createLogEntry(
+        LogLevel::INFO, "Build 456", "ver.log", {{"app_version", "1.2.3+build456"}});
+
+    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN, "1.2.3+build456",
+                            FilterValueType::VERSION, true, "app_version")
+                     .evaluate(build123)
+                     .value_or(true));
+    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, "1.2.3+build456",
+                            FilterValueType::VERSION, true, "app_version")
+                     .evaluate(build123)
+                     .value_or(true));
+    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN_OR_EQUAL, "1.2.3+build456",
+                           FilterValueType::VERSION, true, "app_version")
+                    .evaluate(build123)
+                    .value_or(false));
+    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "1.2.3+build456",
+                           FilterValueType::VERSION, true, "app_version")
+                    .evaluate(build123)
+                    .value_or(false));
+
+    // Strict equality remains build-sensitive by project behavior.
+    EXPECT_FALSE(createExpr(LogEntryField::CUSTOM, FilterOperator::EQUALS, "1.2.3+build456",
+                            FilterValueType::VERSION, true, "app_version")
+                     .evaluate(build123)
+                     .value_or(true));
+    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::NOT_EQUALS, "1.2.3+build456",
+                           FilterValueType::VERSION, true, "app_version")
+                    .evaluate(build123)
+                    .value_or(false));
+
+    // Symmetry check for opposite entry.
+    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::LESS_THAN_OR_EQUAL, "1.2.3+build123",
+                           FilterValueType::VERSION, true, "app_version")
+                    .evaluate(build456)
+                    .value_or(false));
+    EXPECT_TRUE(createExpr(LogEntryField::CUSTOM, FilterOperator::GREATER_THAN_OR_EQUAL, "1.2.3+build123",
+                           FilterValueType::VERSION, true, "app_version")
+                    .evaluate(build456)
+                    .value_or(false));
+}

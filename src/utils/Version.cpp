@@ -99,11 +99,12 @@ bool SemanticVersion::operator<(const SemanticVersion& other) const {
 }
 
 bool SemanticVersion::operator<=(const SemanticVersion& other) const {
-    return (*this < other) || (*this == other);
+    // <= for precedence must ignore build metadata; derive from strict ordering only.
+    return !(other < *this);
 }
 
 bool SemanticVersion::operator>(const SemanticVersion& other) const {
-    return !(*this <= other);
+    return other < *this;
 }
 
 bool SemanticVersion::operator>=(const SemanticVersion& other) const {
