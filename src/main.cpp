@@ -181,7 +181,10 @@ int main(int argc, char *argv[]) {
                 }
                 
                 // Escape header
-                 bool needsQuotes = header.find(cliOptions.csvSeparator) != std::string::npos || header.find('"') != std::string::npos;
+                 bool needsQuotes = header.find(cliOptions.csvSeparator) != std::string::npos
+                     || header.find('"') != std::string::npos
+                     || header.find('\n') != std::string::npos
+                     || header.find('\r') != std::string::npos;
                  if (needsQuotes) {
                      std::string escaped = header;
                      Utils::replaceAll(escaped, "\"", "\"\"");
@@ -229,7 +232,10 @@ int main(int argc, char *argv[]) {
                             }
                         }, fieldMapping.field);
 
-                        bool needsQuotes = value.find(cliOptions.csvSeparator) != std::string::npos || value.find('"') != std::string::npos || value.find('\n') != std::string::npos;
+                        bool needsQuotes = value.find(cliOptions.csvSeparator) != std::string::npos
+                            || value.find('"') != std::string::npos
+                            || value.find('\n') != std::string::npos
+                            || value.find('\r') != std::string::npos;
                         if (needsQuotes) {
                             Utils::replaceAll(value, "\"", "\"\"");
                             *outputStream << "\"" << value << "\"";
