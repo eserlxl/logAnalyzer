@@ -8,7 +8,7 @@
 - Descending sort comparator strict-order bug has been fixed in commit `f76b95e` in both sorted-filter paths, with regression coverage in analyzer tests (`src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`).
 - Statistic collector creation now avoids runtime exceptions on invalid collector params (commit `7e7e68e`), reducing crash risk in constructor/settings flows (`src/analyzer/Stats.cpp`, `tests/analyzer/Core.cpp`).
 - Error model is mixed (`Result` + exceptions), including throws in parser/stats constructors and paths (`src/core/Log/Parser.cpp:322`, `src/analyzer/Stats.cpp:72`).
-- README/product claims and actual implementation diverge in a few places (notably query parser / `--expression`).
+- README/product claim gaps have narrowed; query parsing is now implemented and wired into `--expression` filtering (commit `5cc4c4d`).
 - Overall: solid foundation with real strengths, but several high-likelihood correctness and maintainability risks remain.
 
 ## Scorecard
@@ -16,7 +16,7 @@
 | Area | Score (0-10) | Evidence |
 |---|---:|---|
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
-| Correctness / edge-case handling | 7.0 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, and descending sort now uses strict ordering semantics with regression coverage (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`). |
+| Correctness / edge-case handling | 7.5 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, descending sort now uses strict ordering semantics, and query parsing is implemented for `--expression` with parser tests (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `src/filter/Parser.cpp`, `tests/filter/Iteration15.cpp`). |
 | Error handling consistency | 5.5 | `ErrorCode::Result` is used widely and stats collector construction no longer throws on invalid params; exceptions still exist in parser throw paths (`src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 6.5 | 49 passing tests with good breadth; strong parser/filter/export coverage. Gaps: concurrency is placeholder (`tests/analyzer/Core.cpp:108`), parseQuery is expected unimplemented (`tests/filter/Iteration15.cpp:142`), no direct JsonLogParser-focused tests observed. |
@@ -32,12 +32,12 @@
 - Resolution: Fixed in commit `c3ea33b`; analyzer now consumes parser output via `processLine()` and flushes buffered multiline entries correctly. Regression test added: `LoadAndReplaceSupportsMultilineEntries` in `tests/analyzer/Core.cpp`.
 - Follow-up: Keep coverage in CI to prevent regressions when parser/analyzer integration changes.
 
-2. **Query-expression feature not implemented but exposed in UX/docs**  
+2. **Query-expression feature not implemented but exposed in UX/docs (Resolved)**  
 - Severity: High  
 - Likelihood: High  
-- Where: `src/filter/Parser.cpp:8`, `src/main.cpp:56`, `docs/features.md:18`  
-- Why it matters: Users can reasonably expect expression query parsing to work; runtime behavior is `NotImplemented`.  
-- Minimal mitigation idea: Mark feature as experimental/disabled in README/CLI help until parser exists; add release checklist guard.
+- Where found: `src/filter/Parser.cpp`, `src/main.cpp`  
+- Resolution: Fixed in commit `5cc4c4d`; recursive-descent parsing is now implemented and `--expression` is applied in both stream and non-stream filtering paths.
+- Follow-up: Extend parser coverage for additional operator aliases and malformed-expression diagnostics as grammar evolves.
 
 3. **Descending sort comparator can violate strict weak ordering (Resolved)**  
 - Severity: High  
@@ -125,6 +125,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (query parser + --expression integration): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
@@ -148,7 +152,6 @@ Tests:
 ## Reality check vs README
 
 **Claims not clearly supported by code/tests**
-- Complex filter expressions via query parsing are claimed, but query parser is explicitly unimplemented (`docs/features.md:18`, `src/filter/Parser.cpp:8`, `src/main.cpp:56`).
 - README prerequisite says CMake `4.2.3+`, but project minimum is `3.14` (`README.md:47`, `CMakeLists.txt:4`).
 - “C++ API” is claimed, but install currently exports binaries/libs only, not headers/package config (`README.md:36`, `CMakeLists.txt:111`).
 
