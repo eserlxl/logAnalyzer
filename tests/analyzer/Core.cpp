@@ -434,6 +434,68 @@ TEST_F(LogAnalyzerTest, ConcurrentLoadAsyncWithFilterAndExport) {
     EXPECT_EQ(analyzer.getEntriesSnapshot().size(), 1000);
 }
 
+TEST_F(LogAnalyzerTest, ConcurrentAnalyzeStreamUsesIndependentParserState) {
+    LogAnalyzerSettings settings;
+    settings.lineParsePattern = R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+): ([\s\S]*)$)";
+    settings.logEntryStartPattern = R"(^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+:)";
+    settings.fieldMappings = {
+        FieldMapping{LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), {"%Y-%m-%d %H:%M:%S"}},
+        FieldMapping{LogEntryField::LEVEL, std::make_optional<size_t>(2), {}},
+        FieldMapping{LogEntryField::MESSAGE, std::make_optional<size_t>(3), {}}
+    };
+    auto settingsResult = analyzer.setSettings(settings);
+    ASSERT_TRUE(settingsResult.has_value()) << settingsResult.error().toString();
+
+    const std::string filePath1 = "test_stream_concurrent_1.log";
+    const std::string filePath2 = "test_stream_concurrent_2.log";
+    {
+        std::ofstream ofs(filePath1);
+        for (int i = 0; i < 100; ++i) {
+            ofs << "2023-01-01 12:00:" << (i % 60 < 10 ? "0" : "") << (i % 60)
+                << " INFO: entry-a-" << i << "\n";
+            ofs << "  continuation-a-" << i << "\n";
+        }
+    }
+    {
+        std::ofstream ofs(filePath2);
+        for (int i = 0; i < 100; ++i) {
+            ofs << "2023-01-01 13:00:" << (i % 60 < 10 ? "0" : "") << (i % 60)
+                << " INFO: entry-b-" << i << "\n";
+            ofs << "  continuation-b-" << i << "\n";
+        }
+    }
+
+    std::atomic<int> countA{0};
+    std::atomic<int> countB{0};
+
+    auto f1 = std::async(std::launch::async, [&]() {
+        return analyzer.analyzeStream({filePath1}, [&](const LogEntry& entry) {
+            if (entry.message.find("entry-a-") != std::string::npos) {
+                ++countA;
+            }
+            return true;
+        }, CLIConfig::ParserErrorAction::Warn);
+    });
+    auto f2 = std::async(std::launch::async, [&]() {
+        return analyzer.analyzeStream({filePath2}, [&](const LogEntry& entry) {
+            if (entry.message.find("entry-b-") != std::string::npos) {
+                ++countB;
+            }
+            return true;
+        }, CLIConfig::ParserErrorAction::Warn);
+    });
+
+    auto r1 = f1.get();
+    auto r2 = f2.get();
+    std::remove(filePath1.c_str());
+    std::remove(filePath2.c_str());
+
+    ASSERT_TRUE(r1.has_value()) << r1.error().toString();
+    ASSERT_TRUE(r2.has_value()) << r2.error().toString();
+    EXPECT_EQ(countA.load(), 100);
+    EXPECT_EQ(countB.load(), 100);
+}
+
 class FilterExpressionTest : public ::testing::Test {
 protected:
     void SetUp() override {

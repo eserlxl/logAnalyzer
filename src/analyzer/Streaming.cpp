@@ -71,6 +71,18 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::streamIn(
 }
 
 ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, CLIConfig::ParserErrorAction errorAction) {
+    std::unique_ptr<ILogParser> streamParser;
+    {
+        std::shared_lock<std::shared_mutex> lock(stateMutex_);
+        if (!currentParser_) {
+            return std::unexpected(ErrorCode::Error::unexpected("Parser is not initialized"));
+        }
+        streamParser = currentParser_->clone();
+    }
+    if (!streamParser) {
+        return std::unexpected(ErrorCode::Error::unexpected("Failed to clone parser for stream analysis"));
+    }
+
     for (const auto& filePath : filePaths) {
         std::istream* input;
         std::ifstream file;
@@ -89,7 +101,7 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
         bool shouldContinue = true;
         while (std::getline(*input, line)) {
             lineNumber++;
-            auto parseResultOpt = currentParser_->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
+            auto parseResultOpt = streamParser->processLine(line, lineNumber, (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath));
             if (parseResultOpt.has_value()) {
                 const auto& result = parseResultOpt.value();
                 if (result.has_value()) {
@@ -119,7 +131,7 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
             if (!shouldContinue) break;
         }
         
-        auto flushResults = currentParser_->flushRemaining();
+        auto flushResults = streamParser->flushRemaining();
         for (const auto& result : flushResults) {
             if (result.has_value()) {
                 LogEntry entry = result.value();
