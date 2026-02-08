@@ -255,7 +255,6 @@ private:
     void updateCurrentParser();
 
     mutable std::shared_mutex stateMutex_;
-    mutable std::shared_mutex customLogLevelMappingMutex_;
 
     std::vector<LogEntry> entries_;
     std::map<LogLevel, size_t> levelCounts;
