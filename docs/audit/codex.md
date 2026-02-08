@@ -84,7 +84,7 @@
 - Mitigation progress: `streamIn()` lock boundary now covers `entries_.size()` used for merge reservation, removing a concrete read-race in commit `fc3f674`.
 - Mitigation progress: `parseAndReport()` now clones parser state per call, and append/stream merge-commit is atomic under unique lock to prevent concurrent lost updates (commit `17a85b4`), with explicit concurrent dual-append preservation test coverage.
 - Resolution: Added dedicated long-running shuffled concurrency stress execution in CI (`./build/tests/analyzer_Core --gtest_repeat=50 --gtest_shuffle`) in commit `113a617`.
-- Follow-up: Add sanitizer-backed race job (TSAN) when dependency provisioning for fresh offline builds is available in CI.
+- Follow-up: Completed in commit `bad7ea0`; CI now runs a dedicated TSAN analyzer-core job, and timestamp parsing/formatting paths were synchronized to eliminate detected time-conversion data races.
 
 7. **Fresh builds depend on live network FetchContent (Resolved)**  
 - Severity: Medium  
@@ -225,6 +225,11 @@ Configure/build:
   Commands:
   - cmake -S . -B build-offline-mirror -DCMAKE_BUILD_TYPE=Debug -DLOGANALYZER_OFFLINE_DEPS=ON -DLOGANALYZER_FETCH_DEPS=ON -DLOGANALYZER_DEPS_MIRROR_DIR=/tmp/loganalyzer-mirror
   - cmake --build build-offline-mirror --parallel
+- Post-fix verification (TSAN analyzer concurrency gate): SUCCESS
+  Commands:
+  - cmake -S . -B build-tsan -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" -DLOGANALYZER_OFFLINE_DEPS=ON -DLOGANALYZER_FETCH_DEPS=ON -DLOGANALYZER_DEPS_MIRROR_DIR=/tmp/loganalyzer-mirror-tsan
+  - cmake --build build-tsan --parallel --target analyzer_Core
+  - TSAN_OPTIONS=halt_on_error=1 ./build-tsan/tests/analyzer_Core --gtest_brief=1
 
 Warnings:
 - warning count: 0
