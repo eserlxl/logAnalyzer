@@ -24,3 +24,6 @@ jobs:
 
       - name: Concurrency Stability (analyzer_Core x20)
         run: ctest --test-dir build --output-on-failure --repeat until-fail:20 -R analyzer_Core
+
+      - name: Concurrency Stress (analyzer_Core shuffle x50)
+        run: ./build/tests/analyzer_Core --gtest_repeat=50 --gtest_shuffle --gtest_brief=1
