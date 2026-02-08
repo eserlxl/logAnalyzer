@@ -19,7 +19,7 @@
 |---|---:|---|
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
 | Correctness / edge-case handling | 8.0 | Good filter/type handling and multiline parser tests exist; analyzer load path uses `processLine()`, descending sort uses strict ordering semantics, query parsing is implemented for `--expression`, and concurrent append/stream lost-update behavior was fixed by atomic merge under unique lock with regression coverage (`src/analyzer/Log/Loader.cpp`, `src/analyzer/Streaming.cpp`, commit `17a85b4`). |
-| Error handling consistency | 8.5 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, parser throw mode returns structured `Result` errors (commit `3ce6b12`), and settings updates now roll back safely without leaving partial invalid state (commit `074892a`). |
+| Error handling consistency | 9.0 | `ErrorCode::Result` is now consistently preferred through parser/analyzer/config paths: stats config handling is non-throwing (including malformed statistic `params` values in commit `e622f96`), analyzer catches parser exceptions, parser throw mode returns structured `Result` errors (commit `3ce6b12`), settings updates roll back safely (commit `074892a`), and constructors now avoid explicit fallback-init throws (commit `a4d9101`). |
 | Performance risks | 7.2 | Stream mode exists; regex caches present; noisy unconditional export debug dumps were removed (commit `2dc97f8`), parse pipeline copies were reduced via move-based entry handling (commit `055d6e8`), and append/stream merge paths now use ordered fast-paths to avoid full merge work when ranges are already non-overlapping (commit `8b4d35c`). Remaining cost driver is non-stream load-and-replace full sort for large datasets. |
 | Test quality | 9.1 | 50 passing tests with good breadth; parser/filter/export coverage is strong, query parser behavior is covered, concurrency includes deterministic snapshot/load coverage, concurrent append/filter/export checks, concurrent `loadAsync` filter/export stress coverage, concurrent multiline `analyzeStream` isolation checks, and explicit concurrent dual-append preservation coverage (`tests/analyzer/Core.cpp`, commits `9a69617`, `9e47304`, `51d85c3`, `6a63d62`, `17a85b4`), plus direct JsonLogParser tests (commit `ade5392`). |
 | Build hygiene | 9.4 | Strict warnings-as-errors in CMake (`CMakeLists.txt`), clean ctest integration, CI now includes repeated and shuffled long-running analyzer concurrency stress runs (`.github/workflows/ci.yml`, commits `075f68b`, `113a617`), and dependency strategy supports system packages, optional fetch, plus hermetic offline mirror mode (`LOGANALYZER_OFFLINE_DEPS`, commit `624536a`). |
@@ -48,7 +48,7 @@
 - Resolution: Fixed in commit `f76b95e` by implementing descending comparison as reversed strict ascending (`less(b, a)`) instead of `!less(a, b)` in both sorted-filter overloads.
 - Follow-up: Keep regression coverage in `tests/analyzer/Core.cpp` and add broader sort-property tests when expanding test depth.
 
-4. **Mixed exception + `Result` error model in critical paths (Further mitigated)**  
+4. **Mixed exception + `Result` error model in critical paths (Resolved)**  
 - Severity: High  
 - Likelihood: Medium  
 - Where: `src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`, `src/analyzer/Core.cpp:60`  
@@ -59,7 +59,8 @@
 - Mitigation progress: Constructor parser initialization now falls back to default settings instead of throwing on invalid user-supplied regex/config in commit `eddbe55`.
 - Mitigation progress: `setSettings()` is now transactional and `setCustomLogLevelMapping()` no longer throws on parser recreation failures, preserving prior valid state in commit `074892a`.
 - Mitigation progress: API-level error boundary policy is now documented in `docs/api-reference.md`, and regression tests assert non-throw behavior for invalid file inputs across `loadAndReplace`, `append`, and `analyzeStream` in commit `ff802a8`.
-- Minimal mitigation idea: Define and document one error boundary policy (no-throw across public API, or explicit throw boundaries) and test for it.
+- Resolution: Constructor fallback path no longer throws explicitly when parser initialization remains unavailable, keeping the object constructible and shifting failures to structured runtime `Result` errors (commit `a4d9101`).
+- Follow-up: Keep constructor/operational non-throw behavior covered by analyzer regression tests as parser creation logic evolves.
 
 5. **Thread-safety contract leak via returned references after lock release (Resolved)**  
 - Severity: Medium  
@@ -216,6 +217,10 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
+- Post-fix verification (constructor fallback no-throw hardening): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
 
 Warnings:
 - warning count: 0
