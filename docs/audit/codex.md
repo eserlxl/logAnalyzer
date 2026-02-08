@@ -3,9 +3,9 @@
 - Required module boundaries are present and aligned: `include/{analyzer,config,core,export,filter,stats,utils}`, mirrored by `src/{...}`, with corresponding `tests/{...}`.
 - Build discipline is strong (`-Wall -Wextra -Wpedantic -Werror`), and current build is warning-clean.
 - Test suite breadth is good (49 executables across config/core/filter/export/analyzer/stats/utils), and all tests pass.
-- Main correctness risks are now primarily sorting semantics and error-model consistency.
+- Main correctness risks are now primarily error-model consistency and API/build hygiene.
 - Multiline parser integration in `load/append` has been fixed in commit `c3ea33b` by switching analyzer pipeline parsing to `processLine()` and adding regression coverage (`src/analyzer/IO.cpp`, `tests/analyzer/Core.cpp`).
-- Descending sort comparator uses `!result`, which can violate strict weak ordering (`src/analyzer/Filter.cpp:119`, `src/analyzer/Filter.cpp:182`).
+- Descending sort comparator strict-order bug has been fixed in commit `f76b95e` in both sorted-filter paths, with regression coverage in analyzer tests (`src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`).
 - Error model is mixed (`Result` + exceptions), including throws in parser/stats constructors and paths (`src/core/Log/Parser.cpp:322`, `src/analyzer/Stats.cpp:72`).
 - README/product claims and actual implementation diverge in a few places (notably query parser / `--expression`).
 - Overall: solid foundation with real strengths, but several high-likelihood correctness and maintainability risks remain.
@@ -15,7 +15,7 @@
 | Area | Score (0-10) | Evidence |
 |---|---:|---|
 | Architecture & separation of concerns | 7.0 | Clear subsystem split in `src/`/`include/`; analyzer coordinates parser/filter/export/stats. But `include/analyzer/Core.h:7` has heavy cross-module coupling and large public surface. |
-| Correctness / edge-case handling | 6.5 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()` and has regression coverage for multiline entries (`src/analyzer/IO.cpp`, `tests/analyzer/Core.cpp`). |
+| Correctness / edge-case handling | 7.0 | Good filter/type handling and multiline parser tests exist; analyzer load path now uses `processLine()`, and descending sort now uses strict ordering semantics with regression coverage (`src/analyzer/IO.cpp`, `src/analyzer/Filter.cpp`, `tests/analyzer/Core.cpp`). |
 | Error handling consistency | 4.5 | `ErrorCode::Result` is used widely, but exceptions still thrown in hot paths (`src/core/Log/Parser.cpp:322`, `src/core/Log/JsonParser.cpp:184`, `src/analyzer/Stats.cpp:72`). |
 | Performance risks | 6.0 | Stream mode exists; regex caches present. But non-stream load/append keeps full vectors and sorts/merges (`src/analyzer/Log/Loader.cpp:44`, `src/analyzer/Log/Loader.cpp:224`), and some string copying in parse path. |
 | Test quality | 6.5 | 49 passing tests with good breadth; strong parser/filter/export coverage. Gaps: concurrency is placeholder (`tests/analyzer/Core.cpp:108`), parseQuery is expected unimplemented (`tests/filter/Iteration15.cpp:142`), no direct JsonLogParser-focused tests observed. |
@@ -38,12 +38,12 @@
 - Why it matters: Users can reasonably expect expression query parsing to work; runtime behavior is `NotImplemented`.  
 - Minimal mitigation idea: Mark feature as experimental/disabled in README/CLI help until parser exists; add release checklist guard.
 
-3. **Descending sort comparator can violate strict weak ordering**  
+3. **Descending sort comparator can violate strict weak ordering (Resolved)**  
 - Severity: High  
 - Likelihood: Medium  
-- Where: `src/analyzer/Filter.cpp:119`, `src/analyzer/Filter.cpp:182`  
-- Why it matters: Returning `!result` for descending can make `comp(a,a)==true`, risking undefined behavior in `std::sort`.  
-- Minimal mitigation idea: Add targeted comparator property tests (antisymmetry/transitivity/reflexivity checks) in CI.
+- Where found: `src/analyzer/Filter.cpp`  
+- Resolution: Fixed in commit `f76b95e` by implementing descending comparison as reversed strict ascending (`less(b, a)`) instead of `!less(a, b)` in both sorted-filter overloads.
+- Follow-up: Keep regression coverage in `tests/analyzer/Core.cpp` and add broader sort-property tests when expanding test depth.
 
 4. **Mixed exception + `Result` error model in critical paths**  
 - Severity: High  
@@ -112,6 +112,10 @@ Configure/build:
 - Clean rebuild: SUCCESS
   Command: cmake --build build --target clean && cmake --build build --parallel
 - Post-fix verification (multiline parser integration): SUCCESS
+  Commands:
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure -R analyzer_Core
+- Post-fix verification (descending comparator strict ordering): SUCCESS
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure -R analyzer_Core
