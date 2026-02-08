@@ -38,6 +38,12 @@ jobs:
       - name: Concurrency Stress (analyzer_Core shuffle x50)
         run: ./build/tests/analyzer_Core --gtest_repeat=50 --gtest_shuffle --gtest_brief=1
 
+      - name: Parser/Analyzer Integration Regression
+        run: >
+          ./build/tests/analyzer_Core
+          --gtest_filter=LogAnalyzerTest.LoadAndReplaceSupportsMultilineEntries:LogAnalyzerTest.ConcurrentAnalyzeStreamUsesIndependentParserState
+          --gtest_brief=1
+
   tsan-analyzer-core:
     runs-on: ubuntu-latest
     steps:
