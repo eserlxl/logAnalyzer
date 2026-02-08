@@ -82,12 +82,12 @@
 - Mitigation progress: System dependency fallback and configurable fetch behavior were added in commit `fb4597d` (`-DLOGANALYZER_FETCH_DEPS=OFF` for preinstalled deps).
 - Minimal mitigation idea: Add a fully vendored/mirrored dependency mode for hermetic offline CI.
 
-8. **Public API install incomplete for “C++ API” consumers**  
+8. **Public API install incomplete for “C++ API” consumers (Resolved)**  
 - Severity: Medium  
 - Likelihood: Medium  
-- Where: `README.md:36`, `CMakeLists.txt:111`  
-- Why it matters: Library installed without header/package export flow is hard to consume as a stable API.  
-- Minimal mitigation idea: Document current API consumption method explicitly (source-only vs installed package) until packaging is formalized.
+- Where: `CMakeLists.txt`, `cmake/logAnalyzerConfig.cmake.in`  
+- Resolution: Fixed in commit `43ebdec`; install now exports `logAnalyzerTargets`, installs `logAnalyzerConfig.cmake` + version file, and supports `find_package(logAnalyzer CONFIG REQUIRED)` for installed consumers.
+- Follow-up: Keep a small external-consumer configure/build check in CI to guard install-package regressions.
 
 9. **Stats config parsing throws from JSON helpers**  
 - Severity: Medium  
@@ -136,6 +136,11 @@ Configure/build:
   Commands:
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
+- Post-fix verification (installed package export/consumer): SUCCESS
+  Commands:
+  - cmake --install build --prefix /tmp/loganalyzer-install-test
+  - cmake -S /tmp/loganalyzer-consumer -B /tmp/loganalyzer-consumer/build -DlogAnalyzer_DIR=/tmp/loganalyzer-install-test/lib/cmake/logAnalyzer
+  - cmake --build /tmp/loganalyzer-consumer/build --parallel
 
 Warnings:
 - warning count: 0
@@ -143,11 +148,11 @@ Warnings:
 - Top 10 warnings: none emitted
 
 Tests:
-- Command: ctest --test-dir build --output-on-failure --parallel 8
-- Total tests: 49
-- Passed: 49
+- Command: ctest --test-dir build --output-on-failure
+- Total tests: 50
+- Passed: 50
 - Failed: 0
-- Total wall time: 0.05 sec
+- Total wall time: 0.26 sec
 - Slowest observed tests:
   1) config_CLI_Filtering: 0.03 sec
   2) config_CLI_Formatting: 0.02 sec
@@ -160,7 +165,7 @@ Tests:
 
 **Claims not clearly supported by code/tests**
 - CMake prerequisite/version mismatch has been resolved in commit `0309f10` (README now matches `cmake_minimum_required` and executable output path).
-- C++ API install hygiene is partially improved in commit `982a724` (public headers now installed); packaged CMake target export/config is still pending.
+- C++ API install packaging gap is resolved in commit `43ebdec` (targets export + package config/version installed and validated via external consumer build).
 
 **Features present but under-documented in README**
 - Advanced parser and expression options are now surfaced in README (commit `47e4cbc`), including `--expression`, `--multiline-start-pattern`, `--max-multiline-buffer`, and `--on-parse-error`.
