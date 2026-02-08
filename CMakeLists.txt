@@ -89,7 +89,11 @@ set(LIB_SOURCES
 )
 
 add_library(LogAnalyzerLib ${LIB_SOURCES})
-target_include_directories(LogAnalyzerLib PUBLIC include)
+target_include_directories(LogAnalyzerLib
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(LogAnalyzerLib PUBLIC nlohmann_json::nlohmann_json CLI11::CLI11)
 
 if(MSVC)
@@ -110,8 +114,15 @@ endif()
 
 # Installation
 include(GNUInstallDirs)
-install(TARGETS logAnalyzer RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(TARGETS LogAnalyzerLib LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS logAnalyzer
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(TARGETS LogAnalyzerLib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Enable testing
 enable_testing()
