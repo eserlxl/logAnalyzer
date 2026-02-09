@@ -65,6 +65,14 @@ An array of objects that map regular expression capture groups from `lineParsePa
 -   `groupIndex`: The 1-based index of the capture group from `lineParsePattern` to map to this field.
 -   `customFieldKey` (optional): If `field` is set to `"customFields"`, this specifies a key under which the captured value will be stored within a map of custom fields. This is useful for extracting structured data that doesn't fit standard fields.
 
+**Validation Rules (Current Behavior):**
+- `field` must be a non-empty string after trimming whitespace.
+- `field: "CUSTOM"` is rejected (reserved token). Use a concrete custom name, e.g. `"session_id"`.
+- `groupIndex` must be a non-negative integer or `null`.
+- `formats` (if present) must be an array of strings or `null`.
+- For `field: "STRUCTURED_FIELD"`, `formats` must contain at least one non-empty regex pattern.
+- `customFieldType` is allowed only for custom fields (non-standard field names), and when provided it must be a non-empty string (or `null`).
+
 **Example:**
 If `lineParsePattern` extracts a JSON string into `groupIndex 5`, and you want to parse a specific key `session` from that JSON, you would use:
 `{ "field": "customFields", "groupIndex": 5, "customFieldKey": "session" }`
