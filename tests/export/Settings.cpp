@@ -76,7 +76,13 @@ TEST(ExportSettingsTest, FromJsonValid) {
 
 TEST(ExportSettingsTest, FromJsonInvalidOutputPathType) {
     json j = {{"outputPath", 123}};
-    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
+TEST(ExportSettingsTest, FromJsonOutputPathNullResetsOptional) {
+    json j = {{"outputPath", nullptr}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_FALSE(es.outputPath.has_value());
 }
 
 TEST(ExportSettingsTest, FromJsonRejectsNonObjectRoot) {

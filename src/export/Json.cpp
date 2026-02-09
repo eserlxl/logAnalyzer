@@ -296,7 +296,15 @@ void from_json(const nlohmann::json& j, ExportSettings& es) {
         throw ExportException("ExportSettings must be a JSON object.");
     }
     es = ExportSettings(); 
-    if (j.contains("outputPath")) es.outputPath = j.at("outputPath").get<std::string>();
+    if (j.contains("outputPath")) {
+        if (j.at("outputPath").is_null()) {
+            es.outputPath.reset();
+        } else if (j.at("outputPath").is_string()) {
+            es.outputPath = j.at("outputPath").get<std::string>();
+        } else {
+            throw ExportException("'outputPath' must be a string or null.");
+        }
+    }
     if (j.contains("fieldsToExport")) es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
     if (j.contains("format")) {
         auto formatOpt = Utils::stringToExportFormat(j.at("format").get<std::string>());
