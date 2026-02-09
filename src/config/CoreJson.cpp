@@ -248,7 +248,8 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
                     continue;
                 }
                 if (levelVal.is_string()) {
-                    LogLevel parsedLevel = Utils::stringToLogLevel(levelVal.get<std::string>());
+                    const std::string normalizedValue = Utils::trim(levelVal.get<std::string>());
+                    LogLevel parsedLevel = Utils::stringToLogLevel(normalizedValue);
                     if (parsedLevel == LogLevel::UNKNOWN) {
                         errors.push_back("Invalid custom log level string '" + levelVal.get<std::string>() + "' for key '" + levelStr + "'.");
                     }
