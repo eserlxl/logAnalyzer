@@ -12,19 +12,19 @@ void LogAnalyzerSettings::merge(const LogAnalyzerSettings& other) {
     }
     
     // For optionals, overwrite if 'other' has a value.
-    if (other.logEntryStartPattern.has_value()) {
+    if (other.logEntryStartPattern) {
         logEntryStartPattern = other.logEntryStartPattern;
     }
     
-    if (other.caseSensitiveParsing.has_value()) {
+    if (other.caseSensitiveParsing) {
         caseSensitiveParsing = other.caseSensitiveParsing;
     }
 
-    if (other.maxMultilineBufferSize.has_value()) {
+    if (other.maxMultilineBufferSize) {
         maxMultilineBufferSize = other.maxMultilineBufferSize;
     }
 
-    if (other.parserErrorAction.has_value()) {
+    if (other.parserErrorAction) {
         parserErrorAction = other.parserErrorAction;
     }
 
@@ -65,7 +65,7 @@ void LogAnalyzerSettings::merge(const LogAnalyzerSettings& other) {
     // Use ExportSettings::merge
     exportSettings.merge(other.exportSettings);
 
-    if (other.rootFilterExpression.has_value()) {
+    if (other.rootFilterExpression) {
         rootFilterExpression = other.rootFilterExpression;
     }
 }
@@ -76,4 +76,3 @@ LogAnalyzerSettings LogAnalyzerSettings::createDefault() {
     // Return a default-constructed object.
     return {};
 }
-
