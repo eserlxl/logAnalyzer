@@ -128,3 +128,15 @@ TEST_F(CLIConfigTest, JsonFieldsRejectEmptyFieldName) {
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }
+
+TEST_F(CLIConfigTest, CsvFieldsRejectMissingAliasAfterAs) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--csv-fields", "level as "});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, JsonFieldsRejectMissingAliasAfterAs) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--json-fields", "timestamp as "});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}

@@ -143,6 +143,10 @@ namespace {
             alias.erase(0, alias.find_first_not_of(" \t"));
             auto aliasEnd = alias.find_last_not_of(" \t");
             if (aliasEnd != std::string::npos) alias.erase(aliasEnd + 1);
+
+            if (field.empty() || alias.empty()) {
+                return {"", ""};
+            }
             
             return {field, alias};
         }
