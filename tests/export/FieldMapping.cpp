@@ -33,6 +33,13 @@ TEST(ExportFieldMappingTest, FromJsonValid) {
     ASSERT_EQ(efm2.datetimeFormat.value(), "%H:%M:%S");
 }
 
+TEST(ExportFieldMappingTest, FromJsonDatetimeFormatIsTrimmed) {
+    json j = {{"field", "TIMESTAMP"}, {"datetimeFormat", "  %H:%M:%S  "}};
+    ExportFieldMapping efm = j.get<ExportFieldMapping>();
+    ASSERT_TRUE(efm.datetimeFormat.has_value());
+    ASSERT_EQ(efm.datetimeFormat.value(), "%H:%M:%S");
+}
+
 TEST(ExportFieldMappingTest, FromJsonInvalidField) {
     json j = {{"field", "INVALID_FIELD"}};
     ExportFieldMapping efm;
@@ -83,6 +90,11 @@ TEST(ExportFieldMappingTest, FromJsonNullDatetimeFormatClearsOptional) {
     json j = {{"field", "TIMESTAMP"}, {"datetimeFormat", nullptr}};
     ExportFieldMapping efm = j.get<ExportFieldMapping>();
     ASSERT_FALSE(efm.datetimeFormat.has_value());
+}
+
+TEST(ExportFieldMappingTest, FromJsonEmptyDatetimeFormatRejected) {
+    json j = {{"field", "TIMESTAMP"}, {"datetimeFormat", "   "}};
+    ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
 }
 
 TEST(ExportFieldMappingTest, FromJsonGetToResetsPreviousStateWhenKeysMissing) {
