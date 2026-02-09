@@ -278,3 +278,34 @@ TEST_F(FilterIteration15Test, ParseQueryFieldAliasesMapToStandardFields) {
     ASSERT_TRUE(threadRes.has_value()) << threadRes.error().toString();
     EXPECT_TRUE(threadRes->evaluate(entry).value_or(false));
 }
+
+TEST_F(FilterIteration15Test, ParseQuerySupportsRelationalShorthandTokens) {
+    LogEntry entry{};
+    entry.level = LogLevel::INFO;
+    entry.message = "ok";
+    entry.sourceLineNumber = 42;
+
+    auto eqRes = parseQuery("line EQ 42");
+    ASSERT_TRUE(eqRes.has_value()) << eqRes.error().toString();
+    EXPECT_TRUE(eqRes->evaluate(entry).value_or(false));
+
+    auto neRes = parseQuery("line NE 43");
+    ASSERT_TRUE(neRes.has_value()) << neRes.error().toString();
+    EXPECT_TRUE(neRes->evaluate(entry).value_or(false));
+
+    auto gtRes = parseQuery("line GT 41");
+    ASSERT_TRUE(gtRes.has_value()) << gtRes.error().toString();
+    EXPECT_TRUE(gtRes->evaluate(entry).value_or(false));
+
+    auto ltRes = parseQuery("line LT 43");
+    ASSERT_TRUE(ltRes.has_value()) << ltRes.error().toString();
+    EXPECT_TRUE(ltRes->evaluate(entry).value_or(false));
+
+    auto gteRes = parseQuery("line GTE 42");
+    ASSERT_TRUE(gteRes.has_value()) << gteRes.error().toString();
+    EXPECT_TRUE(gteRes->evaluate(entry).value_or(false));
+
+    auto lteRes = parseQuery("line LTE 42");
+    ASSERT_TRUE(lteRes.has_value()) << lteRes.error().toString();
+    EXPECT_TRUE(lteRes->evaluate(entry).value_or(false));
+}

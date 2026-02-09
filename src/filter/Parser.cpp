@@ -317,12 +317,12 @@ private:
             }
             return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unsupported IS operator: " + nextOp));
         }
-        if (opToken == "EQUALS") return FilterOperator::EQUALS;
-        if (opToken == "NOT_EQUALS") return FilterOperator::NOT_EQUALS;
-        if (opToken == "GREATER_THAN") return FilterOperator::GREATER_THAN;
-        if (opToken == "LESS_THAN") return FilterOperator::LESS_THAN;
-        if (opToken == "GREATER_THAN_OR_EQUAL") return FilterOperator::GREATER_THAN_OR_EQUAL;
-        if (opToken == "LESS_THAN_OR_EQUAL") return FilterOperator::LESS_THAN_OR_EQUAL;
+        if (opToken == "EQUALS" || opToken == "EQ") return FilterOperator::EQUALS;
+        if (opToken == "NOT_EQUALS" || opToken == "NE") return FilterOperator::NOT_EQUALS;
+        if (opToken == "GREATER_THAN" || opToken == "GT") return FilterOperator::GREATER_THAN;
+        if (opToken == "LESS_THAN" || opToken == "LT") return FilterOperator::LESS_THAN;
+        if (opToken == "GREATER_THAN_OR_EQUAL" || opToken == "GTE") return FilterOperator::GREATER_THAN_OR_EQUAL;
+        if (opToken == "LESS_THAN_OR_EQUAL" || opToken == "LTE") return FilterOperator::LESS_THAN_OR_EQUAL;
 
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unsupported operator token: " + opToken));
     }
