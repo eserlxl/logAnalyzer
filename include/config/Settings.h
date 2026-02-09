@@ -91,7 +91,7 @@ struct LogAnalyzerSettings {
     LogAnalyzerSettings& setLineParsePattern(std::string p) { lineParsePattern = std::move(p); return *this; }
     LogAnalyzerSettings& setCaseSensitiveParsing(bool b) { caseSensitiveParsing = b; return *this; }
     LogAnalyzerSettings& setLogEntryStartPattern(std::optional<std::string> p) {
-        if (p.has_value() && p.value().empty()) {
+        if (p && p->empty()) {
             logEntryStartPattern = std::nullopt;
         } else {
             logEntryStartPattern = std::move(p);
