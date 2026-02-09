@@ -71,12 +71,12 @@ void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
         }
     }
 
-    if (efm.datetimeFormat.has_value() && std::holds_alternative<LogEntryField>(efm.field)) {
+    if (efm.datetimeFormat && std::holds_alternative<LogEntryField>(efm.field)) {
         if (std::get<LogEntryField>(efm.field) != LogEntryField::TIMESTAMP) {
             throw ExportException("ExportFieldMapping 'datetimeFormat' is only valid for TIMESTAMP field.");
         }
     }
-    if (efm.datetimeFormat.has_value() && std::holds_alternative<std::string>(efm.field)) {
+    if (efm.datetimeFormat && std::holds_alternative<std::string>(efm.field)) {
         throw ExportException("ExportFieldMapping 'datetimeFormat' is not supported for custom fields.");
     }
 }
@@ -113,14 +113,14 @@ void Exporter::exportAsJson(
 
                     switch (fieldEnum) {
                         case LogEntryField::ID:
-                            value_json = entry.id.has_value() ? json(entry.id.value()) : nullptr;
+                            value_json = entry.id ? json(*entry.id) : nullptr;
                             break;
                         case LogEntryField::TIMESTAMP: {
-                            if (entry.timestamp.has_value()) {
-                                if (fieldMapping.datetimeFormat.has_value()) {
-                                    value_json = Utils::formatTimestamp(entry.timestamp.value(), *fieldMapping.datetimeFormat);
+                            if (entry.timestamp) {
+                                if (fieldMapping.datetimeFormat) {
+                                    value_json = Utils::formatTimestamp(*entry.timestamp, *fieldMapping.datetimeFormat);
                                 } else {
-                                    value_json = Utils::formatTimestamp(entry.timestamp.value());
+                                    value_json = Utils::formatTimestamp(*entry.timestamp);
                                 }
                             } else {
                                 value_json = nullptr;
@@ -137,16 +137,16 @@ void Exporter::exportAsJson(
                             value_json = entry.sourceFile;
                             break;
                         case LogEntryField::LINE_NUMBER:
-                            value_json = entry.sourceLineNumber.has_value() ? json(entry.sourceLineNumber.value()) : nullptr;
+                            value_json = entry.sourceLineNumber ? json(*entry.sourceLineNumber) : nullptr;
                             break;
                         case LogEntryField::THREAD_ID:
-                            value_json = entry.threadId.has_value() ? json(entry.threadId.value()) : nullptr;
+                            value_json = entry.threadId ? json(*entry.threadId) : nullptr;
                             break;
                         case LogEntryField::MODULE:
-                            value_json = entry.module.has_value() ? json(entry.module.value()) : nullptr;
+                            value_json = entry.module ? json(*entry.module) : nullptr;
                             break;
                         case LogEntryField::HOST:
-                            value_json = entry.host.has_value() ? json(entry.host.value()) : nullptr;
+                            value_json = entry.host ? json(*entry.host) : nullptr;
                             break;
                         case LogEntryField::STRUCTURED_FIELD:
                             if (entry.structuredData.has_value()) {
@@ -308,15 +308,15 @@ void Exporter::exportAsXml(
 
 void to_json(nlohmann::json& j, const ExportSettings& es) {
     j = json::object();
-    if (es.outputPath.has_value()) j["outputPath"] = es.outputPath.value();
-    if (es.format.has_value()) j["format"] = Utils::exportFormatToString(es.format.value());
-    if (es.includeHeader.has_value()) j["includeHeader"] = es.includeHeader.value();
-    if (es.separator.has_value()) j["separator"] = std::string(1, es.separator.value());
-    if (es.textFormatString.has_value()) j["textFormatString"] = es.textFormatString.value();
-    if (es.useAnsiColors.has_value()) j["useAnsiColors"] = es.useAnsiColors.value();
+    if (es.outputPath) j["outputPath"] = *es.outputPath;
+    if (es.format) j["format"] = Utils::exportFormatToString(*es.format);
+    if (es.includeHeader) j["includeHeader"] = *es.includeHeader;
+    if (es.separator) j["separator"] = std::string(1, *es.separator);
+    if (es.textFormatString) j["textFormatString"] = *es.textFormatString;
+    if (es.useAnsiColors) j["useAnsiColors"] = *es.useAnsiColors;
     if (!es.fieldsToExport.empty()) j["fieldsToExport"] = es.fieldsToExport;
-    if (es.jsonIndent.has_value()) {
-        j["jsonIndent"] = es.jsonIndent.value();
+    if (es.jsonIndent) {
+        j["jsonIndent"] = *es.jsonIndent;
     }
 }
 
