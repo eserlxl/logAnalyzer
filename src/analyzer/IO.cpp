@@ -140,7 +140,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             report.successfulParses++;
         } else {
             if (errorAction == ParserErrorAction::Warn) {
-                std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResultOpt->error().message << std::endl;
+                std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResultOpt->error().message << '\n';
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResultOpt->error().message, lineNumber});
         }
@@ -168,7 +168,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             report.successfulParses++;
         } else {
             if (errorAction == ParserErrorAction::Warn) {
-                 std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << std::endl;
+                 std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << '\n';
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.error().message, 0});
         }
