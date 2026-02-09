@@ -61,3 +61,13 @@ TEST(ExportFieldMappingTest, FromJsonNullCustomHeaderClearsAlias) {
     ExportFieldMapping efm = j.get<ExportFieldMapping>();
     ASSERT_TRUE(efm.customHeader.empty());
 }
+
+TEST(ExportFieldMappingTest, FromJsonGetToResetsPreviousStateWhenKeysMissing) {
+    ExportFieldMapping efm(LogEntryField::TIMESTAMP, "OldHeader", "%Y-%m-%d");
+    json j = {{"field", "LEVEL"}};
+    j.get_to(efm);
+    ASSERT_TRUE(std::holds_alternative<LogEntryField>(efm.field));
+    ASSERT_EQ(std::get<LogEntryField>(efm.field), LogEntryField::LEVEL);
+    ASSERT_TRUE(efm.customHeader.empty());
+    ASSERT_FALSE(efm.datetimeFormat.has_value());
+}

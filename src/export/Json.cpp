@@ -30,6 +30,7 @@ void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
     if (!j.is_object()) {
         throw ExportException("ExportFieldMapping must be a JSON object.");
     }
+    efm = ExportFieldMapping{};
 
     if (j.contains("field") && j.at("field").is_string()) {
         std::string fieldStr = j.at("field").get<std::string>();
