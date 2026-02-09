@@ -149,6 +149,16 @@ TEST_F(FieldMappingTest, FromJson_CustomField) {
     EXPECT_EQ(fm.customFieldType.value(), "string");
 }
 
+TEST_F(FieldMappingTest, FromJson_FieldNameIsTrimmed) {
+    nlohmann::json j = {
+        {"field", "  MESSAGE \t"},
+        {"groupIndex", 2}
+    };
+    FieldMapping fm = j.get<FieldMapping>();
+    ASSERT_TRUE(std::holds_alternative<LogEntryField>(fm.field));
+    EXPECT_EQ(std::get<LogEntryField>(fm.field), LogEntryField::MESSAGE);
+}
+
 TEST_F(FieldMappingTest, FromJson_StructuredFieldWithRegex) {
     nlohmann::json j = {
         {"field", "STRUCTURED_FIELD"},
@@ -180,6 +190,14 @@ TEST_F(FieldMappingTest, FromJson_InvalidRegex) {
 
 TEST_F(FieldMappingTest, FromJson_MissingField) {
     nlohmann::json j = {
+        {"groupIndex", 1}
+    };
+    EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
+}
+
+TEST_F(FieldMappingTest, FromJson_EmptyFieldRejected) {
+    nlohmann::json j = {
+        {"field", "   "},
         {"groupIndex", 1}
     };
     EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);

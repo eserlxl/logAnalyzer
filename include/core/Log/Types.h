@@ -170,6 +170,12 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
 
     if (j.at("field").is_string()) {
         std::string fieldStr = j.at("field").get<std::string>();
+        const auto first = fieldStr.find_first_not_of(" \t");
+        if (first == std::string::npos) {
+            throw nlohmann::json::parse_error::create(101, 0, "FieldMapping 'field' cannot be empty", &j);
+        }
+        const auto last = fieldStr.find_last_not_of(" \t");
+        fieldStr = fieldStr.substr(first, last - first + 1);
         LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
         if (standardField != LogEntryField::UNKNOWN && standardField != LogEntryField::CUSTOM) {
              fm.field = standardField;
