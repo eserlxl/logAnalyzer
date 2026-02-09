@@ -70,6 +70,12 @@ void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
             throw ExportException("ExportFieldMapping has invalid 'datetimeFormat' type; expected string or null.");
         }
     }
+
+    if (efm.datetimeFormat.has_value() && std::holds_alternative<LogEntryField>(efm.field)) {
+        if (std::get<LogEntryField>(efm.field) != LogEntryField::TIMESTAMP) {
+            throw ExportException("ExportFieldMapping 'datetimeFormat' is only valid for TIMESTAMP field.");
+        }
+    }
 }
 
 void Exporter::exportAsJson(

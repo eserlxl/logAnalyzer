@@ -97,6 +97,11 @@ TEST(ExportFieldMappingTest, FromJsonEmptyDatetimeFormatRejected) {
     ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
 }
 
+TEST(ExportFieldMappingTest, FromJsonDatetimeFormatRejectedForNonTimestampStandardField) {
+    json j = {{"field", "LEVEL"}, {"datetimeFormat", "%H:%M:%S"}};
+    ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
+}
+
 TEST(ExportFieldMappingTest, FromJsonGetToResetsPreviousStateWhenKeysMissing) {
     ExportFieldMapping efm(LogEntryField::TIMESTAMP, "OldHeader", "%Y-%m-%d");
     json j = {{"field", "LEVEL"}};
