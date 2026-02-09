@@ -24,6 +24,15 @@ TEST_F(CLIConfigTest, OutputTextOption) {
     ASSERT_EQ(settings.exportSettings.format, ExportFormat::PLAINTEXT);
 }
 
+TEST_F(CLIConfigTest, OutputXmlOption) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--format", "xml"});
+    ASSERT_TRUE(result.has_value());
+    auto& [settings, options] = result.value();
+
+    ASSERT_EQ(options.outputFormat, "xml");
+    ASSERT_EQ(settings.exportSettings.format, ExportFormat::XML);
+}
+
 TEST_F(CLIConfigTest, NoColorOption) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--color", "never"});
     ASSERT_TRUE(result.has_value());
