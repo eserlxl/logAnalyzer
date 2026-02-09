@@ -167,6 +167,26 @@ TEST_F(FieldMappingTest, FromJson_CustomFieldTypeMustBeStringOrNull) {
     EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::type_error);
 }
 
+TEST_F(FieldMappingTest, FromJson_CustomFieldTypeIsTrimmed) {
+    nlohmann::json j = {
+        {"field", "my_custom"},
+        {"groupIndex", 1},
+        {"customFieldType", "  integer  "}
+    };
+    FieldMapping fm = j.get<FieldMapping>();
+    ASSERT_TRUE(fm.customFieldType.has_value());
+    EXPECT_EQ(fm.customFieldType.value(), "integer");
+}
+
+TEST_F(FieldMappingTest, FromJson_EmptyCustomFieldTypeRejected) {
+    nlohmann::json j = {
+        {"field", "my_custom"},
+        {"groupIndex", 1},
+        {"customFieldType", "   "}
+    };
+    EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
+}
+
 TEST_F(FieldMappingTest, FromJson_FieldNameIsTrimmed) {
     nlohmann::json j = {
         {"field", "  MESSAGE \t"},

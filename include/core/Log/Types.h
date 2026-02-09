@@ -188,7 +188,13 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
                 if (j.at("customFieldType").is_null()) {
                     fm.customFieldType = std::nullopt;
                 } else if (j.at("customFieldType").is_string()) {
-                    fm.customFieldType = j.at("customFieldType").get<std::string>();
+                    std::string typeValue = j.at("customFieldType").get<std::string>();
+                    const auto typeFirst = typeValue.find_first_not_of(" \t");
+                    if (typeFirst == std::string::npos) {
+                        throw nlohmann::json::parse_error::create(101, 0, "FieldMapping 'customFieldType' cannot be empty", &j);
+                    }
+                    const auto typeLast = typeValue.find_last_not_of(" \t");
+                    fm.customFieldType = typeValue.substr(typeFirst, typeLast - typeFirst + 1);
                 } else {
                     throw nlohmann::json::type_error::create(302, "FieldMapping 'customFieldType' must be a string or null", &j);
                 }
