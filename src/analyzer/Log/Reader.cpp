@@ -55,7 +55,7 @@ LogReader::ScopedLogSettings::~ScopedLogSettings() {
     if (!initialSetSettingsError_.has_value() && !settingsRestored_) {
         if (auto res = analyzer_.setSettings(originalSettings_); !res) {
             restorationError_ = res.error(); // Store the error for caller to potentially retrieve
-            std::cerr << "CRITICAL ERROR: Failed to restore original settings during LogReader cleanup: " << res.error().message << std::endl;
+            std::cerr << "CRITICAL ERROR: Failed to restore original settings during LogReader cleanup: " << res.error().message << '\n';
         }
     }
 }
@@ -100,7 +100,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogP
             report.successfulParses++;
         } else {
             if (errorAction == ParserErrorAction::Warn) {
-                std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResult.error().message << std::endl;
+                std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << parseResult.error().message << '\n';
             } else if (errorAction == ParserErrorAction::Throw) {
                 // This will be handled by the caller by checking the Result
             }
@@ -117,7 +117,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogP
             report.successfulParses++;
         } else {
             if (errorAction == ParserErrorAction::Warn) {
-                 std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << std::endl;
+                 std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << '\n';
             }
             report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.error().message, 0, result.error()});
         }
@@ -242,7 +242,7 @@ ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, c
                     }
                 } else {
                     if(errorAction == ParserErrorAction::Warn) {
-                        std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.error().message << std::endl;
+                        std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << filePath << ": " << result.error().message << '\n';
                     }
                      if(errorAction != ParserErrorAction::Ignore) {
                         LogEntry partialEntry;
@@ -272,7 +272,7 @@ ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, c
                 }
             } else {
                  if(errorAction == ParserErrorAction::Warn) {
-                    std::cerr << "Warning: Failed to parse remaining buffer for " << filePath << ": " << result.error().message << std::endl;
+                    std::cerr << "Warning: Failed to parse remaining buffer for " << filePath << ": " << result.error().message << '\n';
                 }
             }
             if (!shouldContinue) break;
