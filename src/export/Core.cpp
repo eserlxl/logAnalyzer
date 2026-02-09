@@ -176,7 +176,20 @@ std::string Exporter::formatEntryForText(
     Utils::replaceAll(result, std::string(PLACEHOLDER_THREAD_ID), entry.threadId.value_or(""));
     Utils::replaceAll(result, std::string(PLACEHOLDER_MODULE), entry.module.value_or(""));
     Utils::replaceAll(result, std::string(PLACEHOLDER_HOST), entry.host.value_or(""));
-    Utils::replaceAll(result, std::string(PLACEHOLDER_CUSTOM_FIELDS), "");
+    std::string customFieldsStr;
+    if (!entry.customFields.empty()) {
+        std::ostringstream customFields;
+        bool first = true;
+        for (const auto& [key, value] : entry.customFields) {
+            if (!first) {
+                customFields << ";";
+            }
+            customFields << key << ":" << value;
+            first = false;
+        }
+        customFieldsStr = customFields.str();
+    }
+    Utils::replaceAll(result, std::string(PLACEHOLDER_CUSTOM_FIELDS), customFieldsStr);
 
     for (const auto& [key, val] : entry.customFields) {
         std::string placeholder = std::string(PLACEHOLDER_CUSTOM_PREFIX) + key + "}";

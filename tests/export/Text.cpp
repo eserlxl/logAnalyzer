@@ -97,3 +97,23 @@ TEST(ExporterTextTest, ExtendedPlaceholderSubstitution) {
         "service.log:77 [thr-1] (auth@node-a) Ready\n"
     );
 }
+
+TEST(ExporterTextTest, CustomFieldsPlaceholder) {
+    Exporter exporter;
+    LogEntry entry = createLogEntry(
+        7,
+        LogLevel::INFO,
+        "msg",
+        std::nullopt,
+        {{"k1", "v1"}, {"k2", "v2"}}
+    );
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::PLAINTEXT;
+    settings.textFormatString = "{customFields}";
+    settings.useAnsiColors = false;
+
+    exporter.exportLogEntries(ss, {entry}, settings);
+    EXPECT_EQ(ss.str(), "k1:v1;k2:v2\n");
+}
