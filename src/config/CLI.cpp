@@ -313,11 +313,11 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         app.parse(argc, argv);
     } catch (const CLI::CallForHelp &e) {
         appOptions.exitAfterParse = true;
-        std::cout << app.help() << std::endl;
+        std::cout << app.help() << '\n';
         return std::make_pair(settings, appOptions);
     } catch (const CLI::CallForVersion &e) {
         appOptions.exitAfterParse = true;
-        std::cout << app.version() << std::endl;
+        std::cout << app.version() << '\n';
         return std::make_pair(settings, appOptions);
     } catch (const CLI::Error &e) {
         // Refined error handling could inspect 'e' more here if needed
@@ -329,8 +329,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     // Deprecation warnings
     if (!appOptions.enabledStatistics.empty()) {
         if (app.count("--top-n")) {
-            std::cerr << "Warning: --top-n is deprecated. Please use --stats \"type=TOP_MESSAGES,top_n=" 
-                      << appOptions.topMessagesCount << "\" instead." << std::endl;
+            std::cerr << "Warning: --top-n is deprecated. Please use --stats \"type=TOP_MESSAGES,top_n="
+                      << appOptions.topMessagesCount << "\" instead." << '\n';
         }
         // stats-window and find-gaps can be checked similarly if they map to new stats
     }
