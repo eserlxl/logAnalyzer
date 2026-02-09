@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "analyzer/Log/Writer.h" // New
+#include "analyzer/Log/Writer.h"
 #include "analyzer/Core.h"
 #include "export/Core.h"
 #include "utils/Core.h"
 #include "utils/String.h"
-#include "config/CLI.h" // Added for CLIConfig
+#include "config/CLI.h"
 #include "filter/ConcreteFilters.h"
 #include "filter/Parser.h"
 #include "filter/Types.h"
-#include "stats/Core.h" // For statistic collectors
+#include "stats/Core.h"
 #include <algorithm>
 #include <chrono>
 #include <fstream>
