@@ -200,6 +200,26 @@ TEST_F(FieldMappingTest, FromJson_InvalidGroupIndexType) {
     EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::type_error);
 }
 
+TEST_F(FieldMappingTest, FromJson_InvalidFormatsType) {
+    nlohmann::json j = {
+        {"field", "MESSAGE"},
+        {"groupIndex", 1},
+        {"formats", "not-an-array"}
+    };
+    EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::type_error);
+}
+
+TEST_F(FieldMappingTest, FromJson_NullFormatsClearsFormats) {
+    FieldMapping fm(LogEntryField::MESSAGE, std::make_optional<size_t>(1), std::vector<std::string>{"%Y-%m-%d"});
+    nlohmann::json j = {
+        {"field", "MESSAGE"},
+        {"groupIndex", 1},
+        {"formats", nullptr}
+    };
+    j.get_to(fm);
+    EXPECT_TRUE(fm.formats.empty());
+}
+
 TEST_F(FieldMappingTest, FromJsonGetTo_ResetsPreviousState) {
     std::vector<std::string> formats = {"%Y-%m-%d"};
     FieldMapping fm("old_custom", std::make_optional<size_t>(7), formats, std::make_optional<std::string>("string"));

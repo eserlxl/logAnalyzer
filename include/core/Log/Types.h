@@ -149,8 +149,14 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
         throw nlohmann::json::type_error::create(302, "FieldMapping 'groupIndex' must be an integer or null", &j);
     }
 
-    if (j.contains("formats") && j.at("formats").is_array()) {
-        fm.formats = j.at("formats").get<std::vector<std::string>>();
+    if (j.contains("formats")) {
+        if (j.at("formats").is_null()) {
+            fm.formats.clear();
+        } else if (j.at("formats").is_array()) {
+            fm.formats = j.at("formats").get<std::vector<std::string>>();
+        } else {
+            throw nlohmann::json::type_error::create(302, "FieldMapping 'formats' must be an array or null", &j);
+        }
     } // 'formats' is optional
 
     // Field identifier (enum or string)
