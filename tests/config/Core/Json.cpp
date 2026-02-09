@@ -354,6 +354,17 @@ TEST_F(LogAnalyzerConfigTest, FromJsonInvalidCustomLogLevelMapping) {
     ASSERT_THAT(result.error()[0], testing::HasSubstr("Invalid custom log level string 'INVALID_LEVEL_STRING' for key 'BAD'."));
 }
 
+TEST_F(LogAnalyzerConfigTest, FromJsonRejectsEmptyCustomLogLevelMappingKey) {
+    std::string jsonContent = R"({
+        "lineParsePattern": ".*",
+        "customLogLevelMappings": {"": "DEBUG"},
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result = LogAnalyzerSettings::fromJson(jsonContent);
+    ASSERT_FALSE(result.has_value());
+    ASSERT_THAT(result.error(), testing::Contains(testing::HasSubstr("Invalid customLogLevelMappings key: key cannot be empty.")));
+}
+
 TEST_F(LogAnalyzerConfigTest, FromJsonInvalidVersionType) {
     std::string jsonContent = R"({
         "version": 2,

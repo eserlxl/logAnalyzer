@@ -242,12 +242,17 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
         if (j.contains("customLogLevelMappings") && j.at("customLogLevelMappings").is_object()) {
             settings.customLogLevelMappings.clear(); // Clear defaults before adding new ones
             for (auto const& [levelStr, levelVal] : j.at("customLogLevelMappings").items()) {
+                const std::string normalizedKey = Utils::trim(levelStr);
+                if (normalizedKey.empty()) {
+                    errors.push_back("Invalid customLogLevelMappings key: key cannot be empty.");
+                    continue;
+                }
                 if (levelVal.is_string()) {
                     LogLevel parsedLevel = Utils::stringToLogLevel(levelVal.get<std::string>());
                     if (parsedLevel == LogLevel::UNKNOWN) {
                         errors.push_back("Invalid custom log level string '" + levelVal.get<std::string>() + "' for key '" + levelStr + "'.");
                     }
-                    settings.customLogLevelMappings[levelStr] = parsedLevel;
+                    settings.customLogLevelMappings[normalizedKey] = parsedLevel;
                 } else {
                     errors.push_back("Invalid type for customLogLevelMapping value for key '" + levelStr + "'. Expected string.");
                 }
