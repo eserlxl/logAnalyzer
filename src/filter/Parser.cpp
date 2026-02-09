@@ -276,10 +276,22 @@ private:
 
         const std::string opToken = Utils::toUpper(consume().text);
         if (opToken == "IN") return FilterOperator::IN;
+        if (opToken == "NOT_IN") return FilterOperator::NOT_IN;
         if (opToken == "CONTAINS") return FilterOperator::CONTAINS;
+        if (opToken == "CONTAINS_I") return FilterOperator::CONTAINS_I;
+        if (opToken == "NOT_CONTAINS") return FilterOperator::NOT_CONTAINS;
+        if (opToken == "NOT_CONTAINS_I") return FilterOperator::NOT_CONTAINS_I;
         if (opToken == "STARTS_WITH") return FilterOperator::STARTS_WITH;
+        if (opToken == "STARTS_WITH_I") return FilterOperator::STARTS_WITH_I;
         if (opToken == "ENDS_WITH") return FilterOperator::ENDS_WITH;
-        if (opToken == "REGEX") return FilterOperator::REGEX;
+        if (opToken == "ENDS_WITH_I") return FilterOperator::ENDS_WITH_I;
+        if (opToken == "REGEX" || opToken == "REGEX_MATCH") return FilterOperator::REGEX;
+        if (opToken == "EQUALS_I") return FilterOperator::EQUALS_I;
+        if (opToken == "NOT_EQUALS_I") return FilterOperator::NOT_EQUALS_I;
+        if (opToken == "IS_NULL") return FilterOperator::IS_NULL;
+        if (opToken == "IS_NOT_NULL") return FilterOperator::IS_NOT_NULL;
+        if (opToken == "IS_PRESENT") return FilterOperator::IS_PRESENT;
+        if (opToken == "IS_ABSENT") return FilterOperator::IS_ABSENT;
         if (opToken == "NOT") {
             auto nextOpRes = consumeIdentifier("Expected operator after NOT.");
             if (!nextOpRes) return std::unexpected(nextOpRes.error());

@@ -188,6 +188,58 @@ TEST_F(FilterIteration15Test, ParseQueryMalformedDiagnostics) {
     EXPECT_THAT(missingRhs.error().message, testing::HasSubstr("Expected field name in condition."));
 }
 
+TEST_F(FilterIteration15Test, ParseQuerySupportsOperatorTokenAliases) {
+    LogEntry entry = createEntry(LogLevel::WARNING, "alpha world", {
+        {"scope", "backend"},
+        {"tag", "World"},
+        {"opt", "yes"},
+    });
+
+    auto notInRes = parseQuery("message NOT_IN ('x', 'y')");
+    ASSERT_TRUE(notInRes.has_value()) << notInRes.error().toString();
+    EXPECT_TRUE(notInRes->evaluate(entry).value_or(false));
+
+    auto regexAliasRes = parseQuery("message REGEX_MATCH 'alpha.*'");
+    ASSERT_TRUE(regexAliasRes.has_value()) << regexAliasRes.error().toString();
+    EXPECT_TRUE(regexAliasRes->evaluate(entry).value_or(false));
+
+    auto containsIRes = parseQuery("custom.tag CONTAINS_I 'world'");
+    ASSERT_TRUE(containsIRes.has_value()) << containsIRes.error().toString();
+    EXPECT_TRUE(containsIRes->evaluate(entry).value_or(false));
+
+    auto equalsIRes = parseQuery("custom.tag EQUALS_I 'world'");
+    ASSERT_TRUE(equalsIRes.has_value()) << equalsIRes.error().toString();
+    EXPECT_TRUE(equalsIRes->evaluate(entry).value_or(false));
+
+    auto notEqualsIRes = parseQuery("custom.tag NOT_EQUALS_I 'w0rld'");
+    ASSERT_TRUE(notEqualsIRes.has_value()) << notEqualsIRes.error().toString();
+    EXPECT_TRUE(notEqualsIRes->evaluate(entry).value_or(false));
+
+    auto startsWithIRes = parseQuery("custom.tag STARTS_WITH_I 'wo'");
+    ASSERT_TRUE(startsWithIRes.has_value()) << startsWithIRes.error().toString();
+    EXPECT_TRUE(startsWithIRes->evaluate(entry).value_or(false));
+
+    auto endsWithIRes = parseQuery("custom.tag ENDS_WITH_I 'LD'");
+    ASSERT_TRUE(endsWithIRes.has_value()) << endsWithIRes.error().toString();
+    EXPECT_TRUE(endsWithIRes->evaluate(entry).value_or(false));
+
+    auto isPresentRes = parseQuery("custom.scope IS_PRESENT");
+    ASSERT_TRUE(isPresentRes.has_value()) << isPresentRes.error().toString();
+    EXPECT_TRUE(isPresentRes->evaluate(entry).value_or(false));
+
+    auto isAbsentRes = parseQuery("custom.missing IS_ABSENT");
+    ASSERT_TRUE(isAbsentRes.has_value()) << isAbsentRes.error().toString();
+    EXPECT_TRUE(isAbsentRes->evaluate(entry).value_or(false));
+
+    auto isNotNullRes = parseQuery("custom.scope IS_NOT_NULL");
+    ASSERT_TRUE(isNotNullRes.has_value()) << isNotNullRes.error().toString();
+    EXPECT_TRUE(isNotNullRes->evaluate(entry).value_or(false));
+
+    auto isNullRes = parseQuery("custom.missing IS_NULL");
+    ASSERT_TRUE(isNullRes.has_value()) << isNullRes.error().toString();
+    EXPECT_TRUE(isNullRes->evaluate(entry).value_or(false));
+}
+
 TEST_F(FilterIteration15Test, FilterOperatorToStringCoversAllIteration15Operators) {
     EXPECT_EQ(toString(FilterOperator::EQUALS_I), "EQUALS_I");
     EXPECT_EQ(toString(FilterOperator::NOT_EQUALS_I), "NOT_EQUALS_I");
