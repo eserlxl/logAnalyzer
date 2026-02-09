@@ -92,12 +92,18 @@ TEST(ExportSettingsTest, FromJsonRejectsNonObjectRoot) {
 
 TEST(ExportSettingsTest, FromJsonInvalidFormatType) {
     json j = {{"format", 123}};
-    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidFormatValue) {
     json j = {{"format", "UNKNOWN_FORMAT"}};
     ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
+TEST(ExportSettingsTest, FromJsonFormatNullResetsOptional) {
+    json j = {{"format", nullptr}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_FALSE(es.format.has_value());
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidFieldsToExportType) {

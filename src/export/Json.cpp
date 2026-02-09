@@ -307,9 +307,15 @@ void from_json(const nlohmann::json& j, ExportSettings& es) {
     }
     if (j.contains("fieldsToExport")) es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();
     if (j.contains("format")) {
-        auto formatOpt = Utils::stringToExportFormat(j.at("format").get<std::string>());
-        if(formatOpt) es.format = *formatOpt;
-        else throw ExportException("Invalid format string provided.");
+        if (j.at("format").is_null()) {
+            es.format.reset();
+        } else if (j.at("format").is_string()) {
+            auto formatOpt = Utils::stringToExportFormat(j.at("format").get<std::string>());
+            if (formatOpt) es.format = *formatOpt;
+            else throw ExportException("Invalid format string provided.");
+        } else {
+            throw ExportException("'format' must be a string or null.");
+        }
     }
     if (j.contains("includeHeader")) es.includeHeader = j.at("includeHeader").get<bool>();
     if (j.contains("jsonIndent")) es.jsonIndent = j.at("jsonIndent").get<int>();
