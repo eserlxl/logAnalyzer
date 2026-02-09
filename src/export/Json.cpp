@@ -33,7 +33,7 @@ void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
     efm = ExportFieldMapping{};
 
     if (j.contains("field") && j.at("field").is_string()) {
-        std::string fieldStr = j.at("field").get<std::string>();
+        std::string fieldStr = Utils::trim(j.at("field").get<std::string>());
         if (fieldStr.empty()) {
             throw ExportException("ExportFieldMapping 'field' cannot be empty.");
         }

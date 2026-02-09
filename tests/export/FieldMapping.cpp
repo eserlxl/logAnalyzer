@@ -41,6 +41,13 @@ TEST(ExportFieldMappingTest, FromJsonInvalidField) {
     ASSERT_EQ(std::get<std::string>(efm.field), "INVALID_FIELD");
 }
 
+TEST(ExportFieldMappingTest, FromJsonFieldNameIsTrimmedBeforeResolution) {
+    json j = {{"field", "  LEVEL\t"}};
+    ExportFieldMapping efm = j.get<ExportFieldMapping>();
+    ASSERT_TRUE(std::holds_alternative<LogEntryField>(efm.field));
+    ASSERT_EQ(std::get<LogEntryField>(efm.field), LogEntryField::LEVEL);
+}
+
 TEST(ExportFieldMappingTest, FromJsonMissingField) {
     json j = {{"customHeader", "Header"}};
     ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
