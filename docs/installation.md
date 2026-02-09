@@ -50,7 +50,7 @@ sudo pacman -Syu gcc cmake git
     cmake --build build --parallel
     ```
 
-    The executable will be located at `build/bin/logAnalyzer`.
+    The executable will be located at `build/logAnalyzer`.
 
 ## System-Wide Installation
 
