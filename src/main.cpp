@@ -102,11 +102,11 @@ int main(int argc, char *argv[]) {
         auto regexSet = std::make_shared<CompositeFilter>(inclusionLogic);
         for (const auto& regex : cliOptions.regexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
-            if (!regexFilterResult.has_value()) {
+            if (!regexFilterResult) {
                 std::cerr << "Error: Invalid regex pattern for inclusion filter: " << regexFilterResult.error().toString() << '\n';
                 return 1;
             }
-            regexSet->add(regexFilterResult.value());
+            regexSet->add(*regexFilterResult);
         }
         inclusionFilters->add(regexSet);
     }
@@ -122,11 +122,11 @@ int main(int argc, char *argv[]) {
         auto exclusionSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
         for (const auto& regex : cliOptions.excludeRegexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
-            if (!regexFilterResult.has_value()) {
+            if (!regexFilterResult) {
                 std::cerr << "Error: Invalid regex pattern for exclusion filter: " << regexFilterResult.error().toString() << '\n';
                 return 1;
             }
-            exclusionSet->add(regexFilterResult.value());
+            exclusionSet->add(*regexFilterResult);
         }
         rootFilter->add(std::make_shared<ExclusionFilter>(exclusionSet));
     }
