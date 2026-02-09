@@ -55,7 +55,7 @@ LogAnalyzer::LogAnalyzer()
     } else {
         // Fallback to known-good defaults so construction remains no-throw for user input issues.
         std::cerr << "Warning: Failed to initialize parser with current settings in default constructor: "
-                  << parser_or_error.error().message << ". Falling back to built-in defaults." << std::endl;
+                  << parser_or_error.error().message << ". Falling back to built-in defaults." << '\n';
         currentSettings_ = LogAnalyzerSettings{};
         customLogLevelMapping_ = currentSettings_.customLogLevelMappings;
         auto fallback_or_error = DefaultLogParser::create(
@@ -71,7 +71,7 @@ LogAnalyzer::LogAnalyzer()
         );
         if (!fallback_or_error.has_value()) {
             std::cerr << "Fatal Error: Failed to initialize fallback parser in default constructor: "
-                      << fallback_or_error.error().message << std::endl;
+                      << fallback_or_error.error().message << '\n';
             // Keep object constructible; operational APIs return structured errors
             // when parser initialization is unavailable.
             currentParser_.reset();
@@ -109,7 +109,7 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
         currentParser_ = std::move(parser_or_error.value());
     } else {
         std::cerr << "Warning: Failed to initialize parser in settings constructor: "
-                  << parser_or_error.error().message << ". Falling back to built-in defaults." << std::endl;
+                  << parser_or_error.error().message << ". Falling back to built-in defaults." << '\n';
         currentSettings_ = LogAnalyzerSettings{};
         customLogLevelMapping_ = currentSettings_.customLogLevelMappings;
         auto fallback_or_error = DefaultLogParser::create(
@@ -125,7 +125,7 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
         );
         if (!fallback_or_error.has_value()) {
             std::cerr << "Fatal Error: Failed to initialize fallback parser in settings constructor: "
-                      << fallback_or_error.error().message << std::endl;
+                      << fallback_or_error.error().message << '\n';
             // Keep object constructible; operational APIs return structured errors
             // when parser initialization is unavailable.
             currentParser_.reset();
@@ -223,7 +223,7 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
     } else {
         customLogLevelMapping_ = std::move(previousMapping);
         std::cerr << "Warning: Failed to re-create parser after updating custom log levels: "
-                  << parser_or_error.error().message << ". Keeping previous parser and mappings." << std::endl;
+                  << parser_or_error.error().message << ". Keeping previous parser and mappings." << '\n';
     }
 }
 
