@@ -4,7 +4,6 @@
 #include <gtest/gtest.h>
 #include "config/Settings.h"
 #include "export/Core.h"
-#include <iostream>
 
 TEST(MergeTest, PartialMergeDoesNotOverwriteDefaults) {
     LogAnalyzerSettings base;
@@ -17,12 +16,7 @@ TEST(MergeTest, PartialMergeDoesNotOverwriteDefaults) {
     // overlay.caseSensitiveParsing is nullopt
     // overlay.exportSettings.format is nullopt
 
-    std::cout << "Base before: " << (base.caseSensitiveParsing.has_value() ? (base.caseSensitiveParsing.value() ? "true" : "false") : "nullopt") << std::endl;
-    std::cout << "Overlay: " << (overlay.caseSensitiveParsing.has_value() ? (overlay.caseSensitiveParsing.value() ? "true" : "false") : "nullopt") << std::endl;
-
     base.merge(overlay);
-
-    std::cout << "Base after: " << (base.caseSensitiveParsing.has_value() ? (base.caseSensitiveParsing.value() ? "true" : "false") : "nullopt") << std::endl;
 
     // This assertion SHOULD PASS with the fix
     ASSERT_TRUE(base.caseSensitiveParsing.has_value());
