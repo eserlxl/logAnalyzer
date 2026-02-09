@@ -185,8 +185,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         })
        ->transform([&](const std::string& tsStr){
           auto parsedTime = Utils::parseTime(tsStr);
-          if (parsedTime.has_value()) {
-              appOptions.startTime = parsedTime.value();
+          if (parsedTime) {
+              appOptions.startTime = *parsedTime;
               return tsStr; // Return original string for CLI internal use
           }
           throw CLI::ValidationError("Internal Error: Timestamp validation passed but parsing failed for --start. This should not happen.");
@@ -201,8 +201,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         })
        ->transform([&](const std::string& tsStr){
           auto parsedTime = Utils::parseTime(tsStr);
-          if (parsedTime.has_value()) {
-              appOptions.endTime = parsedTime.value();
+          if (parsedTime) {
+              appOptions.endTime = *parsedTime;
               return tsStr; // Return original string for CLI internal use
           }
           throw CLI::ValidationError("Internal Error: Timestamp validation passed but parsing failed for --end. This should not happen.");
@@ -392,8 +392,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     // Post-processing options
     if (!durationStr.empty()) {
         auto parsedDuration = Utils::parseDuration(durationStr, false);
-        if (parsedDuration.has_value()) {
-            appOptions.duration = parsedDuration.value();
+        if (parsedDuration) {
+            appOptions.duration = *parsedDuration;
         } else {
             return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error parsing --duration: " + parsedDuration.error().toString()));
         }
