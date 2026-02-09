@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     auto expectedConfig = CLIConfig::parseCLI(argc, argv);
     if (!expectedConfig) {
         // Print the error message and exit.
-        std::cerr << expectedConfig.error().message << std::endl;
+        std::cerr << expectedConfig.error().message << '\n';
         return 1;
     }
     const auto& [analyzerSettings, cliOptions] = expectedConfig.value();
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     if (!cliOptions.outputPath.empty()) {
         outFile.open(cliOptions.outputPath);
         if (!outFile.is_open()) {
-            std::cerr << "Error: Could not open output file: " << cliOptions.outputPath << std::endl;
+            std::cerr << "Error: Could not open output file: " << cliOptions.outputPath << '\n';
             return 1;
         }
         outputStream = &outFile;
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
         for (const auto& regex : cliOptions.regexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
             if (!regexFilterResult.has_value()) {
-                std::cerr << "Error: Invalid regex pattern for inclusion filter: " << regexFilterResult.error().toString() << std::endl;
+                std::cerr << "Error: Invalid regex pattern for inclusion filter: " << regexFilterResult.error().toString() << '\n';
                 return 1;
             }
             regexSet->add(regexFilterResult.value());
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
         for (const auto& regex : cliOptions.excludeRegexPatterns) {
             auto regexFilterResult = RegexFilter::create(regex);
             if (!regexFilterResult.has_value()) {
-                std::cerr << "Error: Invalid regex pattern for exclusion filter: " << regexFilterResult.error().toString() << std::endl;
+                std::cerr << "Error: Invalid regex pattern for exclusion filter: " << regexFilterResult.error().toString() << '\n';
                 return 1;
             }
             exclusionSet->add(regexFilterResult.value());
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
     if (!cliOptions.complexFilterExpression.empty()) {
         auto expressionResult = filter::parseQuery(cliOptions.complexFilterExpression);
         if (!expressionResult) {
-            std::cerr << "Error: Invalid --expression filter: " << expressionResult.error().toString() << std::endl;
+            std::cerr << "Error: Invalid --expression filter: " << expressionResult.error().toString() << '\n';
             return 1;
         }
         parsedExpression = std::move(*expressionResult);
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
         }
         auto evalResult = parsedExpression->evaluate(entry);
         if (!evalResult.has_value()) {
-            std::cerr << "Warning: Failed to evaluate --expression for entry: " << evalResult.error().toString() << std::endl;
+            std::cerr << "Warning: Failed to evaluate --expression for entry: " << evalResult.error().toString() << '\n';
             return false;
         }
         return *evalResult;
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
 
     if (cliOptions.streamMode) {
         if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv") {
-            std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << std::endl;
+            std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << '\n';
             return 1;
         }
 
@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
                  
                  if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
             }
-            *outputStream << std::endl;
+            *outputStream << '\n';
         }
 
         auto streamEntryCallback = [&](const LogEntry &entry) {
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
                     FormattingOptions fmtOptions;
                     fmtOptions.useColor = useColors;
                     fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
-                    *outputStream << logWriter.formatEntry(entry, fmtOptions) << std::endl;
+                    *outputStream << logWriter.formatEntry(entry, fmtOptions) << '\n';
                  } else { // CSV
                     for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
                         const auto& fieldMapping = csvFieldsToExport[i];
@@ -250,21 +250,21 @@ int main(int argc, char *argv[]) {
                         writeCsvEscaped(*outputStream, value, cliOptions.csvSeparator);
                         if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
                     }
-                    *outputStream << std::endl;
+                    *outputStream << '\n';
                  }
             }
             return true;
         };
 
         if(auto res = analyzer.analyzeStream(cliOptions.filePaths, streamEntryCallback, cliOptions.parserErrorAction); !res) {
-            std::cerr << "Error during stream analysis: " << res.error().toString() << std::endl;
+            std::cerr << "Error during stream analysis: " << res.error().toString() << '\n';
             return 1;
         }
 
     } else {
         for (const auto& path : cliOptions.filePaths) {
             if(auto res = analyzer.append(path, cliOptions.parserErrorAction); !res) {
-                 std::cerr << "Error analyzing file " << path << ": " << res.error().toString() << std::endl;
+                 std::cerr << "Error analyzing file " << path << ": " << res.error().toString() << '\n';
                  return 1;
             }
         }
@@ -342,7 +342,7 @@ int main(int argc, char *argv[]) {
         } else if (cliOptions.outputFormat == "xml") {
             exportSettings.format = ExportFormat::XML;
         } else {
-             std::cerr << "Error: Unknown output format: " << cliOptions.outputFormat << std::endl;
+             std::cerr << "Error: Unknown output format: " << cliOptions.outputFormat << '\n';
              return 1;
         }
 
@@ -351,7 +351,7 @@ int main(int argc, char *argv[]) {
         try {
             exporter.exportLogEntries(*outputStream, filteredEntries, exportSettings);
         } catch (const ExportException& e) {
-            std::cerr << "Error exporting log entries: " << e.what() << std::endl;
+            std::cerr << "Error exporting log entries: " << e.what() << '\n';
             return 1;
         }
 
@@ -366,7 +366,7 @@ int main(int argc, char *argv[]) {
             *outputStream << "\n--- Statistics ---\n";
             auto reports = analyzer.getAllStatisticReports();
             for (const auto& reportPair : reports) {
-                *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << std::endl;
+                *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
             }
         }
 }
