@@ -83,7 +83,7 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
         errors.push_back("'fieldMappings' cannot be empty for parsing to work.");
     }
     for (const auto& fm : fieldMappings) {
-        if (!fm.groupIndex.has_value()) {
+        if (!fm.groupIndex) {
             errors.push_back("FieldMapping is missing required 'groupIndex'.");
         }
     }
