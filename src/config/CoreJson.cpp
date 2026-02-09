@@ -202,6 +202,10 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
 
     try {
         nlohmann::json j = nlohmann::json::parse(jsonContent);
+        if (!j.is_object()) {
+            errors.push_back("Invalid top-level JSON type. Expected object.");
+            return std::unexpected(errors);
+        }
 
         if (j.contains("version") && j["version"].is_string()) {
             settings.version = j["version"].get<std::string>();

@@ -333,6 +333,14 @@ TEST_F(LogAnalyzerConfigTest, FromJsonMalformedJson) {
     ASSERT_THAT(result.error()[0], testing::HasSubstr("JSON parsing error:"));
 }
 
+TEST_F(LogAnalyzerConfigTest, FromJsonRejectsNonObjectRoot) {
+    std::string jsonContent = R"([1, 2, 3])";
+    auto result = LogAnalyzerSettings::fromJson(jsonContent);
+    ASSERT_FALSE(result.has_value());
+    ASSERT_FALSE(result.error().empty());
+    ASSERT_THAT(result.error()[0], testing::HasSubstr("Invalid top-level JSON type. Expected object."));
+}
+
 TEST_F(LogAnalyzerConfigTest, FromJsonInvalidCustomLogLevelMapping) {
     std::string jsonContent = R"({
         "lineParsePattern": ".*",
