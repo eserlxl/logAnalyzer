@@ -46,6 +46,11 @@ TEST(ExportFieldMappingTest, FromJsonMissingField) {
     ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
 }
 
+TEST(ExportFieldMappingTest, FromJsonEmptyFieldStringRejected) {
+    json j = {{"field", ""}};
+    ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
+}
+
 TEST(ExportFieldMappingTest, FromJsonInvalidFieldType) {
     json j = {{"field", 123}};
     ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
