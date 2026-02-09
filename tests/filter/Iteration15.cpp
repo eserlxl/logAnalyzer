@@ -317,3 +317,54 @@ TEST_F(FilterIteration15Test, ParseQuerySupportsRelationalShorthandTokens) {
     ASSERT_TRUE(lteEqualsRes.has_value()) << lteEqualsRes.error().toString();
     EXPECT_TRUE(lteEqualsRes->evaluate(entry).value_or(false));
 }
+
+TEST_F(FilterIteration15Test, ParseQuerySupportsStringAndPresenceShorthandAliases) {
+    LogEntry entry{};
+    entry.level = LogLevel::INFO;
+    entry.message = "alpha world";
+    entry.customFields["scope"] = "Backend";
+
+    auto ct = parseQuery("message CT 'world'");
+    ASSERT_TRUE(ct.has_value()) << ct.error().toString();
+    EXPECT_TRUE(ct->evaluate(entry).value_or(false));
+
+    auto nct = parseQuery("message NCT 'error'");
+    ASSERT_TRUE(nct.has_value()) << nct.error().toString();
+    EXPECT_TRUE(nct->evaluate(entry).value_or(false));
+
+    auto sw = parseQuery("message SW 'alpha'");
+    ASSERT_TRUE(sw.has_value()) << sw.error().toString();
+    EXPECT_TRUE(sw->evaluate(entry).value_or(false));
+
+    auto ew = parseQuery("message EW 'world'");
+    ASSERT_TRUE(ew.has_value()) << ew.error().toString();
+    EXPECT_TRUE(ew->evaluate(entry).value_or(false));
+
+    auto rx = parseQuery("message RX 'alpha.*'");
+    ASSERT_TRUE(rx.has_value()) << rx.error().toString();
+    EXPECT_TRUE(rx->evaluate(entry).value_or(false));
+
+    auto cti = parseQuery("custom.scope CTI 'backend'");
+    ASSERT_TRUE(cti.has_value()) << cti.error().toString();
+    EXPECT_TRUE(cti->evaluate(entry).value_or(false));
+
+    auto swi = parseQuery("custom.scope SWI 'back'");
+    ASSERT_TRUE(swi.has_value()) << swi.error().toString();
+    EXPECT_TRUE(swi->evaluate(entry).value_or(false));
+
+    auto ewi = parseQuery("custom.scope EWI 'END'");
+    ASSERT_TRUE(ewi.has_value()) << ewi.error().toString();
+    EXPECT_TRUE(ewi->evaluate(entry).value_or(false));
+
+    auto exists = parseQuery("custom.scope EXISTS");
+    ASSERT_TRUE(exists.has_value()) << exists.error().toString();
+    EXPECT_TRUE(exists->evaluate(entry).value_or(false));
+
+    auto missing = parseQuery("custom.nope MISSING");
+    ASSERT_TRUE(missing.has_value()) << missing.error().toString();
+    EXPECT_TRUE(missing->evaluate(entry).value_or(false));
+
+    auto nonNull = parseQuery("custom.scope NON_NULL");
+    ASSERT_TRUE(nonNull.has_value()) << nonNull.error().toString();
+    EXPECT_TRUE(nonNull->evaluate(entry).value_or(false));
+}
