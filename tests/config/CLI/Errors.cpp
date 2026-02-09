@@ -116,3 +116,15 @@ TEST_F(CLIConfigTest, FindGapsMustBePositive) {
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }
+
+TEST_F(CLIConfigTest, CsvFieldsRejectEmptyFieldName) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--csv-fields", "level, ,message"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, JsonFieldsRejectEmptyFieldName) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--json-fields", "timestamp,,level"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}

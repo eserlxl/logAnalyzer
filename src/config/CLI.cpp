@@ -489,14 +489,22 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     if (app.count("--csv-fields")) {
         settings.exportSettings.csvFields.clear();
         for (const auto& f : appOptions.csvFields) {
-            settings.exportSettings.csvFields.push_back(parseFieldAlias(f));
+            auto parsed = parseFieldAlias(f);
+            if (parsed.first.empty()) {
+                return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, "Invalid --csv-fields entry: field name cannot be empty."));
+            }
+            settings.exportSettings.csvFields.push_back(std::move(parsed));
         }
     }
     
     if (app.count("--json-fields")) {
         settings.exportSettings.jsonFields.clear();
         for (const auto& f : appOptions.jsonFields) {
-            settings.exportSettings.jsonFields.push_back(parseFieldAlias(f));
+            auto parsed = parseFieldAlias(f);
+            if (parsed.first.empty()) {
+                return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, "Invalid --json-fields entry: field name cannot be empty."));
+            }
+            settings.exportSettings.jsonFields.push_back(std::move(parsed));
         }
     }
 
