@@ -326,7 +326,19 @@ void from_json(const nlohmann::json& j, ExportSettings& es) {
             throw ExportException("'includeHeader' must be a boolean or null.");
         }
     }
-    if (j.contains("jsonIndent")) es.jsonIndent = j.at("jsonIndent").get<int>();
+    if (j.contains("jsonIndent")) {
+        if (j.at("jsonIndent").is_null()) {
+            es.jsonIndent.reset();
+        } else if (j.at("jsonIndent").is_number_integer()) {
+            const int indent = j.at("jsonIndent").get<int>();
+            if (indent < 0) {
+                throw ExportException("'jsonIndent' must be non-negative.");
+            }
+            es.jsonIndent = indent;
+        } else {
+            throw ExportException("'jsonIndent' must be an integer or null.");
+        }
+    }
     if (j.contains("separator")) {
         std::string sep_str = j.at("separator").get<std::string>();
         if (sep_str.length() != 1) {

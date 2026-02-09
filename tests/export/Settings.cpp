@@ -124,7 +124,18 @@ TEST(ExportSettingsTest, FromJsonIncludeHeaderNullResetsOptional) {
 
 TEST(ExportSettingsTest, FromJsonInvalidJsonIndentType) {
     json j = {{"jsonIndent", "not_an_int"}};
-    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
+TEST(ExportSettingsTest, FromJsonJsonIndentNullResetsOptional) {
+    json j = {{"jsonIndent", nullptr}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_FALSE(es.jsonIndent.has_value());
+}
+
+TEST(ExportSettingsTest, FromJsonJsonIndentRejectsNegativeValue) {
+    json j = {{"jsonIndent", -1}};
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidSeparatorType) {
