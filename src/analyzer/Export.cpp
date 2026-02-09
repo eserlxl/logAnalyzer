@@ -16,7 +16,7 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const filter::FilterCriteria& f
     
     auto filtered_expected = getFilteredEntries_NoLock(filter); // Use non-locking version as we already hold the lock
     if (!filtered_expected) {
-        std::cerr << "Error filtering entries for CSV export: " << filtered_expected.error().message << std::endl;
+        std::cerr << "Error filtering entries for CSV export: " << filtered_expected.error().message << '\n';
         return;
     }
     const auto& filtered = filtered_expected.value();
@@ -65,7 +65,7 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const filter::FilterCriteria &
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     auto filtered_expected = getFilteredEntries_NoLock(filter); // Use non-locking version as we already hold the lock
     if (!filtered_expected) {
-        std::cerr << "Error filtering entries for JSON export: " << filtered_expected.error().message << std::endl;
+        std::cerr << "Error filtering entries for JSON export: " << filtered_expected.error().message << '\n';
         return;
     }
     const auto& filtered = filtered_expected.value();
@@ -133,9 +133,9 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const filter::FilterCriteria &
     rootJson["entries"] = entriesArray;
 
     if (prettyPrint) {
-        out << rootJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << std::endl;
+        out << rootJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << '\n';
     } else {
-        out << rootJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << std::endl;
+        out << rootJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << '\n';
     }
 }
 
@@ -147,7 +147,7 @@ void LogAnalyzer::exportAsCsv(std::ostream& out, const filter::FilterExpression&
     
     auto filtered_expected = getFilteredEntries_NoLock(expression);
     if (!filtered_expected) {
-        std::cerr << "Error filtering entries for CSV export: " << filtered_expected.error().message << std::endl;
+        std::cerr << "Error filtering entries for CSV export: " << filtered_expected.error().message << '\n';
         return;
     }
     const auto& filtered = filtered_expected.value();
@@ -194,7 +194,7 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const filter::FilterExpression
     std::shared_lock<std::shared_mutex> lock(stateMutex_);
     auto filtered_expected = getFilteredEntries_NoLock(expression);
     if (!filtered_expected) {
-        std::cerr << "Error filtering entries for JSON export: " << filtered_expected.error().message << std::endl;
+        std::cerr << "Error filtering entries for JSON export: " << filtered_expected.error().message << '\n';
         return;
     }
     const auto& filtered = filtered_expected.value();
@@ -260,8 +260,8 @@ void LogAnalyzer::exportAsJson(std::ostream &out, const filter::FilterExpression
     rootJson["entries"] = entriesArray;
 
     if (prettyPrint) {
-        out << rootJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << std::endl;
+        out << rootJson.dump(4, ' ', true, nlohmann::json::error_handler_t::replace) << '\n';
     } else {
-        out << rootJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << std::endl;
+        out << rootJson.dump(-1, ' ', true, nlohmann::json::error_handler_t::replace) << '\n';
     }
 }
