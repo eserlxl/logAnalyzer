@@ -178,6 +178,9 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
         const auto last = fieldStr.find_last_not_of(" \t");
         fieldStr = fieldStr.substr(first, last - first + 1);
         LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
+        if (standardField == LogEntryField::CUSTOM) {
+            throw nlohmann::json::parse_error::create(101, 0, "FieldMapping 'field' cannot be reserved token 'CUSTOM'; provide a concrete custom field name", &j);
+        }
         if (standardField != LogEntryField::UNKNOWN && standardField != LogEntryField::CUSTOM) {
              fm.field = standardField;
             if (j.contains("customFieldType") && !j.at("customFieldType").is_null()) {

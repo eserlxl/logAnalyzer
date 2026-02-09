@@ -274,6 +274,14 @@ TEST_F(FieldMappingTest, FromJson_EmptyFieldRejected) {
     EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
 }
 
+TEST_F(FieldMappingTest, FromJson_ReservedCustomTokenRejected) {
+    nlohmann::json j = {
+        {"field", "CUSTOM"},
+        {"groupIndex", 1}
+    };
+    EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
+}
+
 TEST_F(FieldMappingTest, FromJson_MissingGroupIndex) {
     nlohmann::json j = {
         {"field", "MESSAGE"}
