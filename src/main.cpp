@@ -229,15 +229,15 @@ int main(int argc, char *argv[]) {
                             using T = std::decay_t<decltype(arg)>;
                             if constexpr (std::is_same_v<T, LogEntryField>) {
                                 switch (arg) {
-                                    case LogEntryField::ID: if (entry.id.has_value()) value = std::to_string(entry.id.value()); break;
-                                    case LogEntryField::TIMESTAMP: if (entry.timestamp.has_value()) value = Utils::formatTimestamp(entry.timestamp.value()); break;
+                                    case LogEntryField::ID: if (entry.id) value = std::to_string(*entry.id); break;
+                                    case LogEntryField::TIMESTAMP: if (entry.timestamp) value = Utils::formatTimestamp(*entry.timestamp); break;
                                     case LogEntryField::LEVEL: value = Utils::logLevelToString(entry.level); break;
                                     case LogEntryField::MESSAGE: value = entry.message; break;
                                     case LogEntryField::SOURCE_FILE: value = entry.sourceFile; break;
-                                    case LogEntryField::LINE_NUMBER: if (entry.sourceLineNumber.has_value()) value = std::to_string(entry.sourceLineNumber.value()); break;
-                                    case LogEntryField::THREAD_ID: if (entry.threadId.has_value()) value = entry.threadId.value(); break;
-                                    case LogEntryField::MODULE: if (entry.module.has_value()) value = entry.module.value(); break;
-                                    case LogEntryField::HOST: if (entry.host.has_value()) value = entry.host.value(); break;
+                                    case LogEntryField::LINE_NUMBER: if (entry.sourceLineNumber) value = std::to_string(*entry.sourceLineNumber); break;
+                                    case LogEntryField::THREAD_ID: if (entry.threadId) value = *entry.threadId; break;
+                                    case LogEntryField::MODULE: if (entry.module) value = *entry.module; break;
+                                    case LogEntryField::HOST: if (entry.host) value = *entry.host; break;
                                     default: break;
                                 }
                             } else if constexpr (std::is_same_v<T, std::string>) {
