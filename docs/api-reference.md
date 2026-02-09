@@ -155,7 +155,7 @@ The API uses `ErrorCode::Result<T>` (aliased to `std::expected` or similar) to r
 ```cpp
 auto result = analyzer.load("app.log");
 if (!result) {
-    std::cerr << "Error: " << result.error().message << std::endl;
+    std::cerr << "Error: " << result.error().message << '\n';
 }
 ```
 
