@@ -82,11 +82,11 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string&
         AnalysisReport report_error; // This report_error is local and only used to extract details.
         report_error.status = ParseError::INVALID_REGEX_PATTERN;
         report_error.parseErrors.push_back({ParseError::INVALID_REGEX_PATTERN, res.error().message, 0});
-        std::cerr << "Error setting temporary settings: " << res.error().message << std::endl;
+        std::cerr << "Error setting temporary settings: " << res.error().message << '\n';
         
         // Attempt to restore settings. Log error if it fails, but prioritize the original error.
         if (auto restore_res = setSettings(oldSettings); !restore_res) {
-            std::cerr << "Error restoring settings after temp set failed: " << restore_res.error().message << std::endl;
+            std::cerr << "Error restoring settings after temp set failed: " << restore_res.error().message << '\n';
             // Potentially combine errors here, but for now, return the primary error from setting temp settings.
         }
         // Return an unexpected result with an appropriate error.
@@ -99,7 +99,7 @@ ErrorCode::Result<AnalysisReport> LogAnalyzer::loadAndReplace(const std::string&
 
     // Restore original settings. This must happen regardless of whether loading succeeded or failed.
     if (auto res = setSettings(oldSettings); !res) {
-        std::cerr << "Error restoring settings: " << res.error().message << std::endl;
+        std::cerr << "Error restoring settings: " << res.error().message << '\n';
         // If loading also failed, we might want to combine errors, or prioritize the loading error.
         // For now, we'll log the restore error and return the loading result if it was an error.
         if (!reportResult.has_value()) {
@@ -150,7 +150,7 @@ std::expected<void, LogParseError> LogAnalyzer::load(const std::string& filePath
     auto reportResult = loadAndReplace(filePath, ParserErrorAction::Warn);
 
     if (auto res = setSettings(oldSettings); !res) {
-        std::cerr << "Error restoring settings: " << res.error().message << std::endl;
+        std::cerr << "Error restoring settings: " << res.error().message << '\n';
         if (!reportResult.has_value()) {
             return std::unexpected(LogParseError{ParseError::UNKNOWN_ERROR, reportResult.error().message, 0});
         }
@@ -206,7 +206,7 @@ std::future<ErrorCode::Result<AnalysisReport>> LogAnalyzer::loadAsync(const std:
         auto reportResult = loadAndReplace(filePath, ParserErrorAction::Warn);
 
         if (auto res = setSettings(oldSettings); !res) {
-            std::cerr << "Error restoring settings: " << res.error().message << std::endl;
+            std::cerr << "Error restoring settings: " << res.error().message << '\n';
         }
 
         return reportResult;
@@ -301,7 +301,7 @@ std::expected<void, LogParseError> LogAnalyzer::append(const std::string& filePa
 
     // Restore original settings. Log errors if they occur, but prioritize the outcome of append.
     if (auto res = setSettings(oldSettings); !res) {
-        std::cerr << "Error restoring settings: " << res.error().message << std::endl;
+        std::cerr << "Error restoring settings: " << res.error().message << '\n';
         // If append operation also failed, we should propagate its error.
         // If append succeeded but restore failed, we log the restore error and return success for the append operation.
         if (!reportResult) {
