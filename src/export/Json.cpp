@@ -292,6 +292,9 @@ void to_json(nlohmann::json& j, const ExportSettings& es) {
 }
 
 void from_json(const nlohmann::json& j, ExportSettings& es) {
+    if (!j.is_object()) {
+        throw ExportException("ExportSettings must be a JSON object.");
+    }
     es = ExportSettings(); 
     if (j.contains("outputPath")) es.outputPath = j.at("outputPath").get<std::string>();
     if (j.contains("fieldsToExport")) es.fieldsToExport = j.at("fieldsToExport").get<std::vector<ExportFieldMapping>>();

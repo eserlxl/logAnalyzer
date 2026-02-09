@@ -79,6 +79,11 @@ TEST(ExportSettingsTest, FromJsonInvalidOutputPathType) {
     ASSERT_THROW(j.get<ExportSettings>(), json::exception);
 }
 
+TEST(ExportSettingsTest, FromJsonRejectsNonObjectRoot) {
+    json j = json::array({1, 2, 3});
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
 TEST(ExportSettingsTest, FromJsonInvalidFormatType) {
     json j = {{"format", 123}};
     ASSERT_THROW(j.get<ExportSettings>(), json::exception);
