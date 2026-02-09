@@ -142,10 +142,10 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
                 continue;
             }
 
-            if (parseResultOpt.has_value()) {
-                const auto& result = parseResultOpt.value();
-                if (result.has_value()) {
-                    LogEntry entry = result.value();
+            if (parseResultOpt) {
+                const auto& result = *parseResultOpt;
+                if (result) {
+                    LogEntry entry = *result;
                     entry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
                     if (!entryCallback(entry)) {
                         shouldContinue = false;
@@ -185,8 +185,8 @@ ErrorCode::Result<void> LogAnalyzer::analyzeStream(const std::vector<std::string
             flushResults.clear();
         }
         for (const auto& result : flushResults) {
-            if (result.has_value()) {
-                LogEntry entry = result.value();
+            if (result) {
+                LogEntry entry = *result;
                 entry.sourceFile = (filePath == Utils::STDIN_FILE_PATH ? "stdin" : filePath);
                 if (!entryCallback(entry)) {
                     shouldContinue = false;
