@@ -17,29 +17,29 @@ using json = nlohmann::json;
 
 // Merge implementation for ExportSettings
 void ExportSettings::merge(const ExportSettings& other) {
-    if (other.outputPath.has_value()) outputPath = other.outputPath;
-    if (other.format.has_value()) format = other.format;
+    if (other.outputPath) outputPath = other.outputPath;
+    if (other.format) format = other.format;
     if (!other.fieldsToExport.empty()) fieldsToExport = other.fieldsToExport; // Replace for now, or append? Usually fields list is a complete set.
-    if (other.includeHeader.has_value()) includeHeader = other.includeHeader;
-    if (other.jsonIndent.has_value()) jsonIndent = other.jsonIndent;
-    if (other.separator.has_value()) separator = other.separator;
-    if (other.textFormatString.has_value()) textFormatString = other.textFormatString;
-    if (other.useAnsiColors.has_value()) useAnsiColors = other.useAnsiColors;
-    if (other.sortBy.has_value()) sortBy = other.sortBy;
-    if (other.sortOrder.has_value()) sortOrder = other.sortOrder;
-    if (other.outputNoColor.has_value()) outputNoColor = other.outputNoColor;
-    if (other.textOutputFormat.has_value()) textOutputFormat = other.textOutputFormat;
-    if (other.includeSummary.has_value()) includeSummary = other.includeSummary;
-    if (other.prettyPrint.has_value()) prettyPrint = other.prettyPrint;
-    if (other.csvSeparator.has_value()) csvSeparator = other.csvSeparator;
+    if (other.includeHeader) includeHeader = other.includeHeader;
+    if (other.jsonIndent) jsonIndent = other.jsonIndent;
+    if (other.separator) separator = other.separator;
+    if (other.textFormatString) textFormatString = other.textFormatString;
+    if (other.useAnsiColors) useAnsiColors = other.useAnsiColors;
+    if (other.sortBy) sortBy = other.sortBy;
+    if (other.sortOrder) sortOrder = other.sortOrder;
+    if (other.outputNoColor) outputNoColor = other.outputNoColor;
+    if (other.textOutputFormat) textOutputFormat = other.textOutputFormat;
+    if (other.includeSummary) includeSummary = other.includeSummary;
+    if (other.prettyPrint) prettyPrint = other.prettyPrint;
+    if (other.csvSeparator) csvSeparator = other.csvSeparator;
     
     if (!other.csvFields.empty()) csvFields = other.csvFields;
     if (!other.jsonFields.empty()) jsonFields = other.jsonFields;
     
-    if (other.topMessagesCount.has_value()) topMessagesCount = other.topMessagesCount;
-    if (other.streamMode.has_value()) streamMode = other.streamMode;
-    if (other.tailMode.has_value()) tailMode = other.tailMode;
-    if (other.tailInterval.has_value()) tailInterval = other.tailInterval;
+    if (other.topMessagesCount) topMessagesCount = other.topMessagesCount;
+    if (other.streamMode) streamMode = other.streamMode;
+    if (other.tailMode) tailMode = other.tailMode;
+    if (other.tailInterval) tailInterval = other.tailInterval;
 }
 
 void Exporter::exportLogEntries(
