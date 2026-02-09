@@ -301,7 +301,7 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
         }
 
         if (j.contains("parserErrorAction") && j.at("parserErrorAction").is_string()) {
-            std::string actionStr = j.at("parserErrorAction").get<std::string>();
+            std::string actionStr = Utils::trim(j.at("parserErrorAction").get<std::string>());
             if (Config::ParserErrorActionMap.count(actionStr)) {
                 settings.parserErrorAction = Config::ParserErrorActionMap.at(actionStr);
             } else {
