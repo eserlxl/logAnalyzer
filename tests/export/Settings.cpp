@@ -113,7 +113,13 @@ TEST(ExportSettingsTest, FromJsonInvalidFieldsToExportType) {
 
 TEST(ExportSettingsTest, FromJsonInvalidIncludeHeaderType) {
     json j = {{"includeHeader", "not_a_boolean"}};
-    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
+TEST(ExportSettingsTest, FromJsonIncludeHeaderNullResetsOptional) {
+    json j = {{"includeHeader", nullptr}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_FALSE(es.includeHeader.has_value());
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidJsonIndentType) {

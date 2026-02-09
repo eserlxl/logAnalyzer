@@ -317,7 +317,15 @@ void from_json(const nlohmann::json& j, ExportSettings& es) {
             throw ExportException("'format' must be a string or null.");
         }
     }
-    if (j.contains("includeHeader")) es.includeHeader = j.at("includeHeader").get<bool>();
+    if (j.contains("includeHeader")) {
+        if (j.at("includeHeader").is_null()) {
+            es.includeHeader.reset();
+        } else if (j.at("includeHeader").is_boolean()) {
+            es.includeHeader = j.at("includeHeader").get<bool>();
+        } else {
+            throw ExportException("'includeHeader' must be a boolean or null.");
+        }
+    }
     if (j.contains("jsonIndent")) es.jsonIndent = j.at("jsonIndent").get<int>();
     if (j.contains("separator")) {
         std::string sep_str = j.at("separator").get<std::string>();
