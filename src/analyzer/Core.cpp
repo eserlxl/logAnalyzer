@@ -50,8 +50,8 @@ LogAnalyzer::LogAnalyzer()
         std::nullopt
     );
 
-    if (parser_or_error.has_value()) {
-        currentParser_ = std::move(parser_or_error.value());
+    if (parser_or_error) {
+        currentParser_ = std::move(*parser_or_error);
     } else {
         // Fallback to known-good defaults so construction remains no-throw for user input issues.
         std::cerr << "Warning: Failed to initialize parser with current settings in default constructor: "
@@ -69,7 +69,7 @@ LogAnalyzer::LogAnalyzer()
             true,
             std::nullopt
         );
-        if (!fallback_or_error.has_value()) {
+        if (!fallback_or_error) {
             std::cerr << "Fatal Error: Failed to initialize fallback parser in default constructor: "
                       << fallback_or_error.error().message << '\n';
             // Keep object constructible; operational APIs return structured errors
@@ -77,7 +77,7 @@ LogAnalyzer::LogAnalyzer()
             currentParser_.reset();
             return;
         }
-        currentParser_ = std::move(fallback_or_error.value());
+        currentParser_ = std::move(*fallback_or_error);
     }
 
     for (const auto& config : currentSettings_.statisticConfigs) {
@@ -105,8 +105,8 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
         std::nullopt
     );
 
-    if (parser_or_error.has_value()) {
-        currentParser_ = std::move(parser_or_error.value());
+    if (parser_or_error) {
+        currentParser_ = std::move(*parser_or_error);
     } else {
         std::cerr << "Warning: Failed to initialize parser in settings constructor: "
                   << parser_or_error.error().message << ". Falling back to built-in defaults." << '\n';
@@ -123,7 +123,7 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
             true,
             std::nullopt
         );
-        if (!fallback_or_error.has_value()) {
+        if (!fallback_or_error) {
             std::cerr << "Fatal Error: Failed to initialize fallback parser in settings constructor: "
                       << fallback_or_error.error().message << '\n';
             // Keep object constructible; operational APIs return structured errors
@@ -131,7 +131,7 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
             currentParser_.reset();
             return;
         }
-        currentParser_ = std::move(fallback_or_error.value());
+        currentParser_ = std::move(*fallback_or_error);
     }
 
     for (const auto& config : currentSettings_.statisticConfigs) {
@@ -172,12 +172,12 @@ ErrorCode::Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& sett
         true, // threadSafe: LogAnalyzer should use a thread-safe parser
         std::nullopt // errorHandler: No specific error handler for now, default to internal logging
     );
-    if (parser_or_error.has_value()) {
+    if (parser_or_error) {
         std::unique_lock<std::shared_mutex> lock(stateMutex_);
         currentSettings_ = settings;
         customLogLevelMapping_ = std::move(newCustomLogLevelMapping);
         collectors_ = std::move(newCollectors);
-        currentParser_ = std::move(parser_or_error.value());
+        currentParser_ = std::move(*parser_or_error);
         return {};
     } else {
         return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Failed to create parser with new settings: " + parser_or_error.error().message));
@@ -218,8 +218,8 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
         std::nullopt // errorHandler: No specific error handler for now, default to internal logging
     );
 
-    if (parser_or_error.has_value()) {
-        currentParser_ = std::move(parser_or_error.value());
+    if (parser_or_error) {
+        currentParser_ = std::move(*parser_or_error);
     } else {
         customLogLevelMapping_ = std::move(previousMapping);
         std::cerr << "Warning: Failed to re-create parser after updating custom log levels: "
