@@ -409,6 +409,17 @@ TEST_F(LogAnalyzerConfigTest, FromJsonMaxMultilineBufferSizeRejectsNegativeInteg
     ASSERT_THAT(result.error(), testing::Contains(testing::HasSubstr("Invalid value for 'maxMultilineBufferSize'. Expected non-negative integer or size string.")));
 }
 
+TEST_F(LogAnalyzerConfigTest, FromJsonMaxMultilineBufferSizeAcceptsNull) {
+    std::string jsonContent = R"({
+        "lineParsePattern": ".*",
+        "maxMultilineBufferSize": null,
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result = LogAnalyzerSettings::fromJson(jsonContent);
+    ASSERT_TRUE(result.has_value());
+    ASSERT_FALSE(result.value().maxMultilineBufferSize.has_value());
+}
+
 TEST_F(LogAnalyzerConfigTest, FromJsonRejectsEmptyCustomLogLevelMappingKey) {
     std::string jsonContent = R"({
         "lineParsePattern": ".*",

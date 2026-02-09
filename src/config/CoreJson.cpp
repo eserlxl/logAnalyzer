@@ -325,8 +325,10 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
             } else {
                 errors.push_back("Invalid human-readable size for 'maxMultilineBufferSize': " + j.at("maxMultilineBufferSize").get<std::string>());
             }
+        } else if (j.contains("maxMultilineBufferSize") && j.at("maxMultilineBufferSize").is_null()) {
+            settings.maxMultilineBufferSize = std::nullopt;
         } else if (j.contains("maxMultilineBufferSize")) {
-            errors.push_back("Invalid type for 'maxMultilineBufferSize'. Expected unsigned number or string.");
+            errors.push_back("Invalid type for 'maxMultilineBufferSize'. Expected non-negative integer, size string, or null.");
         }
 
         if (j.contains("statisticConfigs") && j.at("statisticConfigs").is_array()) {
