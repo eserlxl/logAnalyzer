@@ -25,7 +25,7 @@ Run `logAnalyzer --help` for a full list of commands.
 | `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry. For example, `^[\[]\d{4}-\d{2}-\d{2}` to match a timestamp at the start of a new log entry.                                       |           |
 | `--max-multiline-buffer SIZE`   | Max buffer size for multi-line entries. Supports units like `10MB`, `50KB`, or raw bytes (e.g., `1048576`).           | `10MB`    |
 | `--field-map MAPPING`           | Map regex capture group to a field. Format: `INDEX=FIELD[:FORMAT]`. If `FIELD` is a standard field (e.g., `timestamp`), it maps to that property. If `FIELD` is unknown, it is treated as a custom field name and stored in `customFields`. Example: `1=timestamp:%Y-%m-%d`, `2=request_id`. |           |
-| `--on-parse-error OPT`          | Action on parse error. Options are `skip` (ignore the line), `log` (print a warning to stderr), or `fail` (exit).     | `log`     |
+| `--on-parse-error OPT`          | Action on parse error. Options are `skip`/`ignore`, `log`/`warn`, or `fail`/`throw`.                                     | `warn`    |
 
 
 ### Monitoring
