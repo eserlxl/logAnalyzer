@@ -115,7 +115,7 @@ DefaultLogParser::DefaultLogParser(
                     if (_warningLogger) {
                         _warningLogger.value()("Warning: Invalid regex pattern for STRUCTURED_FIELD in FieldMapping: " + mapping.formats[0] + " - " + e.what());
                     } else {
-                        std::cerr << "Warning: Invalid regex pattern for STRUCTURED_FIELD in FieldMapping: " << mapping.formats[0] << " - " << e.what() << std::endl;
+                        std::cerr << "Warning: Invalid regex pattern for STRUCTURED_FIELD in FieldMapping: " << mapping.formats[0] << " - " << e.what() << '\n';
                     }
                     // Continue without the pattern, it will be handled as plain structured data.
                     mapping.compiledKvPattern.reset();
@@ -160,7 +160,7 @@ std::unique_ptr<ILogParser> DefaultLogParser::clone() const {
         if (_warningLogger) {
              _warningLogger.value()("Error during cloning DefaultLogParser: " + result.error().message);
         } else {
-            std::cerr << "Error during cloning DefaultLogParser: " << result.error().message << std::endl;
+            std::cerr << "Error during cloning DefaultLogParser: " << result.error().message << '\n';
         }
         return nullptr; // Or throw an exception if appropriate for cloning failures
     }
@@ -346,7 +346,7 @@ LogEntry DefaultLogParser::applyParserErrorAction(const ErrorCode::Result<LogEnt
         if (_warningLogger) {
             _warningLogger.value()("Warning: Failed to parse line " + std::to_string(lineNumber) + " in " + sourceFile + ": " + parseResult.error().message);
         } else {
-            std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceFile << ": " << parseResult.error().message << std::endl;
+            std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceFile << ": " << parseResult.error().message << '\n';
         }
     }
     // If action is Ignore or Warn, return the partial entry
@@ -414,7 +414,7 @@ std::optional<ErrorCode::Result<LogEntry>> DefaultLogParser::processLine(std::st
         if (_warningLogger) {
             _warningLogger.value()("Warning: Multi-line log buffer exceeded maximum size (" + std::to_string(_maxMultiLineBufferSize) + " bytes). Flushing partial entry.");
         } else {
-            std::cerr << "Warning: Multi-line log buffer exceeded maximum size (" << _maxMultiLineBufferSize << " bytes). Flushing partial entry." << std::endl;
+            std::cerr << "Warning: Multi-line log buffer exceeded maximum size (" << _maxMultiLineBufferSize << " bytes). Flushing partial entry." << '\n';
         }
                 // Force flush the current buffer as an error
                 ErrorCode::Error bufferError(Code::BufferLimitExceeded, "Multi-line log entry truncated due to buffer limit", std::to_string(currentLogEntryStartLineNumber));
@@ -462,7 +462,6 @@ void DefaultLogParser::processStream(
         onEntry(result);
     }
 }
-
 
 
 
