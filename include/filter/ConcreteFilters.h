@@ -219,7 +219,7 @@ public:
     TimeRangeFilter(std::chrono::system_clock::time_point start,
                     std::chrono::system_clock::time_point end);
 
-    /// TODO(Audit): Consider using a dedicated error enum/struct instead of std::string
+    /// Consider using a dedicated error enum/struct instead of std::string
     /// for improved performance and structured error reporting in std::expected.
     static std::expected<TimeRangeFilter, std::string> fromStrings(const std::string& start, const std::string& end);
     static std::expected<TimeRangeFilter, std::string> forDay(const std::string& dateString);
