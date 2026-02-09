@@ -59,7 +59,7 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
 
-The compiled `logAnalyzer` executable will be available in the `build/bin` directory.
+The compiled `logAnalyzer` executable will be available at `build/logAnalyzer`.
 
 #### Build Options
 
