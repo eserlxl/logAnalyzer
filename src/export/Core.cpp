@@ -108,19 +108,19 @@ void Exporter::exportAsCsv(
                 } else if constexpr (std::is_same_v<T, LogEntryField>) {
                     switch (arg) {
                         case LogEntryField::ID:
-                            value_str = entry.id.has_value() ? std::to_string(entry.id.value()) : "";
+                            value_str = entry.id ? std::to_string(*entry.id) : "";
                             break;
                         case LogEntryField::TIMESTAMP:
-                            if (entry.timestamp.has_value()) {
-                                value_str = fieldMapping.datetimeFormat.has_value() ?
-                                    Utils::formatTimestamp(entry.timestamp.value(), *fieldMapping.datetimeFormat) :
-                                    Utils::formatTimestamp(entry.timestamp.value());
+                            if (entry.timestamp) {
+                                value_str = fieldMapping.datetimeFormat ?
+                                    Utils::formatTimestamp(*entry.timestamp, *fieldMapping.datetimeFormat) :
+                                    Utils::formatTimestamp(*entry.timestamp);
                             }
                             break;
                         case LogEntryField::LEVEL: value_str = Utils::logLevelToString(entry.level); break;
                         case LogEntryField::MESSAGE: value_str = entry.message; break;
                         case LogEntryField::SOURCE_FILE: value_str = entry.sourceFile; break;
-                        case LogEntryField::LINE_NUMBER: value_str = entry.sourceLineNumber.has_value() ? std::to_string(entry.sourceLineNumber.value()) : ""; break;
+                        case LogEntryField::LINE_NUMBER: value_str = entry.sourceLineNumber ? std::to_string(*entry.sourceLineNumber) : ""; break;
                         case LogEntryField::THREAD_ID: value_str = entry.threadId.value_or(""); break;
                         case LogEntryField::MODULE: value_str = entry.module.value_or(""); break;
                         case LogEntryField::HOST: value_str = entry.host.value_or(""); break;
@@ -168,11 +168,11 @@ std::string Exporter::formatEntryForText(
     }
 
     Utils::replaceAll(result, std::string(PLACEHOLDER_LEVEL), finalLevelStr);
-    Utils::replaceAll(result, std::string(PLACEHOLDER_ID), entry.id.has_value() ? std::to_string(entry.id.value()) : "");
-    Utils::replaceAll(result, std::string(PLACEHOLDER_TIMESTAMP), entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : "");
+    Utils::replaceAll(result, std::string(PLACEHOLDER_ID), entry.id ? std::to_string(*entry.id) : "");
+    Utils::replaceAll(result, std::string(PLACEHOLDER_TIMESTAMP), entry.timestamp ? Utils::formatTimestamp(*entry.timestamp) : "");
     Utils::replaceAll(result, std::string(PLACEHOLDER_MESSAGE), entry.message);
     Utils::replaceAll(result, std::string(PLACEHOLDER_SOURCE_FILE), entry.sourceFile);
-    Utils::replaceAll(result, std::string(PLACEHOLDER_LINE_NUMBER), entry.sourceLineNumber.has_value() ? std::to_string(entry.sourceLineNumber.value()) : "");
+    Utils::replaceAll(result, std::string(PLACEHOLDER_LINE_NUMBER), entry.sourceLineNumber ? std::to_string(*entry.sourceLineNumber) : "");
     Utils::replaceAll(result, std::string(PLACEHOLDER_THREAD_ID), entry.threadId.value_or(""));
     Utils::replaceAll(result, std::string(PLACEHOLDER_MODULE), entry.module.value_or(""));
     Utils::replaceAll(result, std::string(PLACEHOLDER_HOST), entry.host.value_or(""));
