@@ -21,7 +21,6 @@ Run `logAnalyzer --help` for a full list of commands.
 
 | Option                          | Description                                                                                                          | Default   |
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------- | :-------- |
-| `--parser-type TYPE`            | Specifies the log parser to use. Options are `regex` (default) for pattern-based parsing or `json` for native JSON parsing. | `regex`   |
 | `--pattern REGEX`               | Overrides the log line parsing regular expression defined in the configuration.                                      | (builtin) |
 | `--multiline-start-pattern REGEX` | Regex to identify the start of a multi-line log entry. For example, `^[\[]\d{4}-\d{2}-\d{2}` to match a timestamp at the start of a new log entry.                                       |           |
 | `--max-multiline-buffer SIZE`   | Max buffer size for multi-line entries. Supports units like `10MB`, `50KB`, or raw bytes (e.g., `1048576`).           | `10MB`    |
