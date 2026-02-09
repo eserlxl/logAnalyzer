@@ -256,3 +256,25 @@ TEST_F(FilterIteration15Test, FilterValueTypeUnknownRoundTripAliases) {
     EXPECT_EQ(fromStringToFilterValueType("UNKNOWN"), FilterValueType::UNKNOWN);
     EXPECT_EQ(fromStringToFilterValueType("UNKNOWN_VALUE_TYPE"), FilterValueType::UNKNOWN);
 }
+
+TEST_F(FilterIteration15Test, ParseQueryFieldAliasesMapToStandardFields) {
+    LogEntry entry{};
+    entry.sourceFile = "app.log";
+    entry.sourceLineNumber = 42;
+    entry.threadId = "worker-1";
+    entry.timestamp = std::chrono::system_clock::now();
+    entry.level = LogLevel::INFO;
+    entry.message = "ok";
+
+    auto sourceRes = parseQuery("source = 'app.log'");
+    ASSERT_TRUE(sourceRes.has_value()) << sourceRes.error().toString();
+    EXPECT_TRUE(sourceRes->evaluate(entry).value_or(false));
+
+    auto lineRes = parseQuery("line = 42");
+    ASSERT_TRUE(lineRes.has_value()) << lineRes.error().toString();
+    EXPECT_TRUE(lineRes->evaluate(entry).value_or(false));
+
+    auto threadRes = parseQuery("thread = 'worker-1'");
+    ASSERT_TRUE(threadRes.has_value()) << threadRes.error().toString();
+    EXPECT_TRUE(threadRes->evaluate(entry).value_or(false));
+}
