@@ -140,7 +140,7 @@ std::optional<SemanticVersion> parseSemanticVersion(const std::string& versionSt
             auto minor = parseComponent(matches[2].str());
             auto patch = parseComponent(matches[3].str());
 
-            if (!major.has_value() || !minor.has_value() || !patch.has_value()) {
+            if (!major || !minor || !patch) {
                 // This shouldn't happen with the current regex if matches are found,
                 // but as a safeguard.
                 return std::nullopt;
