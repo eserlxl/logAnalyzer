@@ -144,5 +144,11 @@ private:
         static constexpr std::string_view PLACEHOLDER_ID = "{id}";
         static constexpr std::string_view PLACEHOLDER_TIMESTAMP = "{timestamp}";
         static constexpr std::string_view PLACEHOLDER_MESSAGE = "{message}";
+        static constexpr std::string_view PLACEHOLDER_SOURCE_FILE = "{sourceFile}";
+        static constexpr std::string_view PLACEHOLDER_LINE_NUMBER = "{lineNumber}";
+        static constexpr std::string_view PLACEHOLDER_THREAD_ID = "{threadId}";
+        static constexpr std::string_view PLACEHOLDER_MODULE = "{module}";
+        static constexpr std::string_view PLACEHOLDER_HOST = "{host}";
+        static constexpr std::string_view PLACEHOLDER_CUSTOM_FIELDS = "{customFields}";
         static constexpr std::string_view PLACEHOLDER_CUSTOM_PREFIX = "{custom.";
     };

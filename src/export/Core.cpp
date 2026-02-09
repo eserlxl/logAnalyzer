@@ -171,6 +171,12 @@ std::string Exporter::formatEntryForText(
     Utils::replaceAll(result, std::string(PLACEHOLDER_ID), entry.id.has_value() ? std::to_string(entry.id.value()) : "");
     Utils::replaceAll(result, std::string(PLACEHOLDER_TIMESTAMP), entry.timestamp.has_value() ? Utils::formatTimestamp(entry.timestamp.value()) : "");
     Utils::replaceAll(result, std::string(PLACEHOLDER_MESSAGE), entry.message);
+    Utils::replaceAll(result, std::string(PLACEHOLDER_SOURCE_FILE), entry.sourceFile);
+    Utils::replaceAll(result, std::string(PLACEHOLDER_LINE_NUMBER), entry.sourceLineNumber.has_value() ? std::to_string(entry.sourceLineNumber.value()) : "");
+    Utils::replaceAll(result, std::string(PLACEHOLDER_THREAD_ID), entry.threadId.value_or(""));
+    Utils::replaceAll(result, std::string(PLACEHOLDER_MODULE), entry.module.value_or(""));
+    Utils::replaceAll(result, std::string(PLACEHOLDER_HOST), entry.host.value_or(""));
+    Utils::replaceAll(result, std::string(PLACEHOLDER_CUSTOM_FIELDS), "");
 
     for (const auto& [key, val] : entry.customFields) {
         std::string placeholder = std::string(PLACEHOLDER_CUSTOM_PREFIX) + key + "}";

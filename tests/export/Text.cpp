@@ -68,3 +68,32 @@ TEST(ExporterTextTest, ColorFormatting) {
     ASSERT_FALSE(output.find(Utils::AnsiColor::CYAN.data() + std::string("UNKNOWN")) != std::string::npos);
     ASSERT_FALSE(output.find(Utils::AnsiColor::GREEN.data() + std::string("UNKNOWN")) != std::string::npos);
 }
+
+TEST(ExporterTextTest, ExtendedPlaceholderSubstitution) {
+    Exporter exporter;
+    LogEntry entry = createLogEntry(
+        42,
+        LogLevel::INFO,
+        "Ready",
+        std::nullopt,
+        {},
+        "service.log",
+        77
+    );
+    entry.threadId = "thr-1";
+    entry.module = "auth";
+    entry.host = "node-a";
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::PLAINTEXT;
+    settings.textFormatString =
+        "{sourceFile}:{lineNumber} [{threadId}] ({module}@{host}) {message}";
+    settings.useAnsiColors = false;
+
+    exporter.exportLogEntries(ss, {entry}, settings);
+    EXPECT_EQ(
+        ss.str(),
+        "service.log:77 [thr-1] (auth@node-a) Ready\n"
+    );
+}
