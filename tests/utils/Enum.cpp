@@ -55,16 +55,26 @@ TEST(UtilsEnumConversionTest, StringToLogEntryField) {
     EXPECT_EQ(Utils::stringToLogEntryField("TIMESTAMP"), LogEntryField::TIMESTAMP);
     EXPECT_EQ(Utils::stringToLogEntryField("time"), LogEntryField::TIMESTAMP);
     EXPECT_EQ(Utils::stringToLogEntryField("level"), LogEntryField::LEVEL); // Case insensitive
+    EXPECT_EQ(Utils::stringToLogEntryField("lvl"), LogEntryField::LEVEL);
+    EXPECT_EQ(Utils::stringToLogEntryField("severity"), LogEntryField::LEVEL);
     EXPECT_EQ(Utils::stringToLogEntryField("Message"), LogEntryField::MESSAGE);
+    EXPECT_EQ(Utils::stringToLogEntryField("msg"), LogEntryField::MESSAGE);
+    EXPECT_EQ(Utils::stringToLogEntryField("text"), LogEntryField::MESSAGE);
     EXPECT_EQ(Utils::stringToLogEntryField("SOURCE_FILE"), LogEntryField::SOURCE_FILE);
     EXPECT_EQ(Utils::stringToLogEntryField("source"), LogEntryField::SOURCE_FILE);
     EXPECT_EQ(Utils::stringToLogEntryField("sourcefile"), LogEntryField::SOURCE_FILE);
+    EXPECT_EQ(Utils::stringToLogEntryField("file"), LogEntryField::SOURCE_FILE);
+    EXPECT_EQ(Utils::stringToLogEntryField("filename"), LogEntryField::SOURCE_FILE);
     EXPECT_EQ(Utils::stringToLogEntryField("LINE_NUMBER"), LogEntryField::LINE_NUMBER);
     EXPECT_EQ(Utils::stringToLogEntryField("line"), LogEntryField::LINE_NUMBER);
     EXPECT_EQ(Utils::stringToLogEntryField("linenumber"), LogEntryField::LINE_NUMBER);
+    EXPECT_EQ(Utils::stringToLogEntryField("line_no"), LogEntryField::LINE_NUMBER);
+    EXPECT_EQ(Utils::stringToLogEntryField("lineno"), LogEntryField::LINE_NUMBER);
     EXPECT_EQ(Utils::stringToLogEntryField("THREAD_ID"), LogEntryField::THREAD_ID);
     EXPECT_EQ(Utils::stringToLogEntryField("thread"), LogEntryField::THREAD_ID);
     EXPECT_EQ(Utils::stringToLogEntryField("threadid"), LogEntryField::THREAD_ID);
+    EXPECT_EQ(Utils::stringToLogEntryField("tid"), LogEntryField::THREAD_ID);
+    EXPECT_EQ(Utils::stringToLogEntryField("thread-id"), LogEntryField::THREAD_ID);
     EXPECT_EQ(Utils::stringToLogEntryField("MODULE"), LogEntryField::MODULE);
     EXPECT_EQ(Utils::stringToLogEntryField("HOST"), LogEntryField::HOST);
     EXPECT_EQ(Utils::stringToLogEntryField("CUSTOM"), LogEntryField::UNKNOWN);

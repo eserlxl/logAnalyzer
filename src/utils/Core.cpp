@@ -108,11 +108,14 @@ LogEntryField stringToLogEntryField(const std::string& fieldStr) {
 
     if (upperFieldStr == "ID") return LogEntryField::ID;
     if (upperFieldStr == "TIMESTAMP" || upperFieldStr == "TIME") return LogEntryField::TIMESTAMP;
-    if (upperFieldStr == "LEVEL") return LogEntryField::LEVEL;
-    if (upperFieldStr == "MESSAGE") return LogEntryField::MESSAGE;
-    if (upperFieldStr == "SOURCE_FILE" || upperFieldStr == "SOURCE" || upperFieldStr == "SOURCEFILE") return LogEntryField::SOURCE_FILE;
-    if (upperFieldStr == "LINE_NUMBER" || upperFieldStr == "LINE" || upperFieldStr == "LINENUMBER") return LogEntryField::LINE_NUMBER;
-    if (upperFieldStr == "THREAD_ID" || upperFieldStr == "THREAD" || upperFieldStr == "THREADID") return LogEntryField::THREAD_ID;
+    if (upperFieldStr == "LEVEL" || upperFieldStr == "LVL" || upperFieldStr == "SEVERITY") return LogEntryField::LEVEL;
+    if (upperFieldStr == "MESSAGE" || upperFieldStr == "MSG" || upperFieldStr == "TEXT") return LogEntryField::MESSAGE;
+    if (upperFieldStr == "SOURCE_FILE" || upperFieldStr == "SOURCE" || upperFieldStr == "SOURCEFILE" ||
+        upperFieldStr == "FILE" || upperFieldStr == "FILENAME") return LogEntryField::SOURCE_FILE;
+    if (upperFieldStr == "LINE_NUMBER" || upperFieldStr == "LINE" || upperFieldStr == "LINENUMBER" ||
+        upperFieldStr == "LINE_NO" || upperFieldStr == "LINENO") return LogEntryField::LINE_NUMBER;
+    if (upperFieldStr == "THREAD_ID" || upperFieldStr == "THREAD" || upperFieldStr == "THREADID" ||
+        upperFieldStr == "TID" || upperFieldStr == "THREAD-ID") return LogEntryField::THREAD_ID;
     if (upperFieldStr == "MODULE") return LogEntryField::MODULE;
     if (upperFieldStr == "HOST") return LogEntryField::HOST;
     if (upperFieldStr == "STRUCTURED_FIELD") return LogEntryField::STRUCTURED_FIELD;

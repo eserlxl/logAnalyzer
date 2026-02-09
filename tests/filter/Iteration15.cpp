@@ -368,3 +368,32 @@ TEST_F(FilterIteration15Test, ParseQuerySupportsStringAndPresenceShorthandAliase
     ASSERT_TRUE(nonNull.has_value()) << nonNull.error().toString();
     EXPECT_TRUE(nonNull->evaluate(entry).value_or(false));
 }
+
+TEST_F(FilterIteration15Test, ParseQuerySupportsExtendedFieldAliases) {
+    LogEntry entry{};
+    entry.level = LogLevel::WARNING;
+    entry.message = "alpha world";
+    entry.sourceFile = "app.log";
+    entry.sourceLineNumber = 42;
+    entry.threadId = "worker-1";
+
+    auto lvlRes = parseQuery("lvl = warning");
+    ASSERT_TRUE(lvlRes.has_value()) << lvlRes.error().toString();
+    EXPECT_TRUE(lvlRes->evaluate(entry).value_or(false));
+
+    auto msgRes = parseQuery("msg CONTAINS 'world'");
+    ASSERT_TRUE(msgRes.has_value()) << msgRes.error().toString();
+    EXPECT_TRUE(msgRes->evaluate(entry).value_or(false));
+
+    auto fileRes = parseQuery("file = 'app.log'");
+    ASSERT_TRUE(fileRes.has_value()) << fileRes.error().toString();
+    EXPECT_TRUE(fileRes->evaluate(entry).value_or(false));
+
+    auto lineNoRes = parseQuery("lineno = 42");
+    ASSERT_TRUE(lineNoRes.has_value()) << lineNoRes.error().toString();
+    EXPECT_TRUE(lineNoRes->evaluate(entry).value_or(false));
+
+    auto tidRes = parseQuery("tid = 'worker-1'");
+    ASSERT_TRUE(tidRes.has_value()) << tidRes.error().toString();
+    EXPECT_TRUE(tidRes->evaluate(entry).value_or(false));
+}
