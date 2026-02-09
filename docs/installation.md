@@ -78,7 +78,7 @@ You may need to run your terminal as Administrator.
 cmake --install build
 ```
 
-Alternatively, you can manually add the `build\bin` directory to your System `PATH` environment variable.
+Alternatively, you can manually add the `build` directory to your System `PATH` environment variable.
 
 ## Verification
 
