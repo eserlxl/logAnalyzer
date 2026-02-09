@@ -17,7 +17,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <unistd.h> // For isatty
+#if defined(_WIN32)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 using namespace filter;
 
@@ -53,8 +57,15 @@ int main(int argc, char *argv[]) {
         outputStream = &outFile;
     }
 
+    const bool isTerminalOutput =
+#if defined(_WIN32)
+        _isatty(_fileno(stdout)) != 0;
+#else
+        isatty(fileno(stdout)) != 0;
+#endif
+
     bool useColors = (cliOptions.colorOption == CLIConfig::ColorOption::ALWAYS) ||
-                     (cliOptions.colorOption == CLIConfig::ColorOption::AUTO && isatty(fileno(stdout)) && cliOptions.outputPath.empty());
+                     (cliOptions.colorOption == CLIConfig::ColorOption::AUTO && isTerminalOutput && cliOptions.outputPath.empty());
 
     auto rootFilter = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
     std::optional<filter::FilterExpression> parsedExpression;
