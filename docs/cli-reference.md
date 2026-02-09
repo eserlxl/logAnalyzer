@@ -80,7 +80,7 @@ Run `logAnalyzer --help` for a full list of commands.
 
 | Option             | Description                                                                                                       | Default |
 | :----------------- | :---------------------------------------------------------------------------------------------------------------- | :------ |
-| `--stats NAME`     | Enables a statistic collector. Available: `unique_messages`, `top_messages[:N]`, `entry_rate`. Can be used multiple times. |         |
+| `--stats NAME`     | Enables a statistic collector. Available: `unique_messages`, `top_messages[:N]`, `entry_rate`, `count_by_level`, `field_value_count`, `top_n_field_values`, or key-value form like `type=TOP_MESSAGES,top_n=5`. Can be used multiple times. |         |
 | `--top-n N`        | Sets the number of top items to display for statistics like `top_messages` if not specified directly (e.g., `top_messages:10`). (Deprecated) | `10`    |
 | `--stats-window SEC` | Shows log frequency distribution over a time window in seconds. (Deprecated)                                                   |         |
 | `--find-gaps MS`   | Detects and reports time gaps in logs longer than the specified milliseconds. (Deprecated)                                     |         |
