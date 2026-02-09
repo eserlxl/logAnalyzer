@@ -175,7 +175,7 @@ LogEntry JsonLogParser::applyParserErrorAction(const ErrorCode::Result<LogEntry>
                 (*warningLogger_)(errorMessage + " Line content: " + std::string(originalLine));
             } else {
                 // Fallback warning to stderr if no logger provided
-                std::cerr << "Warning: " << errorMessage << std::endl;
+                std::cerr << "Warning: " << errorMessage << '\n';
             }
             LogEntry errorEntry; // Still return an entry, potentially with UNKNOWN level
             errorEntry.sourceFile = sourceFile;
