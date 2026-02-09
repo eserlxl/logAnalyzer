@@ -60,7 +60,7 @@ Run `logAnalyzer --help` for a full list of commands.
 | Option                 | Shorthand | Description                                                                                         | Default     |
 | :--------------------- | :-------- | :-------------------------------------------------------------------------------------------------- | :---------- |
 | `--sort-by FIELD`      |           | Sorts the output by a specific field. Supported values include `time`/`timestamp`, `level`, `msg`/`message`, `source`/`source_file`, and `thread`/`thread_id`. | `timestamp` |
-| `--order ORDER`        |           | Sets the sorting order. Available orders: `ascending`, `descending`.                                | `ascending` |
+| `--order ORDER`        |           | Sets the sorting order. Available orders: `asc`/`ascending` and `desc`/`descending`.                | `ascending` |
 
 
 ### Output & Export
