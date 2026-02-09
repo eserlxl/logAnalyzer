@@ -137,6 +137,16 @@ TEST_F(LogAnalyzerConfigTest, FromJsonOptionalFields) {
     auto result4 = LogAnalyzerSettings::fromJson(jsonContent4);
     ASSERT_TRUE(result4.has_value());
     ASSERT_FALSE(result4.value().rootFilterExpression.has_value());
+
+    // statisticConfigs explicitly null
+    std::string jsonContent5 = R"({
+        "lineParsePattern": ".*",
+        "statisticConfigs": null,
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result5 = LogAnalyzerSettings::fromJson(jsonContent5);
+    ASSERT_TRUE(result5.has_value());
+    ASSERT_TRUE(result5.value().statisticConfigs.empty());
 }
 
 TEST_F(LogAnalyzerConfigTest, FromJsonMalformedInternalStructures) {

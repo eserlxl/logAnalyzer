@@ -336,6 +336,8 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
             } catch (const std::exception& e) {
                 errors.push_back("Error parsing 'statisticConfigs': " + std::string(e.what()));
             }
+        } else if (j.contains("statisticConfigs") && j.at("statisticConfigs").is_null()) {
+            settings.statisticConfigs.clear();
         } else if (j.contains("statisticConfigs")) {
             errors.push_back("Invalid type for 'statisticConfigs'. Expected array.");
         }
