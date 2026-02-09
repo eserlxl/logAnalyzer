@@ -66,12 +66,6 @@ TEST_F(FilterJsonTest, FromJsonSuccessDatetime) {
     auto result = from_json(j, fc);
     ASSERT_TRUE(result.has_value()) << result.error().message;
 
-    if (fc.datetimeFormat.has_value()) {
-        std::cout << "Debug: fc.datetimeFormat has value: " << *fc.datetimeFormat << std::endl;
-        std::cout << "Debug: fc.datetimeFormat is empty: " << fc.datetimeFormat->empty() << std::endl;
-    } else {
-        std::cout << "Debug: fc.datetimeFormat is std::nullopt" << std::endl;
-    }
     EXPECT_EQ(fc.field, LogEntryField::TIMESTAMP);
     EXPECT_EQ(fc.op, FilterOperator::LESS_THAN);
     EXPECT_EQ(fc.valueType, FilterValueType::DATETIME);
