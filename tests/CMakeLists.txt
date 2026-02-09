@@ -155,4 +155,12 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     add_test(NAME ${TEST_NAME}
         COMMAND $<TARGET_FILE:${TEST_NAME}>
     )
+
+    if(ENABLE_ASAN)
+        # Some constrained CI/sandbox runtimes execute tests under ptrace-like supervision
+        # where LeakSanitizer cannot operate. Keep ASAN checks active while disabling LSan.
+        set_tests_properties(${TEST_NAME} PROPERTIES
+            ENVIRONMENT "ASAN_OPTIONS=quarantine_size_mb=64:thread_local_quarantine_size_kb=1024:malloc_context_size=10:symbolize=0:detect_leaks=0"
+        )
+    endif()
 endforeach()
