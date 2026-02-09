@@ -135,6 +135,7 @@ inline void to_json(nlohmann::json& j, const FieldMapping& fm) {
 }
 
 inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
+    fm = FieldMapping{};
     // Required fields check
     if (!j.contains("groupIndex")) {
          throw nlohmann::json::parse_error::create(101, 0, "FieldMapping must contain 'groupIndex'", &j);

@@ -200,6 +200,25 @@ TEST_F(FieldMappingTest, FromJson_InvalidGroupIndexType) {
     EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::type_error);
 }
 
+TEST_F(FieldMappingTest, FromJsonGetTo_ResetsPreviousState) {
+    std::vector<std::string> formats = {"%Y-%m-%d"};
+    FieldMapping fm("old_custom", std::make_optional<size_t>(7), formats, std::make_optional<std::string>("string"));
+    fm.compiledKvPattern = std::make_shared<const std::regex>("old");
+
+    nlohmann::json j = {
+        {"field", "MESSAGE"},
+        {"groupIndex", 2}
+    };
+
+    j.get_to(fm);
+    ASSERT_TRUE(std::holds_alternative<LogEntryField>(fm.field));
+    EXPECT_EQ(std::get<LogEntryField>(fm.field), LogEntryField::MESSAGE);
+    EXPECT_EQ(fm.groupIndex, 2);
+    EXPECT_TRUE(fm.formats.empty());
+    EXPECT_FALSE(fm.customFieldType.has_value());
+    EXPECT_TRUE(fm.compiledKvPattern == nullptr);
+}
+
 
 TEST_F(FieldMappingTest, ToJson_StandardField) {
     FieldMapping fm(LogEntryField::MESSAGE, std::make_optional<size_t>(2));
