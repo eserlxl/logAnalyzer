@@ -92,7 +92,7 @@ void Exporter::exportAsCsv(
             os << formatCsvField(headerName, settings.separator.value_or(','));
             if (i < fieldsToConsider.size() - 1) os << settings.separator.value_or(',');
         }
-        os << std::endl;
+        os << '\n';
     }
 
     for (const auto& entry : entries) {
@@ -133,7 +133,7 @@ void Exporter::exportAsCsv(
             os << formatCsvField(value_str, settings.separator.value_or(','));
             if (i < fieldsToConsider.size() - 1) os << settings.separator.value_or(',');
         }
-        os << std::endl;
+        os << '\n';
     }
 }
 
@@ -143,7 +143,7 @@ void Exporter::exportAsText(
     const ExportSettings& settings) {
     
     for (const auto& entry : entries) {
-        os << formatEntryForText(entry, settings.textFormatString.value_or("{timestamp} [{level}] {message}"), settings.useAnsiColors.value_or(false)) << std::endl;
+        os << formatEntryForText(entry, settings.textFormatString.value_or("{timestamp} [{level}] {message}"), settings.useAnsiColors.value_or(false)) << '\n';
     }
 }
 
