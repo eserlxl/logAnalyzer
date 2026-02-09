@@ -31,6 +31,19 @@ CompositeFilter::Logic toCompositeLogic(filter::FilterLogicalOperator op) {
         ? CompositeFilter::Logic::OR
         : CompositeFilter::Logic::AND;
 }
+
+void writeCsvEscaped(std::ostream& os, std::string value, char separator) {
+    const bool needsQuotes = value.find(separator) != std::string::npos
+        || value.find('"') != std::string::npos
+        || value.find('\n') != std::string::npos
+        || value.find('\r') != std::string::npos;
+    if (!needsQuotes) {
+        os << value;
+        return;
+    }
+    Utils::replaceAll(value, "\"", "\"\"");
+    os << '"' << value << '"';
+}
 } // namespace
 
 int main(int argc, char *argv[]) {
@@ -193,17 +206,7 @@ int main(int argc, char *argv[]) {
                 }
                 
                 // Escape header
-                 bool needsQuotes = header.find(cliOptions.csvSeparator) != std::string::npos
-                     || header.find('"') != std::string::npos
-                     || header.find('\n') != std::string::npos
-                     || header.find('\r') != std::string::npos;
-                 if (needsQuotes) {
-                     std::string escaped = header;
-                     Utils::replaceAll(escaped, "\"", "\"\"");
-                     *outputStream << "\"" << escaped << "\"";
-                 } else {
-                     *outputStream << header;
-                 }
+                 writeCsvEscaped(*outputStream, header, cliOptions.csvSeparator);
                  
                  if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
             }
@@ -244,16 +247,7 @@ int main(int argc, char *argv[]) {
                             }
                         }, fieldMapping.field);
 
-                        bool needsQuotes = value.find(cliOptions.csvSeparator) != std::string::npos
-                            || value.find('"') != std::string::npos
-                            || value.find('\n') != std::string::npos
-                            || value.find('\r') != std::string::npos;
-                        if (needsQuotes) {
-                            Utils::replaceAll(value, "\"", "\"\"");
-                            *outputStream << "\"" << value << "\"";
-                        } else {
-                            *outputStream << value;
-                        }
+                        writeCsvEscaped(*outputStream, value, cliOptions.csvSeparator);
                         if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
                     }
                     *outputStream << std::endl;
