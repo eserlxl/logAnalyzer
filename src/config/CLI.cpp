@@ -2,17 +2,17 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "config/CLI.h"
-#include "config/CommonTypes.h" // Added for centralized types
-#include "config/Utils.h" // Added for centralized config utilities
+#include "config/CommonTypes.h"
+#include "config/Utils.h"
 #include "utils/Core.h"
-#include "core/Error.h" // Add this include
-#include "core/CiLess.h" // For ci_less
-#include "stats/Core.h" // For StatisticType, StatisticConfig
+#include "core/Error.h"
+#include "core/CiLess.h"
+#include "stats/Core.h"
 #include "utils/Version.h"
 #include <CLI/CLI.hpp>
 #include <cctype>
-#include <algorithm> // For std::transform
-#include <iostream> // For std::cerr
+#include <algorithm>
+#include <iostream>
 #include <string_view>
 #include <sstream>
 #include <regex>
