@@ -682,6 +682,11 @@ Configure/build:
   - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
   - cmake --build build --parallel
   - ctest --test-dir build --output-on-failure
+- Post-fix verification (query parser supports additional operator token aliases and unary forms): SUCCESS
+  Commands:
+  - cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+  - cmake --build build --parallel
+  - ctest --test-dir build --output-on-failure
 
 Warnings:
 - warning count: 0
