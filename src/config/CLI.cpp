@@ -58,7 +58,7 @@ namespace {
 
         // Try to parse as legacy simple name first
         auto legacyType = Utils::stringToStatisticType(normalized);
-        if (legacyType.has_value()) {
+        if (legacyType) {
             config.type = *legacyType;
             return config;
         }
