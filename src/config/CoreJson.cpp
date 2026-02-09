@@ -214,6 +214,8 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
                 // For now, just a note. In the future, this could be a hard error for major versions.
                 // std::cout << "Warning: Configuration file version '" << settings.version << "' is newer than the supported version '1.0'." << std::endl;
             }
+        } else if (j.contains("version")) {
+            errors.push_back("Invalid type for 'version'. Expected string.");
         }
 
         if (j.contains("lineParsePattern") && j.at("lineParsePattern").is_string()) {

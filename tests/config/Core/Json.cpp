@@ -354,6 +354,18 @@ TEST_F(LogAnalyzerConfigTest, FromJsonInvalidCustomLogLevelMapping) {
     ASSERT_THAT(result.error()[0], testing::HasSubstr("Invalid custom log level string 'INVALID_LEVEL_STRING' for key 'BAD'."));
 }
 
+TEST_F(LogAnalyzerConfigTest, FromJsonInvalidVersionType) {
+    std::string jsonContent = R"({
+        "version": 2,
+        "lineParsePattern": ".*",
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result = LogAnalyzerSettings::fromJson(jsonContent);
+    ASSERT_FALSE(result.has_value());
+    ASSERT_FALSE(result.error().empty());
+    ASSERT_THAT(result.error()[0], testing::HasSubstr("Invalid type for 'version'. Expected string."));
+}
+
 TEST_F(LogAnalyzerConfigTest, FromFileErrorHandling) {
     // Non-existent file
     std::string nonExistentFilePath = "non_existent_config.json";
