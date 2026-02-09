@@ -242,6 +242,23 @@ TEST_F(FieldMappingTest, FromJson_InvalidRegex) {
     EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
 }
 
+TEST_F(FieldMappingTest, FromJson_StructuredFieldMissingFormatsRejected) {
+    nlohmann::json j = {
+        {"field", "STRUCTURED_FIELD"},
+        {"groupIndex", 1}
+    };
+    EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
+}
+
+TEST_F(FieldMappingTest, FromJson_StructuredFieldEmptyFormatsRejected) {
+    nlohmann::json j = {
+        {"field", "STRUCTURED_FIELD"},
+        {"groupIndex", 1},
+        {"formats", {"", "   "}}
+    };
+    EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
+}
+
 TEST_F(FieldMappingTest, FromJson_MissingField) {
     nlohmann::json j = {
         {"groupIndex", 1}

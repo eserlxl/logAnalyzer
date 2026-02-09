@@ -216,6 +216,8 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
             } catch (const std::regex_error& e) {
                 throw nlohmann::json::parse_error::create(101, 0, "Invalid regex pattern for STRUCTURED_FIELD: " + std::string(e.what()), &j);
             }
+        } else {
+            throw nlohmann::json::parse_error::create(101, 0, "FieldMapping for STRUCTURED_FIELD requires at least one non-empty regex format", &j);
         }
     }
 }
