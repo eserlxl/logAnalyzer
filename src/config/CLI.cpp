@@ -402,7 +402,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     if (appOptions.duration.has_value()) {
         if (appOptions.startTime.has_value() && !appOptions.endTime.has_value()) {
             appOptions.endTime = *appOptions.startTime + *appOptions.duration;
-        } else if (!appOptions.startTime.has_value() and appOptions.endTime.has_value()) {
+        } else if (!appOptions.startTime.has_value() && appOptions.endTime.has_value()) {
             appOptions.startTime = *appOptions.endTime - *appOptions.duration;
         } else if (!appOptions.startTime.has_value() && !appOptions.endTime.has_value()){
             return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --duration requires either --start or --end to be specified."));
