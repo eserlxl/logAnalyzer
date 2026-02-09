@@ -235,7 +235,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     app.add_option("--format", appOptions.outputFormat, "Output format (text, json, csv, xml)")
        ->transform(CLI::IsMember({"text", "json", "csv", "xml"}, CLI::ignore_case));
     app.add_option("--output", appOptions.outputPath, "Redirect output to a file");
-    app.add_option("--text-format", appOptions.textOutputFormat, "Custom format string for text output. Available: {timestamp}, {level}, {message}, {lineNumber}, {fileName}, {elapsedTime}.");
+    app.add_option("--text-format", appOptions.textOutputFormat, "Custom format string for text output. Available: {timestamp}, {level}, {message}, {id}, {sourceFile}, {lineNumber}, {threadId}, {module}, {host}, {customFields}.");
     
     app.add_flag("--include-summary", appOptions.includeSummary, "Include summary in JSON output");
     app.add_flag("--pretty", appOptions.prettyPrint, "Pretty-print JSON output");
