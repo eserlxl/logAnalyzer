@@ -108,7 +108,13 @@ TEST(ExportSettingsTest, FromJsonFormatNullResetsOptional) {
 
 TEST(ExportSettingsTest, FromJsonInvalidFieldsToExportType) {
     json j = {{"fieldsToExport", "not_an_array"}};
-    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
+TEST(ExportSettingsTest, FromJsonFieldsToExportNullClearsFieldList) {
+    json j = {{"fieldsToExport", nullptr}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_TRUE(es.fieldsToExport.empty());
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidIncludeHeaderType) {
