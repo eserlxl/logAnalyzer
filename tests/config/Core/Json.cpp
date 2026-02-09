@@ -127,6 +127,16 @@ TEST_F(LogAnalyzerConfigTest, FromJsonOptionalFields) {
     auto result3 = LogAnalyzerSettings::fromJson(jsonContent3);
     ASSERT_TRUE(result3.has_value());
     ASSERT_FALSE(result3.value().logEntryStartPattern.has_value());
+
+    // rootFilterExpression explicitly null
+    std::string jsonContent4 = R"({
+        "lineParsePattern": ".*",
+        "rootFilterExpression": null,
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result4 = LogAnalyzerSettings::fromJson(jsonContent4);
+    ASSERT_TRUE(result4.has_value());
+    ASSERT_FALSE(result4.value().rootFilterExpression.has_value());
 }
 
 TEST_F(LogAnalyzerConfigTest, FromJsonMalformedInternalStructures) {

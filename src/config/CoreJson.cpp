@@ -348,6 +348,8 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
             } else {
                 errors.push_back("Error parsing 'rootFilterExpression': " + result.error().message);
             }
+        } else if (j.contains("rootFilterExpression") && j.at("rootFilterExpression").is_null()) {
+            settings.rootFilterExpression = std::nullopt;
         } else if (j.contains("rootFilterExpression")) {
             errors.push_back("Invalid type for 'rootFilterExpression'. Expected object.");
         }
