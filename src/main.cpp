@@ -148,11 +148,11 @@ int main(int argc, char *argv[]) {
     }
 
     auto expressionMatches = [&](const LogEntry& entry) {
-        if (!parsedExpression.has_value()) {
+        if (!parsedExpression) {
             return true;
         }
         auto evalResult = parsedExpression->evaluate(entry);
-        if (!evalResult.has_value()) {
+        if (!evalResult) {
             std::cerr << "Warning: Failed to evaluate --expression for entry: " << evalResult.error().toString() << '\n';
             return false;
         }
