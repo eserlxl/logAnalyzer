@@ -158,6 +158,15 @@ TEST_F(FieldMappingTest, FromJson_CustomFieldTypeRejectedForStandardField) {
     EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
 }
 
+TEST_F(FieldMappingTest, FromJson_CustomFieldTypeNullRejectedForStandardField) {
+    nlohmann::json j = {
+        {"field", "MESSAGE"},
+        {"groupIndex", 1},
+        {"customFieldType", nullptr}
+    };
+    EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::parse_error);
+}
+
 TEST_F(FieldMappingTest, FromJson_CustomFieldTypeMustBeStringOrNull) {
     nlohmann::json j = {
         {"field", "my_custom"},

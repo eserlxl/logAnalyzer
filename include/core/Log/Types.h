@@ -177,13 +177,17 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
         }
         const auto last = fieldStr.find_last_not_of(" \t");
         fieldStr = fieldStr.substr(first, last - first + 1);
+        std::string upperField = fieldStr;
+        std::transform(upperField.begin(), upperField.end(), upperField.begin(), [](unsigned char c) {
+            return static_cast<char>(std::toupper(c));
+        });
         LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
-        if (standardField == LogEntryField::CUSTOM) {
+        if (upperField == "CUSTOM") {
             throw nlohmann::json::parse_error::create(101, 0, "FieldMapping 'field' cannot be reserved token 'CUSTOM'; provide a concrete custom field name", &j);
         }
         if (standardField != LogEntryField::UNKNOWN && standardField != LogEntryField::CUSTOM) {
              fm.field = standardField;
-            if (j.contains("customFieldType") && !j.at("customFieldType").is_null()) {
+            if (j.contains("customFieldType")) {
                 throw nlohmann::json::parse_error::create(101, 0, "FieldMapping 'customFieldType' is only valid for custom fields", &j);
             }
         } else {
