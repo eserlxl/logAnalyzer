@@ -372,7 +372,7 @@ bool ExpressionFilter::matches(const LogEntry &entry) const {
     auto result = expression_.evaluate(entry);
     if (!result) {
         // As per design, log error and fail-open (return true)
-        std::cerr << "Error evaluating filter expression: " << result.error().message << std::endl;
+        std::cerr << "Error evaluating filter expression: " << result.error().message << '\n';
         return true;
     }
     return *result;
