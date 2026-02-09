@@ -7,6 +7,7 @@
 #include "filter/Core.h"
 #include "export/Core.h"
 #include "stats/Core.h"
+#include "utils/String.h"
 #include <fstream>
 #include <regex>
 #include <nlohmann/json.hpp>
@@ -208,7 +209,10 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
         }
 
         if (j.contains("version") && j["version"].is_string()) {
-            settings.version = j["version"].get<std::string>();
+            settings.version = Utils::trim(j["version"].get<std::string>());
+            if (settings.version.empty()) {
+                errors.push_back("Invalid value for 'version'. Expected non-empty string.");
+            }
             // Basic version check (example)
             if (settings.version > "1.0") {
                 // For now, just a note. In the future, this could be a hard error for major versions.

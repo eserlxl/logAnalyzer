@@ -366,6 +366,17 @@ TEST_F(LogAnalyzerConfigTest, FromJsonInvalidVersionType) {
     ASSERT_THAT(result.error()[0], testing::HasSubstr("Invalid type for 'version'. Expected string."));
 }
 
+TEST_F(LogAnalyzerConfigTest, FromJsonRejectsEmptyVersionString) {
+    std::string jsonContent = R"({
+        "version": "   ",
+        "lineParsePattern": ".*",
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result = LogAnalyzerSettings::fromJson(jsonContent);
+    ASSERT_FALSE(result.has_value());
+    ASSERT_THAT(result.error(), testing::Contains(testing::HasSubstr("Invalid value for 'version'. Expected non-empty string.")));
+}
+
 TEST_F(LogAnalyzerConfigTest, FromFileErrorHandling) {
     // Non-existent file
     std::string nonExistentFilePath = "non_existent_config.json";
