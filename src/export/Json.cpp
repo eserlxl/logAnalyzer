@@ -182,7 +182,7 @@ void Exporter::exportAsJson(
         {"count", entries.size()}
     };
 
-    os << j.dump(settings.jsonIndent.value_or(-1)) << std::endl;
+    os << j.dump(settings.jsonIndent.value_or(-1)) << '\n';
 }
 
 // Helper namespace for XML utilities
@@ -211,11 +211,11 @@ namespace {
                 if (it.value().is_primitive() || it.value().is_null()) {
                     os << xmlEscape(it.value().dump());
                 } else {
-                    os << std::endl;
+                    os << '\n';
                     jsonToXml(it.value(), os, indentLevel + 1);
                     os << indent;
                 }
-                os << "</" << xmlEscape(it.key()) << ">" << std::endl;
+                os << "</" << xmlEscape(it.key()) << '\n';
             }
         } else if (j.is_array()) {
             for (const auto& item : j) {
@@ -223,11 +223,11 @@ namespace {
                 if (item.is_primitive() || item.is_null()) {
                     os << xmlEscape(item.dump());
                 } else {
-                    os << std::endl;
+                    os << '\n';
                     jsonToXml(item, os, indentLevel + 1);
                     os << indent;
                 }
-                os << "</item>" << std::endl;
+                os << "</item>" << '\n';
             }
         }
     }
@@ -238,13 +238,13 @@ void Exporter::exportAsXml(
     const std::vector<LogEntry>& entries,
     const ExportSettings& settings) {
     
-    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
-    os << "<log>" << std::endl;
+    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << '\n';
+    os << "<log>" << '\n';
 
     std::vector<ExportFieldMapping> fieldsToConsider = getEffectiveExportFieldMappings(entries, settings);
 
     for (const auto& entry : entries) {
-        os << "  <entry>" << std::endl;
+        os << "  <entry>" << '\n';
         for (const auto& fieldMapping : fieldsToConsider) {
             std::string tagName;
             std::string value;
@@ -289,7 +289,7 @@ void Exporter::exportAsXml(
                 if (isStructured) {
                     try {
                         json structuredJson = json::parse(value);
-                        os << std::endl;
+                        os << '\n';
                         jsonToXml(structuredJson, os, 3);
                         os << "    ";
                     } catch (const json::parse_error&) {
@@ -298,12 +298,12 @@ void Exporter::exportAsXml(
                 } else {
                     os << xmlEscape(value);
                 }
-                os << "</" << xmlEscape(tagName) << ">" << std::endl;
+                os << "</" << xmlEscape(tagName) << '\n';
             }
         }
-        os << "  </entry>" << std::endl;
+        os << "  </entry>" << '\n';
     }
-    os << "</log>" << std::endl;
+    os << "</log>" << '\n';
 }
 
 void to_json(nlohmann::json& j, const ExportSettings& es) {
