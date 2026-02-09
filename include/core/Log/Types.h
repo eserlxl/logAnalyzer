@@ -179,10 +179,19 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
         LogEntryField standardField = Utils::stringToLogEntryField(fieldStr);
         if (standardField != LogEntryField::UNKNOWN && standardField != LogEntryField::CUSTOM) {
              fm.field = standardField;
+            if (j.contains("customFieldType") && !j.at("customFieldType").is_null()) {
+                throw nlohmann::json::parse_error::create(101, 0, "FieldMapping 'customFieldType' is only valid for custom fields", &j);
+            }
         } else {
             fm.field = fieldStr; // It's a custom field name
-            if (j.contains("customFieldType") && j.at("customFieldType").is_string()) {
-                fm.customFieldType = j.at("customFieldType").get<std::string>();
+            if (j.contains("customFieldType")) {
+                if (j.at("customFieldType").is_null()) {
+                    fm.customFieldType = std::nullopt;
+                } else if (j.at("customFieldType").is_string()) {
+                    fm.customFieldType = j.at("customFieldType").get<std::string>();
+                } else {
+                    throw nlohmann::json::type_error::create(302, "FieldMapping 'customFieldType' must be a string or null", &j);
+                }
             }
         }
     } else {
