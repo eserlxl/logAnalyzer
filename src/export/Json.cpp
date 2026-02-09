@@ -76,6 +76,9 @@ void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
             throw ExportException("ExportFieldMapping 'datetimeFormat' is only valid for TIMESTAMP field.");
         }
     }
+    if (efm.datetimeFormat.has_value() && std::holds_alternative<std::string>(efm.field)) {
+        throw ExportException("ExportFieldMapping 'datetimeFormat' is not supported for custom fields.");
+    }
 }
 
 void Exporter::exportAsJson(
