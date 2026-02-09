@@ -145,9 +145,9 @@ ErrorCode::Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries_NoLock(
     std::vector<LogEntry> filtered;
     for (const auto& entry : entries_) {
         auto result = expression.evaluate(entry);
-        if (result.has_value() && result.value()) {
+        if (result && *result) {
             filtered.push_back(entry);
-        } else if (!result.has_value()) {
+        } else if (!result) {
             // Handle evaluation error, for now, we can log it or ignore the entry
             // Depending on desired strictness. Let's return the error.
             return std::unexpected(result.error());
