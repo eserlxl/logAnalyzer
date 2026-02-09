@@ -217,6 +217,22 @@ TEST_F(FieldMappingTest, FromJson_StructuredFieldWithRegex) {
     EXPECT_EQ(match[2].str(), "testuser");
 }
 
+TEST_F(FieldMappingTest, FromJson_StructuredFieldUsesFirstNonEmptyRegexPattern) {
+    nlohmann::json j = {
+        {"field", "STRUCTURED_FIELD"},
+        {"groupIndex", 3},
+        {"formats", {"   ", R"((key)=(\w+))"}}
+    };
+    FieldMapping fm = j.get<FieldMapping>();
+    ASSERT_TRUE(fm.compiledKvPattern != nullptr);
+    std::string test_str = "key=value";
+    std::smatch match;
+    EXPECT_TRUE(std::regex_search(test_str, match, *fm.compiledKvPattern));
+    ASSERT_EQ(match.size(), 3);
+    EXPECT_EQ(match[1].str(), "key");
+    EXPECT_EQ(match[2].str(), "value");
+}
+
 TEST_F(FieldMappingTest, FromJson_InvalidRegex) {
     nlohmann::json j = {
         {"field", "STRUCTURED_FIELD"},

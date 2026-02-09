@@ -5,6 +5,7 @@
 #define LOG_TYPES_H
 
 #include <chrono>
+#include <algorithm>
 #include <map>
 #include <optional>
 #include <string>
@@ -206,9 +207,12 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
 
     // Handle regex compilation for structured fields
     if (std::holds_alternative<LogEntryField>(fm.field) && std::get<LogEntryField>(fm.field) == LogEntryField::STRUCTURED_FIELD) {
-        if (!fm.formats.empty() && !fm.formats[0].empty()) {
+        auto selectedPatternIt = std::find_if(fm.formats.begin(), fm.formats.end(), [](const std::string& pattern) {
+            return pattern.find_first_not_of(" \t") != std::string::npos;
+        });
+        if (selectedPatternIt != fm.formats.end()) {
             try {
-                fm.compiledKvPattern = std::make_shared<const std::regex>(fm.formats[0], std::regex::optimize);
+                fm.compiledKvPattern = std::make_shared<const std::regex>(*selectedPatternIt, std::regex::optimize);
             } catch (const std::regex_error& e) {
                 throw nlohmann::json::parse_error::create(101, 0, "Invalid regex pattern for STRUCTURED_FIELD: " + std::string(e.what()), &j);
             }
