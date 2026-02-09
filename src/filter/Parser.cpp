@@ -321,8 +321,8 @@ private:
         if (opToken == "NOT_EQUALS" || opToken == "NE") return FilterOperator::NOT_EQUALS;
         if (opToken == "GREATER_THAN" || opToken == "GT") return FilterOperator::GREATER_THAN;
         if (opToken == "LESS_THAN" || opToken == "LT") return FilterOperator::LESS_THAN;
-        if (opToken == "GREATER_THAN_OR_EQUAL" || opToken == "GTE") return FilterOperator::GREATER_THAN_OR_EQUAL;
-        if (opToken == "LESS_THAN_OR_EQUAL" || opToken == "LTE") return FilterOperator::LESS_THAN_OR_EQUAL;
+        if (opToken == "GREATER_THAN_OR_EQUAL" || opToken == "GREATER_THAN_OR_EQUALS" || opToken == "GTE") return FilterOperator::GREATER_THAN_OR_EQUAL;
+        if (opToken == "LESS_THAN_OR_EQUAL" || opToken == "LESS_THAN_OR_EQUALS" || opToken == "LTE") return FilterOperator::LESS_THAN_OR_EQUAL;
 
         return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Unsupported operator token: " + opToken));
     }

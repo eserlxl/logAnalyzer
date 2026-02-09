@@ -308,4 +308,12 @@ TEST_F(FilterIteration15Test, ParseQuerySupportsRelationalShorthandTokens) {
     auto lteRes = parseQuery("line LTE 42");
     ASSERT_TRUE(lteRes.has_value()) << lteRes.error().toString();
     EXPECT_TRUE(lteRes->evaluate(entry).value_or(false));
+
+    auto gteEqualsRes = parseQuery("line GREATER_THAN_OR_EQUALS 42");
+    ASSERT_TRUE(gteEqualsRes.has_value()) << gteEqualsRes.error().toString();
+    EXPECT_TRUE(gteEqualsRes->evaluate(entry).value_or(false));
+
+    auto lteEqualsRes = parseQuery("line LESS_THAN_OR_EQUALS 42");
+    ASSERT_TRUE(lteEqualsRes.has_value()) << lteEqualsRes.error().toString();
+    EXPECT_TRUE(lteEqualsRes->evaluate(entry).value_or(false));
 }
