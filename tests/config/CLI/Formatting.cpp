@@ -121,6 +121,15 @@ TEST_F(CLIConfigTest, CsvFieldsWithAliases) {
     ASSERT_EQ(settings.exportSettings.csvFields[1].second, "Severity");
 }
 
+TEST_F(CLIConfigTest, CsvFieldsWithAliasFlexibleWhitespaceAndCase) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--csv-fields", "timestamp\tAS   Time"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.exportSettings.csvFields.size(), 1);
+    ASSERT_EQ(settings.exportSettings.csvFields[0].first, "timestamp");
+    ASSERT_EQ(settings.exportSettings.csvFields[0].second, "Time");
+}
+
 TEST_F(CLIConfigTest, JsonFields) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--json-fields", "timestamp,level"});
     ASSERT_TRUE(result.has_value());

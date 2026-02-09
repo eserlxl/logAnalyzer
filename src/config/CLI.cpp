@@ -15,6 +15,7 @@
 #include <iostream> // For std::cerr
 #include <string_view>
 #include <sstream>
+#include <regex>
 
 #ifndef PROJECT_VERSION
 #define PROJECT_VERSION "0.0.0-dev"
@@ -125,36 +126,21 @@ namespace {
 
     // Helper to parse "field as alias" string
     std::pair<std::string, std::string> parseFieldAlias(const std::string& fieldStr) {
-        std::string lower = fieldStr;
-        std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) {
-            return static_cast<char>(std::tolower(c));
-        });
-        
-        auto pos = lower.find(" as ");
-        if (pos != std::string::npos) {
-            std::string field = fieldStr.substr(0, pos);
-            std::string alias = fieldStr.substr(pos + 4); // +4 for " as "
-            
-            // Trim whitespace
-            field.erase(0, field.find_first_not_of(" \t"));
-            auto fieldEnd = field.find_last_not_of(" \t");
-            if (fieldEnd != std::string::npos) field.erase(fieldEnd + 1);
-            
-            alias.erase(0, alias.find_first_not_of(" \t"));
-            auto aliasEnd = alias.find_last_not_of(" \t");
-            if (aliasEnd != std::string::npos) alias.erase(aliasEnd + 1);
-
+        static const std::regex aliasPattern(R"(^\s*(.*?)\s+[aA][sS]\s+(.*?)\s*$)");
+        std::smatch match;
+        if (std::regex_match(fieldStr, match, aliasPattern)) {
+            std::string field = match[1].str();
+            std::string alias = match[2].str();
+            trimInPlace(field);
+            trimInPlace(alias);
             if (field.empty() || alias.empty()) {
                 return {"", ""};
             }
-            
-            return {field, alias};
+            return {std::move(field), std::move(alias)};
         }
         
         std::string field = fieldStr;
-        field.erase(0, field.find_first_not_of(" \t"));
-        auto end = field.find_last_not_of(" \t");
-        if (end != std::string::npos) field.erase(end + 1);
+        trimInPlace(field);
         return {field, field}; // No alias, use field name
     }
 } // namespace
