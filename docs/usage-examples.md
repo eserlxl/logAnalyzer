@@ -116,14 +116,14 @@ logAnalyzer application.log --format csv --csv-fields "timestamp as Time, level,
 ```
 
 
-### Example 8: Export to XML
+### Example 8: Export to JSON
 
 ```bash
-# Export filtered errors to an XML file
-logAnalyzer production.log --level ERROR --format xml --output errors.xml
+# Export filtered errors to a JSON file
+logAnalyzer production.log --level ERROR --format json --output errors.json
 
-# Export all messages from a specific day to a pretty-printed XML file
-logAnalyzer server.log --start "today" --format xml --pretty --output today_logs.xml
+# Export all messages from a specific day to a pretty-printed JSON file
+logAnalyzer server.log --start "today" --format json --pretty --output today_logs.json
 ```
 
 ### Advanced Expression Examples
