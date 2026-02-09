@@ -62,6 +62,17 @@ TEST(ExportFieldMappingTest, FromJsonNullCustomHeaderClearsAlias) {
     ASSERT_TRUE(efm.customHeader.empty());
 }
 
+TEST(ExportFieldMappingTest, FromJsonInvalidDatetimeFormatType) {
+    json j = {{"field", "TIMESTAMP"}, {"datetimeFormat", 123}};
+    ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
+}
+
+TEST(ExportFieldMappingTest, FromJsonNullDatetimeFormatClearsOptional) {
+    json j = {{"field", "TIMESTAMP"}, {"datetimeFormat", nullptr}};
+    ExportFieldMapping efm = j.get<ExportFieldMapping>();
+    ASSERT_FALSE(efm.datetimeFormat.has_value());
+}
+
 TEST(ExportFieldMappingTest, FromJsonGetToResetsPreviousStateWhenKeysMissing) {
     ExportFieldMapping efm(LogEntryField::TIMESTAMP, "OldHeader", "%Y-%m-%d");
     json j = {{"field", "LEVEL"}};

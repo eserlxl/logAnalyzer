@@ -54,8 +54,14 @@ void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
         }
     }
 
-    if (j.contains("datetimeFormat") && j.at("datetimeFormat").is_string()) {
-        efm.datetimeFormat = j.at("datetimeFormat").get<std::string>();
+    if (j.contains("datetimeFormat")) {
+        if (j.at("datetimeFormat").is_null()) {
+            efm.datetimeFormat.reset();
+        } else if (j.at("datetimeFormat").is_string()) {
+            efm.datetimeFormat = j.at("datetimeFormat").get<std::string>();
+        } else {
+            throw ExportException("ExportFieldMapping has invalid 'datetimeFormat' type; expected string or null.");
+        }
     }
 }
 
