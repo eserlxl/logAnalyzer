@@ -352,6 +352,14 @@ void from_json(const nlohmann::json& j, ExportSettings& es) {
             throw ExportException("'separator' must be a single-character string or null.");
         }
     }
-    if (j.contains("textFormatString")) es.textFormatString = j.at("textFormatString").get<std::string>();
+    if (j.contains("textFormatString")) {
+        if (j.at("textFormatString").is_null()) {
+            es.textFormatString.reset();
+        } else if (j.at("textFormatString").is_string()) {
+            es.textFormatString = j.at("textFormatString").get<std::string>();
+        } else {
+            throw ExportException("'textFormatString' must be a string or null.");
+        }
+    }
     if (j.contains("useAnsiColors")) es.useAnsiColors = j.at("useAnsiColors").get<bool>();
 }

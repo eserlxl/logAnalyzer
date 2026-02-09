@@ -156,7 +156,13 @@ TEST(ExportSettingsTest, FromJsonSeparatorNullResetsOptional) {
 
 TEST(ExportSettingsTest, FromJsonInvalidTextFormatStringType) {
     json j = {{"textFormatString", 123}};
-    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
+TEST(ExportSettingsTest, FromJsonTextFormatStringNullResetsOptional) {
+    json j = {{"textFormatString", nullptr}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_FALSE(es.textFormatString.has_value());
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidUseAnsiColorsType) {
