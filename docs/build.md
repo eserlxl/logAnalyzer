@@ -82,7 +82,7 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
 To ensure everything is working correctly after building:
 
 ```bash
-cd build && ctest
+ctest --test-dir build --output-on-failure
 ```
 
 For more comprehensive test instructions, including advanced testing configurations, please see this guide's full documentation.
