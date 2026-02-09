@@ -29,8 +29,8 @@ std::string LogWriter::formatEntry(const LogEntry& entry, const FormattingOption
     std::map<std::string_view, std::string> replacements;
 
     // Populate replacements map
-    replacements["{timestamp}"] = entry.timestamp.has_value() ?
-        Utils::formatTimestamp(entry.timestamp.value(), options.dateTimeFormat) : "N/A";
+    replacements["{timestamp}"] = entry.timestamp ?
+        Utils::formatTimestamp(*entry.timestamp, options.dateTimeFormat) : "N/A";
 
     std::string levelString = Utils::logLevelToString(entry.level);
     if (options.useColor) {
@@ -50,12 +50,12 @@ std::string LogWriter::formatEntry(const LogEntry& entry, const FormattingOption
     }
 
     replacements["{message}"] = entry.message;
-    replacements["{id}"] = entry.id.has_value() ? std::to_string(entry.id.value()) : "";
+    replacements["{id}"] = entry.id ? std::to_string(*entry.id) : "";
     replacements["{sourceFile}"] = entry.sourceFile;
-    replacements["{lineNumber}"] = entry.sourceLineNumber.has_value() ? std::to_string(entry.sourceLineNumber.value()) : "";
-    replacements["{threadId}"] = entry.threadId.has_value() ? entry.threadId.value() : "";
-    replacements["{module}"] = entry.module.has_value() ? entry.module.value() : "";
-    replacements["{host}"] = entry.host.has_value() ? entry.host.value() : "";
+    replacements["{lineNumber}"] = entry.sourceLineNumber ? std::to_string(*entry.sourceLineNumber) : "";
+    replacements["{threadId}"] = entry.threadId ? *entry.threadId : "";
+    replacements["{module}"] = entry.module ? *entry.module : "";
+    replacements["{host}"] = entry.host ? *entry.host : "";
 
     if (options.includeStructuredFields && !entry.customFields.empty()) {
         std::ostringstream ss;
@@ -121,8 +121,8 @@ void LogWriter::printFilteredEntriesInternal(std::ostream& out, const filter::Fi
     filter::FilterExpression combinedExpression = analyzer_.createFilterExpressionFromCriteria(criteria);
     auto filteredEntriesExpected = analyzer_.getFilteredEntries(combinedExpression);
 
-    if (filteredEntriesExpected.has_value()) {
-        const auto& filteredEntries = filteredEntriesExpected.value();
+    if (filteredEntriesExpected) {
+        const auto& filteredEntries = *filteredEntriesExpected;
         for (const auto& entry : filteredEntries) {
             out << formatEntry(entry, options) << '\n';
         }
