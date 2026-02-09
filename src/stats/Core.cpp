@@ -108,8 +108,8 @@ json TopMessagesCollector::generateReport() const {
 
 // EntryRateCollector implementation
 void EntryRateCollector::collect(const LogEntry& entry) {
-    if (entry.timestamp.has_value()) {
-        _timestamps.push_back(entry.timestamp.value());
+    if (entry.timestamp) {
+        _timestamps.push_back(*entry.timestamp);
     }
 }
 
@@ -169,15 +169,15 @@ std::string FieldValueCountCollector::getFieldValueAsString(const LogEntry& entr
         return entry.message;
     } else if (_targetFieldName == "sourceFile") {
         return entry.sourceFile;
-    } else if (_targetFieldName == "timestamp" && entry.timestamp.has_value()) {
+    } else if (_targetFieldName == "timestamp" && entry.timestamp) {
         return Utils::formatTimestamp(*entry.timestamp);
-    } else if (_targetFieldName == "lineNumber" && entry.sourceLineNumber.has_value()) {
+    } else if (_targetFieldName == "lineNumber" && entry.sourceLineNumber) {
         return std::to_string(*entry.sourceLineNumber);
-    } else if (_targetFieldName == "threadId" && entry.threadId.has_value()) {
+    } else if (_targetFieldName == "threadId" && entry.threadId) {
         return *entry.threadId;
-    } else if (_targetFieldName == "module" && entry.module.has_value()) {
+    } else if (_targetFieldName == "module" && entry.module) {
         return *entry.module;
-    } else if (_targetFieldName == "host" && entry.host.has_value()) {
+    } else if (_targetFieldName == "host" && entry.host) {
         return *entry.host;
     } else if (_targetFieldName == "customFields" && !_customFieldKey.empty()) {
         auto it = entry.customFields.find(_customFieldKey);
@@ -222,15 +222,15 @@ std::string TopNFieldValuesCollector::getFieldValueAsString(const LogEntry& entr
         return entry.message;
     } else if (_targetFieldName == "sourceFile") {
         return entry.sourceFile;
-    } else if (_targetFieldName == "timestamp" && entry.timestamp.has_value()) {
+    } else if (_targetFieldName == "timestamp" && entry.timestamp) {
         return Utils::formatTimestamp(*entry.timestamp);
-    } else if (_targetFieldName == "lineNumber" && entry.sourceLineNumber.has_value()) {
+    } else if (_targetFieldName == "lineNumber" && entry.sourceLineNumber) {
         return std::to_string(*entry.sourceLineNumber);
-    } else if (_targetFieldName == "threadId" && entry.threadId.has_value()) {
+    } else if (_targetFieldName == "threadId" && entry.threadId) {
         return *entry.threadId;
-    } else if (_targetFieldName == "module" && entry.module.has_value()) {
+    } else if (_targetFieldName == "module" && entry.module) {
         return *entry.module;
-    } else if (_targetFieldName == "host" && entry.host.has_value()) {
+    } else if (_targetFieldName == "host" && entry.host) {
         return *entry.host;
     } else if (_targetFieldName == "customFields" && !_customFieldKey.empty()) {
         auto it = entry.customFields.find(_customFieldKey);
