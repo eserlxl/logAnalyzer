@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     const CompositeFilter::Logic inclusionLogic =
         toCompositeLogic(cliOptions.filterLogic.value_or(filter::FilterLogicalOperator::AND));
     auto inclusionFilters = std::make_shared<CompositeFilter>(inclusionLogic);
-    if (cliOptions.minLogLevel.has_value()) inclusionFilters->add(std::make_shared<MinLevelFilter>(*cliOptions.minLogLevel));
+    if (cliOptions.minLogLevel) inclusionFilters->add(std::make_shared<MinLevelFilter>(*cliOptions.minLogLevel));
     if (!cliOptions.filterLevels.empty()) {
         auto levelSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
         for (auto l : cliOptions.filterLevels) levelSet->add(std::make_shared<LevelFilter>(l));
