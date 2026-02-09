@@ -5,7 +5,7 @@ This section guides you through setting up `LogAnalyzer` from its source code.
 ### Prerequisites
 
 -   **C++ Compiler**: A compiler with C++23 support (e.g., GCC 13+, Clang 16+).
--   **Build System**: CMake (version 4.2.3 or higher).
+-   **Build System**: CMake (version 3.14 or higher).
 -   **Version Control**: Git for cloning the repository.
 
 #### Installing Dependencies
