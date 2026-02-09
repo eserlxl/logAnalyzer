@@ -4,7 +4,7 @@ After building, you can run `logAnalyzer` in two ways:
 
 1.  **From the build directory**:
     ```bash
-    ./build/bin/logAnalyzer [options] <log_file(s)>
+    ./build/logAnalyzer [options] <log_file(s)>
     ```
 2.  **As an installed command**:
     ```bash
