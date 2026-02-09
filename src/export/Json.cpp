@@ -361,5 +361,13 @@ void from_json(const nlohmann::json& j, ExportSettings& es) {
             throw ExportException("'textFormatString' must be a string or null.");
         }
     }
-    if (j.contains("useAnsiColors")) es.useAnsiColors = j.at("useAnsiColors").get<bool>();
+    if (j.contains("useAnsiColors")) {
+        if (j.at("useAnsiColors").is_null()) {
+            es.useAnsiColors.reset();
+        } else if (j.at("useAnsiColors").is_boolean()) {
+            es.useAnsiColors = j.at("useAnsiColors").get<bool>();
+        } else {
+            throw ExportException("'useAnsiColors' must be a boolean or null.");
+        }
+    }
 }

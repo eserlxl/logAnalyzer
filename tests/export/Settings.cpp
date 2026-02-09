@@ -167,5 +167,11 @@ TEST(ExportSettingsTest, FromJsonTextFormatStringNullResetsOptional) {
 
 TEST(ExportSettingsTest, FromJsonInvalidUseAnsiColorsType) {
     json j = {{"useAnsiColors", "false"}}; // String "false" is not boolean false
-    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
+TEST(ExportSettingsTest, FromJsonUseAnsiColorsNullResetsOptional) {
+    json j = {{"useAnsiColors", nullptr}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_FALSE(es.useAnsiColors.has_value());
 }
