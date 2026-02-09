@@ -50,3 +50,14 @@ TEST(ExportFieldMappingTest, FromJsonInvalidFieldType) {
     json j = {{"field", 123}};
     ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
 }
+
+TEST(ExportFieldMappingTest, FromJsonInvalidCustomHeaderType) {
+    json j = {{"field", "LEVEL"}, {"customHeader", 123}};
+    ASSERT_THROW(j.get<ExportFieldMapping>(), ExportException);
+}
+
+TEST(ExportFieldMappingTest, FromJsonNullCustomHeaderClearsAlias) {
+    json j = {{"field", "LEVEL"}, {"customHeader", nullptr}};
+    ExportFieldMapping efm = j.get<ExportFieldMapping>();
+    ASSERT_TRUE(efm.customHeader.empty());
+}

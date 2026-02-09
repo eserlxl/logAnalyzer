@@ -43,8 +43,14 @@ void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
         throw ExportException("ExportFieldMapping is missing or has invalid 'field'.");
     }
 
-    if (j.contains("customHeader") && j.at("customHeader").is_string()) {
-        efm.customHeader = j.at("customHeader").get<std::string>();
+    if (j.contains("customHeader")) {
+        if (j.at("customHeader").is_null()) {
+            efm.customHeader.clear();
+        } else if (j.at("customHeader").is_string()) {
+            efm.customHeader = j.at("customHeader").get<std::string>();
+        } else {
+            throw ExportException("ExportFieldMapping has invalid 'customHeader' type; expected string or null.");
+        }
     }
 
     if (j.contains("datetimeFormat") && j.at("datetimeFormat").is_string()) {
