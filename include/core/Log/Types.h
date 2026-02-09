@@ -142,7 +142,11 @@ inline void from_json(const nlohmann::json& j, FieldMapping& fm) {
     }
 
     if (j.at("groupIndex").is_number_integer()) {
-        fm.groupIndex = j.at("groupIndex").get<size_t>();
+        const auto rawGroupIndex = j.at("groupIndex").get<long long>();
+        if (rawGroupIndex < 0) {
+            throw nlohmann::json::type_error::create(302, "FieldMapping 'groupIndex' must be non-negative when provided", &j);
+        }
+        fm.groupIndex = static_cast<size_t>(rawGroupIndex);
     } else if (j.at("groupIndex").is_null()) {
         fm.groupIndex = std::nullopt;
     } else {

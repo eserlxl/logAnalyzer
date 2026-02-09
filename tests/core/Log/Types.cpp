@@ -200,6 +200,14 @@ TEST_F(FieldMappingTest, FromJson_InvalidGroupIndexType) {
     EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::type_error);
 }
 
+TEST_F(FieldMappingTest, FromJson_NegativeGroupIndexRejected) {
+    nlohmann::json j = {
+        {"field", "MESSAGE"},
+        {"groupIndex", -1}
+    };
+    EXPECT_THROW(j.get<FieldMapping>(), nlohmann::json::type_error);
+}
+
 TEST_F(FieldMappingTest, FromJson_InvalidFormatsType) {
     nlohmann::json j = {
         {"field", "MESSAGE"},
