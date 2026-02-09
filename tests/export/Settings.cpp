@@ -140,12 +140,18 @@ TEST(ExportSettingsTest, FromJsonJsonIndentRejectsNegativeValue) {
 
 TEST(ExportSettingsTest, FromJsonInvalidSeparatorType) {
     json j = {{"separator", 123}};
-    ASSERT_THROW(j.get<ExportSettings>(), json::exception);
+    ASSERT_THROW(j.get<ExportSettings>(), ExportException);
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidSeparatorLength) {
     json j = {{"separator", "ab"}};
     ASSERT_THROW(j.get<ExportSettings>(), ExportException);
+}
+
+TEST(ExportSettingsTest, FromJsonSeparatorNullResetsOptional) {
+    json j = {{"separator", nullptr}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_FALSE(es.separator.has_value());
 }
 
 TEST(ExportSettingsTest, FromJsonInvalidTextFormatStringType) {
