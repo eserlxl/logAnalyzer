@@ -311,8 +311,13 @@ std::expected<LogAnalyzerSettings, std::vector<std::string>> LogAnalyzerSettings
             errors.push_back("Invalid type for 'parserErrorAction'. Expected string.");
         }
 
-        if (j.contains("maxMultilineBufferSize") && j.at("maxMultilineBufferSize").is_number_unsigned()) {
-            settings.maxMultilineBufferSize = j.at("maxMultilineBufferSize").get<size_t>();
+        if (j.contains("maxMultilineBufferSize") && j.at("maxMultilineBufferSize").is_number_integer()) {
+            const auto rawSize = j.at("maxMultilineBufferSize").get<long long>();
+            if (rawSize < 0) {
+                errors.push_back("Invalid value for 'maxMultilineBufferSize'. Expected non-negative integer or size string.");
+            } else {
+                settings.maxMultilineBufferSize = static_cast<size_t>(rawSize);
+            }
         } else if (j.contains("maxMultilineBufferSize") && j.at("maxMultilineBufferSize").is_string()) {
             auto sizeRes = Utils::parseHumanReadableSize(j.at("maxMultilineBufferSize").get<std::string>());
             if (sizeRes) {

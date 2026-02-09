@@ -366,6 +366,29 @@ TEST_F(LogAnalyzerConfigTest, FromJsonParserErrorActionValueIsTrimmed) {
     ASSERT_EQ(result.value().parserErrorAction.value(), ParserErrorAction::Warn);
 }
 
+TEST_F(LogAnalyzerConfigTest, FromJsonMaxMultilineBufferSizeAcceptsInteger) {
+    std::string jsonContent = R"({
+        "lineParsePattern": ".*",
+        "maxMultilineBufferSize": 4096,
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result = LogAnalyzerSettings::fromJson(jsonContent);
+    ASSERT_TRUE(result.has_value());
+    ASSERT_TRUE(result.value().maxMultilineBufferSize.has_value());
+    ASSERT_EQ(result.value().maxMultilineBufferSize.value(), 4096u);
+}
+
+TEST_F(LogAnalyzerConfigTest, FromJsonMaxMultilineBufferSizeRejectsNegativeInteger) {
+    std::string jsonContent = R"({
+        "lineParsePattern": ".*",
+        "maxMultilineBufferSize": -1,
+        "exportSettings": {"fieldsToExport": [{"field": "MESSAGE"}]}
+    })";
+    auto result = LogAnalyzerSettings::fromJson(jsonContent);
+    ASSERT_FALSE(result.has_value());
+    ASSERT_THAT(result.error(), testing::Contains(testing::HasSubstr("Invalid value for 'maxMultilineBufferSize'. Expected non-negative integer or size string.")));
+}
+
 TEST_F(LogAnalyzerConfigTest, FromJsonRejectsEmptyCustomLogLevelMappingKey) {
     std::string jsonContent = R"({
         "lineParsePattern": ".*",
