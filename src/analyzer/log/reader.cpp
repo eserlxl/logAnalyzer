@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "analyzer/Log/Reader.h"
+#include "analyzer/log/reader.h"
 #include "analyzer/Core.h" // For LogAnalyzer definition which LogReader needs
 #include "core/Log/Parser.h"
 #include "filter/Core.h"

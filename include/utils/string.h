@@ -7,6 +7,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <map> // Added for parseStructuredData
+#include <regex> // Added for parseStructuredData
 
 namespace Utils {
 
@@ -40,6 +42,10 @@ std::string escapeJsonString(const std::string& input);
  * @return A string representing the equivalent regular expression.
  */
 std::string globToRegex(const std::string& globPattern);
+
+// Added declarations for parsing structured data
+void parseStructuredData(const std::string& data, std::map<std::string, std::string>& targetMap, const std::regex& kvPattern);
+void parseLegacyStructuredData(const std::string& message, std::map<std::string, std::string>& targetMap);
 
 } // namespace Utils
 

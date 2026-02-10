@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "config/CLI.h"
+#include "config/cli.h"
 #include "config/CommonTypes.h"
 #include "config/Utils.h"
 #include "utils/Core.h"

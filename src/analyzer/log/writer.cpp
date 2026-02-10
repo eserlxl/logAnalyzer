@@ -7,8 +7,8 @@
 #include <format> // For std::format in C++20
 #include <map>    // Required for std::map to store placeholders
 
-#include "analyzer/Core.h"
-#include "analyzer/Log/Writer.h"
+#include "analyzer/core.h"
+#include "analyzer/log/writer.h"
 #include "filter/IFilter.h"
 #include "utils/String.h"
 #include "utils/Time.h"

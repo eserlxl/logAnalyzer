@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "filter/EnumStringConversions.h"
+#include "filter/enum_string_conversions.h"
 #include <algorithm> // For std::transform
 #include <cctype>    // For std::tolower
 

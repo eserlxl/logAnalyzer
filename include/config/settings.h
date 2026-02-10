@@ -4,7 +4,7 @@
 #ifndef LOG_ANALYZER_SETTINGS_H
 #define LOG_ANALYZER_SETTINGS_H
 
-#include "core/Log/Types.h"
+#include "core/log/types.h"
 #include "filter/Core.h"
 #include "export/Core.h"
 #include "stats/Core.h"

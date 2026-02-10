@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "analyzer/Core.h"
-#include "filter/Core.h"
+#include "analyzer/core.h"
+#include "filter/core.h"
 #include <algorithm>
 #include <memory>
 #include <vector>
 #include <expected>
 #include <regex>
 
-#include "core/Error.h" // Explicitly include Error.h
+#include "core/error.h" // Explicitly include Error.h
 
 
 ErrorCode::Result<std::vector<LogEntry>> LogAnalyzer::getFilteredEntries(const filter::FilterCriteria& criteria) const {

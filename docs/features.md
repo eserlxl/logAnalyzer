@@ -8,7 +8,7 @@
 | **Structured FieldParsing** | Automatically parses log messages into fields using custom patterns (regex) or by natively parsing full JSON log lines. |
 | **Keyword & Regex Filtering**| Filter by log level, keywords, and case-sensitive/insensitive regular expressions. |
 | **Field-Value Matching**     | Match field values with case-sensitive/insensitive text, regex, and glob patterns.                      |
-| **Nested Field Filtering**   | Target nested fields within structured data (e.g., `user.id` in a JSON log).                            |
+| **Field Filtering**          | Target fields within structured data (e.g., specific JSON keys).                                         |
 | **Advanced Data Types**      | Compare fields as `version` numbers (semantic versioning) or `IP addresses`.                            |
 | **Numeric & Bool Filtering** | Perform numeric (`>`, `<`, `==`) or boolean (`true`, `false`) comparisons on flat and nested fields.     |
 | **Set-Based Filtering**      | Check if a field's value is `in` or `not in` a specific set of values.                                   |

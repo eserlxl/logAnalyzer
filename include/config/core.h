@@ -4,7 +4,7 @@
 #ifndef LOG_ANALYZER_CONFIG_H
 #define LOG_ANALYZER_CONFIG_H
 
-#include "config/Settings.h"
+#include "config/settings.h"
 
 // This header acts as a compatibility facade, providing backward compatibility.
 // It includes core settings and exposes the default log regex pattern.

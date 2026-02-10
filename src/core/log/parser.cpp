@@ -2,11 +2,11 @@
 // Copyright (c) 2026 Eser KUBALI
 
 // Default implementation of ILogParser using regex
-#include "core/Log/Parser.h"
-#include "core/Log/ParserUtils.h"
+#include "core/log/parser.h"
+#include "core/log/parser_utils.h"
 
-#include "utils/Time.h"
-#include "utils/String.h"
+#include "utils/time.h"
+#include "utils/string.h"
 #include <charconv>
 #include <iostream>
 #include <stdexcept>

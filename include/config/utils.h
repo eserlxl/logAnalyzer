@@ -4,8 +4,8 @@
 #ifndef CONFIG_UTILS_H
 #define CONFIG_UTILS_H
 
-#include "core/Error.h"
-#include "core/Log/Types.h"
+#include "core/error.h"
+#include "core/log/types.h"
 #include <string>
 #include <vector>
 #include <string_view>

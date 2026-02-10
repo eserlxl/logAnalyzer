@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "export/Core.h"
+#include "export/core.h"
 #include "utils/String.h"
 #include <iostream>
 #include <vector>

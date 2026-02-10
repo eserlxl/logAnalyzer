@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "filter/Expression.h"
-#include "filter/ConditionEvaluation.h"
-#include "filter/EnumStringConversions.h"
-#include "utils/Core.h"
-#include "utils/Time.h"
-#include "utils/String.h"
-#include "utils/Version.h"
-#include "utils/IpAddress.h"
+#include "filter/expression.h"
+#include "filter/condition_evaluation.h"
+#include "filter/enum_string_conversions.h"
+#include "utils/core.h"
+#include "utils/time.h"
+#include "utils/string.h"
+#include "utils/version.h"
+#include "utils/ip_address.h"
 #include <regex>
 #include <chrono>
 #include <limits>
