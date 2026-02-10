@@ -34,12 +34,6 @@ TEST(ParserUtilsTest, ParseStructuredData_CustomPattern_Group5) {
     std::map<std::string, std::string> results;
     Utils::parseStructuredData(log, results, pattern);
     
-    // With current implementation, it only checks groups 2, 3, 4.
-    // Group 5 should be ignored, resulting in empty value or missing key if not handled.
-    // Actually if value is empty string, key is still inserted? 
-    // The code: key = match[1], value = ...
-    // targetMap[key] = value;
-    // So "mykey" -> ""
-    
+
     EXPECT_EQ(results["mykey"], "valD");
 }
