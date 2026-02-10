@@ -2,9 +2,9 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "core/log/json_parser.h"
-#include "utils/Time.h" // For Utils::parseTimestamp
-#include "utils/String.h" // For Utils::contains
-#include "utils/Core.h" // For Utils::generateLogEntryId
+#include "utils/time.h" // For Utils::parseTimestamp
+#include "utils/string.h" // For Utils::contains
+#include "utils/core.h" // For Utils::generateLogEntryId
 #include <iostream> // For std::cerr
 #include <sstream> // For std::stringstream
 

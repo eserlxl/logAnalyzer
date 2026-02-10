@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "utils/Core.h" // Includes all necessary declarations for Utils namespace
-#include "utils/String.h"
-#include "export/Core.h"
-#include "filter/Types.h" // Include FilterTypes.h for SortBy, SortOrder
-#include "stats/Core.h"
+#include "utils/core.h" // Includes all necessary declarations for Utils namespace
+#include "utils/string.h"
+#include "export/core.h"
+#include "filter/types.h" // Include FilterTypes.h for SortBy, SortOrder
+#include "stats/core.h"
 #include <algorithm>
 #include <map>
 #include <cmath>

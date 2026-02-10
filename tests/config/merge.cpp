@@ -2,8 +2,8 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "config/Settings.h"
-#include "export/Core.h"
+#include "config/settings.h"
+#include "export/core.h"
 
 TEST(MergeTest, PartialMergeDoesNotOverwriteDefaults) {
     LogAnalyzerSettings base;

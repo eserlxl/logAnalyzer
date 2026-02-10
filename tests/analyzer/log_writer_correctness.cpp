@@ -2,12 +2,12 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "gtest/gtest.h"
-#include "analyzer/Log/Writer.h"
-#include "core/Log/Types.h"
-#include "filter/Types.h"
-#include "filter/Expression.h"
-#include "analyzer/Core.h"
-#include "utils/Time.h" // For Utils::formatTimestamp if needed in tests
+#include "analyzer/log/writer.h"
+#include "core/log/types.h"
+#include "filter/types.h"
+#include "filter/expression.h"
+#include "analyzer/core.h"
+#include "utils/time.h" // For Utils::formatTimestamp if needed in tests
 
 #include <sstream>
 #include <vector>

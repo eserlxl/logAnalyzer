@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "filter/ConcreteFilters.h"
-#include "utils/String.h"
-#include "utils/Core.h"
+#include "filter/concrete_filters.h"
+#include "utils/string.h"
+#include "utils/core.h"
 #include <charconv>
 #include <regex>
 #include <cmath>
@@ -347,7 +347,7 @@ bool CompositeFilter::matches(const LogEntry &entry) const {
 
 // --- ExpressionFilter Implementation ---
 
-#include "filter/Expression.h"
+#include "filter/expression.h"
 // nlohmann/json.hpp and iostream are already included at the top of the file
 // #include <nlohmann/json.hpp>
 // #include <iostream>

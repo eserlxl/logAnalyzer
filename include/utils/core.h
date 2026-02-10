@@ -4,10 +4,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include "core/Log/Types.h"   // For LogEntryField, LogLevel
-#include "core/CiLess.h"     // For ci_less comparator
-#include "core/Error.h"      // For ErrorCode::Error
-#include "utils/Time.h"      // For time utilities
+#include "core/log/types.h"   // For LogEntryField, LogLevel
+#include "core/ci_less.h"     // For ci_less comparator
+#include "core/error.h"      // For ErrorCode::Error
+#include "utils/time.h"      // For time utilities
 
 #include <string>
 #include <string_view>

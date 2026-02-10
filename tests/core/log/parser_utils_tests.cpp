@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "core/Log/ParserUtils.h"
+#include "core/log/parserutils.h"
 #include <regex>
 
 TEST(ParserUtilsTest, ParseStructuredData_LegacyPattern) {

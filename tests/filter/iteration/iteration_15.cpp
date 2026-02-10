@@ -3,12 +3,12 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "filter/ConcreteFilters.h"
-#include "filter/Expression.h"
-#include "filter/Condition.h"
-#include "filter/Parser.h"
-#include "filter/EnumStringConversions.h"
-#include "core/Log/Types.h"
+#include "filter/concrete_filters.h"
+#include "filter/expression.h"
+#include "filter/condition.h"
+#include "filter/parser.h"
+#include "filter/enum_string_conversions.h"
+#include "core/log/types.h"
 #include <nlohmann/json.hpp>
 #include <vector>
 #include <string>

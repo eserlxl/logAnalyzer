@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "Utils.h"
-#include "filter/Expression.h" // Added
-#include "filter/Condition.h" // Added
-#include "filter/Types.h" // Added
-#include "filter/ConcreteFilters.h" // Added for filter types used in createExpr
-#include "core/Log/Types.h" // Added for LogEntry and LogLevel
+#include "utils.h"
+#include "filter/expression.h" // Added
+#include "filter/condition.h" // Added
+#include "filter/types.h" // Added
+#include "filter/concrete_filters.h" // Added for filter types used in createExpr
+#include "core/log/types.h" // Added for LogEntry and LogLevel
 
 using namespace filter;
 

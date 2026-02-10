@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "Utils.h"
-#include "filter/ConcreteFilters.h"
+#include "utils.h"
+#include "filter/concrete_filters.h"
 
 using namespace filter;
 

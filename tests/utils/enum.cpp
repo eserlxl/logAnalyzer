@@ -2,13 +2,13 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "utils/Core.h"
-#include "core/Log/Types.h"
-#include "filter/Types.h" // Ensure this header includes SortBy and SortOrder
-#include "filter/Condition.h" // Added as a common header that might transitively include sort-related enums
-#include "filter/Expression.h" // Added for similar reasons
-#include "export/Core.h"
-#include "stats/Core.h"
+#include "utils/core.h"
+#include "core/log/types.h"
+#include "filter/types.h" // Ensure this header includes SortBy and SortOrder
+#include "filter/condition.h" // Added as a common header that might transitively include sort-related enums
+#include "filter/expression.h" // Added for similar reasons
+#include "export/core.h"
+#include "stats/core.h"
 #include <optional>
 
 using namespace filter;

@@ -4,9 +4,9 @@
 #ifndef FILTER_CONDITION_EVALUATION_H
 #define FILTER_CONDITION_EVALUATION_H
 
-#include "filter/Condition.h"
-#include "core/Log/Types.h"
-#include "core/Error.h"
+#include "filter/condition.h"
+#include "core/log/types.h"
+#include "core/error.h"
 #include <optional>
 #include <string>
 

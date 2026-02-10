@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "analyzer/core.h"
-#include "stats/Core.h"
+#include "stats/core.h"
 #include <algorithm>
 #include <cctype>
 #include <charconv>

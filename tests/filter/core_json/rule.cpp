@@ -3,9 +3,9 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "filter/Legacy.h"
-#include "filter/Types.h" // Added
-#include "core/Log/Types.h"
+#include "filter/legacy.h"
+#include "filter/types.h" // Added
+#include "core/log/types.h"
 #include <nlohmann/json.hpp>
 
 using namespace filter;

@@ -3,7 +3,7 @@
 
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
-#include "config/Settings.h"
+#include "config/settings.h"
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>

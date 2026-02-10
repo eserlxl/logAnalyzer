@@ -3,11 +3,11 @@
 
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
-#include "config/Core.h"
-#include "core/Log/Types.h"
-#include "filter/Core.h"
-#include "export/Core.h"
-#include "stats/Core.h"
+#include "config/core.h"
+#include "core/log/types.h"
+#include "filter/core.h"
+#include "export/core.h"
+#include "stats/core.h"
 #include <string>
 #include <vector>
 #include <map>

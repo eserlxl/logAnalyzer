@@ -5,16 +5,16 @@
 #define LOG_ANALYZER_SETTINGS_H
 
 #include "core/log/types.h"
-#include "filter/Core.h"
-#include "export/Core.h"
-#include "stats/Core.h"
+#include "filter/core.h"
+#include "export/core.h"
+#include "stats/core.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <optional>
 #include <string_view>
 #include <expected>
-#include "core/CiLess.h" // Include for LogAnalyzer::ci_less
+#include "core/ci_less.h" // Include for LogAnalyzer::ci_less
 #include <filesystem>
 
 

@@ -91,42 +91,30 @@ For detailed, platform-specific instructions, refer to the [**Installation Guide
 
 ## ⚡ Quick Start
 
-`logAnalyzer` is a versatile tool. Here’s a quick overview of its command-line interface.
+`logAnalyzer` is a versatile and powerful command-line utility. Here’s a quick overview of its basic usage.
 
 ### Basic Syntax
 
 ```bash
-logAnalyzer [input-file] [options]
+logAnalyzer [input-file(s)] [options]
 ```
 
-### Example
+### Example: Basic Filtering
 
 - **Analyze a specific log file and filter for errors:**
   ```bash
   logAnalyzer /var/log/syslog --level ERROR
   ```
-
-For a deep dive into all functionalities and more detailed examples, check out our [**Usage Examples**](docs/usage-examples.md) and [**CLI Reference**](docs/cli-reference.md).
-
-### Advanced Filtering and Parsing
-
-- **Expression filter**:
+- **Process input from `stdin` and search for a keyword:**
   ```bash
-  logAnalyzer app.log --expression "level >= WARNING AND message contains 'timeout'"
+  cat application.log | logAnalyzer --stdin --keyword "authentication failed"
   ```
-- **JSON filter expression workflows (C++ API):**
-  Build, serialize, and deserialize nested filter-expression trees via the `filter::FilterExpression` JSON APIs (see tests under `tests/filter/core_json/*` and the API reference).
-- **Multi-line entry parsing**:
+- **Export errors from the last 2 hours to a JSON file:**
   ```bash
-  logAnalyzer app.log \
-    --pattern "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) (\\w+): ([\\s\\S]*)$" \
-    --multiline-start-pattern "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} \\w+:" \
-    --max-multiline-buffer 10MB
+  logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
   ```
-- **Parse error behavior**:
-  ```bash
-  logAnalyzer app.log --on-parse-error warn
-  ```
+
+For a deep dive into all functionalities, advanced filtering, multi-line parsing, and more detailed examples, check out our [**Usage Examples**](docs/usage-examples.md) and the [**CLI Reference**](docs/cli-reference.md).
 
 ## ⚙️ Configuration
 

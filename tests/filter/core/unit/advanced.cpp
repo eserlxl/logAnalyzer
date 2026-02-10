@@ -2,12 +2,12 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "filter/Core.h"
-#include "filter/Condition.h" // Added
-#include "filter/Types.h" // Added
-#include "filter/ConcreteFilters.h" // Added
-#include "core/Log/Types.h"
-#include "Utils.h"
+#include "filter/core.h"
+#include "filter/condition.h" // Added
+#include "filter/types.h" // Added
+#include "filter/concrete_filters.h" // Added
+#include "core/log/types.h"
+#include "utils.h"
 #include <chrono>
 #include <map>
 #include <sstream>

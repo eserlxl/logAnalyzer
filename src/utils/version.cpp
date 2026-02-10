@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "utils/Version.h"
-#include "utils/String.h" // For Utils::split
+#include "utils/version.h"
+#include "utils/string.h" // For Utils::split
 #include <regex>
 #include <charconv> // For std::from_chars in C++17
 #include <cctype>

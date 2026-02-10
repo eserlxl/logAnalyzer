@@ -5,9 +5,9 @@
 #define LOGANALYZER_FILTER_JSON_TEST_FIXTURE_H
 
 #include <gtest/gtest.h>
-#include "filter/Core.h"
-#include "filter/Condition.h"
-#include "filter/Types.h"
+#include "filter/core.h"
+#include "filter/condition.h"
+#include "filter/types.h"
 #include <optional>
 #include <string>
 

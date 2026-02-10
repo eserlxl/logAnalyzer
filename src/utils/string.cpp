@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "utils/String.h" // Explicitly include String.h
-#include "utils/Core.h" // Includes all necessary declarations for Utils namespace
+#include "utils/string.h" // Explicitly include String.h
+#include "utils/core.h" // Includes all necessary declarations for Utils namespace
 #include <algorithm>
 #include <vector>
 #include <regex> // For globToRegex only

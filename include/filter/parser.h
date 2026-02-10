@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "filter/Expression.h"
-#include "core/Error.h"
+#include "filter/expression.h"
+#include "core/error.h"
 #include <string>
 
 namespace filter {

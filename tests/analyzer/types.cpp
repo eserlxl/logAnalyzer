@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "analyzer/Types.h"
+#include "analyzer/types.h"
 #include <string>
 
 // Test fixture for FormattingOptions tests

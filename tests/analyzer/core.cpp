@@ -2,11 +2,11 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "analyzer/Core.h"
-#include "filter/Expression.h"
-#include "filter/Condition.h"
-#include "filter/Types.h"
-#include "stats/Core.h"
+#include "analyzer/core.h"
+#include "filter/expression.h"
+#include "filter/condition.h"
+#include "filter/types.h"
+#include "stats/core.h"
 #include <fstream>
 #include <filesystem>
 #include <algorithm>
@@ -633,7 +633,10 @@ TEST_F(LogAnalyzerTest, SortedFilteredEntriesDescendingUsesStrictComparator) {
     ASSERT_TRUE(loadResult.has_value()) << loadResult.error().toString();
 
     FilterExpression allEntries;
-    auto sorted = analyzer.getSortedFilteredEntries(allEntries, SortBy::MESSAGE, SortOrder::DESCENDING);
+    auto sortedResult = analyzer.getSortedFilteredEntries(allEntries, SortBy::MESSAGE, SortOrder::DESCENDING);
+    ASSERT_TRUE(sortedResult.has_value()) << sortedResult.error().toString();
+    auto sorted = sortedResult.value();
+
     ASSERT_EQ(sorted.size(), 4);
     EXPECT_EQ(sorted.front().message, "zeta");
     EXPECT_EQ(sorted.back().message, "alpha");
@@ -694,8 +697,14 @@ TEST_F(LogAnalyzerTest, SortedFilteredEntriesMaintainOrderingAndMembershipAcross
 
     FilterExpression allEntries;
     for (const auto sortBy : sortKeys) {
-        const auto ascending = analyzer.getSortedFilteredEntries(allEntries, sortBy, SortOrder::ASCENDING);
-        const auto descending = analyzer.getSortedFilteredEntries(allEntries, sortBy, SortOrder::DESCENDING);
+        auto ascendingResult = analyzer.getSortedFilteredEntries(allEntries, sortBy, SortOrder::ASCENDING);
+        auto descendingResult = analyzer.getSortedFilteredEntries(allEntries, sortBy, SortOrder::DESCENDING);
+
+        ASSERT_TRUE(ascendingResult.has_value()) << ascendingResult.error().toString();
+        ASSERT_TRUE(descendingResult.has_value()) << descendingResult.error().toString();
+
+        const auto ascending = ascendingResult.value();
+        const auto descending = descendingResult.value();
 
         ASSERT_EQ(ascending.size(), descending.size()) << "Sort key: " << static_cast<int>(sortBy);
         ASSERT_EQ(ascending.size(), 6u) << "Sort key: " << static_cast<int>(sortBy);

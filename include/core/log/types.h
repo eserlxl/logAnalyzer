@@ -16,8 +16,8 @@
 #include <limits> // Required for std::numeric_limits
 #include <variant> // Required for std::variant
 #include <nlohmann/json.hpp> // Required for JSON serialization
-#include "core/Error.h" // New: For Error struct and Result alias
-#include "core/CiLess.h" // Include the new header for ci_less comparator
+#include "core/error.h" // New: For Error struct and Result alias
+#include "core/ci_less.h" // Include the new header for ci_less comparator
 
 // Enum for different pattern matching types
 enum class PatternType { Literal, Regex, Wildcard };

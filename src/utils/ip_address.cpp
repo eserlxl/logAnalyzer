@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "utils/IpAddress.h"
+#include "utils/ip_address.h"
 #include <string.h> // For memset
 
 namespace Utils {

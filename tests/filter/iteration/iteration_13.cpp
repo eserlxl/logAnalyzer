@@ -2,10 +2,10 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "filter/Expression.h"
-#include "filter/Condition.h"
-#include "filter/Types.h" // Added
-#include "core/Log/Types.h"
+#include "filter/expression.h"
+#include "filter/condition.h"
+#include "filter/types.h" // Added
+#include "core/log/types.h"
 #include <chrono>
 #include <map>
 #include <vector> // Added for std::vector

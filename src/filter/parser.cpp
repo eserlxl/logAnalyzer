@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "filter/Parser.h"
-#include "filter/Condition.h"
-#include "utils/Core.h"
-#include "utils/String.h"
+#include "filter/parser.h"
+#include "filter/condition.h"
+#include "utils/core.h"
+#include "utils/string.h"
 #include <cctype>
 #include <string_view>
 #include <vector>

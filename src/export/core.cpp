@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "export/core.h"
-#include "utils/String.h"
+#include "utils/string.h"
 #include <chrono>
 #include <fstream>
 #include <iomanip>

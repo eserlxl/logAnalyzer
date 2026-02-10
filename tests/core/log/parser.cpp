@@ -2,9 +2,9 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "core/Log/Parser.h"
-#include "core/Log/Types.h"
-#include "core/Error.h"
+#include "core/log/parser.h"
+#include "core/log/types.h"
+#include "core/error.h"
 #include <sstream>
 #include <memory>
 #include <iostream> // Already present.

@@ -10,11 +10,11 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 
-#include "core/Error.h" // For ErrorCode::Result
-#include "core/Log/Types.h" // For LogLevel, PatternType etc.
-#include "utils/Core.h"    // For ci_less
-#include "filter/EnumStringConversions.h" // For enum to string conversions
-#include "filter/JsonUtils.h"
+#include "core/error.h" // For ErrorCode::Result
+#include "core/log/types.h" // For LogLevel, PatternType etc.
+#include "utils/core.h"    // For ci_less
+#include "filter/enum_string_conversions.h" // For enum to string conversions
+#include "filter/json_utils.h"
 
 namespace filter {
 

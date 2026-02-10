@@ -3,11 +3,11 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "analyzer/Log/Writer.h"
-#include "analyzer/Core.h"
-#include "core/Error.h"
-#include "utils/String.h"
-#include "config/Core.h"
+#include "analyzer/log/writer.h"
+#include "analyzer/core.h"
+#include "core/error.h"
+#include "utils/string.h"
+#include "config/core.h"
 #include <string>
 #include <sstream>
 #include <vector>

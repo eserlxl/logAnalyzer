@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "stats/Core.h"
+#include "stats/core.h"
 #include <algorithm>
 #include <cctype>
 #include <charconv>

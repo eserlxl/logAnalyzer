@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "config/Utils.h"
+#include "config/utils.h"
 #include <variant>
 
 TEST(ConfigUtilsTest, ParseFieldMappingString_ValidKnownField) {

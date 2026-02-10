@@ -5,7 +5,7 @@
 
 #include <string>
 #include <optional>
-#include "filter/Types.h" // Include the enums
+#include "filter/types.h" // Include the enums
 
 namespace filter {
 

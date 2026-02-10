@@ -4,8 +4,8 @@
 #ifndef JSON_LOG_PARSER_FACTORY_H
 #define JSON_LOG_PARSER_FACTORY_H
 
-#include "IParserFactory.h"
-#include "JsonParser.h" // For JsonLogParser
+#include "iparser_factory.h"
+#include "json_parser.h" // For JsonLogParser
 
 class JsonLogParserFactory : public ILogParserFactory {
 public:

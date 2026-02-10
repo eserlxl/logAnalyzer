@@ -4,7 +4,7 @@
 #ifndef JSON_LOG_PARSER_H
 #define JSON_LOG_PARSER_H
 
-#include "core/Log/Parser.h" // For ILogParser
+#include "core/log/parser.h" // For ILogParser
 #include <nlohmann/json.hpp> // For JSON parsing
 
 class JsonLogParser : public ILogParser {

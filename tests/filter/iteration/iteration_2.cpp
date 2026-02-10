@@ -2,15 +2,15 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "filter/Core.h"
-#include "filter/Condition.h" // Added
-#include "filter/Types.h" // Added
-#include "filter/Expression.h"
-#include "filter/ConcreteFilters.h" // Added
-#include "core/Log/Types.h"
-#include "utils/Version.h"
-#include "utils/IpAddress.h"
-#include "utils/Time.h"
+#include "filter/core.h"
+#include "filter/condition.h" // Added
+#include "filter/types.h" // Added
+#include "filter/expression.h"
+#include "filter/concrete_filters.h" // Added
+#include "core/log/types.h"
+#include "utils/version.h"
+#include "utils/ip_address.h"
+#include "utils/time.h"
 #include <chrono>
 #include <map>
 

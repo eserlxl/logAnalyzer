@@ -3,10 +3,10 @@
 
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
-#include "config/Settings.h" // Use direct include
-#include "core/Log/Types.h"
-#include "filter/Types.h"
-#include "filter/Legacy.h"
+#include "config/settings.h" // Use direct include
+#include "core/log/types.h"
+#include "filter/types.h"
+#include "filter/legacy.h"
 #include <string>
 #include <vector>
 #include <map>

@@ -4,9 +4,9 @@
 #ifndef CONFIG_COMMON_TYPES_H
 #define CONFIG_COMMON_TYPES_H
 
-#include "core/Log/Types.h" // For LogLevel
-#include "filter/Types.h"  // For SortBy, SortOrder, FilterLogicalOperator
-#include "core/CiLess.h" // For LogAnalyzerInternal::ci_less
+#include "core/log/types.h" // For LogLevel
+#include "filter/types.h"  // For SortBy, SortOrder, FilterLogicalOperator
+#include "core/ci_less.h" // For LogAnalyzerInternal::ci_less
 
 #include <map>
 #include <string>

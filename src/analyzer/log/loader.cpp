@@ -3,13 +3,13 @@
 
 #include "analyzer/core.h"
 #include "analyzer/log/reader.h"
-#include "utils/String.h"
-#include "core/Log/Parser.h"
-#include "filter/Core.h"
-#include "stats/Core.h"
-#include "export/Core.h"
-#include "utils/Core.h"
-#include "core/Error.h"
+#include "utils/string.h"
+#include "core/log/parser.h"
+#include "filter/core.h"
+#include "stats/core.h"
+#include "export/core.h"
+#include "utils/core.h"
+#include "core/error.h"
 #include <fstream>
 #include <iostream>
 #include <algorithm>

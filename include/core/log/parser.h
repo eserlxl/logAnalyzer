@@ -4,9 +4,9 @@
 #ifndef LOG_PARSER_H
 #define LOG_PARSER_H
 
-#include "core/Log/Types.h" // Includes LogEntryField, FieldMapping, etc.
-#include "core/Error.h" // For Error struct and Result alias
-#include "core/CiLess.h" // For LogAnalyzer::LogAnalyzerInternal::ci_less
+#include "core/log/types.h" // Includes LogEntryField, FieldMapping, etc.
+#include "core/error.h" // For Error struct and Result alias
+#include "core/ci_less.h" // For LogAnalyzer::LogAnalyzerInternal::ci_less
 #include <functional>
 #include <istream>
 #include <map>

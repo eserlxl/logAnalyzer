@@ -2,11 +2,11 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "filter/Core.h"
-#include "filter/Condition.h" // Added
-#include "filter/Types.h" // Added
-#include "filter/ConcreteFilters.h" // Added
-#include "core/Log/Types.h"
+#include "filter/core.h"
+#include "filter/condition.h" // Added
+#include "filter/types.h" // Added
+#include "filter/concrete_filters.h" // Added
+#include "core/log/types.h"
 #include <chrono>
 #include <map>
 #include <sstream> // Required for std::stringstream for general string manipulation if needed

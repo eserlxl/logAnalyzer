@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "config/core.h"
-#include "config/Settings.h"
+#include "config/settings.h"
 #include <algorithm>
 
 void LogAnalyzerSettings::merge(const LogAnalyzerSettings& other) {

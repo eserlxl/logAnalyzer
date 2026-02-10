@@ -4,9 +4,9 @@
 #ifndef LOG_ANALYZER_H
 #define LOG_ANALYZER_H
 
-#include "core/Log/Types.h"
-#include "core/Error.h"
-#include "core/CiLess.h"
+#include "core/log/types.h"
+#include "core/error.h"
+#include "core/ci_less.h"
 #include <nlohmann/json_fwd.hpp>
 
 #include <atomic>
@@ -42,9 +42,10 @@ class FilterExpression;
 struct FilterCriteria;
 enum class SortBy : uint8_t;
 enum class SortOrder : uint8_t;
+class CompositeFilter;
 }
 
-#include "config/Core.h"
+#include "config/core.h"
 
 // New: Define a CancellationToken structure
 struct CancellationToken {
@@ -207,9 +208,8 @@ public:
     virtual ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterCriteria& criteria) const;
     virtual ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterExpression& expression) const;
 
-    [[deprecated("Use getSortedFilteredEntries(const filter::FilterExpression&, filter::SortBy, filter::SortOrder) instead.")]]
-    std::vector<LogEntry> getSortedFilteredEntries(const filter::FilterCriteria& criteria, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
-    std::vector<LogEntry> getSortedFilteredEntries(const filter::FilterExpression& expression, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
+    ErrorCode::Result<std::vector<LogEntry>> getSortedFilteredEntries(const filter::FilterCriteria& criteria, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
+    ErrorCode::Result<std::vector<LogEntry>> getSortedFilteredEntries(const filter::FilterExpression& expression, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
 
     // New: Apply a filter, returning a new view (generator)
     std::generator<const LogEntry&> filter(std::generator<const LogEntry&> input, const filter::FilterExpression& expression) const;
@@ -275,6 +275,8 @@ private:
 
     ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const filter::FilterCriteria& criteria) const;
     ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const filter::FilterExpression& expression) const;
+    ErrorCode::Result<std::shared_ptr<filter::CompositeFilter>> createFilterFromCriteria_NoLock(const filter::FilterCriteria& criteria) const;
+    static bool lessByField(const LogEntry& lhs, const LogEntry& rhs, filter::SortBy key);
     
     static std::shared_ptr<IStatisticCollector> createStatisticCollector(const StatisticConfig& config);
     

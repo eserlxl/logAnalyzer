@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "core/Log/Types.h"
-#include "utils/Core.h"
+#include "core/log/types.h"
+#include "utils/core.h"
 #include <string>
 #include <vector>
 #include <map>

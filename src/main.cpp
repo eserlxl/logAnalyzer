@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "analyzer/Log/Writer.h"
-#include "analyzer/Core.h"
-#include "export/Core.h"
-#include "utils/Core.h"
-#include "utils/String.h"
-#include "config/CLI.h"
-#include "filter/ConcreteFilters.h"
-#include "filter/Parser.h"
-#include "filter/Types.h"
-#include "stats/Core.h"
+#include "analyzer/log/writer.h"
+#include "analyzer/core.h"
+#include "export/core.h"
+#include "utils/core.h"
+#include "utils/string.h"
+#include "config/cli.h"
+#include "filter/concrete_filters.h"
+#include "filter/parser.h"
+#include "filter/types.h"
+#include "stats/core.h"
 #include <algorithm>
 #include <chrono>
 #include <fstream>

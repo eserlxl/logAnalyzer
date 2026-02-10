@@ -15,15 +15,15 @@
 #include <nlohmann/json.hpp>
 
 // Includes from the project
-#include "core/Log/Types.h"
-#include "utils/Time.h"
-#include "utils/Core.h"
-#include "utils/Version.h"
-#include "utils/IpAddress.h"
-#include "export/Core.h"
-#include "filter/Core.h"
-#include "filter/Expression.h"
-#include "filter/EnumStringConversions.h"
+#include "core/log/types.h"
+#include "utils/time.h"
+#include "utils/core.h"
+#include "utils/version.h"
+#include "utils/ip_address.h"
+#include "export/core.h"
+#include "filter/core.h"
+#include "filter/expression.h"
+#include "filter/enum_string_conversions.h"
 
 
 // Consolidated test fixture for FilterExpression tests

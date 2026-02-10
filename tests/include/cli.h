@@ -4,12 +4,12 @@
 #pragma once
 
 #include "gtest/gtest.h"
-#include "config/CLI.h"
-#include "core/Log/Types.h"
-#include "core/Error.h"
-#include "utils/Time.h"
-#include "export/Core.h"
-#include "config/Settings.h"
+#include "config/cli.h"
+#include "core/log/types.h"
+#include "core/error.h"
+#include "utils/time.h"
+#include "export/core.h"
+#include "config/settings.h"
 #include <fstream>
 #include <filesystem>
 #include <chrono>

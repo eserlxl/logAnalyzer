@@ -9,9 +9,9 @@
 
 #include "analyzer/core.h"
 #include "analyzer/log/writer.h"
-#include "filter/IFilter.h"
-#include "utils/String.h"
-#include "utils/Time.h"
+#include "filter/ifilter.h"
+#include "utils/string.h"
+#include "utils/time.h"
 
 // ANSI Color Codes
 namespace ansi_color {
@@ -25,7 +25,7 @@ namespace ansi_color {
 
 LogWriter::LogWriter(const LogAnalyzer& analyzer) : analyzer_(analyzer) {}
 
-std::string LogWriter::formatEntry(const LogEntry& entry, const FormattingOptions& options) {
+std::string LogWriter::formatEntry(const LogEntry& entry, const FormattingOptions& options) const {
     std::map<std::string_view, std::string> replacements;
 
     // Populate replacements map

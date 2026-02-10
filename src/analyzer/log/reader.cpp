@@ -2,13 +2,13 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "analyzer/log/reader.h"
-#include "analyzer/Core.h" // For LogAnalyzer definition which LogReader needs
-#include "core/Log/Parser.h"
-#include "filter/Core.h"
-#include "stats/Core.h"
-#include "export/Core.h"
-#include "utils/Core.h"
-#include "core/Error.h"
+#include "analyzer/core.h" // For LogAnalyzer definition which LogReader needs
+#include "core/log/parser.h"
+#include "filter/core.h"
+#include "stats/core.h"
+#include "export/core.h"
+#include "utils/core.h"
+#include "core/error.h"
 #include <fstream>
 #include <iostream>
 #include <algorithm>

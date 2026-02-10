@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "analyzer/types.h"
+#include "core/log/types.h"
 #include "utils/time.h" // For Utils::formatTimestamp
 
 nlohmann::json LogEntry::toJson() const {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "tests/include/CLI.h"
+#include "tests/include/cli.h"
 
 TEST_F(CLIConfigTest, NoArgsReturnsError) {
     auto result = parse({"log_analyzer"});

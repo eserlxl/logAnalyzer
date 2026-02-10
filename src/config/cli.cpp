@@ -2,13 +2,13 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "config/cli.h"
-#include "config/CommonTypes.h"
-#include "config/Utils.h"
-#include "utils/Core.h"
-#include "core/Error.h"
-#include "core/CiLess.h"
-#include "stats/Core.h"
-#include "utils/Version.h"
+#include "config/common_types.h"
+#include "config/utils.h"
+#include "utils/core.h"
+#include "core/error.h"
+#include "core/ci_less.h"
+#include "stats/core.h"
+#include "utils/version.h"
 #include <CLI/CLI.hpp>
 #include <cctype>
 #include <algorithm>

@@ -2,12 +2,12 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "config/settings.h"
-#include "config/Utils.h"
-#include "config/CommonTypes.h"
-#include "filter/Core.h"
-#include "export/Core.h"
-#include "stats/Core.h"
-#include "utils/String.h"
+#include "config/utils.h"
+#include "config/common_types.h"
+#include "filter/core.h"
+#include "export/core.h"
+#include "stats/core.h"
+#include "utils/string.h"
 #include <fstream>
 #include <regex>
 #include <nlohmann/json.hpp>

@@ -10,15 +10,15 @@
 #include <cmath>
 #include <cctype>
 #include <nlohmann/json.hpp>
-#include "core/Error.h"
-#include "core/Log/Types.h"
-#include "utils/Core.h"
-#include "utils/String.h"
-#include "utils/IpAddress.h"
-#include "utils/Version.h"
-#include "filter/Types.h"
-#include "filter/EnumStringConversions.h"
-#include "filter/JsonUtils.h"
+#include "core/error.h"
+#include "core/log/types.h"
+#include "utils/core.h"
+#include "utils/string.h"
+#include "utils/ip_address.h"
+#include "utils/version.h"
+#include "filter/types.h"
+#include "filter/enum_string_conversions.h"
+#include "filter/json_utils.h"
 #include <iostream> // Added for std::cerr warning
 
 namespace filter {

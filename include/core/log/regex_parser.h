@@ -4,8 +4,8 @@
 #ifndef REGEX_LOG_PARSER_H
 #define REGEX_LOG_PARSER_H
 
-#include "core/Log/Parser.h"
-#include "config/CommonTypes.h" // For FieldMapping
+#include "core/log/parser.h"
+#include "config/common_types.h" // For FieldMapping
 #include <string>
 #include <vector>
 #include <map>

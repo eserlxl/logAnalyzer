@@ -5,7 +5,7 @@
 
 #include <nlohmann/json.hpp>
 #include <string>
-#include "core/Error.h"
+#include "core/error.h"
 
 namespace filter {
 namespace FilterJsonUtils {

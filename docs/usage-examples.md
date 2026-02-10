@@ -207,3 +207,29 @@ Combine multiple filter criteria to narrow down your search results.
 # Combine filters (e.g., critical errors with specific message content):
 logAnalyzer server.log --level CRITICAL --expression 'msg contains "failed to connect"'
 ```
+
+### CLI Advanced Filtering and Parsing
+
+These examples demonstrate more advanced command-line filtering and parsing capabilities.
+
+- **Expression filter**:
+  Utilize a powerful expression language for complex conditional filtering.
+  ```bash
+  logAnalyzer app.log --expression "level >= WARNING AND message contains 'timeout'"
+  ```
+- **JSON filter expression workflows (C++ API):**
+  For C++ developers, you can build, serialize, and deserialize nested filter-expression trees via the `filter::FilterExpression` JSON APIs.
+  (See tests under `tests/filter/core_json/*` and the [API Reference](docs/api-reference.md) for details).
+- **Multi-line entry parsing**:
+  Handle log entries that span multiple lines by defining patterns for start and end, and buffering settings.
+  ```bash
+  logAnalyzer app.log \
+    --pattern "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}) (\\w+): ([\\s\\S]*)$" \
+    --multiline-start-pattern "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} \\w+:" \
+    --max-multiline-buffer 10MB
+  ```
+- **Parse error behavior**:
+  Control how `logAnalyzer` reacts to unparseable log lines.
+  ```bash
+  logAnalyzer app.log --on-parse-error warn
+  ```

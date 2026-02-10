@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include "filter/IFilter.h"
-#include "filter/Expression.h"
-#include "core/Log/Types.h" // For LogLevel, PatternType etc.
-#include "core/Error.h"    // For ErrorCode::Result
-#include "utils/Core.h"    // For ci_less
+#include "filter/ifilter.h"
+#include "filter/expression.h"
+#include "core/log/types.h" // For LogLevel, PatternType etc.
+#include "core/error.h"    // For ErrorCode::Result
+#include "utils/core.h"    // For ci_less
 #include <string>
 #include <vector>
 #include <set>

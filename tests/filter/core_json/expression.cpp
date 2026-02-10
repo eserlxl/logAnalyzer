@@ -2,8 +2,8 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "filter/Core.h"
-#include "core/Log/Types.h"
+#include "filter/core.h"
+#include "core/log/types.h"
 #include <nlohmann/json.hpp>
 
 using namespace filter;

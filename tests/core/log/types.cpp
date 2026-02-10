@@ -2,8 +2,8 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "core/Log/Types.h"
-#include "core/Error.h"
+#include "core/log/types.h"
+#include "core/error.h"
 #include <nlohmann/json.hpp>
 #include <vector>
 

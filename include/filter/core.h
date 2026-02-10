@@ -4,11 +4,11 @@
 #ifndef FILTER_H
 #define FILTER_H
 
-#include "filter/Types.h"
-#include "filter/Condition.h"
-#include "filter/Expression.h"
-#include "filter/Legacy.h"
-#include "filter/IFilter.h"
-#include "filter/ConcreteFilters.h"
+#include "filter/types.h"
+#include "filter/condition.h"
+#include "filter/expression.h"
+#include "filter/legacy.h"
+#include "filter/ifilter.h"
+#include "filter/concrete_filters.h"
 
 #endif // FILTER_H

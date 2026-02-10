@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "config/settings.h"
-#include "config/Utils.h"
+#include "config/utils.h"
 #include <algorithm>
 #include <cctype>
 #include <charconv>

@@ -4,8 +4,8 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include "core/Log/Types.h"
-#include "utils/Core.h"
+#include "core/log/types.h"
+#include "utils/core.h"
 #include <iostream>
 #include <vector>
 #include <string>

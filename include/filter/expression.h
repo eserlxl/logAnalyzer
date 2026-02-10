@@ -8,12 +8,12 @@
 #include <functional>
 #include <memory>
 #include <nlohmann/json.hpp>
-#include "core/Error.h"
-#include "core/Log/Types.h" // For LogEntry
-#include "filter/Condition.h" // For FilterCondition
-#include "filter/Types.h"     // For FilterLogicalOperator
-#include "filter/EnumStringConversions.h" // New: For enum to string conversions
-#include "filter/JsonUtils.h"
+#include "core/error.h"
+#include "core/log/types.h" // For LogEntry
+#include "filter/condition.h" // For FilterCondition
+#include "filter/types.h"     // For FilterLogicalOperator
+#include "filter/enum_string_conversions.h" // New: For enum to string conversions
+#include "filter/json_utils.h"
 
 namespace filter {
 

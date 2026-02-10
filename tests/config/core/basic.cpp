@@ -2,10 +2,10 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "gtest/gtest.h"
-#include "config/Settings.h"
-#include "core/Log/Types.h"
-#include "export/Core.h" // For ExportFieldMapping
-#include "filter/Types.h"
+#include "config/settings.h"
+#include "core/log/types.h"
+#include "export/core.h" // For ExportFieldMapping
+#include "filter/types.h"
 #include <string>
 #include <algorithm> // For std::find_if
 #include <vector>

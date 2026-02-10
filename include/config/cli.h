@@ -4,11 +4,11 @@
 #ifndef CLICONFIG_H
 #define CLICONFIG_H
 
-#include "core/Log/Types.h" // For LogLevel
-#include "filter/Types.h" // For SortBy, SortOrder, FilterLogicalOperator
-#include "config/Settings.h" // To return a populated LogAnalyzerSettings object
-#include "config/CommonTypes.h" // For shared types and maps
-#include "core/Error.h"    // For Error struct and Result alias
+#include "core/log/types.h" // For LogLevel
+#include "filter/types.h" // For SortBy, SortOrder, FilterLogicalOperator
+#include "config/settings.h" // To return a populated LogAnalyzerSettings object
+#include "config/common_types.h" // For shared types and maps
+#include "core/error.h"    // For Error struct and Result alias
 #include <string>
 #include <vector>
 #include <chrono>
