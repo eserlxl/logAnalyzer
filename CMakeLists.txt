@@ -163,37 +163,37 @@ endif()
 
 # Library source files
 set(LIB_SOURCES
-    src/analyzer/Log/Reader.cpp
-    src/analyzer/Log/Writer.cpp
-    src/analyzer/Log/Loader.cpp
-    src/analyzer/Stats.cpp
-    src/analyzer/Core.cpp
-    src/analyzer/IO.cpp
-    src/analyzer/Export.cpp
-    src/analyzer/Filter.cpp
-    src/analyzer/Streaming.cpp
-    src/config/Core.cpp
-    src/config/CoreJson.cpp
-    src/config/CoreValidation.cpp
-    src/config/Utils.cpp
-    src/config/CLI.cpp
-    src/core/Log/Parser.cpp
-    src/core/Log/ParserUtils.cpp
-    src/core/Log/JsonParser.cpp
-    src/core/Log/Types.cpp
-    src/export/Core.cpp
-    src/export/Json.cpp
-    src/filter/EnumStringConversions.cpp
-    src/filter/Expression.cpp
-    src/filter/ConcreteFilters.cpp
-    src/filter/ConditionEvaluation.cpp
-    src/filter/Parser.cpp
-    src/stats/Core.cpp
-    src/utils/IpAddress.cpp
-    src/utils/Version.cpp
-    src/utils/Time.cpp
-    src/utils/String.cpp
-    src/utils/Core.cpp
+    src/analyzer/log/reader.cpp
+    src/analyzer/log/writer.cpp
+    src/analyzer/log/loader.cpp
+    src/analyzer/stats.cpp
+    src/analyzer/core.cpp
+    src/analyzer/io.cpp
+    src/analyzer/export.cpp
+    src/analyzer/filter.cpp
+    src/analyzer/streaming.cpp
+    src/config/core.cpp
+    src/config/json.cpp
+    src/config/validation.cpp
+    src/config/utils.cpp
+    src/config/cli.cpp
+    src/core/log/parser.cpp
+    src/core/log/parser_utils.cpp
+    src/core/log/json_parser.cpp
+    src/core/log/types.cpp
+    src/export/core.cpp
+    src/export/json.cpp
+    src/filter/enum_string_conversions.cpp
+    src/filter/expression.cpp
+    src/filter/concrete_filters.cpp
+    src/filter/condition_evaluation.cpp
+    src/filter/parser.cpp
+    src/stats/core.cpp
+    src/utils/ip_address.cpp
+    src/utils/version.cpp
+    src/utils/time.cpp
+    src/utils/string.cpp
+    src/utils/core.cpp
 )
 
 add_library(LogAnalyzerLib ${LIB_SOURCES})
@@ -225,6 +225,60 @@ else()
     target_compile_options(logAnalyzer PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
+
+
+# Formatting target
+find_program(CLANG_FORMAT_BIN "clang-format")
+if(CLANG_FORMAT_BIN)
+    file(GLOB_RECURSE ALL_CPP_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp" "${CMAKE_SOURCE_DIR}/include/*.h")
+    add_custom_target(format
+        COMMAND ${CLANG_FORMAT_BIN} -i ${ALL_CPP_FILES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Formatting C++ source code with clang-format"
+    )
+else()
+    message(WARNING "clang-format not found. 'format' target will not be available.")
+endif()
+
+# Documentation target
+find_program(DOXYGEN_BIN "doxygen")
+if(DOXYGEN_BIN)
+    # Configure Doxyfile for this project
+    set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in") # Assume a Doxyfile.in might exist
+    set(DOXYFILE_OUT "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
+
+    if(NOT EXISTS "${DOXYFILE_IN}")
+        # If Doxyfile.in doesn't exist, create a basic one dynamically
+        file(WRITE "${DOXYFILE_OUT}" "
+            PROJECT_NAME       = \"logAnalyzer\"
+            PROJECT_BRIEF      = \"High-Performance C++ Utility for Advanced Log Analysis\"
+            OUTPUT_DIRECTORY   = \"${CMAKE_CURRENT_BINARY_DIR}/docs\"
+            GENERATE_LATEX     = NO
+            GENERATE_HTML      = YES
+            HTML_OUTPUT        = html
+            CASE_SENSE_NAMES   = NO
+            INPUT              = \"${CMAKE_CURRENT_SOURCE_DIR}/include\" \"${CMAKE_CURRENT_SOURCE_DIR}/src\"
+            RECURSIVE          = YES
+            EXCLUDE_PATTERNS   = */tests/*
+            FILE_PATTERNS      = *.h *.hpp *.cpp *.cc *.c
+            QUIET              = YES
+            WARN_NO_PARAM      = NO
+        ")
+    else()
+        # If Doxyfile.in exists, configure it
+        configure_file("${DOXYFILE_IN}" "${DOXYFILE_OUT}" @ONLY)
+    endif()
+
+    add_custom_target(doc
+        COMMAND ${DOXYGEN_BIN} ${DOXYFILE_OUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
+else()
+    message(WARNING "Doxygen not found. 'doc' target will not be available.")
+endif()
+
 # Installation
 include(GNUInstallDirs)
 set(LOGANALYZER_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/logAnalyzer")
@@ -241,7 +295,7 @@ install(TARGETS LogAnalyzerLib
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/logAnalyzerConfig.cmake.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfig.cmake"
     INSTALL_DESTINATION "${LOGANALYZER_INSTALL_CMAKEDIR}"
 )

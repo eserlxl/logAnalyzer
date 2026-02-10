@@ -5,8 +5,8 @@
 | **Memory-Efficient Processing** | Handles massive files with minimal memory usage using the `--stream` mode.                              |
 | **Multi-File Support**       | Parses and analyzes multiple log files in a single run.                                                 |
 | **Sorting**                  | Sort results by timestamp, log level, message, or other fields in ascending or descending order.        |
-| **Structured FieldParsing** | Automatically parses log messages into fields using custom patterns (regex) or by natively parsing full JSON log lines. Supports applying different patterns/parsers to different files in the same session, perfect for analyzing logs from multiple microservices. |
-| **Keyword & Regex Filtering**| Filter by log level, keywords, glob patterns (anchored), and case-sensitive/insensitive regular expressions. |
+| **Structured FieldParsing** | Automatically parses log messages into fields using custom patterns (regex) or by natively parsing full JSON log lines. |
+| **Keyword & Regex Filtering**| Filter by log level, keywords, and case-sensitive/insensitive regular expressions. |
 | **Field-Value Matching**     | Match field values with case-sensitive/insensitive text, regex, and glob patterns.                      |
 | **Nested Field Filtering**   | Target nested fields within structured data (e.g., `user.id` in a JSON log).                            |
 | **Advanced Data Types**      | Compare fields as `version` numbers (semantic versioning) or `IP addresses`.                            |

@@ -115,7 +115,7 @@ For a deep dive into all functionalities and more detailed examples, check out o
   logAnalyzer app.log --expression "level >= WARNING AND message contains 'timeout'"
   ```
 - **JSON filter expression workflows (C++ API):**
-  Build, serialize, and deserialize nested filter-expression trees via the `filter::FilterExpression` JSON APIs (see tests under `tests/filter/CoreJson/*` and the API reference).
+  Build, serialize, and deserialize nested filter-expression trees via the `filter::FilterExpression` JSON APIs (see tests under `tests/filter/core_json/*` and the API reference).
 - **Multi-line entry parsing**:
   ```bash
   logAnalyzer app.log \
