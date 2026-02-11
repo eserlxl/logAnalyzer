@@ -2,11 +2,8 @@
 // Copyright (c) 2024 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "filter/core.h"
-#include "filter/legacy.h"
 #include "filter/condition.h"
 #include "filter/types.h"
-#include "filter/expression.h"
 #include "core/log/types.h"
 #include <nlohmann/json.hpp>
 #include <optional>
