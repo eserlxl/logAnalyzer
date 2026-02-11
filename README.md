@@ -9,11 +9,12 @@
 [![CI Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/ci.yml/badge.svg?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer/actions/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue.svg?style=for-the-badge)](https://cmake.org)
 [![Project Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/eserlxl/logAnalyzer?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer/releases)
 
 ---
 ## 📚 Table of Contents
-- [🤔 Why logAnalyzer?](#-why-loganalyzer)
-- [✨ Key Features](#-key-features)
+- [🤔 Why logAnalyzer?](#why-loganalyzer)
+- [✨ Key Features](#key-features)
 - [🚀 Installation](#-installation)
 - [⚡ Quick Start](#-quick-start)
 - [⚙️ Configuration](#️-configuration)
