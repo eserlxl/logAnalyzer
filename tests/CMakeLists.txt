@@ -102,7 +102,7 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     string(REPLACE "/" "_" TEST_NAME_FULL "${TEST_SOURCE}")
     string(REPLACE ".cpp" "" TEST_NAME "${TEST_NAME_FULL}")
     
-    set(TEST_LABEL "${TEST_NAME}")
+
 
     # Create an executable for each test file
     add_executable(${TEST_NAME} ${TEST_SOURCE})
