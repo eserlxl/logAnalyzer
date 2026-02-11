@@ -5,7 +5,7 @@
 #include "filter/core.h"
 #include "core/log/types.h"
 #include <nlohmann/json.hpp>
-#include "filter_json_fixture.h"
+#include "../core_json/filter_json_fixture.h"
 
 using namespace filter;
 

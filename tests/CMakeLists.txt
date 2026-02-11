@@ -112,6 +112,7 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
 
 
     # Create an executable for each test file
+set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
     add_executable(${TEST_NAME} ${TEST_SOURCE})
     loganalyzer_apply_sanitizers_and_coverage(${TEST_NAME})
 

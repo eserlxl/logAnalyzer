@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "utils.h"
+#include "test_utils.h"
 #include "filter/expression.h" // Added
 #include "filter/condition.h" // Added
 #include "filter/types.h" // Added
