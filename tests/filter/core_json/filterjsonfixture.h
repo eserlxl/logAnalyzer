@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (c) 2026 Eser KUBALI
+
 #ifndef FILTER_JSON_FIXTURE_H
 #define FILTER_JSON_FIXTURE_H
 
