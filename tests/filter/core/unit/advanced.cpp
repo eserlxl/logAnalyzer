@@ -25,23 +25,23 @@ protected:
 
 TEST_F(FilterTest, SourceFileFilterRegex) {
     SourceFileFilter filter("server.*\\.log", PatternType::Regex); // Matches server anything .log
-    auto entry1 = createLogEntry(1, "server-alpha.log", now, LogLevel::INFO, "Server started");
-    auto entry2 = createLogEntry(2, "production.server.log", now, LogLevel::INFO, "Production server log");
-    auto entry3 = createLogEntry(3, "server_log", now, LogLevel::INFO, "No match");
+    auto entry1 = createLogEntry(1, LogLevel::INFO, "Server started", now, {}, "server-alpha.log");
+    auto entry2 = createLogEntry(2, LogLevel::INFO, "Production server log", now, {}, "production.server.log");
+    auto entry3 = createLogEntry(3, LogLevel::INFO, "No match", now, {}, "server_log");
     EXPECT_TRUE(filter.matches(entry1));
     EXPECT_TRUE(filter.matches(entry2));
     EXPECT_FALSE(filter.matches(entry3));
 
     SourceFileFilter filter_icase("SERVER.*\\.LOG", PatternType::Regex, false);
-    auto entry4 = createLogEntry(4, "Server-Alpha.log", now, LogLevel::INFO, "Server started");
+    auto entry4 = createLogEntry(4, LogLevel::INFO, "Server started", now, {}, "Server-Alpha.log");
     EXPECT_TRUE(filter_icase.matches(entry4));
 }
 
 TEST_F(FilterTest, SourceFileFilterWildcard) {
     // New test for standardized wildcard behavior (anchored)
     SourceFileFilter filter("server*.log", PatternType::Wildcard);
-    auto entry1 = createLogEntry(1, "server-alpha.log", now, LogLevel::INFO, "Match");
-    auto entry2 = createLogEntry(2, "production.server.log", now, LogLevel::INFO, "No Match");
+    auto entry1 = createLogEntry(1, LogLevel::INFO, "Match", now, {}, "server-alpha.log");
+    auto entry2 = createLogEntry(2, LogLevel::INFO, "No Match", now, {}, "production.server.log");
     EXPECT_TRUE(filter.matches(entry1));
     EXPECT_FALSE(filter.matches(entry2)); // Should not match because of anchored regex
 }
@@ -49,8 +49,8 @@ TEST_F(FilterTest, SourceFileFilterWildcard) {
 TEST_F(FilterTest, FieldValueFilterRegex) {
     // Default caseSensitive is false, so it should be case-insensitive
     FieldValueFilter filter_regex("error_code", R"(ERR\d{3})", PatternType::Regex);
-    auto entry3 = createLogEntry(3, "app.log", now, LogLevel::ERROR, "DB error", {{"error_code", "ERR501"}});
-    auto entry4 = createLogEntry(4, "app.log", now, LogLevel::ERROR, "Network error", {{"error_code", "err200"}});
+    auto entry3 = createLogEntry(3, LogLevel::ERROR, "DB error", now, {{"error_code", "ERR501"}}, "app.log");
+    auto entry4 = createLogEntry(4, LogLevel::ERROR, "Network error", now, {{"error_code", "err200"}}, "app.log");
     EXPECT_TRUE(filter_regex.matches(entry3)); // ERR501 matches ERR\d{3} case-insensitively
     EXPECT_TRUE(filter_regex.matches(entry4)); // err200 matches ERR\d{3} case-insensitively
 
@@ -61,8 +61,8 @@ TEST_F(FilterTest, FieldValueFilterRegex) {
 
 TEST_F(FilterTest, FieldValueFilterRegexCaseSensitive) {
     FieldValueFilter filter_regex_cs("error_code", R"(ERR\d{3})", PatternType::Regex, true); // Explicitly case sensitive
-    auto entry3 = createLogEntry(3, "app.log", now, LogLevel::ERROR, "DB error", {{"error_code", "ERR501"}});
-    auto entry4 = createLogEntry(4, "app.log", now, LogLevel::ERROR, "Network error", {{"error_code", "err200"}});
+    auto entry3 = createLogEntry(3, LogLevel::ERROR, "DB error", now, {{"error_code", "ERR501"}}, "app.log");
+    auto entry4 = createLogEntry(4, LogLevel::ERROR, "Network error", now, {{"error_code", "err200"}}, "app.log");
     EXPECT_TRUE(filter_regex_cs.matches(entry3));
     EXPECT_FALSE(filter_regex_cs.matches(entry4)); // Should not match 'err'
 }
@@ -72,8 +72,8 @@ TEST_F(FilterTest, RegexFilterCaseSensitive) {
     ASSERT_TRUE(filter_res_cs.has_value()) << filter_res_cs.error();
     auto filter_cs = filter_res_cs.value();
 
-    auto entry1 = createLogEntry(1, "app.log", now, LogLevel::INFO, "error found");
-    auto entry2 = createLogEntry(2, "app.log", now, LogLevel::INFO, "Error found");
+    auto entry1 = createLogEntry(1, LogLevel::INFO, "error found", now, {}, "app.log");
+    auto entry2 = createLogEntry(2, LogLevel::INFO, "Error found", now, {}, "app.log");
     EXPECT_FALSE(filter_cs->matches(entry1));
     EXPECT_TRUE(filter_cs->matches(entry2));
 
@@ -88,10 +88,10 @@ TEST_F(FilterTest, RegexFilterCaseSensitive) {
     auto filter_complex_res = RegexFilter::create("^(warn|error|fatal).*$", false);
     ASSERT_TRUE(filter_complex_res.has_value()) << filter_complex_res.error();
     auto filter_complex = filter_complex_res.value();
-    EXPECT_TRUE(filter_complex->matches(createLogEntry(3, "app.log", now, LogLevel::WARNING, "Warning: Something happened")));
-    EXPECT_TRUE(filter_complex->matches(createLogEntry(4, "app.log", now, LogLevel::ERROR, "ERROR: Critical issue")));
-    EXPECT_TRUE(filter_complex->matches(createLogEntry(5, "app.log", now, LogLevel::FATAL, "fatal: System down")));
-    EXPECT_FALSE(filter_complex->matches(createLogEntry(6, "app.log", now, LogLevel::INFO, "info: All good")));
+    EXPECT_TRUE(filter_complex->matches(createLogEntry(3, LogLevel::WARNING, "Warning: Something happened", now, {}, "app.log")));
+    EXPECT_TRUE(filter_complex->matches(createLogEntry(4, LogLevel::ERROR, "ERROR: Critical issue", now, {}, "app.log")));
+    EXPECT_TRUE(filter_complex->matches(createLogEntry(5, LogLevel::FATAL, "fatal: System down", now, {}, "app.log")));
+    EXPECT_FALSE(filter_complex->matches(createLogEntry(6, LogLevel::INFO, "info: All good", now, {}, "app.log")));
 }
 
 TEST_F(FilterTest, RegexFilterInvalidPattern) {
@@ -106,9 +106,9 @@ TEST_F(FilterTest, RegexFilterInvalidPattern) {
 TEST_F(FilterTest, NumericComparisonFilter) {
     // EQ
     NumericComparisonFilter eq_filter("status_code", 200, NumericComparisonFilter::Operator::EQ);
-    auto entry_eq_match = createLogEntry(1, "web.log", now, LogLevel::INFO, "Success", {{"status_code", "200"}});
-    auto entry_eq_mismatch = createLogEntry(2, "web.log", now, LogLevel::INFO, "Not found", {{"status_code", "404"}});
-    auto entry_eq_double = createLogEntry(3, "web.log", now, LogLevel::INFO, "Partial OK", {{"response_time", "250.75"}});
+    auto entry_eq_match = createLogEntry(1, LogLevel::INFO, "Success", now, {{"status_code", "200"}}, "web.log");
+    auto entry_eq_mismatch = createLogEntry(2, LogLevel::INFO, "Not found", now, {{"status_code", "404"}}, "web.log");
+    auto entry_eq_double = createLogEntry(3, LogLevel::INFO, "Partial OK", now, {{"response_time", "250.75"}}, "web.log");
     EXPECT_TRUE(eq_filter.matches(entry_eq_match));
     EXPECT_FALSE(eq_filter.matches(entry_eq_mismatch));
     EXPECT_FALSE(eq_filter.matches(entry_eq_double)); // Comparing double with int
@@ -144,16 +144,16 @@ TEST_F(FilterTest, NumericComparisonFilter) {
 
     // Non-numeric field
     NumericComparisonFilter non_numeric_filter("status_code", 100, NumericComparisonFilter::Operator::EQ);
-    auto entry_non_numeric = createLogEntry(4, "web.log", now, LogLevel::INFO, "Text status", {{"status_code", "OK"}});
+    auto entry_non_numeric = createLogEntry(4, LogLevel::INFO, "Text status", now, {{"status_code", "OK"}}, "web.log");
     EXPECT_FALSE(non_numeric_filter.matches(entry_non_numeric));
 }
 
 TEST_F(FilterTest, DottedKeyNumericComparisonFilter) {
     // EQ
     DottedKeyNumericComparisonFilter eq_filter("request.duration_ms", 50.5, NumericComparisonFilter::Operator::EQ);
-    auto entry_match = createLogEntry(1, "api.log", now, LogLevel::INFO, "Request processed", {{"request.duration_ms", "50.5"}});
-    auto entry_mismatch = createLogEntry(2, "api.log", now, LogLevel::INFO, "Request processed", {{"request.duration_ms", "100.0"}});
-    auto entry_nested_mismatch = createLogEntry(3, "api.log", now, LogLevel::INFO, "Request processed", {{"response.duration_ms", "50.5"}});
+    auto entry_match = createLogEntry(1, LogLevel::INFO, "Request processed", now, {{"request.duration_ms", "50.5"}}, "api.log");
+    auto entry_mismatch = createLogEntry(2, LogLevel::INFO, "Request processed", now, {{"request.duration_ms", "100.0"}}, "api.log");
+    auto entry_nested_mismatch = createLogEntry(3, LogLevel::INFO, "Request processed", now, {{"response.duration_ms", "50.5"}}, "api.log");
     EXPECT_TRUE(eq_filter.matches(entry_match));
     EXPECT_FALSE(eq_filter.matches(entry_mismatch));
     EXPECT_FALSE(eq_filter.matches(entry_nested_mismatch));
@@ -173,44 +173,44 @@ TEST_F(FilterTest, DottedKeyNumericComparisonFilter) {
     EXPECT_FALSE(missing_field_filter.matches(entry_match));
 
     // Non-numeric field
-    auto entry_non_numeric = createLogEntry(4, "api.log", now, LogLevel::INFO, "Request processed", {{"request.duration_ms", "fast"}});
+    auto entry_non_numeric = createLogEntry(4, LogLevel::INFO, "Request processed", now, {{"request.duration_ms", "fast"}}, "api.log");
     EXPECT_FALSE(eq_filter.matches(entry_non_numeric));
 }
 
 TEST_F(FilterTest, NumericComparisonFilterFloatingPointPrecision) {
     // Test EQ with values very close
     NumericComparisonFilter eq_filter("value", 100.0, NumericComparisonFilter::Operator::EQ);
-    EXPECT_TRUE(eq_filter.matches(createLogEntry(1, "log", now, LogLevel::INFO, "msg", {{"value", "100.0000000001"}}))); // Within epsilon
-    EXPECT_TRUE(eq_filter.matches(createLogEntry(2, "log", now, LogLevel::INFO, "msg", {{"value", "99.9999999999"}})));  // Within epsilon
-    EXPECT_FALSE(eq_filter.matches(createLogEntry(3, "log", now, LogLevel::INFO, "msg", {{"value", "100.000001"}}))); // Outside epsilon (e.g., 1e-6 difference)
+    EXPECT_TRUE(eq_filter.matches(createLogEntry(1, LogLevel::INFO, "msg", now, {{"value", "100.0000000001"}}, "log")));
+    EXPECT_TRUE(eq_filter.matches(createLogEntry(2, LogLevel::INFO, "msg", now, {{"value", "99.9999999999"}}, "log")));
+    EXPECT_FALSE(eq_filter.matches(createLogEntry(3, LogLevel::INFO, "msg", now, {{"value", "100.000001"}}, "log")));
 
     // Test NEQ with values very close
     NumericComparisonFilter neq_filter("value", 100.0, NumericComparisonFilter::Operator::NEQ);
-    EXPECT_FALSE(neq_filter.matches(createLogEntry(4, "log", now, LogLevel::INFO, "msg", {{"value", "100.0000000001"}}))); // Within epsilon, so considered equal
-    EXPECT_FALSE(neq_filter.matches(createLogEntry(5, "log", now, LogLevel::INFO, "msg", {{"value", "99.9999999999"}})));  // Within epsilon, so considered equal
-    EXPECT_TRUE(neq_filter.matches(createLogEntry(6, "log", now, LogLevel::INFO, "msg", {{"value", "100.000001"}})));  // Outside epsilon, so considered not equal
+    EXPECT_FALSE(neq_filter.matches(createLogEntry(4, LogLevel::INFO, "msg", now, {{"value", "100.0000000001"}}, "log")));
+    EXPECT_FALSE(neq_filter.matches(createLogEntry(5, LogLevel::INFO, "msg", now, {{"value", "99.9999999999"}}, "log")));
+    EXPECT_TRUE(neq_filter.matches(createLogEntry(6, LogLevel::INFO, "msg", now, {{"value", "100.000001"}}, "log")));
 }
 
 TEST_F(FilterTest, DottedKeyNumericComparisonFilterFloatingPointPrecision) {
     // Test EQ with values very close
     DottedKeyNumericComparisonFilter eq_filter("metric.value", 100.0, NumericComparisonFilter::Operator::EQ);
-    EXPECT_TRUE(eq_filter.matches(createLogEntry(1, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.0000000001"}})));
-    EXPECT_TRUE(eq_filter.matches(createLogEntry(2, "log", now, LogLevel::INFO, "msg", {{"metric.value", "99.9999999999"}})));
-    EXPECT_FALSE(eq_filter.matches(createLogEntry(3, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.000001"}})));
+    EXPECT_TRUE(eq_filter.matches(createLogEntry(1, LogLevel::INFO, "msg", now, {{"metric.value", "100.0000000001"}}, "log")));
+    EXPECT_TRUE(eq_filter.matches(createLogEntry(2, LogLevel::INFO, "msg", now, {{"metric.value", "99.9999999999"}}, "log")));
+    EXPECT_FALSE(eq_filter.matches(createLogEntry(3, LogLevel::INFO, "msg", now, {{"metric.value", "100.000001"}}, "log")));
 
     // Test NEQ with values very close
     DottedKeyNumericComparisonFilter neq_filter("metric.value", 100.0, NumericComparisonFilter::Operator::NEQ);
-    EXPECT_FALSE(neq_filter.matches(createLogEntry(4, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.0000000001"}})));
-    EXPECT_FALSE(neq_filter.matches(createLogEntry(5, "log", now, LogLevel::INFO, "msg", {{"metric.value", "99.9999999999"}})));  // Within epsilon, so considered equal
-    EXPECT_TRUE(neq_filter.matches(createLogEntry(6, "log", now, LogLevel::INFO, "msg", {{"metric.value", "100.000001"}})));  // Outside epsilon, so considered not equal
+    EXPECT_FALSE(neq_filter.matches(createLogEntry(4, LogLevel::INFO, "msg", now, {{"metric.value", "100.0000000001"}}, "log")));
+    EXPECT_FALSE(neq_filter.matches(createLogEntry(5, LogLevel::INFO, "msg", now, {{"metric.value", "99.9999999999"}}, "log")));
+    EXPECT_TRUE(neq_filter.matches(createLogEntry(6, LogLevel::INFO, "msg", now, {{"metric.value", "100.000001"}}, "log")));
 }
 
 TEST_F(FilterTest, DottedKeyBoolFilter) {
     DottedKeyBoolFilter filter_true("user.is_admin", true);
-    auto entry_true_match = createLogEntry(1, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "true"}});
-    auto entry_true_mismatch = createLogEntry(2, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "false"}});
-    auto entry_true_numeric = createLogEntry(3, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "1"}});
-    auto entry_true_nested_mismatch = createLogEntry(4, "user.log", now, LogLevel::INFO, "User info", {{"account.is_admin", "true"}});
+    auto entry_true_match = createLogEntry(1, LogLevel::INFO, "User info", now, {{"user.is_admin", "true"}}, "user.log");
+    auto entry_true_mismatch = createLogEntry(2, LogLevel::INFO, "User info", now, {{"user.is_admin", "false"}}, "user.log");
+    auto entry_true_numeric = createLogEntry(3, LogLevel::INFO, "User info", now, {{"user.is_admin", "1"}}, "user.log");
+    auto entry_true_nested_mismatch = createLogEntry(4, LogLevel::INFO, "User info", now, {{"account.is_admin", "true"}}, "user.log");
 
     EXPECT_TRUE(filter_true.matches(entry_true_match));
     EXPECT_FALSE(filter_true.matches(entry_true_mismatch));
@@ -218,8 +218,8 @@ TEST_F(FilterTest, DottedKeyBoolFilter) {
     EXPECT_FALSE(filter_true.matches(entry_true_nested_mismatch));
 
     DottedKeyBoolFilter filter_false("user.is_admin", false);
-    EXPECT_TRUE(filter_false.matches(createLogEntry(5, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "0"}}))); // Handle "0" as false
-    EXPECT_TRUE(filter_false.matches(createLogEntry(6, "user.log", now, LogLevel::INFO, "User info", {{"user.is_admin", "false"}})));
+    EXPECT_TRUE(filter_false.matches(createLogEntry(5, LogLevel::INFO, "User info", now, {{"user.is_admin", "0"}}, "user.log")));
+    EXPECT_TRUE(filter_false.matches(createLogEntry(6, LogLevel::INFO, "User info", now, {{"user.is_admin", "false"}}, "user.log")));
     EXPECT_FALSE(filter_false.matches(entry_true_match));
     EXPECT_FALSE(filter_false.matches(entry_true_numeric));
 
@@ -231,24 +231,24 @@ TEST_F(FilterTest, DottedKeyBoolFilter) {
 TEST_F(FilterTest, DottedKeyFieldValueFilter) {
     // Literal, case-insensitive
     DottedKeyFieldValueFilter filter_literal("user.role", "admin", PatternType::Literal, false);
-    auto entry_match = createLogEntry(1, "user.log", now, LogLevel::INFO, "User role", {{"user.role", "Admin"}});
-    auto entry_mismatch = createLogEntry(2, "user.log", now, LogLevel::INFO, "User role", {{"user.role", "user"}});
-    auto entry_nested_mismatch = createLogEntry(3, "user.log", now, LogLevel::INFO, "User role", {{"account.role", "Admin"}});
+    auto entry_match = createLogEntry(1, LogLevel::INFO, "User role", now, {{"user.role", "Admin"}}, "user.log");
+    auto entry_mismatch = createLogEntry(2, LogLevel::INFO, "User role", now, {{"user.role", "user"}}, "user.log");
+    auto entry_nested_mismatch = createLogEntry(3, LogLevel::INFO, "User role", now, {{"account.role", "Admin"}}, "user.log");
     EXPECT_TRUE(filter_literal.matches(entry_match));
     EXPECT_FALSE(filter_literal.matches(entry_mismatch));
     EXPECT_FALSE(filter_literal.matches(entry_nested_mismatch));
 
     // Regex
     DottedKeyFieldValueFilter filter_regex("user.id", R"(U\d{3})", PatternType::Regex);
-    auto entry_regex_match = createLogEntry(4, "user.log", now, LogLevel::INFO, "User ID", {{"user.id", "U123"}});
-    auto entry_regex_mismatch = createLogEntry(5, "user.log", now, LogLevel::INFO, "User ID", {{"user.id", "123"}});
+    auto entry_regex_match = createLogEntry(4, LogLevel::INFO, "User ID", now, {{"user.id", "U123"}}, "user.log");
+    auto entry_regex_mismatch = createLogEntry(5, LogLevel::INFO, "User ID", now, {{"user.id", "123"}}, "user.log");
     EXPECT_TRUE(filter_regex.matches(entry_regex_match));
     EXPECT_FALSE(filter_regex.matches(entry_regex_mismatch));
 
     // Wildcard
     DottedKeyFieldValueFilter filter_wildcard("request.path", "/api/v1/*", PatternType::Wildcard);
-    auto entry_wildcard_match = createLogEntry(6, "api.log", now, LogLevel::INFO, "API call", {{"request.path", "/api/v1/users"}});
-    auto entry_wildcard_mismatch = createLogEntry(7, "api.log", now, LogLevel::INFO, "API call", {{"request.path", "/api/v2/users"}});
+    auto entry_wildcard_match = createLogEntry(6, LogLevel::INFO, "API call", now, {{"request.path", "/api/v1/users"}}, "api.log");
+    auto entry_wildcard_mismatch = createLogEntry(7, LogLevel::INFO, "API call", now, {{"request.path", "/api/v2/users"}}, "api.log");
     EXPECT_TRUE(filter_wildcard.matches(entry_wildcard_match));
     EXPECT_FALSE(filter_wildcard.matches(entry_wildcard_mismatch));
 
@@ -259,13 +259,13 @@ TEST_F(FilterTest, DottedKeyFieldValueFilter) {
 
 TEST_F(FilterTest, DottedKeyFieldValueFilterWildcardSubstringMatch) {
     DottedKeyFieldValueFilter filter("request.path", "/api/*/users", PatternType::Wildcard);
-    auto entry1 = createLogEntry(1, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v1/users"}});
-    auto entry2 = createLogEntry(2, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v2/admin/users"}});
-    auto entry3 = createLogEntry(3, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/api/v1/data"}});
+    auto entry1 = createLogEntry(1, LogLevel::INFO, "msg", now, {{"request.path", "/api/v1/users"}}, "api.log");
+    auto entry2 = createLogEntry(2, LogLevel::INFO, "msg", now, {{"request.path", "/api/v2/admin/users"}}, "api.log");
+    auto entry3 = createLogEntry(3, LogLevel::INFO, "msg", now, {{"request.path", "/api/v1/data"}}, "api.log");
     
     // NOTE: Wildcards are now anchored to match the full string (standard glob behavior).
     // "/internal/api/v1/users" should NOT match "/api/*/users" because of the prefix.
-    auto entry4 = createLogEntry(4, "api.log", now, LogLevel::INFO, "msg", {{"request.path", "/internal/api/v1/users"}});
+    auto entry4 = createLogEntry(4, LogLevel::INFO, "msg", now, {{"request.path", "/internal/api/v1/users"}}, "api.log");
 
     EXPECT_TRUE(filter.matches(entry1));
     EXPECT_TRUE(filter.matches(entry2));
@@ -288,8 +288,8 @@ TEST_F(FilterTest, TimeRangeFilterFromStrings) {
     ss_out >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
     auto time_out = std::chrono::system_clock::from_time_t(std::mktime(&tm));
 
-    auto entry1 = createLogEntry(1, "time.log", time_in, LogLevel::INFO, "In time");
-    auto entry2 = createLogEntry(2, "time.log", time_out, LogLevel::INFO, "Out of time");
+    auto entry1 = createLogEntry(1, LogLevel::INFO, "In time", time_in, {}, "time.log");
+    auto entry2 = createLogEntry(2, LogLevel::INFO, "Out of time", time_out, {}, "time.log");
 
     EXPECT_TRUE(filter.matches(entry1));
     EXPECT_FALSE(filter.matches(entry2));
@@ -315,34 +315,34 @@ TEST_F(FilterTest, TimeRangeFilterForDay) {
     std::stringstream ss_day_in_morning("2023-03-10 08:30:00");
     ss_day_in_morning >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
     auto day_in_morning = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-    EXPECT_TRUE(filter_ymd.matches(createLogEntry(1, "day.log", day_in_morning, LogLevel::INFO, "Morning log")));
+    EXPECT_TRUE(filter_ymd.matches(createLogEntry(1, LogLevel::INFO, "Morning log", day_in_morning, {}, "day.log")));
 
     std::stringstream ss_day_in_evening("2023-03-10 22:15:00");
     ss_day_in_evening >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
     auto day_in_evening = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-    EXPECT_TRUE(filter_ymd.matches(createLogEntry(2, "day.log", day_in_evening, LogLevel::INFO, "Evening log")));
+    EXPECT_TRUE(filter_ymd.matches(createLogEntry(2, LogLevel::INFO, "Evening log", day_in_evening, {}, "day.log")));
 
     std::stringstream ss_day_before("2023-03-09 23:59:59");
     ss_day_before >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
     auto day_before = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-    EXPECT_FALSE(filter_ymd.matches(createLogEntry(3, "day.log", day_before, LogLevel::INFO, "Day before")));
+    EXPECT_FALSE(filter_ymd.matches(createLogEntry(3, LogLevel::INFO, "Day before", day_before, {}, "day.log")));
 
     std::stringstream ss_day_after("2023-03-11 00:00:00");
     ss_day_after >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
     auto day_after = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-    EXPECT_FALSE(filter_ymd.matches(createLogEntry(4, "day.log", day_after, LogLevel::INFO, "Day after")));
+    EXPECT_FALSE(filter_ymd.matches(createLogEntry(4, LogLevel::INFO, "Day after", day_after, {}, "day.log")));
     
     // Test end of day boundary (fixed bug)
     std::stringstream ss_day_end("2023-03-10 23:59:59");
     ss_day_end >> std::get_time(&tm, "%Y-%m-%d %H:%M:%S");
     auto day_end = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-    EXPECT_TRUE(filter_ymd.matches(createLogEntry(5, "day.log", day_end, LogLevel::INFO, "End of day")));
+    EXPECT_TRUE(filter_ymd.matches(createLogEntry(5, LogLevel::INFO, "End of day", day_end, {}, "day.log")));
 
     // Valid case MM/DD/YYYY
     auto filter_res_mdy = TimeRangeFilter::forDay("03/10/2023");
     ASSERT_TRUE(filter_res_mdy.has_value()) << filter_res_mdy.error();
     auto filter_mdy = filter_res_mdy.value();
-    EXPECT_TRUE(filter_mdy.matches(createLogEntry(6, "day.log", day_in_morning, LogLevel::INFO, "Morning log MM/DD/YYYY")));
+    EXPECT_TRUE(filter_mdy.matches(createLogEntry(6, LogLevel::INFO, "Morning log MM/DD/YYYY", day_in_morning, {}, "day.log")));
 
     // Invalid date format
     auto invalid_date_res = TimeRangeFilter::forDay("not-a-date");
@@ -362,8 +362,8 @@ TEST_F(FilterTest, TimeRangeFilterSince) {
     auto time_in = std::chrono::system_clock::now() - std::chrono::minutes(2);
     auto time_out = std::chrono::system_clock::now() - std::chrono::minutes(20);
 
-    auto entry1 = createLogEntry(1, "time.log", time_in, LogLevel::INFO, "In time");
-    auto entry2 = createLogEntry(2, "time.log", time_out, LogLevel::INFO, "Out of time");
+    auto entry1 = createLogEntry(1, LogLevel::INFO, "In time", time_in, {}, "time.log");
+    auto entry2 = createLogEntry(2, LogLevel::INFO, "Out of time", time_out, {}, "time.log");
 
     EXPECT_TRUE(filter.matches(entry1));
     EXPECT_FALSE(filter.matches(entry2));

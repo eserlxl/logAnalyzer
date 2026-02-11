@@ -58,7 +58,7 @@ TEST(ExportTestUtilsTest, CreateLogEntry_DefaultParameters) {
     EXPECT_FALSE(entry.timestamp.has_value()); // Default should be nullopt
     EXPECT_TRUE(entry.customFields.empty());   // Default should be empty map
     EXPECT_TRUE(entry.sourceFile.empty());     // Default should be empty string
-    EXPECT_EQ(entry.sourceLineNumber, 0);      // Default should be 0
+    EXPECT_FALSE(entry.sourceLineNumber.has_value()); // Default should be nullopt
 }
 
 TEST(ExportTestUtilsTest, CreateLogEntry_EmptyStringsAndMap) {

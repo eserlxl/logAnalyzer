@@ -180,7 +180,7 @@ inline LogEntry createLogEntry(
     std::optional<std::chrono::system_clock::time_point> timestamp = std::nullopt,
     const std::map<std::string, std::string>& customFields = {},
     const std::string& sourceFile = "",
-    size_t sourceLineNumber = 0
+    std::optional<unsigned int> sourceLineNumber = std::nullopt
 ) {
     LogEntry entry;
     entry.id = id;
