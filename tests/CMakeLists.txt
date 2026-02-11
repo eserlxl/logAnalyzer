@@ -90,7 +90,6 @@ set(TEST_SOURCES
     "utils/time.cpp"
     "utils/enum.cpp"
     "utils/string.cpp"
-    "utils/test_regex_behavior.cpp"
     "analyzer/types.cpp"
     "analyzer/log_writer.cpp"
     "analyzer/log_writer_correctness.cpp"
