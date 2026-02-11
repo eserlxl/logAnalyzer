@@ -147,4 +147,4 @@ All notable changes are documented in the [`CHANGELOG.md`](CHANGELOG.md) file.
 
 ## 📄 License
 
-This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License Version 3. See the [LICENSE](LICENSE) file for details.
