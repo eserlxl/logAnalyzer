@@ -90,22 +90,31 @@ set(TEST_SOURCES
     "utils/time.cpp"
     "utils/enum.cpp"
     "utils/string.cpp"
+    "utils/test_regex_behavior.cpp"
     "analyzer/types.cpp"
     "analyzer/log_writer.cpp"
     "analyzer/log_writer_correctness.cpp"
+    "config/cli/new_feature_test.cpp"
 )
 
 # Loop through each test source file
 foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     # Generate a unique test name based on the path to avoid collisions (e.g. export/Core.cpp vs filter/Core.cpp)
     # "export/Core.cpp" -> "export_Core"
-    string(REPLACE "/" "_" TEST_NAME_FULL "${TEST_SOURCE}")
-    string(REPLACE ".cpp" "" TEST_NAME "${TEST_NAME_FULL}")
+    get_filename_component(FILE_NAME_WE "${TEST_SOURCE}" NAME_WE) # e.g., "input_output" from "config/cli/input_output.cpp"
+    get_filename_component(PARENT_DIR "${TEST_SOURCE}" DIRECTORY) # e.g., "config/cli"
+    string(REPLACE "/" "_" SANITIZED_PARENT_DIR "${PARENT_DIR}") # e.g., "config_cli"
+    if(SANITIZED_PARENT_DIR) # If it's not in the root of tests/
+        set(TEST_NAME "${SANITIZED_PARENT_DIR}_${FILE_NAME_WE}")
+    else()
+        set(TEST_NAME "${FILE_NAME_WE}")
+    endif()
     
 
 
     # Create an executable for each test file
     add_executable(${TEST_NAME} ${TEST_SOURCE})
+    loganalyzer_apply_sanitizers_and_coverage(${TEST_NAME})
 
     # Add project root and tests/include to include path for 'tests/...' includes
     target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -135,18 +144,6 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
         $<$<BOOL:${ENABLE_GMOCK}>:GMock::gmock GMock::gmock_main>
     )
 
-    # Add build options (sanitizers, coverage)
-    target_compile_options(${TEST_NAME} PRIVATE
-        $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address -fno-omit-frame-pointer>
-        $<$<BOOL:${ENABLE_UBSAN}>:-fsanitize=undefined>
-        $<$<BOOL:${ENABLE_COVERAGE}>:--coverage>
-    )
-    target_link_options(${TEST_NAME} PRIVATE
-        $<$<BOOL:${ENABLE_ASAN}>:-fsanitize=address>
-        $<$<BOOL:${ENABLE_UBSAN}>:-fsanitize=undefined>
-        $<$<BOOL:${ENABLE_COVERAGE}>:--coverage>
-    )
-
     # Register the test directly with add_test
     # Create a unique working directory for each test for isolation
     set(TEST_EXECUTION_DIR "${CMAKE_BINARY_DIR}/Testing/Temporary/${TEST_NAME}_working_dir")
@@ -155,12 +152,5 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     add_test(NAME ${TEST_NAME}
         COMMAND $<TARGET_FILE:${TEST_NAME}>
     )
-
-    if(ENABLE_ASAN)
-        # Some constrained CI/sandbox runtimes execute tests under ptrace-like supervision
-        # where LeakSanitizer cannot operate. Keep ASAN checks active while disabling LSan.
-        set_tests_properties(${TEST_NAME} PROPERTIES
-            ENVIRONMENT "ASAN_OPTIONS=quarantine_size_mb=64:thread_local_quarantine_size_kb=1024:malloc_context_size=10:symbolize=0:detect_leaks=0"
-        )
-    endif()
 endforeach()
+

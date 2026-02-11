@@ -12,6 +12,10 @@ endif()
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
+
 option(LOGANALYZER_FETCH_DEPS "Fetch third-party dependencies with FetchContent when not found locally" ON)
 option(LOGANALYZER_OFFLINE_DEPS "Disallow network dependency fetches; use system packages or local mirror/source dirs" OFF)
 set(LOGANALYZER_DEPS_MIRROR_DIR "" CACHE PATH "Local mirror root containing nlohmann_json/, cli11/, and googletest/ source trees")
@@ -21,6 +25,7 @@ set(LOGANALYZER_GTEST_SOURCE_DIR "" CACHE PATH "Local source directory override 
 
 include(FetchContent)
 include(CMakePackageConfigHelpers)
+include(cmake/LogAnalyzerCompilerSettings.cmake)
 
 # nlohmann_json
 find_package(nlohmann_json 3.11.3 QUIET CONFIG)
@@ -197,6 +202,7 @@ set(LIB_SOURCES
 )
 
 add_library(LogAnalyzerLib ${LIB_SOURCES})
+loganalyzer_apply_sanitizers_and_coverage(LogAnalyzerLib)
 target_include_directories(LogAnalyzerLib
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -218,6 +224,11 @@ endif()
 # Main executable
 add_executable(logAnalyzer src/main.cpp)
 target_link_libraries(logAnalyzer PRIVATE LogAnalyzerLib)
+loganalyzer_apply_sanitizers_and_coverage(logAnalyzer)
+
+# Add sanitizer and coverage flags
+
+
 
 if(MSVC)
     target_compile_options(logAnalyzer PRIVATE /W4 /WX)
@@ -247,27 +258,8 @@ if(DOXYGEN_BIN)
     set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in") # Assume a Doxyfile.in might exist
     set(DOXYFILE_OUT "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
 
-    if(NOT EXISTS "${DOXYFILE_IN}")
-        # If Doxyfile.in doesn't exist, create a basic one dynamically
-        file(WRITE "${DOXYFILE_OUT}" "
-            PROJECT_NAME       = \"logAnalyzer\"
-            PROJECT_BRIEF      = \"High-Performance C++ Utility for Advanced Log Analysis\"
-            OUTPUT_DIRECTORY   = \"${CMAKE_CURRENT_BINARY_DIR}/docs\"
-            GENERATE_LATEX     = NO
-            GENERATE_HTML      = YES
-            HTML_OUTPUT        = html
-            CASE_SENSE_NAMES   = NO
-            INPUT              = \"${CMAKE_CURRENT_SOURCE_DIR}/include\" \"${CMAKE_CURRENT_SOURCE_DIR}/src\"
-            RECURSIVE          = YES
-            EXCLUDE_PATTERNS   = */tests/*
-            FILE_PATTERNS      = *.h *.hpp *.cpp *.cc *.c
-            QUIET              = YES
-            WARN_NO_PARAM      = NO
-        ")
-    else()
-        # If Doxyfile.in exists, configure it
-        configure_file("${DOXYFILE_IN}" "${DOXYFILE_OUT}" @ONLY)
-    endif()
+    # If Doxyfile.in exists, configure it
+    configure_file("${DOXYFILE_IN}" "${DOXYFILE_OUT}" @ONLY)
 
     add_custom_target(doc
         COMMAND ${DOXYGEN_BIN} ${DOXYFILE_OUT}

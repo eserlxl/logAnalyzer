@@ -3,8 +3,13 @@
 #include <regex>
 #include <map>
 
+std::regex createKvPattern() {
+    std::string pattern_str = R"RAW(([a-zA-Z0-9_.-]+)\s*=\s*(?:"(.*?)"|'([^']*)'|([^\s,]*?(?:(?=[a-zA-Z0-9_.-]+\s*=)|$)))[, ]*)RAW";
+    return std::regex(pattern_str);
+}
+
 void test_regex_behavior(const std::string& message) {
-    static const std::regex kvPattern("([a-zA-Z0-9_.-]+)\\s*=\\s*(?:\\"(.*?)\\"|'([^']*)'|([^\\s,]*?(?:(?=[a-zA-Z0-9_.-]+\\s*=)|$)))[, ]*", std::regex::optimize);
+    static const std::regex kvPattern = createKvPattern();
     std::sregex_iterator next(message.begin(), message.end(), kvPattern);
     std::sregex_iterator end;
 
