@@ -213,10 +213,12 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     // Sorting
     app.add_option("--sort-by", appOptions.sortBy, "Sort entries by field")
-       ->transform(CLI::CheckedTransformer(Config::SortByMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::SortByMap, CLI::ignore_case))
+       ->multi_option_policy(CLI::MultiOptionPolicy::TakeLast);
     
     app.add_option("--order", appOptions.sortOrder, "Sort order")
-       ->transform(CLI::CheckedTransformer(Config::SortOrderMap, CLI::ignore_case));
+       ->transform(CLI::CheckedTransformer(Config::SortOrderMap, CLI::ignore_case))
+       ->multi_option_policy(CLI::MultiOptionPolicy::TakeLast);
 
     // Output Configuration
     app.add_option("--pattern", appOptions.lineParsePattern, "Custom regex for parsing log lines");
@@ -235,7 +237,15 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     app.add_option("--format", appOptions.outputFormat, "Output format (text, json, csv, xml)")
        ->transform(CLI::IsMember({"text", "json", "csv", "xml"}, CLI::ignore_case));
     app.add_option("--output", appOptions.outputPath, "Redirect output to a file");
-    app.add_option("--text-format", appOptions.textOutputFormat, "Custom format string for text output. Available: {timestamp}, {level}, {message}, {id}, {sourceFile}, {lineNumber}, {threadId}, {module}, {host}, {customFields}.");
+    app.add_option("--text-format", appOptions.textOutputFormat, "Custom format string for text output. Available: {timestamp}, {level}, {message}, {id}, {sourceFile}, {lineNumber}, {threadId}, {module}, {host}, {customFields}.")
+       ->check([](const std::string &str) -> std::string {
+           long open_braces = std::count(str.begin(), str.end(), '{');
+           long close_braces = std::count(str.begin(), str.end(), '}');
+           if (open_braces != close_braces) {
+               return "Mismatched braces in format string.";
+           }
+           return "";
+       });
     
     app.add_flag("--include-summary", appOptions.includeSummary, "Include summary in JSON output");
     app.add_flag("--pretty", appOptions.prettyPrint, "Pretty-print JSON output");
@@ -247,9 +257,31 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     
     // CSV and JSON Fields
     app.add_option("--csv-fields", appOptions.csvFields, "Ordered list of fields for CSV output (e.g., 'timestamp as Time, level, message')")
-       ->delimiter(',');
+       ->delimiter(',')
+       ->each([](const std::string& f_raw) { // Throws on error
+           std::string f = f_raw;
+           trimInPlace(f);
+           if (f.empty()) {
+               throw CLI::ValidationError("Invalid --csv-fields: list contains an empty element.");
+           }
+           auto parsed = parseFieldAlias(f);
+           if (parsed.first.empty()) {
+                throw CLI::ValidationError("Invalid --csv-fields entry: field '" + f_raw + "' has an empty name in an alias expression.");
+           }
+       });
     app.add_option("--json-fields", appOptions.jsonFields, "Ordered list of fields for JSON output (e.g., 'timestamp as time, log_level as level')")
-       ->delimiter(',');
+       ->delimiter(',')
+       ->each([](const std::string& f_raw) { // Throws on error
+           std::string f = f_raw;
+           trimInPlace(f);
+           if (f.empty()) {
+               throw CLI::ValidationError("Invalid --json-fields: list contains an empty element.");
+           }
+           auto parsed = parseFieldAlias(f);
+           if (parsed.first.empty()) {
+                throw CLI::ValidationError("Invalid --json-fields entry: field '" + f_raw + "' has an empty name in an alias expression.");
+           }
+       });
 
     // Analysis Options
     app.add_flag("--stdin", appOptions.readFromStdin, "Read log entries from standard input (stdin) if no file paths are provided.");
@@ -453,6 +485,9 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         } else if (appOptions.outputFormat == "text") {
             settings.exportSettings.format = ExportFormat::PLAINTEXT;
         }
+    } else {
+        // Default to PLAINTEXT if no format is specified
+        settings.exportSettings.format = ExportFormat::PLAINTEXT;
     }
     
     if (app.count("--sort-by")) {

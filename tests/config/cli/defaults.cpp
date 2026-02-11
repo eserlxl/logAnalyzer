@@ -47,7 +47,8 @@ TEST_F(CLIConfigTest, DefaultValues) {
     ASSERT_TRUE(settings.filterRules.empty()); // No filters by default
     ASSERT_FALSE(settings.rootFilterExpression.has_value());
     ASSERT_FALSE(settings.exportSettings.outputPath.has_value());
-    ASSERT_FALSE(settings.exportSettings.format.has_value());
+    ASSERT_TRUE(settings.exportSettings.format.has_value());
+    ASSERT_EQ(settings.exportSettings.format.value(), ExportFormat::PLAINTEXT);
     ASSERT_FALSE(settings.exportSettings.textOutputFormat.has_value());
     ASSERT_FALSE(settings.exportSettings.includeSummary.has_value());
     ASSERT_FALSE(settings.exportSettings.prettyPrint.has_value());
