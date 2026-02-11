@@ -33,7 +33,7 @@ The test suite relies on data files, which are expected in `tests/data` by defau
 cmake -B build -S . -DLOGANALYZER_TEST_DATA_DIR=/path/to/your/test/data
 ```
 
-Additionally, tests are configured to support various build options. For instance, if you've configured your build with sanitizers (like AddressSanitizer or UndefinedBehaviorSanitizer) or coverage enabled, these will automatically apply to the test executables, helping to ensure code quality and robustness. Refer to the main `CMakeLists.txt` and `cmake/LogAnalyzerCompilerSettings.cmake` for details on enabling these features.
+Additionally, tests are configured to support various build options. For instance, if you've configured your build with sanitizers (like AddressSanitizer or UndefinedBehaviorSanitizer) or coverage enabled, these will automatically apply to the test executables, helping to ensure code quality and robustness. Refer to the main `CMakeLists.txt` and `cmake/compiler_settings.cmake` for details on enabling these features.
 
 
 ### Developer Tools

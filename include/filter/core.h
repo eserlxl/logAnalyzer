@@ -8,7 +8,7 @@
 #include "filter/condition.h"
 #include "filter/expression.h"
 #include "filter/legacy.h"
-#include "filter/ifilter.h"
+#include "filter/i_filter.h"
 #include "filter/concrete_filters.h"
 
 #endif // FILTER_H

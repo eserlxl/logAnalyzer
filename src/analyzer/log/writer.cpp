@@ -9,7 +9,7 @@
 
 #include "analyzer/core.h"
 #include "analyzer/log/writer.h"
-#include "filter/ifilter.h"
+#include "filter/i_filter.h"
 #include "utils/string.h"
 #include "utils/time.h"
 

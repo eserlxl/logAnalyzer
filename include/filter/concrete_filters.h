@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "filter/ifilter.h"
+#include "filter/i_filter.h"
 #include "filter/expression.h"
 #include "core/log/types.h" // For LogLevel, PatternType etc.
 #include "core/error.h"    // For ErrorCode::Result

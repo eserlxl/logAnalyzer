@@ -57,7 +57,7 @@ set(TEST_SOURCES
     "config/utils.cpp"
     "core/log/parser.cpp"
     "core/log/json_parser.cpp"
-    "core/log/parser_utils_tests.cpp"
+    "core/log/parser_utils.cpp"
     "core/log/types.cpp"
     "export/core.cpp"
     "export/json.cpp"
@@ -83,9 +83,9 @@ set(TEST_SOURCES
     "filter/core/unit/advanced.cpp"
     "filter/core/unit/basic.cpp"
     "filter/core/unit/field.cpp"
-    "filter/iteration/iteration_2.cpp"
-    "filter/iteration/iteration_13.cpp"
-    "filter/iteration/iteration_15.cpp"
+    "filter/iteration/2.cpp"
+    "filter/iteration/13.cpp"
+    "filter/iteration/15.cpp"
     "stats/core.cpp"
     "utils/time.cpp"
     "utils/enum.cpp"
@@ -93,7 +93,7 @@ set(TEST_SOURCES
     "analyzer/types.cpp"
     "analyzer/log_writer.cpp"
     "analyzer/log_writer_correctness.cpp"
-    "config/cli/new_feature_test.cpp"
+    "config/cli/new_feature.cpp"
 )
 
 # Loop through each test source file

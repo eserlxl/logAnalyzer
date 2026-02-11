@@ -216,7 +216,14 @@ inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, Filt
         return std::unexpected(makeError(Code::InvalidArgument, "Maximum recursion depth exceeded.", current_path, ""));
     }
 
-    bool current_negated = getOptional<bool>(j, "negated").value_or(false);
+    bool current_negated = false;
+    if (j.contains("negated")) {
+        const auto& negated_json = j.at("negated");
+        if (!negated_json.is_boolean()) {
+            return std::unexpected(makeError(Code::InvalidArgument, "Invalid type for 'negated', must be boolean.", current_path, "negated"));
+        }
+        current_negated = negated_json.get<bool>();
+    }
 
     if (j.contains("condition") && j.at("condition").is_object()) {
         FilterCondition fc;
@@ -239,6 +246,10 @@ inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, Filt
         }
 
         const auto& operands_array = j.at("operands");
+        if (operands_array.empty()) {
+            return std::unexpected(makeError(Code::InvalidArgument, "Operator " + opStr + " 'operands' array cannot be empty.", current_path, "operands"));
+        }
+
         std::vector<FilterExpression> operands;
         for (size_t i = 0; i < operands_array.size(); ++i) {
             FilterExpression operand_fe;

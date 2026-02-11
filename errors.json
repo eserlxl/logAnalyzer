@@ -1,0 +1,19 @@
+{
+    "entries": [
+        {
+            "ID": null,
+            "LEVEL": "ERROR",
+            "MESSAGE": "Database connection failed",
+            "TIMESTAMP": "2023-10-26 10:02:00"
+        },
+        {
+            "ID": null,
+            "LEVEL": "ERROR",
+            "MESSAGE": "Timeout while fetching data",
+            "TIMESTAMP": "2023-10-26 10:04:00"
+        }
+    ],
+    "summary": {
+        "count": 2
+    }
+}

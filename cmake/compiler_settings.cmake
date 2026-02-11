@@ -1,4 +1,4 @@
-# cmake/LogAnalyzerCompilerSettings.cmake
+# cmake/compiler_settings.cmake
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (c) 2026 Eser KUBALI
 

@@ -10,13 +10,20 @@ using namespace filter;
 
 class FilterExpressionJsonTest : public ::testing::Test {
 protected:
-    static FilterCondition createCondition(LogEntryField field, FilterOperator op, const std::string& value) {
+    // Generic helper for creating conditions with different value types
+    template<typename T>
+    static FilterCondition createCondition(LogEntryField field, FilterOperator op, T value, FilterValueType valueType) {
         FilterCondition cond;
         cond.field = field;
         cond.op = op;
         cond.value = value;
-        cond.valueType = FilterValueType::STRING;
+        cond.valueType = valueType;
         return cond;
+    }
+
+    // Overload for string literals to default to STRING type
+    static FilterCondition createCondition(LogEntryField field, FilterOperator op, const char* value) {
+        return createCondition(field, op, std::string(value), FilterValueType::STRING);
     }
 };
 
@@ -75,6 +82,7 @@ TEST_F(FilterExpressionJsonTest, AndExpressionFromJson) {
     ASSERT_TRUE(result.has_value()) << result.error().toString();
 
     EXPECT_TRUE(expr.isLogical());
+    ASSERT_TRUE(expr.getLogicalOperator().has_value());
     EXPECT_EQ(*expr.getLogicalOperator(), FilterLogicalOperator::AND);
     EXPECT_EQ(expr.getExpressions().size(), 2);
 }
@@ -116,11 +124,13 @@ TEST_F(FilterExpressionJsonTest, NestedExpressionFromJson) {
     ASSERT_TRUE(result.has_value()) << result.error().toString();
     
     EXPECT_TRUE(expr.isLogical());
+    ASSERT_TRUE(expr.getLogicalOperator().has_value());
     EXPECT_EQ(*expr.getLogicalOperator(), FilterLogicalOperator::OR);
     EXPECT_EQ(expr.getExpressions().size(), 2);
 
     const auto& nestedAnd = expr.getExpressions()[1];
     EXPECT_TRUE(nestedAnd.isLogical());
+    ASSERT_TRUE(nestedAnd.getLogicalOperator().has_value());
     EXPECT_EQ(*nestedAnd.getLogicalOperator(), FilterLogicalOperator::AND);
     EXPECT_EQ(nestedAnd.getExpressions().size(), 2);
 }
@@ -167,6 +177,25 @@ TEST_F(FilterExpressionJsonTest, NotExpressionToJson) {
     EXPECT_TRUE(j["negated"].get<bool>());
 }
 
+TEST_F(FilterExpressionJsonTest, NotExpressionFromJson) {
+    nlohmann::json j = {
+        {"condition", {
+            {"field", "MESSAGE"},
+            {"op", "CONTAINS"},
+            {"value", "success"},
+            {"value_type", "STRING"}
+        }},
+        {"negated", true}
+    };
+
+    FilterExpression expr;
+    auto result = from_json(j, expr);
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    EXPECT_TRUE(expr.isCondition());
+    EXPECT_TRUE(expr.isNegated());
+}
+
+
 TEST_F(FilterExpressionJsonTest, NestedExpressionToJson) {
     FilterExpression nestedAnd(FilterLogicalOperator::AND, {
         FilterExpression(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "timeout")),
@@ -192,10 +221,12 @@ TEST_F(FilterExpressionJsonTest, NestedExpressionToJson) {
     EXPECT_TRUE(nested["operands"][1]["negated"].get<bool>());
 }
 
-TEST_F(FilterExpressionJsonTest, FromJsonInvalidOperator) {
+TEST_F(FilterExpressionJsonTest, FromJsonInvalidLogicalOperator) {
     nlohmann::json j = {
         {"operator", "XOR"},
-        {"operands", nlohmann::json::array()}
+        {"operands", {
+            {{"condition", {{"field", "MESSAGE"}, {"op", "CONTAINS"}, {"value", "test"}, {"value_type", "STRING"}}}}
+        }}
     };
 
     FilterExpression expr;
@@ -204,6 +235,43 @@ TEST_F(FilterExpressionJsonTest, FromJsonInvalidOperator) {
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
     EXPECT_NE(result.error().message.find("Unknown logical operator"), std::string::npos);
     EXPECT_EQ(result.error().jsonPath, "/operator");
+}
+
+TEST_F(FilterExpressionJsonTest, FromJsonInvalidConditionOperator) {
+    nlohmann::json j = {
+        {"condition", {
+            {"field", "MESSAGE"},
+            {"op", "IS_LIKE_TOTALLY"},
+            {"value", "test"},
+            {"value_type", "STRING"}
+        }}
+    };
+
+    FilterExpression expr;
+    auto result = from_json(j, expr);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().jsonPath, "/condition/op");
+}
+
+TEST_F(FilterExpressionJsonTest, FromJsonInvalidField) {
+    nlohmann::json j = {
+        {"condition", {
+            {"field", "NOT_A_REAL_FIELD"},
+            {"op", "EQUALS"},
+            {"value", "test"},
+            {"value_type", "STRING"}
+        }}
+    };
+
+    FilterExpression expr;
+    auto result = from_json(j, expr);
+    ASSERT_TRUE(result.has_value());
+    const auto& cond = expr.getCondition();
+    ASSERT_TRUE(cond.has_value());
+    EXPECT_EQ(cond->field, LogEntryField::CUSTOM);
+    ASSERT_TRUE(cond->customField.has_value());
+    EXPECT_EQ(cond->customField.value(), "NOT_A_REAL_FIELD");
 }
 
 TEST_F(FilterExpressionJsonTest, FromJsonMissingOperands) {
@@ -218,6 +286,23 @@ TEST_F(FilterExpressionJsonTest, FromJsonMissingOperands) {
     EXPECT_NE(result.error().message.find("requires 'operands' array"), std::string::npos);
     EXPECT_EQ(result.error().jsonPath, "/operands");
 }
+
+TEST_F(FilterExpressionJsonTest, FromJsonMissingConditionField) {
+    nlohmann::json j = {
+        {"condition", {
+            {"op", "EQUALS"},
+            {"value", "test"},
+            {"value_type", "STRING"}
+        }}
+    };
+
+    FilterExpression expr;
+    auto result = from_json(j, expr);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().jsonPath, "/condition/field");
+}
+
 
 TEST_F(FilterExpressionJsonTest, FromJsonNestedErrorPath) {
     nlohmann::json j = {
@@ -254,8 +339,6 @@ TEST_F(FilterExpressionJsonTest, EmptyExpressionRoundTrip) {
     nlohmann::json j;
     to_json(j, original);
     
-    // Should be empty object or just have negated:false (which is default so empty)
-    // Actually, to_json adds nothing for EMPTY if not negated.
     EXPECT_TRUE(j.empty() || (j.contains("negated") && !j["negated"].get<bool>()));
 
     FilterExpression deserialized;
@@ -279,10 +362,10 @@ TEST_F(FilterExpressionJsonTest, EmptyExpressionRoundTrip) {
 }
 
 TEST_F(FilterExpressionJsonTest, MaxRecursionDepthExceeded) {
-    // Create a deeply nested JSON that exceeds limit (50)
+    // Create a deeply nested JSON that exceeds limit
     nlohmann::json j;
     nlohmann::json* current = &j;
-    for (int i = 0; i < 60; ++i) {
+    for (size_t i = 0; i < MAX_JSON_RECURSION_DEPTH + 10; ++i) {
         (*current)["operator"] = "AND";
         (*current)["operands"] = nlohmann::json::array();
         (*current)["operands"].push_back(nlohmann::json::object());
@@ -302,7 +385,7 @@ TEST_F(FilterExpressionJsonTest, MaxRecursionDepthExceeded) {
     EXPECT_NE(result.error().message.find("Maximum recursion depth exceeded"), std::string::npos);
 }
 
-TEST_F(FilterExpressionJsonTest, EmptyOperandsArray) {
+TEST_F(FilterExpressionJsonTest, EmptyOperandsArrayFails) {
     nlohmann::json j = {
         {"operator", "AND"},
         {"operands", nlohmann::json::array()}
@@ -310,8 +393,100 @@ TEST_F(FilterExpressionJsonTest, EmptyOperandsArray) {
     
     FilterExpression expr;
     auto result = from_json(j, expr);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("'operands' array cannot be empty"), std::string::npos);
+    EXPECT_EQ(result.error().jsonPath, "/operands");
+}
+
+TEST_F(FilterExpressionJsonTest, IntegerConditionFromJson) {
+    nlohmann::json j = {
+        {"condition", {
+            {"field", "PID"},
+            {"op", "GREATER_THAN"},
+            {"value", 12345},
+            {"value_type", "INT"}
+        }}
+    };
+
+    FilterExpression expr;
+    auto result = from_json(j, expr);
     ASSERT_TRUE(result.has_value()) << result.error().toString();
-    EXPECT_EQ(expr.getType(), FilterExpression::ExpressionType::LOGICAL);
-    EXPECT_EQ(*expr.getLogicalOperator(), FilterLogicalOperator::AND);
-    EXPECT_TRUE(expr.getExpressions().empty());
+
+    const auto& cond = expr.getCondition();
+    ASSERT_TRUE(cond.has_value());
+    EXPECT_EQ(cond->field, LogEntryField::ID);
+    EXPECT_EQ(cond->op, FilterOperator::GREATER_THAN);
+    EXPECT_EQ(std::get<int64_t>(cond->value), 12345);
+}
+
+TEST_F(FilterExpressionJsonTest, ValueTypeMismatchError) {
+    nlohmann::json j = {
+        {"condition", {
+            {"field", "PID"},
+            {"op", "EQUALS"},
+            {"value", "not-a-number"},
+            {"value_type", "INT"}
+        }}
+    };
+
+    FilterExpression expr;
+    auto result = from_json(j, expr);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_NE(result.error().message.find("mismatch"), std::string::npos);
+    EXPECT_EQ(result.error().jsonPath, "/condition/value");
+}
+
+TEST_F(FilterExpressionJsonTest, NonBooleanNegatedError) {
+    nlohmann::json j = {
+        {"condition", {
+            {"field", "MESSAGE"},
+            {"op", "CONTAINS"},
+            {"value", "test"},
+            {"value_type", "STRING"}
+        }},
+        {"negated", "false"} // Invalid, should be a boolean
+    };
+
+    FilterExpression expr;
+    auto result = from_json(j, expr);
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    EXPECT_EQ(result.error().jsonPath, "/negated");
+}
+
+TEST_F(FilterExpressionJsonTest, VariousTypesRoundTrip) {
+    FilterExpression expr = FilterExpression(FilterLogicalOperator::OR, {
+        FilterExpression(createCondition(LogEntryField::MESSAGE, FilterOperator::CONTAINS, "error")),
+        FilterExpression(createCondition(LogEntryField::ID, FilterOperator::EQUALS, 42, FilterValueType::INT)),
+        FilterExpression(createCondition(LogEntryField::CUSTOM, FilterOperator::LESS_THAN, 3.14, FilterValueType::DOUBLE), true)
+    });
+
+    nlohmann::json j;
+    to_json(j, expr);
+
+    FilterExpression deserialized;
+    auto result = from_json(j, deserialized);
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    
+    EXPECT_TRUE(deserialized.isLogical());
+    ASSERT_TRUE(deserialized.getLogicalOperator().has_value());
+    EXPECT_EQ(*deserialized.getLogicalOperator(), FilterLogicalOperator::OR);
+    
+    const auto& operands = deserialized.getExpressions();
+    ASSERT_EQ(operands.size(), 3);
+
+    const auto& cond1 = operands[0].getCondition();
+    ASSERT_TRUE(cond1.has_value());
+    EXPECT_EQ(std::get<std::string>(cond1->value), "error");
+
+    const auto& cond2 = operands[1].getCondition();
+    ASSERT_TRUE(cond2.has_value());
+    EXPECT_EQ(std::get<int64_t>(cond2->value), 42);
+
+    const auto& cond3 = operands[2].getCondition();
+    ASSERT_TRUE(cond3.has_value());
+    EXPECT_DOUBLE_EQ(std::get<double>(cond3->value), 3.14);
+    EXPECT_TRUE(operands[2].isNegated());
 }

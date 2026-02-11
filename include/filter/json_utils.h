@@ -5,7 +5,9 @@
 
 #include <nlohmann/json.hpp>
 #include <string>
+#include <vector> // Required for std::vector in validateTimestamp
 #include "core/error.h"
+#include "utils/time.h" // For Utils::parseTimeWithFormats
 
 namespace filter {
 namespace FilterJsonUtils {
@@ -53,6 +55,26 @@ namespace FilterJsonUtils {
             }
         }
         return std::nullopt;
+    }
+
+    /**
+     * @brief Validates a datetime string against a set of formats.
+     * @param datetimeStr The string to validate.
+     * @param formats A vector of format strings to try.
+     * @param currentPath The JSON path for error reporting.
+     * @param fieldName The field name for error reporting.
+     * @return ErrorCode::Result<void> indicating success or failure.
+     */
+    inline ErrorCode::Result<void> validateTimestamp(const std::string& datetimeStr, const std::vector<std::string>& formats, const std::string& currentPath, const std::string& fieldName) {
+        if (formats.empty()) {
+            return std::unexpected(makeError(Code::InvalidArgument, "No datetime formats provided for validation.", currentPath, fieldName));
+        }
+        
+        auto parseResult = Utils::parseTimeWithFormats(datetimeStr, formats);
+        if (!parseResult) {
+            return std::unexpected(makeError(Code::InvalidArgument, "Failed to parse datetime value: " + parseResult.error().message, currentPath, fieldName));
+        }
+        return {}; // Success
     }
 
 } // namespace FilterJsonUtils

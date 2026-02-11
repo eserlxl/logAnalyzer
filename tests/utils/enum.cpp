@@ -60,6 +60,8 @@ TEST(UtilsEnumConversionTest, StringToLogEntryField) {
     EXPECT_EQ(Utils::stringToLogEntryField("Message"), LogEntryField::MESSAGE);
     EXPECT_EQ(Utils::stringToLogEntryField("msg"), LogEntryField::MESSAGE);
     EXPECT_EQ(Utils::stringToLogEntryField("text"), LogEntryField::MESSAGE);
+    EXPECT_EQ(Utils::stringToLogEntryField("ID"), LogEntryField::ID);
+    EXPECT_EQ(Utils::stringToLogEntryField("pid"), LogEntryField::ID);
     EXPECT_EQ(Utils::stringToLogEntryField("SOURCE_FILE"), LogEntryField::SOURCE_FILE);
     EXPECT_EQ(Utils::stringToLogEntryField("source"), LogEntryField::SOURCE_FILE);
     EXPECT_EQ(Utils::stringToLogEntryField("sourcefile"), LogEntryField::SOURCE_FILE);

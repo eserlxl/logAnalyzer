@@ -7,7 +7,7 @@
 #include "core/log/types.h"
 #include <nlohmann/json.hpp>
 #include <optional>
-#include "filterjsonfixture.h"
+#include "filter_json_fixture.h"
 
 using namespace filter;
 
@@ -26,7 +26,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson_Datetime) {
     EXPECT_EQ(j["op"], "GREATER_THAN");
     EXPECT_EQ(j["value"].get<std::string>(), "2023-01-01T00:00:00Z");
     EXPECT_EQ(j["value_type"], "DATETIME");
-    EXPECT_EQ(j["caseSensitive"], false);
+    EXPECT_FALSE(j.contains("caseSensitive"));
     EXPECT_EQ(j["datetimeFormat"], "%Y-%m-%dT%H:%M:%SZ");
 }
 
@@ -69,7 +69,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson_String) {
     EXPECT_EQ(j["op"], "CONTAINS");
     EXPECT_EQ(j["value"].get<std::string>(), "error message");
     EXPECT_EQ(j["value_type"], "STRING");
-    EXPECT_EQ(j["caseSensitive"], false);
+    EXPECT_FALSE(j.contains("caseSensitive"));
     EXPECT_FALSE(j.contains("datetimeFormat"));
 }
 
@@ -149,7 +149,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson_StringRegex) {
     EXPECT_EQ(j["op"], "REGEX");
     EXPECT_EQ(j["value"].get<std::string>(), ".*error.*");
     EXPECT_EQ(j["value_type"], "STRING");
-    EXPECT_EQ(j["caseSensitive"], false);
+    EXPECT_FALSE(j.contains("caseSensitive"));
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_StringRegex) {
@@ -225,7 +225,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson_StringNotEquals) {
     EXPECT_EQ(j["op"], "NOT_EQUALS");
     EXPECT_EQ(j["value"].get<std::string>(), "success");
     EXPECT_EQ(j["value_type"], "STRING");
-    EXPECT_EQ(j["caseSensitive"], false);
+    EXPECT_FALSE(j.contains("caseSensitive"));
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_StringNotEquals) {
@@ -250,20 +250,19 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_StringNotEquals) {
 }
 
 TEST_F(FilterJsonTest, FilterConditionToJson_NumberInt) {
-    auto createResult = FilterCondition::createTyped(
-        LogEntryField::LINE_NUMBER, FilterOperator::GREATER_THAN, "100", FilterValueType::INT
-    );
-    ASSERT_TRUE(createResult) << createResult.error().message;
-    const FilterCondition& fc = createResult.value();
+    FilterCondition fc;
+    fc.field = LogEntryField::LINE_NUMBER;
+    fc.op = FilterOperator::GREATER_THAN;
+    fc.value = static_cast<int64_t>(100);
+    fc.valueType = FilterValueType::INT;
 
     nlohmann::json j;
     to_json(j, fc);
 
     EXPECT_EQ(j["field"], "LINE_NUMBER");
     EXPECT_EQ(j["op"], "GREATER_THAN");
-    EXPECT_EQ(j["value"].get<std::string>(), "100");
+    EXPECT_EQ(j["value"].get<int64_t>(), 100);
     EXPECT_EQ(j["value_type"], "INT");
-    EXPECT_EQ(j["caseSensitive"], false);
     EXPECT_FALSE(j.contains("datetimeFormat"));
 }
 
@@ -282,28 +281,28 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_NumberInt) {
 
     EXPECT_EQ(fc.field, LogEntryField::LINE_NUMBER);
     EXPECT_EQ(fc.op, FilterOperator::GREATER_THAN);
-    ASSERT_TRUE(std::holds_alternative<std::string>(fc.value));
-    EXPECT_EQ(std::get<std::string>(fc.value), "100");
+    ASSERT_TRUE(std::holds_alternative<int64_t>(fc.value));
+    EXPECT_EQ(std::get<int64_t>(fc.value), 100);
     EXPECT_EQ(fc.valueType, FilterValueType::INT);
     EXPECT_EQ(fc.caseSensitive, false);
     EXPECT_FALSE(fc.datetimeFormat.has_value());
 }
 
 TEST_F(FilterJsonTest, FilterConditionToJson_NumberDouble) {
-    auto createResult = FilterCondition::createCustomTyped(
-        "duration", FilterOperator::LESS_THAN, "5.5", FilterValueType::DOUBLE
-    );
-    ASSERT_TRUE(createResult) << createResult.error().message;
-    const FilterCondition& fc = createResult.value();
+    FilterCondition fc;
+    fc.field = LogEntryField::CUSTOM;
+    fc.customField = "duration";
+    fc.op = FilterOperator::LESS_THAN;
+    fc.value = 5.5;
+    fc.valueType = FilterValueType::DOUBLE;
 
     nlohmann::json j;
     to_json(j, fc);
 
     EXPECT_EQ(j["field"], "duration");
     EXPECT_EQ(j["op"], "LESS_THAN");
-    EXPECT_EQ(j["value"].get<std::string>(), "5.5");
+    EXPECT_EQ(j["value"].get<double>(), 5.5);
     EXPECT_EQ(j["value_type"], "DOUBLE");
-    EXPECT_EQ(j["caseSensitive"], false);
     EXPECT_FALSE(j.contains("datetimeFormat"));
 }
 
@@ -324,26 +323,26 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_NumberDouble) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(fc.customField.value(), "duration");
     EXPECT_EQ(fc.op, FilterOperator::LESS_THAN);
-    ASSERT_TRUE(std::holds_alternative<std::string>(fc.value));
-    EXPECT_DOUBLE_EQ(std::stod(std::get<std::string>(fc.value)), 5.5);
+    ASSERT_TRUE(std::holds_alternative<double>(fc.value));
+    EXPECT_DOUBLE_EQ(std::get<double>(fc.value), 5.5);
     EXPECT_EQ(fc.valueType, FilterValueType::DOUBLE);
     EXPECT_EQ(fc.caseSensitive, false);
     EXPECT_FALSE(fc.datetimeFormat.has_value());
 }
 
 TEST_F(FilterJsonTest, FilterConditionToJson_NumberLessThanOrEqual) {
-    auto createResult = FilterCondition::createTyped(
-        LogEntryField::LINE_NUMBER, FilterOperator::LESS_THAN_OR_EQUAL, "42", FilterValueType::INT
-    );
-    ASSERT_TRUE(createResult) << createResult.error().message;
-    const FilterCondition& fc = createResult.value();
+    FilterCondition fc;
+    fc.field = LogEntryField::LINE_NUMBER;
+    fc.op = FilterOperator::LESS_THAN_OR_EQUAL;
+    fc.value = static_cast<int64_t>(42);
+    fc.valueType = FilterValueType::INT;
 
     nlohmann::json j;
     to_json(j, fc);
 
     EXPECT_EQ(j["field"], "LINE_NUMBER");
     EXPECT_EQ(j["op"], "LESS_THAN_OR_EQUAL");
-    EXPECT_EQ(j["value"].get<std::string>(), "42");
+    EXPECT_EQ(j["value"].get<int64_t>(), 42);
     EXPECT_EQ(j["value_type"], "INT");
 }
 
@@ -361,26 +360,26 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_NumberLessThanOrEqual) {
 
     EXPECT_EQ(fc.field, LogEntryField::LINE_NUMBER);
     EXPECT_EQ(fc.op, FilterOperator::LESS_THAN_OR_EQUAL);
-    ASSERT_TRUE(std::holds_alternative<std::string>(fc.value));
-    EXPECT_EQ(std::get<std::string>(fc.value), "42");
+    ASSERT_TRUE(std::holds_alternative<int64_t>(fc.value));
+    EXPECT_EQ(std::get<int64_t>(fc.value), 42);
     EXPECT_EQ(fc.valueType, FilterValueType::INT);
 }
 
 TEST_F(FilterJsonTest, FilterConditionToJson_Boolean) {
-    auto createResult = FilterCondition::createCustomTyped(
-        "is_error", FilterOperator::EQUALS, "true", FilterValueType::BOOL
-    );
-    ASSERT_TRUE(createResult) << createResult.error().message;
-    const FilterCondition& fc = createResult.value();
+    FilterCondition fc;
+    fc.field = LogEntryField::CUSTOM;
+    fc.customField = "is_error";
+    fc.op = FilterOperator::EQUALS;
+    fc.value = true;
+    fc.valueType = FilterValueType::BOOL;
 
     nlohmann::json j;
     to_json(j, fc);
 
     EXPECT_EQ(j["field"], "is_error");
     EXPECT_EQ(j["op"], "EQUALS");
-    EXPECT_EQ(j["value"].get<std::string>(), "true");
+    EXPECT_EQ(j["value"].get<bool>(), true);
     EXPECT_EQ(j["value_type"], "BOOL");
-    EXPECT_EQ(j["caseSensitive"], false);
     EXPECT_FALSE(j.contains("datetimeFormat"));
 }
 
@@ -401,8 +400,8 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_Boolean) {
     ASSERT_TRUE(fc.customField.has_value());
     EXPECT_EQ(fc.customField.value(), "is_error");
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    ASSERT_TRUE(std::holds_alternative<std::string>(fc.value));
-    EXPECT_EQ(std::get<std::string>(fc.value), "true");
+    ASSERT_TRUE(std::holds_alternative<bool>(fc.value));
+    EXPECT_EQ(std::get<bool>(fc.value), true);
     EXPECT_EQ(fc.valueType, FilterValueType::BOOL);
     EXPECT_EQ(fc.caseSensitive, false);
     EXPECT_FALSE(fc.datetimeFormat.has_value());
@@ -506,7 +505,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_InvalidCaseSensitiveType) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Invalid type for key 'caseSensitive'");
+    EXPECT_EQ(result.error().message, "Invalid type for 'caseSensitive', must be boolean.");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_InvalidValueForBoolType) {
@@ -520,7 +519,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_InvalidValueForBoolType) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Invalid boolean value: not_a_boolean");
+    EXPECT_EQ(result.error().message, "Type mismatch: value for BOOL must be a boolean.");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_InvalidValueForIntType) {
@@ -534,7 +533,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_InvalidValueForIntType) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Invalid integer value: 100a");
+    EXPECT_EQ(result.error().message, "Type mismatch: value for INT must be an integer.");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_InvalidValueForDoubleType) {
@@ -548,7 +547,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_InvalidValueForDoubleType) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Invalid float value: 1.2.3");
+    EXPECT_EQ(result.error().message, "Type mismatch: value for FLOAT/DOUBLE must be a number.");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_InvalidValueForDatetimeType) {
@@ -577,7 +576,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_ArrayValueNotForInOperator) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Array value is only supported for 'IN' and 'NOT_IN' operators.");
+    EXPECT_EQ(result.error().message, "Type mismatch: value for STRING must be a string.");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_ValueArrayWithInvalidElementType) {
@@ -591,7 +590,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_ValueArrayWithInvalidElementType)
     auto result = from_json(j, fc);
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Invalid type in 'value' array; only strings, numbers, and booleans are supported.");
+    EXPECT_EQ(result.error().message, "Invalid type in 'value' array.");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_MissingValueForNonNullableOperator) {
@@ -619,38 +618,36 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_ValueNullForNonNullableOperator) 
     auto result = from_json(j, fc);
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Invalid type for key: 'value' (null not allowed for this operator)");
+    EXPECT_EQ(result.error().message, "Invalid type for key: 'value'");
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_IsNullOperatorWithValue) {
     nlohmann::json j = {
         {"field", "MESSAGE"},
-        {"op", "IS_NULL"},
+        {"op", "IS_ABSENT"},
         {"value", "some_value"}, // Value should not be present or should be null/empty string
         {"value_type", "STRING"}
     };
     FilterCondition fc;
     auto result = from_json(j, fc);
     ASSERT_TRUE(result);
-    // The value will be overwritten to an empty string in from_json for IS_NULL/IS_NOT_NULL
-    ASSERT_TRUE(std::holds_alternative<std::string>(fc.value));
-    EXPECT_EQ(std::get<std::string>(fc.value), "");
-    EXPECT_EQ(fc.op, FilterOperator::IS_NULL);
+    // The value will be overwritten to a monostate for IS_NULL/IS_NOT_NULL
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(fc.value));
+    EXPECT_EQ(fc.op, FilterOperator::IS_ABSENT);
     EXPECT_EQ(fc.valueType, FilterValueType::STRING);
 }
 
 TEST_F(FilterJsonTest, FilterConditionToJson_IsNotNullOperator) {
-    auto createResult = FilterCondition::createString(
-        LogEntryField::HOST, FilterOperator::IS_NOT_NULL, ""
-    );
-    ASSERT_TRUE(createResult) << createResult.error().message;
-    const FilterCondition& fc = createResult.value();
+    FilterCondition fc;
+    fc.field = LogEntryField::HOST;
+    fc.op = FilterOperator::IS_PRESENT;
+    fc.valueType = FilterValueType::STRING;
 
     nlohmann::json j;
     to_json(j, fc);
 
     EXPECT_EQ(j["field"], "HOST");
-    EXPECT_EQ(j["op"], "IS_NOT_NULL");
+    EXPECT_EQ(j["op"], "IS_PRESENT");
     EXPECT_FALSE(j.contains("value"));
     EXPECT_EQ(j["value_type"], "STRING");
 }
@@ -658,7 +655,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson_IsNotNullOperator) {
 TEST_F(FilterJsonTest, FilterConditionFromJson_IsNotNullOperator) {
     nlohmann::json j = {
         {"field", "HOST"},
-        {"op", "IS_NOT_NULL"},
+        {"op", "IS_PRESENT"},
         {"value_type", "STRING"}
     };
 
@@ -667,10 +664,9 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_IsNotNullOperator) {
     ASSERT_TRUE(result) << result.error().message;
 
     EXPECT_EQ(fc.field, LogEntryField::HOST);
-    EXPECT_EQ(fc.op, FilterOperator::IS_NOT_NULL);
-    // For IS_NULL and IS_NOT_NULL, the value is expected to be an empty string.
-    ASSERT_TRUE(std::holds_alternative<std::string>(fc.value));
-    EXPECT_EQ(std::get<std::string>(fc.value), "");
+    EXPECT_EQ(fc.op, FilterOperator::IS_PRESENT);
+    // For IS_PRESENT and IS_ABSENT, the value is expected to be a monostate.
+    ASSERT_TRUE(std::holds_alternative<std::monostate>(fc.value));
     EXPECT_EQ(fc.valueType, FilterValueType::STRING);
 }
 
@@ -697,7 +693,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_SetOperator) {
         {"field", "MESSAGE"},
         {"op", "IN"},
         {"value", {"value1", "value2", "123", true}},
-        {"value_type", "STRING"}
+        {"value_type", "AUTO"}
     };
     FilterCondition fc;
     auto result = from_json(j, fc);
@@ -733,7 +729,7 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_SetOperatorNotIn) {
         {"field", "LEVEL"},
         {"op", "NOT_IN"},
         {"value", {"debug", "trace"}},
-        {"value_type", "STRING"}
+        {"value_type", "AUTO"}
     };
 
     FilterCondition fc;
@@ -751,18 +747,18 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_SetOperatorNotIn) {
 // New tests added below
 
 TEST_F(FilterJsonTest, FilterConditionToJson_ThreadId) {
-    auto createResult = FilterCondition::createTyped(
-        LogEntryField::THREAD_ID, FilterOperator::EQUALS, "12345", FilterValueType::INT
-    );
-    ASSERT_TRUE(createResult) << createResult.error().message;
-    const FilterCondition& fc = createResult.value();
+    FilterCondition fc;
+    fc.field = LogEntryField::THREAD_ID;
+    fc.op = FilterOperator::EQUALS;
+    fc.value = static_cast<int64_t>(12345);
+    fc.valueType = FilterValueType::INT;
 
     nlohmann::json j;
     to_json(j, fc);
 
     EXPECT_EQ(j["field"], "THREAD_ID");
     EXPECT_EQ(j["op"], "EQUALS");
-    EXPECT_EQ(j["value"].get<std::string>(), "12345");
+    EXPECT_EQ(j["value"].get<int64_t>(), 12345);
     EXPECT_EQ(j["value_type"], "INT");
 }
 
@@ -780,8 +776,8 @@ TEST_F(FilterJsonTest, FilterConditionFromJson_ThreadId) {
 
     EXPECT_EQ(fc.field, LogEntryField::THREAD_ID);
     EXPECT_EQ(fc.op, FilterOperator::EQUALS);
-    ASSERT_TRUE(std::holds_alternative<std::string>(fc.value));
-    EXPECT_EQ(std::get<std::string>(fc.value), "12345");
+    ASSERT_TRUE(std::holds_alternative<int64_t>(fc.value));
+    EXPECT_EQ(std::get<int64_t>(fc.value), 12345);
     EXPECT_EQ(fc.valueType, FilterValueType::INT);
 }
 
@@ -947,7 +943,7 @@ TEST_F(FilterJsonTest, FilterConditionToJson_StringNotContains) {
     EXPECT_EQ(j["op"], "NOT_CONTAINS");
     EXPECT_EQ(j["value"].get<std::string>(), "secret");
     EXPECT_EQ(j["value_type"], "STRING");
-    EXPECT_EQ(j["caseSensitive"], false);
+    EXPECT_FALSE(j.contains("caseSensitive"));
 }
 
 TEST_F(FilterJsonTest, FilterConditionFromJson_StringNotContains) {

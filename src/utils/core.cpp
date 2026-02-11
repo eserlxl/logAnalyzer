@@ -106,7 +106,7 @@ std::string logEntryFieldToString(LogEntryField field) {
 LogEntryField stringToLogEntryField(const std::string& fieldStr) {
     std::string upperFieldStr = toUpper(fieldStr);
 
-    if (upperFieldStr == "ID") return LogEntryField::ID;
+    if (upperFieldStr == "ID" || upperFieldStr == "PID") return LogEntryField::ID;
     if (upperFieldStr == "TIMESTAMP" || upperFieldStr == "TIME") return LogEntryField::TIMESTAMP;
     if (upperFieldStr == "LEVEL" || upperFieldStr == "LVL" || upperFieldStr == "SEVERITY") return LogEntryField::LEVEL;
     if (upperFieldStr == "MESSAGE" || upperFieldStr == "MSG" || upperFieldStr == "TEXT") return LogEntryField::MESSAGE;

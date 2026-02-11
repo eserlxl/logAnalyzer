@@ -25,7 +25,7 @@ set(LOGANALYZER_GTEST_SOURCE_DIR "" CACHE PATH "Local source directory override 
 
 include(FetchContent)
 include(CMakePackageConfigHelpers)
-include(cmake/LogAnalyzerCompilerSettings.cmake)
+include(cmake/compiler_settings.cmake)
 
 # nlohmann_json
 find_package(nlohmann_json 3.11.3 QUIET CONFIG)

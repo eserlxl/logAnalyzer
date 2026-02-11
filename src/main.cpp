@@ -47,13 +47,17 @@ void writeCsvEscaped(std::ostream& os, std::string value, char separator) {
 } // namespace
 
 int main(int argc, char *argv[]) {
+    LogAnalyzerSettings analyzerSettings;
+
     auto expectedConfig = CLIConfig::parseCLI(argc, argv);
     if (!expectedConfig) {
         // Print the error message and exit.
         std::cerr << expectedConfig.error().message << '\n';
         return 1;
     }
-    const auto& [analyzerSettings, cliOptions] = expectedConfig.value();
+
+    analyzerSettings.merge(expectedConfig.value().first);
+    const auto& cliOptions = expectedConfig.value().second;
     const bool statisticsEnabled = !analyzerSettings.statisticConfigs.empty();
 
     LogAnalyzer analyzer(analyzerSettings); // Construct with settings
