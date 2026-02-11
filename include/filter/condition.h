@@ -157,15 +157,17 @@ inline void to_json(nlohmann::json& j, const FilterCondition& fc) {
     
     j["op"] = toString(fc.op);
     
-    // Serialize value based on variant type
-    std::visit([&j](auto&& arg) {
-        using T = std::decay_t<decltype(arg)>;
-        if constexpr (std::is_same_v<T, std::string>) {
-            j["value"] = arg;
-        } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
-            j["value"] = arg;
-        }
-    }, fc.value);
+    // Serialize value based on variant type, but only if operator is not IS_NULL or IS_NOT_NULL
+    if (fc.op != FilterOperator::IS_NULL && fc.op != FilterOperator::IS_NOT_NULL) {
+        std::visit([&j](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, std::string>) {
+                j["value"] = arg;
+            } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
+                j["value"] = arg;
+            }
+        }, fc.value);
+    }
 
     j["value_type"] = toString(fc.valueType);
     j["caseSensitive"] = fc.caseSensitive;
