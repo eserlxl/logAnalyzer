@@ -16,10 +16,9 @@ using namespace filter;
 
 // FilterCondition JSON tests
 TEST_F(FilterJsonTest, FilterConditionToJson) {
-    FilterCondition fc = createFilterCondition(
-        LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01T00:00:00Z",
-        FilterValueType::DATETIME, false, "%Y-%m-%dT%H:%M:%SZ"
-    );
+    FilterCondition fc = FilterCondition::createDatetime(
+        LogEntryField::TIMESTAMP, FilterOperator::GREATER_THAN, "2023-01-01T00:00:00Z", "%Y-%m-%dT%H:%M:%SZ"
+    ).value();
 
     nlohmann::json j;
     to_json(j, fc);

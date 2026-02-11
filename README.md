@@ -6,7 +6,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0)
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg?style=for-the-badge)](https://en.cppreference.com/w/cpp/23)
-[![Build Status](https://img.shields.io/badge/Build%20Status-passing-brightgreen?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer)
+[![CI Status](https://github.com/eserlxl/logAnalyzer/actions/workflows/ci.yml/badge.svg?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer/actions/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue.svg?style=for-the-badge)](https://cmake.org)
 [![Project Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer)
 
@@ -14,7 +14,7 @@
 ## 📚 Table of Contents
 - [🤔 Why logAnalyzer?](#-why-loganalyzer)
 - [✨ Key Features](#-key-features)
-- [🚀 Getting Started](#-getting-started)
+- [🚀 Installation](#-installation)
 - [⚡ Quick Start](#-quick-start)
 - [⚙️ Configuration](#️-configuration)
 - [📚 Documentation](#-documentation)
@@ -33,21 +33,20 @@ For a comprehensive explanation, see [**docs/why-loganalyzer.md**](docs/why-loga
 
 ## ✨ Key Features
 
-`logAnalyzer` offers a rich set of features for efficient log analysis, including high-performance processing, advanced filtering capabilities (e.g., field-based, regex, and logical operators), built-in analytics, multi-format support, flexible I/O, and a C++ API.
+`logAnalyzer` provides a robust set of features designed for efficient log analysis:
+
+*   **High Performance**: Built with C++23, it leverages stream processing for efficient handling of massive log files, even those larger than available memory.
+*   **Advanced Filtering**: Powerful filtering capabilities including field-based queries, regular expressions, and logical operators to pinpoint relevant log entries.
+*   **Built-in Analytics**: Extract statistics and insights directly from your logs.
+*   **Multi-format Support**: Adapts to various log formats.
+*   **Flexible I/O**: Process logs from files, `stdin`, and output to various formats like JSON, CSV, or plain text.
+*   **Extensible C++ API**: Integrate `logAnalyzer`'s core functionalities into your own C++ applications, leveraging modern C++23 patterns such as `std::generator`, `std::expected`, and `std::span`.
 
 For a comprehensive overview of all capabilities, see the [**full feature list**](docs/features.md).
 
-## 🚀 Getting Started
+## 🚀 Installation
 
-Follow these steps to get `logAnalyzer` running on your system.
-
-### Prerequisites
-
--   **C++ Compiler**: C++23 compatible (GCC 13+ or Clang 16+).
--   **Build System**: CMake (3.14+).
--   **Version Control**: Git.
-
-### Installation
+To get `logAnalyzer` up and running on your system, follow these basic steps:
 
 1.  **Clone the repository:**
     ```bash
@@ -60,61 +59,45 @@ Follow these steps to get `logAnalyzer` running on your system.
     cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
     cmake --build build --parallel
     ```
-
-    If your environment has dependencies preinstalled and no network access, configure with:
-    ```bash
-    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DLOGANALYZER_FETCH_DEPS=OFF
-    ```
-
-    For hermetic/offline builds with a local mirror of dependency sources:
-    ```bash
-    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release \
-      -DLOGANALYZER_OFFLINE_DEPS=ON \
-      -DLOGANALYZER_DEPS_MIRROR_DIR=/path/to/deps-mirror
-    ```
-    Expected mirror layout: `/path/to/deps-mirror/{nlohmann_json,cli11,googletest}` (each containing a `CMakeLists.txt`).
-
     The executable will be located at `build/logAnalyzer`.
 
-3.  **Install (Optional):**
-    To install `logAnalyzer` to your system path:
+3.  **Verify Installation:**
     ```bash
-    sudo cmake --install build
+    ./build/logAnalyzer --version
     ```
+    (If installed system-wide: `logAnalyzer --version`)
 
-4.  **Verify Installation:**
-    ```bash
-    logAnalyzer --version
-    ```
-
-For detailed, platform-specific instructions, refer to the [**Installation Guide**](docs/installation.md) and the [**Build Guide**](docs/build.md) for advanced configurations.
+For detailed, platform-specific instructions, prerequisites, advanced build configurations, and optional system-wide installation, refer to the [**Installation Guide**](docs/installation.md) and the [**Build Guide**](docs/build.md).
 
 ## ⚡ Quick Start
 
-`logAnalyzer` is a versatile and powerful command-line utility. Here’s a quick overview of its basic usage.
+Dive right in! Here are some common ways to use `logAnalyzer`:
 
-### Basic Syntax
-
+### Filter for specific log levels
 ```bash
-logAnalyzer [input-file(s)] [options]
+# Analyze a syslog file and filter only for ERROR level entries
+logAnalyzer /var/log/syslog --level ERROR
 ```
 
-### Example: Basic Filtering
+### Advanced filtering with expressions
+```bash
+# Find database errors OR any message containing "timeout"
+logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
+```
 
-- **Analyze a specific log file and filter for errors:**
-  ```bash
-  logAnalyzer /var/log/syslog --level ERROR
-  ```
-- **Process input from `stdin` and search for a keyword:**
-  ```bash
-  cat application.log | logAnalyzer --stdin --keyword "authentication failed"
-  ```
-- **Export errors from the last 2 hours to a JSON file:**
-  ```bash
-  logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
-  ```
+### Export to JSON
+```bash
+# Find errors from the last 2 hours and export to a pretty JSON file
+logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
+```
 
-For a deep dive into all functionalities, advanced filtering, multi-line parsing, and more detailed examples, check out our [**Usage Examples**](docs/usage-examples.md) and the [**CLI Reference**](docs/cli-reference.md).
+### Statistical Analysis
+```bash
+# Generate a report of the top 5 most frequent error messages
+logAnalyzer system.log --level ERROR --stats "type=TOP_MESSAGES,top_n=5"
+```
+
+For a more detailed overview of basic usage, syntax, and more example commands, see our [**Quick Start Guide**](docs/quick-start.md) and [**Usage Examples**](docs/usage-examples.md).
 
 ## ⚙️ Configuration
 
@@ -129,6 +112,7 @@ For more in-depth information, explore the documentation in the [`docs/`](./docs
 ### User Documentation
 - [**Why logAnalyzer?**](docs/why-loganalyzer.md)
 - [**Features Overview**](docs/features.md)
+- [**Quick Start Guide**](docs/quick-start.md)
 - [**Installation Guide**](docs/installation.md)
 - [**Command Line Reference**](docs/cli-reference.md)
 - [**Configuration Guide**](docs/configuration.md)

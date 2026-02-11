@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include <gtest/gtest.h>
-#include "core/log/jsonparser.h"
+#include "core/log/json_parser.h"
 
 TEST(JsonLogParserTest, ParseValidJsonLine) {
     JsonLogParser parser({}, ParserErrorAction::Warn, std::nullopt);
