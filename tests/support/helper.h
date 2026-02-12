@@ -29,7 +29,7 @@
 
 // A fixed point in time for deterministic tests
 inline std::chrono::system_clock::time_point getFixedTimestamp() {
-    return stringToTime("2024-01-01T12:00:00Z");
+    return Utils::parseISO8601("2024-01-01T12:00:00Z").value();
 }
 
 // Consolidated test fixture for FilterExpression tests
