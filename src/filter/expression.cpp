@@ -16,7 +16,6 @@
 #include <stdexcept>
 #include <iostream>
 #include <numeric>
-#include <set>
 
 namespace filter {
 
@@ -81,54 +80,6 @@ ErrorCode::Result<void> FilterExpression::validate() const {
     switch (type_) {
         case ExpressionType::EMPTY: return {};
         case ExpressionType::CONDITION: {
-            if (condition_->op == FilterOperator::REGEX) {
-                if (auto* condValue = std::get_if<std::string>(&condition_->value)) {
-                    try {
-                        auto flags = condition_->caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
-                        condition_->compiledRegex = std::regex(*condValue, flags); // Cache it
-                    } catch (const std::regex_error& e) {
-                        return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid regex: " + (*condValue) + " (" + e.what() + ")"));
-                    }
-                }
-            } else if (condition_->op == FilterOperator::IN || condition_->op == FilterOperator::NOT_IN) {
-                if (std::holds_alternative<std::string>(condition_->value)) {
-                     const auto& jsonStr = std::get<std::string>(condition_->value);
-                     try {
-                        auto j = nlohmann::json::parse(jsonStr);
-                        if(j.is_array()) {
-                            std::vector<std::string> parsedSet;
-                            for (const auto& item : j) {
-                                if (item.is_string()) parsedSet.push_back(item.get<std::string>());
-                                else if (item.is_number_integer()) parsedSet.push_back(std::to_string(item.get<long long>()));
-                                else if (item.is_number()) parsedSet.push_back(std::to_string(item.get<double>()));
-                                else if (item.is_boolean()) parsedSet.emplace_back(item.get<bool>() ? "true" : "false");
-                            }
-                            condition_->parsedValue = std::move(parsedSet); // Cache it
-                        } else {
-                            return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "IN/NOT_IN operator value must be a JSON array string."));
-                        }
-                     } catch(...) {
-                        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Failed to parse JSON array for IN/NOT_IN operator."));
-                     }
-                } else if (!std::holds_alternative<std::vector<std::string>>(condition_->value)) {
-                    return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "IN/NOT_IN operator requires an array value."));
-                }
-            }
-            
-            if (condition_->valueType == FilterValueType::AUTO && std::holds_alternative<std::string>(condition_->value)) {
-                const auto& condValue = std::get<std::string>(condition_->value);
-                if (condValue == "true" || condValue == "false") {
-                    condition_->inferredValueType = FilterValueType::BOOL;
-                } else if (Utils::isNumeric(condValue)) {
-                    condition_->inferredValueType = condValue.find('.') != std::string::npos ? FilterValueType::DOUBLE : FilterValueType::INT;
-                } else if (Utils::parseIpAddress(condValue)) {
-                    condition_->inferredValueType = FilterValueType::IP_ADDRESS;
-                } else if (Utils::parseSemanticVersion(condValue)) {
-                    condition_->inferredValueType = FilterValueType::VERSION;
-                } else {
-                    condition_->inferredValueType = FilterValueType::STRING;
-                }
-            }
             return {};
         }
         case ExpressionType::LOGICAL:
@@ -220,6 +171,12 @@ std::string FilterExpression::conditionToString(const FilterCondition& cond) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, std::string>) {
             valStr = "\"" + arg + "\"";
+        } else if constexpr (std::is_same_v<T, int64_t>) {
+            valStr = std::to_string(arg);
+        } else if constexpr (std::is_same_v<T, double>) {
+            valStr = std::to_string(arg);
+        } else if constexpr (std::is_same_v<T, bool>) {
+            valStr = arg ? "true" : "false";
         } else if constexpr (std::is_same_v<T, std::vector<std::string>>) {
             valStr = "[";
             for (size_t i = 0; i < arg.size(); ++i) {
@@ -227,6 +184,8 @@ std::string FilterExpression::conditionToString(const FilterCondition& cond) {
                 if (i < arg.size() - 1) valStr += ", ";
             }
             valStr += "]";
+        } else if constexpr (std::is_same_v<T, std::monostate>) {
+            valStr = "NULL"; // Or some other representation for monostate
         }
     }, cond.value);
     
@@ -234,15 +193,23 @@ std::string FilterExpression::conditionToString(const FilterCondition& cond) {
 }
 
 // --- Other FilterExpression methods ---
-FilterExpression FilterExpression::clone() const { return *this; }
-FilterExpression FilterExpression::makeEmpty(bool negated) { FilterExpression e; e.negated_ = negated; return e; }
-FilterExpression FilterExpression::makeCondition(FilterCondition condition, bool negated) { return {std::move(condition), negated}; }
+FilterExpression FilterExpression::makeEmpty(bool negated) {
+    FilterExpression e;
+    e.negated_ = negated;
+    return e;
+}
+FilterExpression FilterExpression::makeCondition(FilterCondition condition, bool negated) {
+    return FilterExpression(std::move(condition), negated);
+}
 FilterExpression FilterExpression::makeAnd(std::vector<FilterExpression> expressions, bool negated) {
     return FilterExpression(FilterLogicalOperator::AND, std::move(expressions), negated).simplify();
 }
 FilterExpression FilterExpression::makeOr(std::vector<FilterExpression> expressions, bool negated) {
     return FilterExpression(FilterLogicalOperator::OR, std::move(expressions), negated).simplify();
 }
-FilterExpression FilterExpression::makeNot(FilterExpression expr) { expr.negated_ = !expr.negated_; return expr; }
+FilterExpression FilterExpression::makeNot(FilterExpression expr) {
+    expr.negated_ = !expr.negated_;
+    return expr;
+}
 
 } // namespace filter

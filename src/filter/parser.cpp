@@ -358,10 +358,21 @@ private:
         const std::optional<std::string>& customField,
         FilterOperator op,
         std::vector<std::string> values) {
-        if (field == LogEntryField::CUSTOM) {
-            return FilterCondition::createCustomSet(*customField, op, std::move(values));
+        
+        nlohmann::json json_cond;
+        if (field == LogEntryField::CUSTOM && customField) {
+            json_cond["field"] = *customField;
+        } else {
+            json_cond["field"] = Utils::logEntryFieldToString(field);
         }
-        return FilterCondition::createSet(field, op, std::move(values));
+        json_cond["op"] = toString(op);
+        json_cond["value"] = values; // nlohmann::json automatically handles std::vector<std::string>
+        json_cond["value_type"] = "STRING"; // Set-based comparisons are typically string-based at this level
+
+        FilterCondition cond;
+        auto result = from_json(json_cond, cond);
+        if (!result) return std::unexpected(result.error());
+        return cond;
     }
 
     static ErrorCode::Result<FilterCondition> buildCondition(
@@ -369,28 +380,39 @@ private:
         const std::optional<std::string>& customField,
         FilterOperator op,
         std::string value) {
-        FilterCondition cond;
-        cond.field = field;
-        cond.op = op;
-        cond.value = std::move(value);
-        cond.caseSensitive = false;
-        cond.customField = customField;
-
-        if (field == LogEntryField::LEVEL && isRelationalOperator(op)) {
-            cond.valueType = FilterValueType::LOG_LEVEL;
-        } else if (field == LogEntryField::TIMESTAMP && isRelationalOperator(op)) {
-            cond.valueType = FilterValueType::DATETIME;
-        } else if (op == FilterOperator::CONTAINS || op == FilterOperator::NOT_CONTAINS ||
-                   op == FilterOperator::STARTS_WITH || op == FilterOperator::ENDS_WITH ||
-                   op == FilterOperator::REGEX || op == FilterOperator::CONTAINS_I ||
-                   op == FilterOperator::NOT_CONTAINS_I || op == FilterOperator::STARTS_WITH_I ||
-                   op == FilterOperator::ENDS_WITH_I || op == FilterOperator::EQUALS_I ||
-                   op == FilterOperator::NOT_EQUALS_I) {
-            cond.valueType = FilterValueType::STRING;
+        
+        nlohmann::json json_cond;
+        if (field == LogEntryField::CUSTOM && customField) {
+            json_cond["field"] = *customField;
         } else {
-            cond.valueType = FilterValueType::AUTO;
+            json_cond["field"] = Utils::logEntryFieldToString(field);
+        }
+        json_cond["op"] = toString(op);
+        json_cond["value"] = value;
+
+        // Determine case-sensitivity from operator
+        if (op == FilterOperator::EQUALS_I || op == FilterOperator::NOT_EQUALS_I ||
+            op == FilterOperator::CONTAINS_I || op == FilterOperator::NOT_CONTAINS_I ||
+            op == FilterOperator::STARTS_WITH_I || op == FilterOperator::ENDS_WITH_I) {
+            json_cond["caseSensitive"] = false;
+        } else {
+            json_cond["caseSensitive"] = true; // Default to case-sensitive unless explicit _I operator
         }
 
+        // Infer value_type for specific fields or default to AUTO
+        if (field == LogEntryField::LEVEL && isRelationalOperator(op)) {
+            json_cond["value_type"] = "LOG_LEVEL";
+        } else if (field == LogEntryField::TIMESTAMP && isRelationalOperator(op)) {
+            json_cond["value_type"] = "DATETIME";
+        } else if (op == FilterOperator::REGEX) {
+            json_cond["value_type"] = "STRING"; // Regex pattern is always a string
+        } else {
+            json_cond["value_type"] = "AUTO"; // Let FilterCondition::from_json infer the type
+        }
+
+        FilterCondition cond;
+        auto result = from_json(json_cond, cond);
+        if (!result) return std::unexpected(result.error());
         return cond;
     }
 

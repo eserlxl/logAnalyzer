@@ -230,45 +230,99 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
 filter::FilterExpression LogAnalyzer::createFilterExpressionFromCriteria(const filter::FilterCriteria& criteria) const {
     std::vector<filter::FilterExpression> expressions;
 
+    auto addCondition = [&](const nlohmann::json& json_cond) {
+        filter::FilterCondition cond;
+        if (auto result = filter::from_json(json_cond, cond); result) {
+            expressions.emplace_back(filter::FilterExpression::makeCondition(cond));
+        } else {
+            // In a real application, you might want to log this error or handle it differently.
+            // For now, we'll just skip the invalid condition.
+            std::cerr << "Warning: Failed to create filter condition: " << result.error().toString() << std::endl;
+        }
+    };
+
     // Keyword filter
     if (!criteria.keyword.empty()) {
-        filter::FilterOperator op = criteria.keywordCaseSensitive ? filter::FilterOperator::CONTAINS : filter::FilterOperator::CONTAINS_I;
-        expressions.emplace_back(filter::FilterCondition::createString(LogEntryField::MESSAGE, op, criteria.keyword).value());
+        nlohmann::json json_cond = {
+            {"field", "message"},
+            {"op", criteria.keywordCaseSensitive ? "CONTAINS" : "CONTAINS_I"},
+            {"value", criteria.keyword},
+            {"value_type", "STRING"},
+            {"caseSensitive", criteria.keywordCaseSensitive}
+        };
+        addCondition(json_cond);
     }
 
     // Regex pattern filter
     if (!criteria.regexPattern.empty()) {
-        expressions.emplace_back(filter::FilterCondition::createString(LogEntryField::MESSAGE, filter::FilterOperator::REGEX, criteria.regexPattern).value());
+        nlohmann::json json_cond = {
+            {"field", "message"},
+            {"op", "REGEX"},
+            {"value", criteria.regexPattern},
+            {"value_type", "STRING"}
+        };
+        addCondition(json_cond);
     }
 
-    // Log levels filter (combine with OR if multiple, or single EQUALS)
+    // Log levels filter
     if (!criteria.levels.empty()) {
         if (criteria.levels.size() == 1) {
-            expressions.emplace_back(filter::FilterCondition::createString(LogEntryField::LEVEL, filter::FilterOperator::EQUALS, Utils::logLevelToString(criteria.levels[0])).value());
+            nlohmann::json json_cond = {
+                {"field", "level"},
+                {"op", "EQUALS"},
+                {"value", Utils::logLevelToString(criteria.levels[0])},
+                {"value_type", "LOG_LEVEL"}
+            };
+            addCondition(json_cond);
         } else {
             std::vector<filter::FilterExpression> levelExpressions;
             for (LogLevel level : criteria.levels) {
-                levelExpressions.emplace_back(filter::FilterCondition::createString(LogEntryField::LEVEL, filter::FilterOperator::EQUALS, Utils::logLevelToString(level)).value());
+                nlohmann::json json_cond = {
+                    {"field", "level"},
+                    {"op", "EQUALS"},
+                    {"value", Utils::logLevelToString(level)},
+                    {"value_type", "LOG_LEVEL"}
+                };
+                filter::FilterCondition cond;
+                if(auto res = filter::from_json(json_cond, cond); res) {
+                    levelExpressions.emplace_back(filter::FilterExpression::makeCondition(cond));
+                }
             }
-            expressions.emplace_back(filter::FilterLogicalOperator::OR, levelExpressions);
+            if(!levelExpressions.empty()) {
+                expressions.emplace_back(filter::FilterExpression::makeOr(levelExpressions));
+            }
         }
     }
 
     // Time range filters
     if (criteria.startTime.has_value()) {
         std::string dtFormat = "%Y-%m-%d %H:%M:%S"; // Example default
-        expressions.emplace_back(filter::FilterCondition::createDatetime(LogEntryField::TIMESTAMP, filter::FilterOperator::GREATER_THAN_OR_EQUAL, Utils::formatTimestamp(criteria.startTime.value(), dtFormat), dtFormat).value());
+        nlohmann::json json_cond = {
+            {"field", "timestamp"},
+            {"op", "GREATER_THAN_OR_EQUAL"},
+            {"value", Utils::formatTimestamp(criteria.startTime.value(), dtFormat)},
+            {"value_type", "DATETIME"},
+            {"datetimeFormat", dtFormat}
+        };
+        addCondition(json_cond);
     }
     if (criteria.endTime.has_value()) {
         std::string dtFormat = "%Y-%m-%d %H:%M:%S"; // Example default
-        expressions.emplace_back(filter::FilterCondition::createDatetime(LogEntryField::TIMESTAMP, filter::FilterOperator::LESS_THAN_OR_EQUAL, Utils::formatTimestamp(criteria.endTime.value(), dtFormat), dtFormat).value());
+        nlohmann::json json_cond = {
+            {"field", "timestamp"},
+            {"op", "LESS_THAN_OR_EQUAL"},
+            {"value", Utils::formatTimestamp(criteria.endTime.value(), dtFormat)},
+            {"value_type", "DATETIME"},
+            {"datetimeFormat", dtFormat}
+        };
+        addCondition(json_cond);
     }
 
     if (expressions.empty()) {
-        return filter::FilterExpression(); // Empty expression means always true
+        return filter::FilterExpression::makeEmpty();
     } else if (expressions.size() == 1) {
         return expressions[0];
     } else {
-        return filter::FilterExpression(filter::FilterLogicalOperator::AND, expressions);
+        return filter::FilterExpression::makeAnd(expressions);
     }
 }

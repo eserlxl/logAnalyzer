@@ -31,43 +31,6 @@ public:
     FilterExpression(FilterLogicalOperator op, std::vector<FilterExpression> expressions = {}, bool negated = false) // Add negated parameter
         : type_(ExpressionType::LOGICAL), logicalOperator_(op), expressions_(std::move(expressions)), negated_(negated) {}
 
-    // Fluent builders for complex expressions
-    static FilterExpression create(const FilterCondition& cond) {
-        FilterExpression expr;
-        expr.type_ = ExpressionType::CONDITION;
-        expr.condition_ = cond;
-        return expr;
-    }
-
-    FilterExpression And(FilterExpression other) const {
-        if (type_ == ExpressionType::LOGICAL && logicalOperator_ == FilterLogicalOperator::AND) {
-            FilterExpression newExpr = *this;
-            newExpr.expressions_.push_back(std::move(other));
-            return newExpr;
-        }
-        return FilterExpression(FilterLogicalOperator::AND, {*this, std::move(other)});
-    }
-
-    FilterExpression Or(FilterExpression other) const {
-        if (type_ == ExpressionType::LOGICAL && logicalOperator_ == FilterLogicalOperator::OR) {
-            FilterExpression newExpr = *this;
-            newExpr.expressions_.push_back(std::move(other));
-            return newExpr;
-        }
-        return FilterExpression(FilterLogicalOperator::OR, {*this, std::move(other)});
-    }
-
-    // Applies 'NOT' to 'this' expression
-    FilterExpression Not() const {
-        FilterExpression newExpr = *this; // Create a copy
-        newExpr.negated_ = !newExpr.negated_; // Toggle negation
-        return newExpr;
-    }
-
-    // Forward declarations for recursive JSON conversion
-    friend void to_json(nlohmann::json& j, const FilterExpression& fe);
-    friend inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe);
-
     // Accessors for internal components (useful for evaluation)
     enum class ExpressionType {
         EMPTY,      ///< Represents an empty or no-op filter. An EMPTY expression (if not negated) evaluates to `true` (passes all log entries). If `negated_` is true for an EMPTY expression, it evaluates to `false` (blocks all log entries).
@@ -228,7 +191,7 @@ inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, Filt
     if (j.contains("condition") && j.at("condition").is_object()) {
         FilterCondition fc;
         std::string next_path = (current_path == "/" ? "" : current_path) + "/condition";
-        auto result = from_json(j.at("condition"), fc, next_path);
+        auto result = from_json(j.at("condition"), fc);
         if (!result) return std::unexpected(result.error());
         
         fe = FilterExpression(std::move(fc), current_negated);

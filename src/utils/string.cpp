@@ -163,19 +163,19 @@ std::string toUpper(const std::string& str) {
     return upperStr;
 }
 
-bool caseInsensitiveEquals(const std::string& s1, const std::string& s2) {
+bool caseInsensitiveEquals(std::string_view s1, std::string_view s2) {
     if (s1.length() != s2.length()) {
         return false;
     }
     return std::equal(s1.begin(), s1.end(), s2.begin(), caseInsensitiveCharCompare);
 }
 
-bool caseInsensitiveSearch(const std::string& text, const std::string& pattern) {
+bool caseInsensitiveSearch(std::string_view text, std::string_view pattern) {
     if (pattern.empty()) {
-        return true; // Or false, depending on desired behavior; true is common
+        return true; // Empty pattern is always "contained"
     }
-    if (text.empty() && !pattern.empty()) {
-        return false;
+    if (text.empty()) {
+        return false; // Cannot find non-empty pattern in empty text
     }
     auto it = std::search(text.begin(), text.end(),
                           pattern.begin(), pattern.end(),
@@ -183,18 +183,17 @@ bool caseInsensitiveSearch(const std::string& text, const std::string& pattern) 
     return it != text.end();
 }
 
-bool caseInsensitiveStarts(const std::string& text, const std::string& prefix) {
+bool caseInsensitiveStarts(std::string_view text, std::string_view prefix) {
     if (prefix.length() > text.length()) {
         return false;
     }
     return std::equal(prefix.begin(), prefix.end(), text.begin(), caseInsensitiveCharCompare);
 }
 
-bool caseInsensitiveEnds(const std::string& text, const std::string& suffix) {
+bool caseInsensitiveEnds(std::string_view text, std::string_view suffix) {
     if (suffix.length() > text.length()) {
         return false;
     }
-    // Use reverse iterators for efficiency and correctness with std::equal
     return std::equal(suffix.rbegin(), suffix.rend(), text.rbegin(), caseInsensitiveCharCompare);
 }
 

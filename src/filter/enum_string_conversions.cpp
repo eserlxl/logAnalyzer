@@ -110,7 +110,6 @@ std::string toString(FilterValueType type) {
         case FilterValueType::VERSION: return "VERSION";
         case FilterValueType::IP_ADDRESS: return "IP_ADDRESS";
         case FilterValueType::REGEX: return "REGEX";
-        case FilterValueType::FLOAT: return "FLOAT";
         case FilterValueType::LOG_LEVEL: return "LOG_LEVEL";
         default: return "UNKNOWN_VALUE_TYPE";
     }
@@ -129,7 +128,6 @@ std::optional<FilterValueType> fromStringToFilterValueType(const std::string& ty
     if (upperTypeStr == "VERSION") return FilterValueType::VERSION;
     if (upperTypeStr == "IP_ADDRESS") return FilterValueType::IP_ADDRESS;
     if (upperTypeStr == "REGEX") return FilterValueType::REGEX;
-    if (upperTypeStr == "FLOAT") return FilterValueType::FLOAT;
     if (upperTypeStr == "LOG_LEVEL") return FilterValueType::LOG_LEVEL;
     return std::nullopt;
 }

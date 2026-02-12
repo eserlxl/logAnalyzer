@@ -21,7 +21,7 @@ std::vector<std::string> split(const std::string& str, char delimiter);
 std::vector<std::string> split(const std::string& str, char delimiter, bool skipEmptyTokens);
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
-bool caseInsensitiveEquals(const std::string& s1, const std::string& s2);
+bool caseInsensitiveEquals(std::string_view s1, std::string_view s2);
 bool caseInsensitiveSearch(const std::string& text, const std::string& pattern);
 bool caseInsensitiveStarts(const std::string& text, const std::string& prefix);
 bool caseInsensitiveEnds(const std::string& text, const std::string& suffix);
