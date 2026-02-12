@@ -282,8 +282,20 @@ ErrorCode::Result<LogEntry> DefaultLogParser::parseLineInternal(std::string_view
                     break;
                 }
                 case LogEntryField::ID:
-                    // ID is usually assigned externally, not parsed from a line.
-                    // If needed, implement parsing logic here.
+                    if (!extractedValue.empty()) {
+                        size_t parsedId = 0;
+                        const char* begin = extractedValue.data();
+                        const char* end = begin + extractedValue.size();
+                        auto [ptr, ec] = std::from_chars(begin, end, parsedId);
+                        if (ec == std::errc{} && ptr == end) {
+                            entry.id = parsedId;
+                        } else {
+                             entry.parsingErrors.emplace_back(ErrorCode::Error(
+                                Code::ConversionError,
+                                "Failed to convert ID to unsigned integer: '" + std::string(extractedValue) + "'",
+                                std::to_string(lineNumber)));
+                        }
+                    }
                     break;
                 case LogEntryField::CUSTOM:
                     // Custom fields as LogEntryField::CUSTOM should not happen,

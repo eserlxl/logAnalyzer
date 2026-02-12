@@ -56,8 +56,21 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    analyzerSettings.merge(expectedConfig.value().first);
-    const auto& cliOptions = expectedConfig.value().second;
+    auto [cliSettings, cliOptions] = std::move(expectedConfig.value());
+
+    if (!cliOptions.configPath.empty()) {
+        auto loadedSettings = LogAnalyzerSettings::fromFile(cliOptions.configPath);
+        if (loadedSettings) {
+            analyzerSettings = std::move(*loadedSettings);
+        } else {
+            for (const auto& err : loadedSettings.error()) {
+                std::cerr << "Configuration error in " << cliOptions.configPath << ": " << err << '\n';
+            }
+            return 1;
+        }
+    }
+
+    analyzerSettings.merge(cliSettings);
     const bool statisticsEnabled = !analyzerSettings.statisticConfigs.empty();
 
     LogAnalyzer analyzer(analyzerSettings); // Construct with settings
@@ -163,6 +176,11 @@ int main(int argc, char *argv[]) {
         return *evalResult;
     };
 
+    auto inputPaths = cliOptions.filePaths;
+    if (cliOptions.readFromStdin) {
+        inputPaths.push_back(std::string(Utils::STDIN_FILE_PATH));
+    }
+
     if (cliOptions.streamMode) {
         if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv") {
             std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << '\n';
@@ -260,13 +278,13 @@ int main(int argc, char *argv[]) {
             return true;
         };
 
-        if(auto res = analyzer.analyzeStream(cliOptions.filePaths, streamEntryCallback, cliOptions.parserErrorAction); !res) {
+        if(auto res = analyzer.analyzeStream(inputPaths, streamEntryCallback, cliOptions.parserErrorAction); !res) {
             std::cerr << "Error during stream analysis: " << res.error().toString() << '\n';
             return 1;
         }
 
     } else {
-        for (const auto& path : cliOptions.filePaths) {
+        for (const auto& path : inputPaths) {
             if(auto res = analyzer.append(path, cliOptions.parserErrorAction); !res) {
                  std::cerr << "Error analyzing file " << path << ": " << res.error().toString() << '\n';
                  return 1;

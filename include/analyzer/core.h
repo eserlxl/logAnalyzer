@@ -92,6 +92,16 @@ public:
     const LogAnalyzerSettings& getSettings() const;
     void clear();
 
+    void replaceEntries(const std::vector<LogEntry>& newEntries) {
+        std::unique_lock<std::shared_mutex> lock(stateMutex_);
+        entries_ = newEntries;
+        levelCounts.clear();
+        lastReport = {}; // Reset report
+        for (const auto& entry : entries_) {
+            levelCounts[entry.level]++;
+        }
+    }
+
     // New: Register a custom parser factory for a given format identifier
     // This allows users to extend parsing capabilities without modifying the core.
     static ErrorCode::Result<void> registerParserFactory(
@@ -181,35 +191,25 @@ public:
     
     void setCustomLogLevelMapping(std::string_view levelString, LogLevel mappedLevel);
     
-    [[deprecated("Use exportAsCsv(std::ostream&, const filter::FilterExpression&, char, std::string_view) instead.")]]
-    void exportAsCsv(std::ostream& out, const filter::FilterCriteria& filter, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
-    void exportAsCsv(std::ostream& out, const filter::FilterExpression& expression, char delimiter = ',', std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
-
-    // New: Export to CSV from a projected view (e.g., from project() method)
-    void exportAsCsv(
-        std::ostream& out, 
-        std::generator<nlohmann::json> projectedView,
-        char delimiter = ',', 
-        std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ"
-    ) const;
-    
-    [[deprecated("Use exportAsJson(std::ostream&, const filter::FilterExpression&, bool, std::string_view) instead.")]]
-    void exportAsJson(std::ostream& out, const filter::FilterCriteria& filter, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
-    void exportAsJson(std::ostream& out, const filter::FilterExpression& expression, bool prettyPrint, std::string_view timestampFormat = "%Y-%m-%dT%H:%M:%S.%fZ") const;
-
-    // New: Export to custom text format
-    void exportAsText(
-        std::ostream& out, 
-        std::generator<const LogEntry&> filteredView, 
-        const TextOutputFormat& format
-    ) const;
-
     [[deprecated("Use getFilteredEntries(const filter::FilterExpression&) instead.")]]
     virtual ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterCriteria& criteria) const;
     virtual ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries(const filter::FilterExpression& expression) const;
 
     ErrorCode::Result<std::vector<LogEntry>> getSortedFilteredEntries(const filter::FilterCriteria& criteria, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
     ErrorCode::Result<std::vector<LogEntry>> getSortedFilteredEntries(const filter::FilterExpression& expression, filter::SortBy sortBy, filter::SortOrder sortOrder) const;
+
+    // Exporting
+    ErrorCode::Result<void> exportAsJson(
+        std::ostream& out, 
+        const filter::FilterExpression& expression, 
+        bool includeSummary = true
+    ) const;
+
+    ErrorCode::Result<void> exportAsCsv(
+        std::ostream& out, 
+        const filter::FilterExpression& expression, 
+        bool includeHeader = true
+    ) const;
 
     // New: Apply a filter, returning a new view (generator)
     std::generator<const LogEntry&> filter(std::generator<const LogEntry&> input, const filter::FilterExpression& expression) const;
@@ -236,6 +236,8 @@ public:
 
     ILogParser* getCurrentParser() const { return currentParser_.get(); }
 
+    static bool lessByField(const LogEntry& lhs, const LogEntry& rhs, filter::SortBy key);
+
     // Helper methods used by IO.cpp
     void setDefaultFieldMappings(LogAnalyzerSettings& settings);
     std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(
@@ -245,7 +247,7 @@ public:
         std::optional<CancellationToken*> cancellationToken = std::nullopt,
         std::optional<ProgressCallback> progressCallback = std::nullopt
     );
-    virtual filter::FilterExpression createFilterExpressionFromCriteria(const filter::FilterCriteria& criteria) const;
+    virtual ErrorCode::Result<filter::FilterExpression> createFilterExpressionFromCriteria(const filter::FilterCriteria& criteria) const;
 
 private:
     // Internal helper methods that generators would call
@@ -276,7 +278,6 @@ private:
     ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const filter::FilterCriteria& criteria) const;
     ErrorCode::Result<std::vector<LogEntry>> getFilteredEntries_NoLock(const filter::FilterExpression& expression) const;
     ErrorCode::Result<std::shared_ptr<filter::CompositeFilter>> createFilterFromCriteria_NoLock(const filter::FilterCriteria& criteria) const;
-    static bool lessByField(const LogEntry& lhs, const LogEntry& rhs, filter::SortBy key);
     
     static std::shared_ptr<IStatisticCollector> createStatisticCollector(const StatisticConfig& config);
     

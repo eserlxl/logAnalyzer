@@ -136,6 +136,23 @@ public:
      */
     static FilterExpression makeNot(FilterExpression expr);
 
+    // Fluent API / Factory methods
+    static FilterExpression create(FilterCondition condition) {
+        return makeCondition(std::move(condition));
+    }
+
+    FilterExpression And(FilterExpression other) const {
+        return makeAnd({*this, std::move(other)});
+    }
+
+    FilterExpression Or(FilterExpression other) const {
+        return makeOr({*this, std::move(other)});
+    }
+
+    FilterExpression Not() const {
+        return makeNot(*this);
+    }
+
 private:
     // Helper to convert a FilterCondition to its string representation.
     static std::string conditionToString(const FilterCondition& cond) ;
@@ -191,7 +208,7 @@ inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, Filt
     if (j.contains("condition") && j.at("condition").is_object()) {
         FilterCondition fc;
         std::string next_path = (current_path == "/" ? "" : current_path) + "/condition";
-        auto result = from_json(j.at("condition"), fc);
+        auto result = from_json(j.at("condition"), fc, next_path);
         if (!result) return std::unexpected(result.error());
         
         fe = FilterExpression(std::move(fc), current_negated);
@@ -232,9 +249,9 @@ inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, Filt
 }
 
 // Main from_json entry point for FilterExpression
-inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe) {
-    // Start recursive parsing with root path "/"
-    return from_json_recursive(j, fe, "/", 0);
+inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterExpression& fe, const std::string& path = "/") {
+    // Start recursive parsing with root path
+    return from_json_recursive(j, fe, path, 0);
 }
 
 } // namespace filter

@@ -5,6 +5,7 @@
 #include "analyzer/log/reader.h"
 #include "analyzer/log/writer.h"
 #include "core/log/parser.h"
+#include "core/log/i_parser_factory.h"
 #include "filter/core.h"
 #include "stats/core.h"
 #include "export/core.h"
@@ -227,102 +228,37 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
     }
 }
 
-filter::FilterExpression LogAnalyzer::createFilterExpressionFromCriteria(const filter::FilterCriteria& criteria) const {
-    std::vector<filter::FilterExpression> expressions;
 
-    auto addCondition = [&](const nlohmann::json& json_cond) {
-        filter::FilterCondition cond;
-        if (auto result = filter::from_json(json_cond, cond); result) {
-            expressions.emplace_back(filter::FilterExpression::makeCondition(cond));
-        } else {
-            // In a real application, you might want to log this error or handle it differently.
-            // For now, we'll just skip the invalid condition.
-            std::cerr << "Warning: Failed to create filter condition: " << result.error().toString() << std::endl;
-        }
-    };
 
-    // Keyword filter
-    if (!criteria.keyword.empty()) {
-        nlohmann::json json_cond = {
-            {"field", "message"},
-            {"op", criteria.keywordCaseSensitive ? "CONTAINS" : "CONTAINS_I"},
-            {"value", criteria.keyword},
-            {"value_type", "STRING"},
-            {"caseSensitive", criteria.keywordCaseSensitive}
-        };
-        addCondition(json_cond);
+std::map<std::string, std::shared_ptr<ILogParserFactory>, LogAnalyzerInternal::ci_less> LogAnalyzer::s_parserFactories_;
+
+ErrorCode::Result<void> LogAnalyzer::registerParserFactory(std::string_view formatIdentifier, std::shared_ptr<ILogParserFactory> factory) {
+    if (!factory) {
+        return std::unexpected(ErrorCode::Error::unexpected("Cannot register a null parser factory"));
     }
+    s_parserFactories_[std::string(formatIdentifier)] = std::move(factory);
+    return {};
+}
 
-    // Regex pattern filter
-    if (!criteria.regexPattern.empty()) {
-        nlohmann::json json_cond = {
-            {"field", "message"},
-            {"op", "REGEX"},
-            {"value", criteria.regexPattern},
-            {"value_type", "STRING"}
-        };
-        addCondition(json_cond);
+ErrorCode::Result<void> LogAnalyzer::selectParser(std::string_view formatIdentifier) {
+    std::unique_lock<std::shared_mutex> lock(stateMutex_);
+    auto it = s_parserFactories_.find(std::string(formatIdentifier));
+    if (it == s_parserFactories_.end()) {
+        return std::unexpected(ErrorCode::Error::unexpected("Parser factory not found for format: " + std::string(formatIdentifier)));
     }
+    currentParserIdentifier_ = std::string(formatIdentifier);
+    updateCurrentParser();
+    return {};
+}
 
-    // Log levels filter
-    if (!criteria.levels.empty()) {
-        if (criteria.levels.size() == 1) {
-            nlohmann::json json_cond = {
-                {"field", "level"},
-                {"op", "EQUALS"},
-                {"value", Utils::logLevelToString(criteria.levels[0])},
-                {"value_type", "LOG_LEVEL"}
-            };
-            addCondition(json_cond);
-        } else {
-            std::vector<filter::FilterExpression> levelExpressions;
-            for (LogLevel level : criteria.levels) {
-                nlohmann::json json_cond = {
-                    {"field", "level"},
-                    {"op", "EQUALS"},
-                    {"value", Utils::logLevelToString(level)},
-                    {"value_type", "LOG_LEVEL"}
-                };
-                filter::FilterCondition cond;
-                if(auto res = filter::from_json(json_cond, cond); res) {
-                    levelExpressions.emplace_back(filter::FilterExpression::makeCondition(cond));
-                }
-            }
-            if(!levelExpressions.empty()) {
-                expressions.emplace_back(filter::FilterExpression::makeOr(levelExpressions));
-            }
-        }
-    }
+std::string_view LogAnalyzer::getSelectedParserIdentifier() const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    return currentParserIdentifier_;
+}
 
-    // Time range filters
-    if (criteria.startTime.has_value()) {
-        std::string dtFormat = "%Y-%m-%d %H:%M:%S"; // Example default
-        nlohmann::json json_cond = {
-            {"field", "timestamp"},
-            {"op", "GREATER_THAN_OR_EQUAL"},
-            {"value", Utils::formatTimestamp(criteria.startTime.value(), dtFormat)},
-            {"value_type", "DATETIME"},
-            {"datetimeFormat", dtFormat}
-        };
-        addCondition(json_cond);
-    }
-    if (criteria.endTime.has_value()) {
-        std::string dtFormat = "%Y-%m-%d %H:%M:%S"; // Example default
-        nlohmann::json json_cond = {
-            {"field", "timestamp"},
-            {"op", "LESS_THAN_OR_EQUAL"},
-            {"value", Utils::formatTimestamp(criteria.endTime.value(), dtFormat)},
-            {"value_type", "DATETIME"},
-            {"datetimeFormat", dtFormat}
-        };
-        addCondition(json_cond);
-    }
-
-    if (expressions.empty()) {
-        return filter::FilterExpression::makeEmpty();
-    } else if (expressions.size() == 1) {
-        return expressions[0];
-    } else {
-        return filter::FilterExpression::makeAnd(expressions);
+void LogAnalyzer::updateCurrentParser() {
+    auto it = s_parserFactories_.find(currentParserIdentifier_);
+    if (it != s_parserFactories_.end()) {
+        currentParser_ = it->second->createParser(currentSettings_);
     }
 }

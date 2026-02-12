@@ -38,6 +38,28 @@ Additionally, tests are configured to support various build options. For instanc
 
 ### Developer Tools
 
+#### Code Formatting and Quality
+
+To ensure consistent code style and quality, `logAnalyzer` uses `pre-commit` hooks. These hooks automatically run checks and formatters on your code before you commit.
+
+First, install `pre-commit`:
+
+```bash
+pip install pre-commit
+```
+
+Next, set up the git hooks:
+
+```bash
+pre-commit install
+```
+
+Now, `pre-commit` will run automatically on `git commit`. You can also run it manually on all files:
+
+```bash
+pre-commit run --all-files
+```
+
 The following commands can be run from the `build` directory to assist with development and maintenance:
 
 -   **Generate Documentation**:

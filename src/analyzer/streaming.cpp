@@ -233,3 +233,146 @@ std::expected<void, LogParseError> LogAnalyzer::analyzeStream(const std::vector<
     }
     return {};
 }
+
+std::generator<const LogEntry&> LogAnalyzer::streamFilteredEntries(const filter::FilterExpression& expression) const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    for (const auto& entry : entries_) {
+        auto evalResult = expression.evaluate(entry);
+        if (evalResult && *evalResult) {
+            co_yield entry;
+        }
+    }
+}
+
+std::generator<const LogEntry&> LogAnalyzer::streamSortedFilteredEntries(
+    const filter::FilterExpression& expression, 
+    filter::SortBy sortBy, 
+    filter::SortOrder sortOrder
+) const {
+    auto filtered = getSortedFilteredEntries(expression, sortBy, sortOrder);
+    if (filtered) {
+        for (const auto& entry : *filtered) {
+            co_yield entry;
+        }
+    }
+}
+
+std::generator<const LogEntry&> LogAnalyzer::streamAnalyze(
+    std::istream& is, 
+    std::string_view sourceIdentifier,
+    ParserErrorAction /*errorAction*/,
+    std::optional<filter::FilterExpression> filter,
+    std::optional<std::function<LogEntry(LogEntry)>> transform,
+    std::optional<CancellationToken*> cancellationToken,
+    std::optional<ProgressCallback> /*progressCallback*/
+) const {
+    std::unique_ptr<ILogParser> parser;
+    {
+        std::shared_lock<std::shared_mutex> lock(stateMutex_);
+        if (currentParser_) {
+            parser = currentParser_->clone();
+        }
+    }
+
+    if (!parser) co_return;
+
+    std::string line;
+    size_t lineNumber = 0;
+    while (std::getline(is, line)) {
+        if (cancellationToken && (*cancellationToken)->isCancelled()) break;
+        lineNumber++;
+        
+        auto res = parser->processLine(line, lineNumber, std::string(sourceIdentifier));
+        if (res && *res) {
+            LogEntry entry = std::move(**res);
+            if (filter) {
+                auto eval = filter->evaluate(entry);
+                if (!eval || !*eval) continue;
+            }
+            if (transform) {
+                entry = (*transform)(std::move(entry));
+            }
+            co_yield entry;
+        }
+    }
+    
+    for (auto& res : parser->flushRemaining()) {
+        if (res) {
+            LogEntry entry = std::move(*res);
+             if (filter) {
+                auto eval = filter->evaluate(entry);
+                if (!eval || !*eval) continue;
+            }
+            if (transform) {
+                entry = (*transform)(std::move(entry));
+            }
+            co_yield entry;
+        }
+    }
+}
+
+std::generator<const LogEntry&> LogAnalyzer::filter(std::generator<const LogEntry&> input, const filter::FilterExpression& expression) const {
+    for (const auto& entry : input) {
+        auto evalResult = expression.evaluate(entry);
+        if (evalResult && *evalResult) {
+            co_yield entry;
+        }
+    }
+}
+
+std::generator<LogEntry> LogAnalyzer::transform(std::generator<const LogEntry&> input, std::function<LogEntry(LogEntry)> transformer) const {
+    for (const auto& entry : input) {
+        co_yield transformer(entry);
+    }
+}
+
+std::generator<nlohmann::json> LogAnalyzer::project(std::generator<const LogEntry&> input, const FieldProjection& projection) const {
+    for (const auto& entry : input) {
+        nlohmann::json j;
+        for (const auto& fieldName : projection.fieldsToInclude) {
+             LogEntryField fieldEnum = Utils::stringToLogEntryField(fieldName);
+             if (fieldEnum != LogEntryField::UNKNOWN) {
+                 switch (fieldEnum) {
+                     case LogEntryField::ID: if (entry.id) j[fieldName] = *entry.id; break;
+                     case LogEntryField::TIMESTAMP: if (entry.timestamp) j[fieldName] = Utils::formatTimestamp(*entry.timestamp); break;
+                     case LogEntryField::LEVEL: j[fieldName] = Utils::logLevelToString(entry.level); break;
+                     case LogEntryField::MESSAGE: j[fieldName] = entry.message; break;
+                     case LogEntryField::SOURCE_FILE: j[fieldName] = entry.sourceFile; break;
+                     case LogEntryField::LINE_NUMBER: if (entry.sourceLineNumber) j[fieldName] = *entry.sourceLineNumber; break;
+                     case LogEntryField::THREAD_ID: if (entry.threadId) j[fieldName] = *entry.threadId; break;
+                     case LogEntryField::MODULE: if (entry.module) j[fieldName] = *entry.module; break;
+                     case LogEntryField::HOST: if (entry.host) j[fieldName] = *entry.host; break;
+                     default: break;
+                 }
+             } else {
+                 if (entry.customFields.count(fieldName)) {
+                     j[fieldName] = entry.customFields.at(fieldName);
+                 }
+             }
+        }
+        co_yield j;
+    }
+}
+
+std::generator<const LogEntry&> LogAnalyzer::filterEntriesInternal(const filter::FilterExpression& expression) const {
+    return streamFilteredEntries(expression);
+}
+
+std::generator<const LogEntry&> LogAnalyzer::sortEntriesInternal(std::generator<const LogEntry&> input, filter::SortBy sortBy, filter::SortOrder sortOrder) const {
+    std::vector<LogEntry> entries;
+    for (const auto& entry : input) {
+        entries.push_back(entry);
+    }
+    
+    auto sortLambda = [&](const LogEntry& a, const LogEntry& b) {
+        if (sortOrder == filter::SortOrder::ASCENDING) {
+            return lessByField(a, b, sortBy);
+        }
+        return lessByField(b, a, sortBy);
+    };
+    std::sort(entries.begin(), entries.end(), sortLambda);
+    
+    for (const auto& entry : entries) {
+        co_yield entry;
+    }
+}

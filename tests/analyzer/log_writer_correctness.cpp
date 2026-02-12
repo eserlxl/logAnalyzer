@@ -30,7 +30,7 @@ public:
     }
 
     // Override createFilterExpressionFromCriteria
-    filter::FilterExpression createFilterExpressionFromCriteria(const filter::FilterCriteria& /*criteria*/) const override {
+    ErrorCode::Result<filter::FilterExpression> createFilterExpressionFromCriteria(const filter::FilterCriteria& /*criteria*/) const override {
         // For testing LogWriter, the exact FilterExpression doesn't matter as much as the output of getFilteredEntries.
         // Return a dummy expression.
         return filter::FilterExpression();

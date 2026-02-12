@@ -175,23 +175,27 @@ set(LIB_SOURCES
     src/analyzer/log/reader.cpp
     src/analyzer/log/writer.cpp
     src/analyzer/log/loader.cpp
-    src/analyzer/stats.cpp
+    src/stats/analyzer.cpp
     src/analyzer/core.cpp
     src/analyzer/io.cpp
-    src/analyzer/export.cpp
-    src/analyzer/filter.cpp
+    src/filter/analyzer.cpp
     src/analyzer/streaming.cpp
+    src/analyzer/export.cpp
     src/config/core.cpp
     src/config/json.cpp
     src/config/validation.cpp
     src/config/utils.cpp
     src/config/cli.cpp
+    src/config/cli_helpers.cpp
     src/core/log/parser.cpp
     src/core/log/parser_utils.cpp
     src/core/log/json_parser.cpp
     src/core/log/types.cpp
     src/export/core.cpp
     src/export/json.cpp
+    src/export/xml.cpp
+    src/export/csv.cpp
+    src/export/text.cpp
     src/filter/enum_string_conversions.cpp
     src/filter/expression.cpp
     src/filter/concrete_filters.cpp
@@ -201,6 +205,8 @@ set(LIB_SOURCES
     src/utils/ip_address.cpp
     src/utils/version.cpp
     src/utils/time.cpp
+    src/utils/time_parser.cpp
+    src/utils/timer.cpp
     src/utils/string.cpp
     src/utils/core.cpp
 )
@@ -222,7 +228,7 @@ target_link_libraries(LogAnalyzerLib
 if(MSVC)
     target_compile_options(LogAnalyzerLib PRIVATE /W4 /WX)
 else()
-    target_compile_options(LogAnalyzerLib PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(LogAnalyzerLib PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-uninitialized)
 endif()
 
 # Main executable

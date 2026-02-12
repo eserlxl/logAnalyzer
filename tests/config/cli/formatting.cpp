@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "tests/include/cli.h"
+#include "cli_helper.h"
 #include "filter/types.h" // For SortBy, SortOrder
 
 using namespace filter;

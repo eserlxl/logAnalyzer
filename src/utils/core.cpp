@@ -21,7 +21,7 @@ namespace Utils {
 namespace {
 
 void toUpperInPlaceAsciiSafe(std::string& value) {
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+    std::ranges::transform(value, value.begin(), [](unsigned char c) {
         return static_cast<char>(std::toupper(c));
     });
 }

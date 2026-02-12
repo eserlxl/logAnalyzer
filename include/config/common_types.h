@@ -20,7 +20,8 @@ namespace Config {
     // Case-insensitive map for LogLevel strings
     inline const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> LogLevelMap = {
         {"TRACE", LogLevel::TRACE}, {"DEBUG", LogLevel::DEBUG}, {"INFO", LogLevel::INFO},
-        {"WARNING", LogLevel::WARNING}, {"ERROR", LogLevel::ERROR}, {"FATAL", LogLevel::FATAL},
+        {"WARN", LogLevel::WARNING}, {"WARNING", LogLevel::WARNING}, {"ERROR", LogLevel::ERROR},
+        {"FATAL", LogLevel::FATAL},
         {"CRITICAL", LogLevel::CRITICAL}, // Added CRITICAL to match Utils
         {"UNKNOWN", LogLevel::UNKNOWN}
     };

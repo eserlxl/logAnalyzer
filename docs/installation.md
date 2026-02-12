@@ -1,89 +1,105 @@
 # Installation Guide
 
-This guide covers the requirements and steps to build and install `logAnalyzer` on various platforms.
+This guide provides detailed instructions for building and installing `logAnalyzer` from source.
 
 ## Prerequisites
 
-`logAnalyzer` requires a C++23 compatible compiler and CMake 3.14+.
+Before you begin, ensure you have the following dependencies installed on your system:
 
-### Platform-Specific Setup
+-   **A C++23 Compatible Compiler**: `logAnalyzer` uses features from the C++23 standard.
+    -   GCC 13 or later.
+    -   Clang 16 or later.
+-   **CMake**: A modern build system generator.
+    -   Version 3.14 or later is required.
+-   **Git**: The version control system used to clone the repository.
 
-#### 🐧 Linux (Debian/Ubuntu)
+### Installing Dependencies
+
+#### On Debian/Ubuntu
 
 ```bash
 sudo apt-get update
-# GCC 13 is required for C++23 support
-sudo apt-get install -y g++-13 cmake git
+sudo apt-get install -y build-essential g++-13 cmake git
 ```
 
-#### 🍎 macOS
+#### On macOS
 
 Using [Homebrew](https://brew.sh/):
 
 ```bash
 brew install gcc cmake git
 ```
+*Note: On macOS, you may need to set the compiler explicitly when running CMake, as the default Clang version provided by Xcode may not be up-to-date. You can do this by setting the `CC` and `CXX` environment variables, for example: `CC=/usr/local/bin/gcc-13 CXX=/usr/local/bin/g++-13 cmake ...`*
 
-#### 🏔 Arch Linux
+#### On Windows
 
-```bash
-sudo pacman -Syu gcc cmake git
-```
-
-#### 🪟 Windows
-
-1.  Install [Visual Studio 2022](https://visualstudio.microsoft.com/) with the "Desktop development with C++" workload.
-2.  Install [CMake](https://cmake.org/download/).
-3.  Install [Git](https://git-scm.com/download/win).
+We recommend using the Windows Subsystem for Linux (WSL) with a distribution like Ubuntu. Once you have WSL set up, you can follow the Debian/Ubuntu instructions above.
 
 ## Building from Source
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/eserlxl/logAnalyzer.git
-    cd logAnalyzer
-    ```
+### 1. Clone the Repository
 
-2.  **Configure and Build:**
-    ```bash
-    cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
-    cmake --build build --parallel
-    ```
+First, clone the `logAnalyzer` repository from GitHub:
 
-    The executable will be located at `build/bin/logAnalyzer`.
+```bash
+git clone https://github.com/eserlxl/logAnalyzer.git
+cd logAnalyzer
+```
 
-## System-Wide Installation
+### 2. Configure the Build
 
-To install the `logAnalyzer` executable to your system path so it can be run from any directory:
+Next, use CMake to generate the build files. It's best practice to create a separate build directory.
 
-### Unix/Linux/macOS
+```bash
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+```
 
-Run the following command from the project root after building:
+-   `-B build`: Specifies that the build files should be generated in a directory named `build`.
+-   `-S .`: Specifies that the source directory is the current directory.
+-   `-DCMAKE_BUILD_TYPE=Release`: Configures the build for release, which enables optimizations for the best performance.
+
+### 3. Compile the Project
+
+Now, compile the project using the `cmake --build` command:
+
+```bash
+cmake --build build --parallel
+```
+
+-   `--build build`: Tells CMake to build the project in the `build` directory.
+-   `--parallel`: (Optional) Uses all available CPU cores to speed up the compilation process.
+
+The compiled `logAnalyzer` executable will be located in the `build/bin` directory.
+
+### 4. Run the Executable
+
+You can run `logAnalyzer` directly from the build directory:
+
+```bash
+./build/bin/logAnalyzer --version
+```
+
+### 5. Install the Executable (Optional)
+
+If you wish to install `logAnalyzer` system-wide, you can use the `cmake --install` command. This will typically copy the executable to `/usr/local/bin`.
 
 ```bash
 sudo cmake --install build
 ```
 
-By default, this installs to `/usr/local/bin`. You can specify a different prefix:
-
-```bash
-cmake --install build --prefix /home/user/.local
-```
-
-### Windows
-
-You may need to run your terminal as Administrator.
-
-```powershell
-cmake --install build
-```
-
-Alternatively, you can manually add the `build` directory to your System `PATH` environment variable.
-
-## Verification
-
-After installation, verify that `logAnalyzer` is accessible:
+Once installed, you can run `logAnalyzer` from any location:
 
 ```bash
 logAnalyzer --version
+```
+
+## Updating `logAnalyzer`
+
+To update `logAnalyzer` to the latest version, navigate to your cloned repository and run the following commands:
+
+```bash
+git pull
+cmake --build build --parallel
+# If you installed it system-wide:
+sudo cmake --install build
 ```

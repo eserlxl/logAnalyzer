@@ -5,7 +5,7 @@
 #include <chrono>
 #include <optional>
 #include <map>
-#include "test_utils.h"
+#include "helper.h"
 #include "core/log/types.h" // Assuming LogEntry and LogLevel are defined here
 
 // Helper to create a time point for testing

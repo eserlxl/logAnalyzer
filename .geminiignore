@@ -1,0 +1,6 @@
+# Allow gemini-cli to read build logs (gitignored but needed by AI)
+!build/build.log
+!build/*.log
+
+# Allow gemini-cli to read its own audit artifacts
+!audits/**

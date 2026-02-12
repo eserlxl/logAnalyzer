@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "tests/include/cli.h"
+#include "cli_helper.h"
 
 TEST_F(CLIConfigTest, DefaultValues) {
     auto result = parse({"log_analyzer", "dummy_log_file.log"});

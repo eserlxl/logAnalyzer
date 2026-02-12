@@ -9,6 +9,7 @@
 #include "export/core.h"
 #include "utils/core.h"
 #include "core/error.h"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <algorithm>
@@ -16,6 +17,7 @@
 #include <iomanip>
 #include <sstream>
 #include <memory> 
+#include <utility>
 #include <vector>
 #include <utility>
 #include <future>
@@ -30,20 +32,20 @@ LogReader::LogReader(LogAnalyzer& analyzer) : analyzer_(analyzer) {}
 
 // Implementation of LogReader::ScopedLogSettings
 // Assumes analyzer_.stateMutex_ is already locked (unique_lock) by the caller.
-LogReader::ScopedLogSettings::ScopedLogSettings(LogAnalyzer& analyzer, const std::string& pattern_val, LogReader& reader)
+LogReader::ScopedLogSettings::ScopedLogSettings(LogAnalyzer& analyzer, const std::string& patternVal, LogReader& reader)
     : analyzer_(analyzer), reader_(reader), restorationError_(std::nullopt), settingsRestored_(false) {
     // stateMutex_ is already held by caller; avoid re-locking through getSettings().
     originalSettings_ = analyzer_.currentSettings_;
     LogAnalyzerSettings tempSettings = originalSettings_;
 
-    if (pattern_val == DEFAULT_LOG_REGEX_PATTERN_SV) {
+    if (patternVal == DEFAULT_LOG_REGEX_PATTERN_SV) {
         reader_.setDefaultFieldMappings(tempSettings); // Call helper through reader instance
         // Low-risk cleanup: Redundant assignment of DEFAULT_LOG_REGEX_PATTERN_SV is implicitly removed.
         // The setDefaultFieldMappings or prior settings logic should handle setting this if appropriate.
     } else {
         tempSettings.fieldMappings.clear();
     }
-    tempSettings.lineParsePattern = pattern_val; // Set the pattern
+    tempSettings.lineParsePattern = patternVal; // Set the pattern
 
     if (auto res = analyzer_.setSettings(tempSettings); !res) {
         // Error setting temporary settings. Store the error, and indicate restoration is not needed.
@@ -104,7 +106,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogP
             } else if (errorAction == ParserErrorAction::Throw) {
                 // This will be handled by the caller by checking the Result
             }
-            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber, parseResult.error()});
+            report.parseErrors.emplace_back(ParseError::PARTIAL_FAILURE, parseResult.error().message, lineNumber, parseResult.error());
         }
     }
 
@@ -119,7 +121,7 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogReader::parseAndReport(ILogP
             if (errorAction == ParserErrorAction::Warn) {
                  std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << '\n';
             }
-            report.parseErrors.emplace_back(LogParseError{ParseError::PARTIAL_FAILURE, result.error().message, 0, result.error()});
+            report.parseErrors.emplace_back(ParseError::PARTIAL_FAILURE, result.error().message, 0, result.error());
         }
     }
 
@@ -154,7 +156,7 @@ ErrorCode::Result<AnalysisReport> LogReader::doLoadAndReplace(ILogParser* parser
         analyzer_.processEntryForStatistics(entry);
     }
     
-    std::sort(analyzer_.entries_.begin(), analyzer_.entries_.end(), [](const LogEntry& a, const LogEntry& b) {
+    std::ranges::sort(analyzer_.entries_, [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
@@ -178,7 +180,7 @@ ErrorCode::Result<AnalysisReport> LogReader::doAppend(ILogParser* parser, const 
     // Use C++17 structured bindings
     auto [newEntries, report] = parseAndReport(parser, file, filePath, errorAction);
     
-    std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
+    std::ranges::sort(newEntries, [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
@@ -191,8 +193,8 @@ ErrorCode::Result<AnalysisReport> LogReader::doAppend(ILogParser* parser, const 
     mergedEntries.reserve(analyzer_.entries_.size() + newEntries.size());
 
     // All modifications to analyzer_.entries_ are done under the assumption of a unique_lock held by the caller.
-    std::merge(analyzer_.entries_.begin(), analyzer_.entries_.end(),
-               newEntries.begin(), newEntries.end(),
+    std::ranges::merge(analyzer_.entries_,
+               newEntries,
                std::back_inserter(mergedEntries),
                [](const LogEntry& a, const LogEntry& b) {
                    return a.timestamp < b.timestamp;
@@ -211,7 +213,7 @@ ErrorCode::Result<AnalysisReport> LogReader::doAppend(ILogParser* parser, const 
 // Private helper to perform analyzeStream logic.
 // Assumes analyzer_.stateMutex_ is already locked (shared_lock or unique_lock) by the caller.
 // The parser passed is expected to be stable for the duration of this call.
-ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction) {
+ErrorCode::Result<void> LogReader::doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, const std::function<bool(const LogEntry&)>& entryCallback, ParserErrorAction errorAction) {
     for (const auto& filePath : filePaths) {
         std::istream* input;
         std::ifstream file;
@@ -305,7 +307,7 @@ ErrorCode::Result<AnalysisReport> LogReader::loadAndReplace(const std::string& f
         if (reportResult.has_value()) {
             // Parsing was successful, but restoration failed. Add to report.
             reportResult.value().parseErrors.emplace_back(
-                LogParseError{ParseError::SETTINGS_RESTORE_FAILED, scopedSettings.getRestorationError()->message, 0, scopedSettings.getRestorationError().value()}
+                ParseError::SETTINGS_RESTORE_FAILED, scopedSettings.getRestorationError()->message, 0, scopedSettings.getRestorationError().value()
             );
             if (reportResult.value().status == ParseError::SUCCESS) {
                 reportResult.value().status = ParseError::PARTIAL_FAILURE; // Indicate some issue
@@ -376,7 +378,7 @@ std::future<ErrorCode::Result<AnalysisReport>> LogReader::loadAsync(const std::s
         if (scopedSettings.getRestorationError().has_value()) {
             if (reportResult.has_value()) {
                 reportResult.value().parseErrors.emplace_back(
-                    LogParseError{ParseError::SETTINGS_RESTORE_FAILED, scopedSettings.getRestorationError()->message, 0, scopedSettings.getRestorationError().value()}
+                    ParseError::SETTINGS_RESTORE_FAILED, scopedSettings.getRestorationError()->message, 0, scopedSettings.getRestorationError().value()
                 );
                 if (reportResult.value().status == ParseError::SUCCESS) {
                     reportResult.value().status = ParseError::PARTIAL_FAILURE;
@@ -395,7 +397,7 @@ ErrorCode::Result<AnalysisReport> LogReader::streamIn(std::istream& is, const st
     // Use C++17 structured bindings
     auto [newEntries, report] = parseAndReport(currentParser, is, sourceIdentifier, errorAction);
 
-    std::sort(newEntries.begin(), newEntries.end(), [](const LogEntry& a, const LogEntry& b) {
+    std::ranges::sort(newEntries, [](const LogEntry& a, const LogEntry& b) {
         return a.timestamp < b.timestamp;
     });
 
@@ -408,8 +410,8 @@ ErrorCode::Result<AnalysisReport> LogReader::streamIn(std::istream& is, const st
     mergedEntries.reserve(analyzer_.entries_.size() + newEntries.size());
 
     // All modifications to analyzer_.entries_ are done under the unique_lock held for the entire function.
-    std::merge(analyzer_.entries_.begin(), analyzer_.entries_.end(),
-               newEntries.begin(), newEntries.end(),
+    std::ranges::merge(analyzer_.entries_,
+               newEntries,
                std::back_inserter(mergedEntries),
                [](const LogEntry& a, const LogEntry& b) {
                    return a.timestamp < b.timestamp;
@@ -429,7 +431,7 @@ ErrorCode::Result<void> LogReader::analyzeStream(const std::vector<std::string>&
     std::shared_lock<std::shared_mutex> lock(analyzer_.stateMutex_); // Shared lock for reading parser state (High-risk 1)
     ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser while lock is held
 
-    return doAnalyzeStreamInternal(currentParser, filePaths, entryCallback, errorAction);
+    return doAnalyzeStreamInternal(currentParser, filePaths, std::move(entryCallback), errorAction);
 }
 
 std::expected<void, LogParseError> LogReader::analyzeStream(const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, const std::string& pattern) {
@@ -441,7 +443,7 @@ std::expected<void, LogParseError> LogReader::analyzeStream(const std::vector<st
     }
 
     ILogParser* currentParser = analyzer_.getCurrentParser(); // Get parser after settings are applied
-    auto result = doAnalyzeStreamInternal(currentParser, filePaths, entryCallback, ParserErrorAction::Warn);
+    auto result = doAnalyzeStreamInternal(currentParser, filePaths, std::move(entryCallback), ParserErrorAction::Warn);
 
     if (scopedSettings.getRestorationError().has_value()) {
         // If restoration failed, return an error indicating that.

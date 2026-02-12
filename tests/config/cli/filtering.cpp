@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "tests/include/cli.h"
+#include "cli_helper.h"
 #include "filter/types.h"
 #include "core/log/types.h" // For LogLevel
 #include "utils/time.h" // For Utils::parseTime
@@ -96,17 +96,17 @@ TEST_F(CLIConfigTest, ComplexFilterExpression) {
 
 TEST_F(CLIConfigTest, FilterStartTimeISO) {
     std::string time_str = "2023-01-01 10:00:00";
-    auto expected_time = Utils::parseTime(time_str).value();
-    auto result = parse({"log_analyzer", "dummy_log_file.log", "--start", time_str.c_str()});
+    auto expectedTime = Utils::parseTime(time_str).value();
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--start", time_str});
     ASSERT_TRUE(result.has_value());
     auto& options = result.value().second;
     ASSERT_TRUE(options.startTime.has_value());
-    ASSERT_EQ(options.startTime.value(), expected_time);
+    ASSERT_EQ(options.startTime.value(), expectedTime);
 }
 
 TEST_F(CLIConfigTest, FilterEndTimeRelative) {
     std::string time_str = "1 hour ago";
-    auto result = parse({"log_analyzer", "dummy_log_file.log", "--end", time_str.c_str()});
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--end", time_str});
     ASSERT_TRUE(result.has_value());
     auto& options = result.value().second;
     ASSERT_TRUE(options.endTime.has_value());
@@ -119,17 +119,17 @@ TEST_F(CLIConfigTest, FilterEndTimeRelative) {
 TEST_F(CLIConfigTest, FilterDurationWithStartTime) {
     std::string start_time_str = "2023-01-01 00:00:00";
     std::string duration_str = "1h";
-    auto expected_start_time = Utils::parseTime(start_time_str).value();
-    auto expected_end_time = expected_start_time + std::chrono::hours(1);
+    auto expectedStartTime = Utils::parseTime(start_time_str).value();
+    auto expectedEndTime = expectedStartTime + std::chrono::hours(1);
 
-    auto result = parse({"log_analyzer", "dummy_log_file.log", "--start", start_time_str.c_str(), "--duration", duration_str.c_str()});
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--start", start_time_str, "--duration", duration_str});
     ASSERT_TRUE(result.has_value());
     auto& options = result.value().second;
     
     ASSERT_TRUE(options.startTime.has_value());
-    ASSERT_EQ(options.startTime.value(), expected_start_time);
+    ASSERT_EQ(options.startTime.value(), expectedStartTime);
     ASSERT_TRUE(options.endTime.has_value());
-    ASSERT_EQ(options.endTime.value(), expected_end_time);
+    ASSERT_EQ(options.endTime.value(), expectedEndTime);
     ASSERT_TRUE(options.duration.has_value());
     ASSERT_EQ(options.duration.value(), std::chrono::hours(1));
 }

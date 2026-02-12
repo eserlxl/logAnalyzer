@@ -2,6 +2,44 @@
 
 The `logAnalyzer` core functionality is exposed through a C++ API, allowing developers to integrate log analysis capabilities directly into their own applications.
 
+## Configuration Class: `LogAnalyzerSettings`
+
+The `LogAnalyzerSettings` class holds all configuration parameters for the analysis process. It provides a fluent API for easy configuration in C++ code.
+
+### Header
+```cpp
+#include "config/settings.h"
+```
+
+### Fluent API Example
+
+```cpp
+LogAnalyzerSettings settings;
+settings.setLineParsePattern(R"(^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) ([A-Z]+): (.*)$)")
+        .setCaseSensitiveParsing(false)
+        .setLogEntryStartPattern(R"(^\d{4}-\d{2}-\d{2})")
+        .addFieldMapping(LogEntryField::TIMESTAMP, 1, "%Y-%m-%d %H:%M:%S")
+        .addFieldMapping(LogEntryField::LEVEL, 2)
+        .addFieldMapping(LogEntryField::MESSAGE, 3)
+        .addCustomLogLevelMapping("WRN", LogLevel::WARNING)
+        .addFilterRule({LogEntryField::LEVEL, FilterOperator::EQUALS, "ERROR"})
+        .setExportPath("errors.json")
+        .setExportFormat(ExportFormat::JSON);
+```
+
+### Key Methods
+
+- `setLineParsePattern(std::string pattern)`: Sets the regex for parsing lines.
+- `setCaseSensitiveParsing(bool)`: Enables/disables case sensitivity for parsing.
+- `setLogEntryStartPattern(std::optional<std::string> pattern)`: Sets the pattern for multi-line log entry starts.
+- `addFieldMapping(LogEntryField field, int groupIndex, const std::string& format = "")`: Maps a regex group to a standard field.
+- `addFieldMapping(const std::string& customFieldName, int groupIndex, const std::string& format = "")`: Maps a regex group to a custom field.
+- `addCustomLogLevelMapping(std::string label, LogLevel level)`: Maps a string in the log to an internal log level.
+- `addFilterRule(filter::FilterRule rule)`: Adds a simple filter rule.
+- `setExportSettings(ExportSettings es)`: Sets the complete export configuration.
+- `setExportPath(std::string path)`: Shortcut to set the export output path.
+- `setExportFormat(ExportFormat format)`: Shortcut to set the export format.
+
 ## Core Class: `LogAnalyzer`
 
 The `LogAnalyzer` class is the main entry point for the library. It manages log settings, parsing, filtering, statistics, and export.

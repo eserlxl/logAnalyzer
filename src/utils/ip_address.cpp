@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "utils/ip_address.h"
-#include <string.h> // For memset
+#include <cstring> // For memset
 
 namespace Utils {
 
@@ -43,7 +43,7 @@ bool IpAddress::operator==(const IpAddress& other) const {
     }
     if (family == AF_INET) {
         return std::get<std::array<unsigned char, 4>>(addressBytes) == std::get<std::array<unsigned char, 4>>(other.addressBytes);
-    } else if (family == AF_INET6) {
+    } if (family == AF_INET6) {
         return std::get<std::array<unsigned char, 16>>(addressBytes) == std::get<std::array<unsigned char, 16>>(other.addressBytes);
     }
     return false; // Should not happen for valid IpAddress objects
@@ -62,7 +62,7 @@ bool IpAddress::operator<(const IpAddress& other) const {
     
     if (family == AF_INET) {
         return std::get<std::array<unsigned char, 4>>(addressBytes) < std::get<std::array<unsigned char, 4>>(other.addressBytes);
-    } else if (family == AF_INET6) {
+    } if (family == AF_INET6) {
         return std::get<std::array<unsigned char, 16>>(addressBytes) < std::get<std::array<unsigned char, 16>>(other.addressBytes);
     }
     return false; // Should not happen

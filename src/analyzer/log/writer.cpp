@@ -4,7 +4,6 @@
 #include <iostream>
 #include <sstream>
 #include <string_view>
-#include <format> // For std::format in C++20
 #include <map>    // Required for std::map to store placeholders
 
 #include "analyzer/core.h"
@@ -117,9 +116,20 @@ std::string LogWriter::formatEntry(const LogEntry& entry, const FormattingOption
     return resultStream.str();
 }
 
+std::string LogWriter::formatEntry(const LogEntry& entry, std::string_view dateTimeFormat, bool useColor) const {
+    FormattingOptions options;
+    options.dateTimeFormat = dateTimeFormat;
+    options.useColor = useColor;
+    return formatEntry(entry, options);
+}
+
 void LogWriter::printFilteredEntriesInternal(std::ostream& out, const filter::FilterCriteria& criteria, const FormattingOptions& options) const {
-    filter::FilterExpression combinedExpression = analyzer_.createFilterExpressionFromCriteria(criteria);
-    auto filteredEntriesExpected = analyzer_.getFilteredEntries(combinedExpression);
+    auto exprResult = analyzer_.createFilterExpressionFromCriteria(criteria);
+    if (!exprResult) {
+        out << "Error: Invalid filter criteria: " << exprResult.error().message << '\n';
+        return;
+    }
+    auto filteredEntriesExpected = analyzer_.getFilteredEntries(*exprResult);
 
     if (filteredEntriesExpected) {
         const auto& filteredEntries = *filteredEntriesExpected;

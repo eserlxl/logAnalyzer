@@ -70,6 +70,7 @@ enum class FilterValueType : uint8_t {
     STRING = 1,
     INT = 2,
     DOUBLE = 3,
+    FLOAT = 3,    // Alias for DOUBLE
     BOOL = 4,
     DATETIME = 5,
     AUTO = 6,     // Infer the type from the value's syntax (New).

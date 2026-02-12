@@ -27,6 +27,7 @@ enum class Code {
     NotImplemented, // New error code for unimplemented features
     FieldNotFound, // New error code for when a log entry field is not found
     UnknownJsonError, // New: For generic JSON errors not covered by others
+    ValidationError, // Added ValidationError
     Unexpected, // Added Unexpected error code
     // Add more error codes as needed
 };
@@ -102,6 +103,7 @@ struct Error : public std::runtime_error {
             case Code::JsonParseError: return "JsonParseError";
             case Code::NotImplemented: return "NotImplemented";
             case Code::FieldNotFound: return "FieldNotFound";
+            case Code::ValidationError: return "ValidationError";
             case Code::Unexpected: return "Unexpected";
             default: return "UnknownCode";
         }

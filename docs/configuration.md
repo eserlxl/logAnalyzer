@@ -78,10 +78,25 @@ If `lineParsePattern` extracts a JSON string into `groupIndex 5`, and you want t
 `{ "field": "customFields", "groupIndex": 5, "customFieldKey": "session" }`
 This would make the `session` value accessible for filtering and export via `customFields.session`.
 
+#### `customLogLevelMappings`
+An object that maps custom log level strings found in your log files to internal log levels recognized by `logAnalyzer`.
+- **Keys**: The custom log level strings (e.g., `"VERBOSE"`, `"WRN"`, `"trace_db"`). Leading and trailing whitespace is automatically trimmed.
+- **Values**: The target internal log level (e.g., `"DEBUG"`, `"WARNING"`, `"TRACE"`). These are case-insensitive and also trimmed of whitespace.
+
+Supported internal levels are: `TRACE`, `DEBUG`, `INFO`, `WARNING`, `ERROR`, `FATAL`.
+
+#### `logEntryStartPattern` (optional)
+A regular expression pattern used to identify the beginning of a new log entry. This is essential for parsing multi-line log entries (e.g., stack traces). If not provided, each line is treated as a separate log entry.
+
 #### `filterRules`
 An array of rule objects that define how to filter log entries. Each rule is an object with:
 -   `field`: The log entry field to check (e.g., `level`, `message`, `customFields`).
--   `operator`: The comparison operator (e.g., `EQUALS`, `CONTAINS`, `REGEX_MATCH`, `GREATER_THAN`).
+-   `operator`: The comparison operator. Supported operators include:
+    -   **Relational**: `EQUALS`, `NOT_EQUALS`, `LESS_THAN`, `GREATER_THAN`, `LESS_THAN_OR_EQUAL`, `GREATER_THAN_OR_EQUAL`.
+    -   **String**: `CONTAINS`, `NOT_CONTAINS`, `STARTS_WITH`, `ENDS_WITH`, `REGEX`.
+    -   **Case-Insensitive String**: `EQUALS_I`, `NOT_EQUALS_I`, `CONTAINS_I`, `NOT_CONTAINS_I`, `STARTS_WITH_I`, `ENDS_WITH_I`.
+    -   **Set-based**: `IN`, `NOT_IN`.
+    -   **Presence**: `IS_PRESENT`, `IS_ABSENT`, `IS_NULL`, `IS_NOT_NULL`.
 -   `value`: The value to compare against.
 -   `customFieldKey` (optional): Required if `field` is `customFields`.
 

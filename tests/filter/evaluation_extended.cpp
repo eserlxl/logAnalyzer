@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "tests/utils/test_utils.h"
+#include "helper.h"
+
+using namespace filter;
 
 namespace {
     // Helper to create a FilterExpression from a JSON object

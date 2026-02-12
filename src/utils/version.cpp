@@ -70,9 +70,7 @@ bool SemanticVersion::operator==(const SemanticVersion& other) const {
     return major == other.major &&
            minor == other.minor &&
            patch == other.patch &&
-           prerelease == other.prerelease &&
-           build == other.build; // According to SemVer, build metadata is ignored for comparison
-                                // but for strict equality we can include it.
+           prerelease == other.prerelease;
 }
 
 bool SemanticVersion::operator!=(const SemanticVersion& other) const {

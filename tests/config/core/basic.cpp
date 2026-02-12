@@ -6,6 +6,7 @@
 #include "core/log/types.h"
 #include "export/core.h" // For ExportFieldMapping
 #include "filter/types.h"
+#include <algorithm>
 #include <string>
 #include <algorithm> // For std::find_if
 #include <vector>
@@ -15,15 +16,15 @@ using namespace filter;
 // Define constants for magic numbers used in tests
 // NOTE: These should ideally be defined in a common header or within the test fixture scope
 // For simplicity in this example, we define them here.
-constexpr int DEFAULT_FIELD_MAPPING_COUNT = 3;
-constexpr int FIRST_GROUP_INDEX = 1;
-constexpr int SECOND_GROUP_INDEX = 2;
-constexpr int THIRD_GROUP_INDEX = 3;
-constexpr int TENTH_GROUP_INDEX = 10;
-constexpr int TWENTIETH_GROUP_INDEX = 20;
-constexpr int INVALID_GROUP_INDEX_ZERO = 0;
-constexpr int INVALID_GROUP_INDEX_NEGATIVE = -1;
-constexpr int EXTREMELY_LARGE_GROUP_INDEX = 9999; // For testing out-of-bounds
+constexpr int defaultFieldMappingCount = 3;
+constexpr int firstGroupIndex = 1;
+constexpr int secondGroupIndex = 2;
+constexpr int thirdGroupIndex = 3;
+constexpr int tenthGroupIndex = 10;
+constexpr int twentiethGroupIndex = 20;
+constexpr int invalidGroupIndexZero = 0;
+constexpr int invalidGroupIndexNegative = -1;
+constexpr int extremelyLargeGroupIndex = 9999; // For testing out-of-bounds
 
 struct LogAnalyzerConfigTest : public ::testing::Test {
     LogAnalyzerSettings settings;
@@ -32,7 +33,7 @@ struct LogAnalyzerConfigTest : public ::testing::Test {
 TEST_F(LogAnalyzerConfigTest, DefaultConstructorInitializesCorrectly) {
     ASSERT_EQ(settings.lineParsePattern, std::string(DEFAULT_LOG_REGEX_PATTERN_INTERNAL));
     ASSERT_FALSE(settings.fieldMappings.empty());
-    ASSERT_EQ(settings.fieldMappings.size(), DEFAULT_FIELD_MAPPING_COUNT); // Using constant
+    ASSERT_EQ(settings.fieldMappings.size(), defaultFieldMappingCount); // Using constant
     ASSERT_TRUE(settings.customLogLevelMappings.empty());
     ASSERT_FALSE(settings.logEntryStartPattern.has_value());
     ASSERT_FALSE(settings.caseSensitiveParsing);
@@ -67,44 +68,44 @@ TEST_F(LogAnalyzerConfigTest, SetEmptyLogEntryStartPattern) {
 
 TEST_F(LogAnalyzerConfigTest, FieldMappingFluentApi) {
     settings.clearFieldMappings()
-            .addFieldMapping(LogEntryField::MESSAGE, FIRST_GROUP_INDEX)
-            .addFieldMapping(LogEntryField::SOURCE_FILE, SECOND_GROUP_INDEX, "my_format")
-            .addFieldMapping("CustomField", THIRD_GROUP_INDEX, "custom_format");
+            .addFieldMapping(LogEntryField::MESSAGE, firstGroupIndex)
+            .addFieldMapping(LogEntryField::SOURCE_FILE, secondGroupIndex, "my_format")
+            .addFieldMapping("CustomField", thirdGroupIndex, "custom_format");
 
     ASSERT_EQ(settings.fieldMappings.size(), 3);
 
     // Verify MESSAGE mapping (using std::find_if for robustness)
-    auto msgIt = std::find_if(settings.fieldMappings.begin(), settings.fieldMappings.end(),
+    auto msgIt = std::ranges::find_if(settings.fieldMappings,
         [](const auto& mapping) {
             return std::holds_alternative<LogEntryField>(mapping.field) &&
                    std::get<LogEntryField>(mapping.field) == LogEntryField::MESSAGE;
         });
     ASSERT_NE(msgIt, settings.fieldMappings.end());
     ASSERT_TRUE(msgIt->groupIndex.has_value());
-    EXPECT_EQ(msgIt->groupIndex.value(), FIRST_GROUP_INDEX);
+    EXPECT_EQ(msgIt->groupIndex.value(), firstGroupIndex);
     EXPECT_TRUE(msgIt->formats.empty()); // No format provided for MESSAGE
 
     // Verify SOURCE_FILE mapping
-    auto fileIt = std::find_if(settings.fieldMappings.begin(), settings.fieldMappings.end(),
+    auto fileIt = std::ranges::find_if(settings.fieldMappings,
         [](const auto& mapping) {
             return std::holds_alternative<LogEntryField>(mapping.field) &&
                    std::get<LogEntryField>(mapping.field) == LogEntryField::SOURCE_FILE;
         });
     ASSERT_NE(fileIt, settings.fieldMappings.end());
     ASSERT_TRUE(fileIt->groupIndex.has_value());
-    EXPECT_EQ(fileIt->groupIndex.value(), SECOND_GROUP_INDEX);
+    EXPECT_EQ(fileIt->groupIndex.value(), secondGroupIndex);
     ASSERT_FALSE(fileIt->formats.empty());
     EXPECT_EQ(fileIt->formats[0], "my_format");
 
     // Verify CustomField mapping
-    auto customIt = std::find_if(settings.fieldMappings.begin(), settings.fieldMappings.end(),
+    auto customIt = std::ranges::find_if(settings.fieldMappings,
         [](const auto& mapping) {
             return std::holds_alternative<std::string>(mapping.field) &&
                    std::get<std::string>(mapping.field) == "CustomField";
         });
     ASSERT_NE(customIt, settings.fieldMappings.end());
     ASSERT_TRUE(customIt->groupIndex.has_value());
-    EXPECT_EQ(customIt->groupIndex.value(), THIRD_GROUP_INDEX);
+    EXPECT_EQ(customIt->groupIndex.value(), thirdGroupIndex);
     ASSERT_FALSE(customIt->formats.empty());
     EXPECT_EQ(customIt->formats[0], "custom_format");
 }
@@ -121,35 +122,35 @@ TEST_F(LogAnalyzerConfigTest, ClearFieldMappings) {
 TEST_F(LogAnalyzerConfigTest, AddDuplicateFieldMapping) {
     // Behavior: Last one wins (overwrite)
     settings.clearFieldMappings()
-            .addFieldMapping(LogEntryField::MESSAGE, FIRST_GROUP_INDEX, "old_format")
-            .addFieldMapping(LogEntryField::MESSAGE, SECOND_GROUP_INDEX, "new_format");
+            .addFieldMapping(LogEntryField::MESSAGE, firstGroupIndex, "old_format")
+            .addFieldMapping(LogEntryField::MESSAGE, secondGroupIndex, "new_format");
 
     ASSERT_EQ(settings.fieldMappings.size(), 1);
-    auto it = std::find_if(settings.fieldMappings.begin(), settings.fieldMappings.end(),
+    auto it = std::ranges::find_if(settings.fieldMappings,
         [](const auto& mapping) {
             return std::holds_alternative<LogEntryField>(mapping.field) &&
                    std::get<LogEntryField>(mapping.field) == LogEntryField::MESSAGE;
         });
     ASSERT_NE(it, settings.fieldMappings.end());
     ASSERT_TRUE(it->groupIndex.has_value());
-    EXPECT_EQ(it->groupIndex.value(), SECOND_GROUP_INDEX); // Assert it was updated
+    EXPECT_EQ(it->groupIndex.value(), secondGroupIndex); // Assert it was updated
     ASSERT_FALSE(it->formats.empty());
     EXPECT_EQ(it->formats[0], "new_format");
 
     // Removed redundant clearFieldMappings() call as per audit, but it's needed for test isolation
     settings.clearFieldMappings()
-            .addFieldMapping("CustomField", TENTH_GROUP_INDEX, "old_custom")
-            .addFieldMapping("CustomField", TWENTIETH_GROUP_INDEX, "new_custom");
+            .addFieldMapping("CustomField", tenthGroupIndex, "old_custom")
+            .addFieldMapping("CustomField", twentiethGroupIndex, "new_custom");
 
     ASSERT_EQ(settings.fieldMappings.size(), 1);
-    auto customIt = std::find_if(settings.fieldMappings.begin(), settings.fieldMappings.end(),
+    auto customIt = std::ranges::find_if(settings.fieldMappings,
         [](const auto& mapping) {
             return std::holds_alternative<std::string>(mapping.field) &&
                    std::get<std::string>(mapping.field) == "CustomField";
         });
     ASSERT_NE(customIt, settings.fieldMappings.end());
     ASSERT_TRUE(customIt->groupIndex.has_value());
-    EXPECT_EQ(customIt->groupIndex.value(), TWENTIETH_GROUP_INDEX); // Assert it was updated
+    EXPECT_EQ(customIt->groupIndex.value(), twentiethGroupIndex); // Assert it was updated
     ASSERT_FALSE(customIt->formats.empty());
     EXPECT_EQ(customIt->formats[0], "new_custom");
 }
@@ -171,62 +172,62 @@ TEST_F(LogAnalyzerConfigTest, CustomLogLevelMappingApi) {
 
 TEST_F(LogAnalyzerConfigTest, ExtendedFilterOperatorCoverage) {
     // Test GREATER_THAN and LESS_THAN with numeric-like strings
-    settings.addFilterRule({LogEntryField::LINE_NUMBER, FilterOperator::GREATER_THAN, "100"});
-    settings.addFilterRule({LogEntryField::LINE_NUMBER, FilterOperator::LESS_THAN, "200"});
+    settings.addFilterRule({.field=LogEntryField::LINE_NUMBER, .op=FilterOperator::GREATER_THAN, .value="100"});
+    settings.addFilterRule({.field=LogEntryField::LINE_NUMBER, .op=FilterOperator::LESS_THAN, .value="200"});
 
     // Test STARTS_WITH and ENDS_WITH
-    settings.addFilterRule({LogEntryField::MESSAGE, FilterOperator::STARTS_WITH, "Starting"});
-    settings.addFilterRule({LogEntryField::MESSAGE, FilterOperator::ENDS_WITH, "Ending"});
+    settings.addFilterRule({.field=LogEntryField::MESSAGE, .op=FilterOperator::STARTS_WITH, .value="Starting"});
+    settings.addFilterRule({.field=LogEntryField::MESSAGE, .op=FilterOperator::ENDS_WITH, .value="Ending"});
 
     // Test REGEX
-    settings.addFilterRule({LogEntryField::MESSAGE, FilterOperator::REGEX, ".*(critical|error).*"});
+    settings.addFilterRule({.field=LogEntryField::MESSAGE, .op=FilterOperator::REGEX, .value=".*(critical|error).*"});
 
     ASSERT_EQ(settings.filterRules.size(), 5); // 2 + 2 + 1
 
-    auto it_gt = std::find_if(settings.filterRules.begin(), settings.filterRules.end(),
+    auto itGt = std::ranges::find_if(settings.filterRules,
         [](const auto& rule) { return rule.field == LogEntryField::LINE_NUMBER && rule.op == FilterOperator::GREATER_THAN; });
-    ASSERT_NE(it_gt, settings.filterRules.end());
-    EXPECT_EQ(it_gt->value, "100");
+    ASSERT_NE(itGt, settings.filterRules.end());
+    EXPECT_EQ(itGt->value, "100");
 
-    auto it_lt = std::find_if(settings.filterRules.begin(), settings.filterRules.end(),
+    auto itLt = std::ranges::find_if(settings.filterRules,
         [](const auto& rule) { return rule.field == LogEntryField::LINE_NUMBER && rule.op == FilterOperator::LESS_THAN; });
-    ASSERT_NE(it_lt, settings.filterRules.end());
-    EXPECT_EQ(it_lt->value, "200");
+    ASSERT_NE(itLt, settings.filterRules.end());
+    EXPECT_EQ(itLt->value, "200");
 
-    auto it_starts = std::find_if(settings.filterRules.begin(), settings.filterRules.end(),
+    auto itStarts = std::ranges::find_if(settings.filterRules,
         [](const auto& rule) { return rule.field == LogEntryField::MESSAGE && rule.op == FilterOperator::STARTS_WITH; });
-    ASSERT_NE(it_starts, settings.filterRules.end());
-    EXPECT_EQ(it_starts->value, "Starting");
+    ASSERT_NE(itStarts, settings.filterRules.end());
+    EXPECT_EQ(itStarts->value, "Starting");
 
-    auto it_ends = std::find_if(settings.filterRules.begin(), settings.filterRules.end(),
+    auto itEnds = std::ranges::find_if(settings.filterRules,
         [](const auto& rule) { return rule.field == LogEntryField::MESSAGE && rule.op == FilterOperator::ENDS_WITH; });
-    ASSERT_NE(it_ends, settings.filterRules.end());
-    EXPECT_EQ(it_ends->value, "Ending");
+    ASSERT_NE(itEnds, settings.filterRules.end());
+    EXPECT_EQ(itEnds->value, "Ending");
 
-    auto it_regex = std::find_if(settings.filterRules.begin(), settings.filterRules.end(),
+    auto itRegex = std::ranges::find_if(settings.filterRules,
         [](const auto& rule) { return rule.field == LogEntryField::MESSAGE && rule.op == FilterOperator::REGEX; });
-    ASSERT_NE(it_regex, settings.filterRules.end());
-    EXPECT_EQ(it_regex->value, ".*(critical|error).*");
+    ASSERT_NE(itRegex, settings.filterRules.end());
+    EXPECT_EQ(itRegex->value, ".*(critical|error).*");
 }
 
 TEST_F(LogAnalyzerConfigTest, FilterValueEdgeCases) {
     // Test with empty string value
-    settings.addFilterRule({LogEntryField::MESSAGE, FilterOperator::EQUALS, ""});
+    settings.addFilterRule({.field=LogEntryField::MESSAGE, .op=FilterOperator::EQUALS, .value=""});
     ASSERT_EQ(settings.filterRules.size(), 1);
     EXPECT_EQ(settings.filterRules[0].value, "");
 
     // Test with a very long string value
-    std::string long_string(1000, 'a');
-    settings.addFilterRule({LogEntryField::MESSAGE, FilterOperator::CONTAINS, long_string});
+    std::string longString(1000, 'a');
+    settings.addFilterRule({.field=LogEntryField::MESSAGE, .op=FilterOperator::CONTAINS, .value=longString});
     ASSERT_EQ(settings.filterRules.size(), 2);
-    EXPECT_EQ(settings.filterRules[1].value, long_string);
+    EXPECT_EQ(settings.filterRules[1].value, longString);
 
     // Test with values that might cause issues for specific operators.
-    settings.addFilterRule({LogEntryField::LINE_NUMBER, FilterOperator::GREATER_THAN, "abc"});
+    settings.addFilterRule({.field=LogEntryField::LINE_NUMBER, .op=FilterOperator::GREATER_THAN, .value="abc"});
     ASSERT_EQ(settings.filterRules.size(), 3);
     EXPECT_EQ(settings.filterRules[2].value, "abc");
 
-    settings.addFilterRule({LogEntryField::LINE_NUMBER, FilterOperator::LESS_THAN, "xyz"});
+    settings.addFilterRule({.field=LogEntryField::LINE_NUMBER, .op=FilterOperator::LESS_THAN, .value="xyz"});
     ASSERT_EQ(settings.filterRules.size(), 4);
     EXPECT_EQ(settings.filterRules[3].value, "xyz");
 }
@@ -244,10 +245,10 @@ TEST_F(LogAnalyzerConfigTest, InvalidFieldMappingInput) {
 
     // Test with invalid group indices.
     // Assuming group indices are 1-based, so 0 and negative are invalid.
-    settings.addFieldMapping(LogEntryField::MESSAGE, INVALID_GROUP_INDEX_ZERO);
+    settings.addFieldMapping(LogEntryField::MESSAGE, invalidGroupIndexZero);
     ASSERT_TRUE(settings.fieldMappings.empty()); // Assuming it's ignored or rejected
 
-    settings.addFieldMapping(LogEntryField::MESSAGE, INVALID_GROUP_INDEX_NEGATIVE);
+    settings.addFieldMapping(LogEntryField::MESSAGE, invalidGroupIndexNegative);
     ASSERT_TRUE(settings.fieldMappings.empty()); // Assuming it's ignored or rejected
 }
 

@@ -2,7 +2,7 @@
 
 > **Unleash the Power of Your Logs: A High-Performance C++ Utility for Advanced Log Analysis.**
 
-`logAnalyzer` is a blazing fast, command-line utility for parsing, filtering, and extracting insights from massive log files. Built with C++23, it leverages stream processing to handle datasets larger than available memory.
+`logAnalyzer` is a blazing fast, command-line utility for parsing, filtering, and extracting insights from massive log files. Built with C++23, it leverages stream processing to handle datasets larger than available memory with ease.
 
 [![Project Status: Active](https://img.shields.io/badge/Status-Active-brightgreen.svg?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/eserlxl/logAnalyzer?style=for-the-badge)](https://github.com/eserlxl/logAnalyzer/releases)
@@ -11,147 +11,156 @@
 [![C++ Standard](https://img.shields.io/badge/C%2B%2B-23-blue.svg?style=for-the-badge)](https://en.cppreference.com/w/cpp/23)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue.svg?style=for-the-badge)](https://cmake.org)
 
+## Table of Contents
 
----
-## 📚 Table of Contents
-- [✨ Key Features](#-key-features)
-- [🚀 Getting Started](#-getting-started)
-- [🛠️ Build from Source](#️-build-from-source)
-- [💡 Usage](#-usage)
-- [⚡ Quick Start](#-quick-start)
-- [⚙️ Configuration](#️-configuration)
-- [📚 Documentation](#-documentation)
-- [🏗 Project Structure](#-project-structure)
-- [🤝 Contributing & Support](#-contributing--support)
-- [📜 Changelog](#-changelog)
-- [📄 License](#-license)
+- [Why logAnalyzer?](#why-loganalyzer)
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
 
----
+## Why logAnalyzer?
 
-## ✨ Key Features
+`logAnalyzer` is designed to be a powerful, flexible, and easy-to-use tool for log analysis. Here are a few reasons why you might choose `logAnalyzer`:
 
-`logAnalyzer` provides a robust set of features designed for efficient log analysis:
+-   **Performance**: Built in C++ for maximum speed, `logAnalyzer` can process large volumes of log data quickly. Its stream processing capabilities mean you're not limited by your system's RAM.
+-   **Flexibility**: With advanced filtering options, multiple output formats, and a rich set of data types, `logAnalyzer` can be adapted to a wide range of log analysis tasks.
+-   **Ease of Use**: A simple command-line interface, combined with powerful features like automatic type inference, makes `logAnalyzer` easy to learn and use.
+-   **Extensibility**: The C++ API allows you to integrate `logAnalyzer`'s parsing and filtering capabilities directly into your own applications.
 
-*   **High-Performance Stream Processing**: Built with C++23, it processes massive log files without consuming excessive memory.
-*   **Advanced Filtering**: Use field-based queries, regular expressions, and complex logical operators (`AND`, `OR`, `NOT`) to pinpoint the exact log entries you need.
-*   **Flexible I/O**: Reads from files and `stdin`. Exports to JSON, CSV, or custom text formats.
-*   **Built-in Analytics**: Generate statistics like frequency counts and value distributions directly from your logs.
-*   **Extensible C++ API**: Integrate `logAnalyzer`'s core functionalities into your own C++ applications.
+## Features
 
-For a comprehensive overview of all capabilities, see the [**full feature list**](docs/features.md).
+-   **High-Performance Stream Processing**: Process large log files without loading them into memory.
+-   **Advanced Filtering**: Use field-based queries, regex, and logical operators.
+-   **Flexible I/O**: Read from files or stdin and export to JSON, CSV, XML, or text.
+-   **Built-in Analytics**: Get statistics like frequency counts and value distributions.
+-   **Rich Data Types**: Filter by semantic versions, IP addresses, and booleans.
+-   **Configurable**: Use command-line flags or JSON configuration files.
+-   **Extensible C++ API**: Integrate `logAnalyzer` into your C++ projects.
+-   **Multi-File Support**: Parse and analyze multiple log files in a single run.
+-   **Sorting**: Sort results by timestamp, log level, or any other field.
+-   **Structured Field Parsing**: Automatically parse log messages into fields using custom patterns.
 
-## 🚀 Getting Started
+For a full list of features, see the [Features documentation](docs/features.md).
 
-Get up and running with `logAnalyzer` in just a few steps.
+## Getting Started
 
-1.  **Clone the repository:**
+### Installation
+
+To get started with `logAnalyzer`, you can build it from source.
+
+#### Prerequisites
+
+-   A C++23 compatible compiler (GCC 13+, Clang 16+).
+-   CMake (version 3.14+).
+-   Git.
+
+#### Build
+
+1.  Clone the repository:
     ```bash
     git clone https://github.com/eserlxl/logAnalyzer.git
     cd logAnalyzer
     ```
 
-2.  **Build the project:**
+2.  Configure and build the project:
     ```bash
     cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
     cmake --build build --parallel
     ```
 
-3.  **Run your first analysis:**
-    Pipe `dmesg` output to `logAnalyzer` and filter for entries containing "error".
+3.  Install the executable (optional):
     ```bash
-    dmesg | ./build/bin/logAnalyzer --level error
+    sudo cmake --install build
     ```
 
-## 🛠️ Build from Source
+For more detailed instructions, see the [Build Guide](docs/build.md).
 
-For detailed, platform-specific instructions, prerequisites, and advanced build configurations, refer to the [**Build Guide**](docs/build.md).
+### Quick Start
 
-The executable will be located at `build/bin/logAnalyzer`. To install it system-wide (optional):
+-   **Filter by log level**:
+    ```bash
+    logAnalyzer /var/log/syslog --level ERROR
+    ```
+
+-   **Find entries with "database" or "timeout"**:
+    ```bash
+    logAnalyzer app.log --keyword "database" --keyword "timeout" --logic OR
+    ```
+
+-   **Use a complex expression**:
+    ```bash
+    logAnalyzer app.log --expression '(level=ERROR and msg contains "auth") or status_code >= 500'
+    ```
+
+-   **Export errors from the last 30 minutes to JSON**:
+    ```bash
+    logAnalyzer system.log --level ERROR --start "30m ago" --format json --pretty
+    ```
+
+For more examples, see the [Quick Start Guide](docs/quick-start.md) and [Usage Examples](docs/usage-examples.md).
+
+## Usage
+
+`logAnalyzer` can be run from the command line, with options to specify the input file, filtering criteria, and output format.
+
+### Basic Filtering
+
+Filter by a single log level:
 
 ```bash
-sudo cmake --install build
+logAnalyzer /path/to/your.log --level INFO
 ```
 
-Verify the installation by checking the version:
-```bash
-logAnalyzer --version
-```
+### Multiple Keywords
 
-## 💡 Usage
-
-The basic syntax for `logAnalyzer` is:
+Search for logs containing either "error" or "warning":
 
 ```bash
-logAnalyzer [options] [log_file]
+logAnalyzer /path/to/your.log --keyword error --keyword warning --logic OR
 ```
 
--   `[options]`: Flags to control filtering, output format, and other behaviors.
--   `[log_file]`: The path to the log file to analyze. If omitted, `logAnalyzer` reads from `stdin`.
+### Time-Based Filtering
 
-For a complete list of all command-line arguments, see the [**Command Line Reference**](docs/cli-reference.md).
+Show logs from the last 2 hours:
 
-## ⚡ Quick Start
-
-Here are some common examples to get you started.
-
-### Filter by Log Level
-Analyze a syslog file and show only `ERROR` level entries.
 ```bash
-logAnalyzer /var/log/syslog --level ERROR
+logAnalyzer /path/to/your.log --start "2h ago"
 ```
 
-### Advanced Filtering with Expressions
-Find database errors OR any message containing "timeout".
+### Output Formatting
+
+Export results to a CSV file:
+
 ```bash
-logAnalyzer app.log --expression '(level=ERROR and msg contains "database") or msg contains "timeout"'
+logAnalyzer /path/to/your.log --level WARN --format csv --output warnings.csv
 ```
 
-### Time-based Filtering
-Show all warnings from the last 30 minutes.
-```bash
-logAnalyzer system.log --level WARN --start "30m ago"
-```
+For a complete list of command-line options, refer to the [CLI Reference](docs/cli-reference.md).
 
-### Export to JSON
-Find errors from the last 2 hours and export them to a pretty-printed JSON file.
-```bash
-logAnalyzer app.log --start "2h ago" --level ERROR --format json --pretty --output errors.json
-```
+## Documentation
 
-For more examples, see the [**Usage Examples**](docs/usage-examples.md) guide.
+For more detailed information, please refer to the following documents:
 
-## ⚙️ Configuration
+-   [**Why logAnalyzer?**](docs/why-loganalyzer.md)
+-   [**Installation Guide**](docs/installation.md)
+-   [**Quick Start Guide**](docs/quick-start.md)
+-   [**Usage Examples**](docs/usage-examples.md)
+-   [**Build Details**](docs/build.md)
+-   [**CLI Reference**](docs/cli-reference.md)
+-   [**Configuration Guide**](docs/configuration.md)
+-   [**API Reference**](docs/api-reference.md)
+-   [**Features**](docs/features.md)
+-   [**Project Structure**](docs/project-structure.md)
 
-`logAnalyzer` can be configured via command-line arguments or a JSON configuration file. Command-line arguments always override settings from a configuration file.
+## Contributing
 
-For full details on all options, see the [**Configuration Guide**](docs/configuration.md).
+Contributions are welcome. Please read our [Contributing Guide](CONTRIBUTING.md) to learn about our development process and how to set up your environment.
 
-## 📚 Documentation
-
-For more in-depth information, explore the complete documentation.
-
-### User Documentation
-- [**Why logAnalyzer?**](docs/why-loganalyzer.md)
-- [**Features Overview**](docs/features.md)
-- [**Installation Guide**](docs/installation.md)
-- [**Quick Start Guide**](docs/quick-start.md)
-- [**Command Line Reference**](docs/cli-reference.md)
-- [**Configuration Guide**](docs/configuration.md)
-- [**Usage Examples**](docs/usage-examples.md)
-
-### Developer Documentation
-- [**Build Guide**](docs/build.md)
-- [**API Reference**](docs/api-reference.md)
-- [**Project Structure**](docs/project-structure.md)
-
-## 🤝 Contributing & Support
-
-We welcome contributions! Please see our [**Contributing Guide**](CONTRIBUTING.md) for details on how to get started, report bugs, or request features. All contributors are expected to adhere to our [**Code of Conduct**](CODE_OF_CONDUCT.md).
-
-## 📜 Changelog
-
-All notable changes are documented in the [`CHANGELOG.md`](CHANGELOG.md) file.
-
-## 📄 License
+## License
 
 This project is licensed under the GNU General Public License Version 3. See the [LICENSE](LICENSE) file for details.

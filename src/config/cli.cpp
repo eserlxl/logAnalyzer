@@ -23,127 +23,11 @@
 
 using namespace ErrorCode;
 
-namespace {
-    void trimInPlace(std::string& s) {
-        const auto first = s.find_first_not_of(" \t");
-        if (first == std::string::npos) {
-            s.clear();
-            return;
-        }
-        const auto last = s.find_last_not_of(" \t");
-        s = s.substr(first, last - first + 1);
-    }
-
-    // Helper to parse extended --stats syntax (e.g., "type=TOP_MESSAGES,top_n=5")
-    // or legacy syntax (e.g., "unique_messages", "top_messages:10")
-    std::optional<StatisticConfig> parseStatisticConfig(const std::string& statStr) {
-        StatisticConfig config;
-        std::string normalized = statStr;
-        trimInPlace(normalized);
-        const std::string normalizedLower = Utils::toLower(normalized);
-        
-        // Handle legacy top_messages:N
-        if (normalizedLower.rfind("top_messages:", 0) == 0) {
-            std::string topN = normalized.substr(13);
-            trimInPlace(topN);
-            if (topN.empty() || !std::all_of(topN.begin(), topN.end(), [](unsigned char c) {
-                    return std::isdigit(c) != 0;
-                })) {
-                return std::nullopt;
-            }
-            config.type = StatisticType::TOP_MESSAGES;
-            config.params["top_n"] = topN;
-            return config;
-        }
-
-        // Try to parse as legacy simple name first
-        auto legacyType = Utils::stringToStatisticType(normalized);
-        if (legacyType) {
-            config.type = *legacyType;
-            return config;
-        }
-
-        // Try parsing key-value pairs
-        bool typeFound = false;
-        std::string token;
-        std::istringstream tokenStream(normalized);
-        
-        while (std::getline(tokenStream, token, ',')) {
-            trimInPlace(token);
-            if (token.empty()) {
-                continue;
-            }
-            auto pos = token.find('=');
-            if (pos != std::string::npos) {
-                std::string key = token.substr(0, pos);
-                std::string value = token.substr(pos + 1);
-                trimInPlace(key);
-                trimInPlace(value);
-                if (key.empty()) {
-                    return std::nullopt;
-                }
-                const std::string normalizedKey = Utils::toLower(key);
-                
-                if (normalizedKey == "type") {
-                    if (typeFound) {
-                        return std::nullopt;
-                    }
-                    auto type = Utils::stringToStatisticType(value);
-                    if (type) {
-                        config.type = *type;
-                        typeFound = true;
-                    } else {
-                        // Invalid type in key-value pair
-                        return std::nullopt; 
-                    }
-                } else {
-                    config.params[normalizedKey] = value;
-                }
-            } else {
-                // Token without '=', maybe it's just the type name mixed with params? 
-                // e.g. "TOP_MESSAGES,top_n=5"
-                trimInPlace(token);
-                auto type = Utils::stringToStatisticType(token);
-                if (type) {
-                    if (typeFound) {
-                        return std::nullopt;
-                    }
-                    config.type = *type;
-                    typeFound = true;
-                } else {
-                    // Bare token is neither a type nor a key=value parameter: reject.
-                    return std::nullopt;
-                }
-            }
-        }
-        
-        if (typeFound) {
-            return config;
-        }
-        
-        return std::nullopt;
-    }
-
-    // Helper to parse "field as alias" string
-    std::pair<std::string, std::string> parseFieldAlias(const std::string& fieldStr) {
-        static const std::regex aliasPattern(R"(^\s*(.*?)\s+[aA][sS]\s+(.*?)\s*$)");
-        std::smatch match;
-        if (std::regex_match(fieldStr, match, aliasPattern)) {
-            std::string field = match[1].str();
-            std::string alias = match[2].str();
-            trimInPlace(field);
-            trimInPlace(alias);
-            if (field.empty() || alias.empty()) {
-                return {"", ""};
-            }
-            return {std::move(field), std::move(alias)};
-        }
-        
-        std::string field = fieldStr;
-        trimInPlace(field);
-        return {field, field}; // No alias, use field name
-    }
-} // namespace
+namespace CLIConfigHelpers {
+    void trimInPlace(std::string& s);
+    std::optional<StatisticConfig> parseStatisticConfig(const std::string& statStr);
+    std::pair<std::string, std::string> parseFieldAlias(const std::string& fieldStr);
+}
 
 // CLI Parsing
 Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCLI(int argc, const char *const *argv) {
@@ -152,7 +36,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     CLI::App app{"Log Analyzer Tool"};
     app.set_version_flag("--version", PROJECT_VERSION);
 
-    app.set_config("--config", "", "Read options from a configuration file", false);
+    app.set_config("--config", appOptions.configPath, "Read options from a configuration file", false);
 
     // Positional Arguments
     app.add_option("log_files", appOptions.filePaths, "Path to log files or '-' for stdin");
@@ -260,11 +144,11 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
        ->delimiter(',')
        ->each([](const std::string& f_raw) { // Throws on error
            std::string f = f_raw;
-           trimInPlace(f);
+           CLIConfigHelpers::trimInPlace(f);
            if (f.empty()) {
                throw CLI::ValidationError("Invalid --csv-fields: list contains an empty element.");
            }
-           auto parsed = parseFieldAlias(f);
+           auto parsed = CLIConfigHelpers::parseFieldAlias(f);
            if (parsed.first.empty()) {
                 throw CLI::ValidationError("Invalid --csv-fields entry: field '" + f_raw + "' has an empty name in an alias expression.");
            }
@@ -273,11 +157,11 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
        ->delimiter(',')
        ->each([](const std::string& f_raw) { // Throws on error
            std::string f = f_raw;
-           trimInPlace(f);
+           CLIConfigHelpers::trimInPlace(f);
            if (f.empty()) {
                throw CLI::ValidationError("Invalid --json-fields: list contains an empty element.");
            }
-           auto parsed = parseFieldAlias(f);
+           auto parsed = CLIConfigHelpers::parseFieldAlias(f);
            if (parsed.first.empty()) {
                 throw CLI::ValidationError("Invalid --json-fields entry: field '" + f_raw + "' has an empty name in an alias expression.");
            }
@@ -302,8 +186,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
             if(pos == std::string::npos) throw CLI::ValidationError("Invalid KEY=VALUE format for --map-level");
             std::string from = s.substr(0, pos);
             std::string to = s.substr(pos + 1);
-            trimInPlace(from);
-            trimInPlace(to);
+            CLIConfigHelpers::trimInPlace(from);
+            CLIConfigHelpers::trimInPlace(to);
             if (from.empty() || to.empty()) {
                 throw CLI::ValidationError("Invalid KEY=VALUE format for --map-level");
             }
@@ -387,7 +271,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     // Process statistics
     for (const auto& statStr : appOptions.enabledStatistics) {
-        auto statConfig = parseStatisticConfig(statStr);
+        auto statConfig = CLIConfigHelpers::parseStatisticConfig(statStr);
         if (statConfig) {
             // Backward compatibility for top_n
             if (statConfig->type == StatisticType::TOP_MESSAGES && statConfig->params.find("top_n") == statConfig->params.end()) {
@@ -459,11 +343,17 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     }
 
     if (!appOptions.readFromStdin && appOptions.filePaths.empty()) {
-        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: No log files or --stdin provided. Please specify input sources.\n" + app.help()));
+        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "No input files provided. Use '-' for stdin or specify file paths."));
     }
 
     if (appOptions.tailMode && appOptions.readFromStdin) {
-        return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --tail mode is not compatible with --stdin."));
+        // If it was automatically set to readFromStdin, but tailMode is on, and no files were provided, we have an error.
+        // But if the user explicitly provided --stdin and --tail, it's also an error.
+        if (app.count("--stdin") || stdinViaDash) {
+            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --tail mode is not compatible with --stdin."));
+        } else {
+            return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --tail mode requires file paths and is not compatible with stdin."));
+        }
     }
 
     // Sync appOptions to settings
@@ -516,7 +406,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     if (app.count("--csv-fields")) {
         settings.exportSettings.csvFields.clear();
         for (const auto& f : appOptions.csvFields) {
-            auto parsed = parseFieldAlias(f);
+            auto parsed = CLIConfigHelpers::parseFieldAlias(f);
             if (parsed.first.empty()) {
                 return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, "Invalid --csv-fields entry: field name cannot be empty."));
             }
@@ -527,7 +417,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     if (app.count("--json-fields")) {
         settings.exportSettings.jsonFields.clear();
         for (const auto& f : appOptions.jsonFields) {
-            auto parsed = parseFieldAlias(f);
+            auto parsed = CLIConfigHelpers::parseFieldAlias(f);
             if (parsed.first.empty()) {
                 return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, "Invalid --json-fields entry: field name cannot be empty."));
             }

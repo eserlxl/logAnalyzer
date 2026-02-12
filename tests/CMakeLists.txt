@@ -50,7 +50,8 @@ set(TEST_SOURCES
     "config/cli/errors.cpp"
     "config/cli/defaults.cpp"
     "config/core/basic.cpp"
-    "config/core/json.cpp"
+    "config/core/json/deserialization.cpp"
+    "config/core/json/serialization.cpp"
     "config/core/validation.cpp"
     "config/core/features.cpp"
     "config/merge.cpp"
@@ -67,6 +68,12 @@ set(TEST_SOURCES
     "export/settings.cpp"
     "export/utils.cpp"
     "analyzer/core.cpp"
+    "analyzer/stream.cpp"
+    "analyzer/filter.cpp"
+    "analyzer/export.cpp"
+    "analyzer/filter_logic/sorting.cpp"
+    "analyzer/filter_logic/expressions.cpp"
+    "analyzer/filter_logic/criteria.cpp"
     "filter/legacy.cpp"
     "filter/fluent_api.cpp"
     "filter/evaluation.cpp"
@@ -75,10 +82,12 @@ set(TEST_SOURCES
     "filter/advanced.cpp"
     "filter/version.cpp"
     "filter/ip_address.cpp"
-    "filter/core_json/basic_serialization.cpp"
-    "filter/core_json/basic_deserialization.cpp"
-    "filter/core_json/condition_serialization.cpp"
-    "filter/core_json/condition_deserialization.cpp"
+    "filter/core_json/basic/serialization.cpp"
+    "filter/core_json/basic/serialization_advanced.cpp"
+    "filter/core_json/basic/deserialization.cpp"
+    "filter/core_json/condition/serialization.cpp"
+    "filter/core_json/condition/deserialization.cpp"
+    "filter/core_json/condition/factory_function.cpp"
     "filter/core_json/expression.cpp"
     "filter/core_json/rule.cpp"
     "filter/core/unit/advanced.cpp"
@@ -117,7 +126,7 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     loganalyzer_apply_sanitizers_and_coverage(${TEST_NAME})
 
     # Add project root and tests/include to include path for 'tests/...' includes
-    target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/support)
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")
         message(STATUS "Including test-specific options for ${TEST_NAME} from ${CMAKE_CURRENT_SOURCE_DIR}/${TEST_NAME}_options.cmake")

@@ -80,6 +80,22 @@ ErrorCode::Result<void> FilterExpression::validate() const {
     switch (type_) {
         case ExpressionType::EMPTY: return {};
         case ExpressionType::CONDITION: {
+            if (condition_) {
+                auto res = condition_->validate();
+                if (!res) return res;
+                
+                if (condition_->op == FilterOperator::REGEX) {
+                    if (!std::holds_alternative<std::string>(condition_->value)) {
+                        return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Value for REGEX operator must be a string."));
+                    }
+                    try {
+                        auto flags = condition_->caseSensitive ? std::regex::ECMAScript : std::regex::ECMAScript | std::regex::icase;
+                        std::regex(std::get<std::string>(condition_->value), flags);
+                    } catch (const std::regex_error& e) {
+                        return std::unexpected(ErrorCode::Error(Code::InvalidRegex, std::string("Invalid regex pattern: ") + e.what()));
+                    }
+                }
+            }
             return {};
         }
         case ExpressionType::LOGICAL:
@@ -156,6 +172,10 @@ for (const auto& expr : expressions_) {
         return "NOT (" + coreStr + ")";
     }
     return coreStr;
+}
+
+FilterExpression FilterExpression::clone() const {
+    return *this;
 }
 
 std::string FilterExpression::conditionToString(const FilterCondition& cond) {

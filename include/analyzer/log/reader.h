@@ -59,11 +59,11 @@ private:
         bool settingsRestored_;
     };
 
-    void setDefaultFieldMappings(LogAnalyzerSettings& settings);
-    std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(ILogParser* parser, std::istream& is, const std::string& sourceIdentifier, ParserErrorAction errorAction);
+    static void setDefaultFieldMappings(LogAnalyzerSettings& settings);
+    static std::pair<std::vector<LogEntry>, AnalysisReport> parseAndReport(ILogParser* parser, std::istream& is, const std::string& sourceIdentifier, ParserErrorAction errorAction);
     ErrorCode::Result<AnalysisReport> doLoadAndReplace(ILogParser* parser, const std::string& filePath, ParserErrorAction errorAction);
     ErrorCode::Result<AnalysisReport> doAppend(ILogParser* parser, const std::string& filePath, ParserErrorAction errorAction);
-    ErrorCode::Result<void> doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, std::function<bool(const LogEntry&)> entryCallback, ParserErrorAction errorAction);
+    static ErrorCode::Result<void> doAnalyzeStreamInternal(ILogParser* parser, const std::vector<std::string>& filePaths, const std::function<bool(const LogEntry&)>& entryCallback, ParserErrorAction errorAction);
 };
 
 #endif // ANALYZER_LOG_READER_H

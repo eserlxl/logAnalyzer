@@ -22,9 +22,9 @@ std::vector<std::string> split(const std::string& str, char delimiter, bool skip
 std::string toLower(const std::string& str);
 std::string toUpper(const std::string& str);
 bool caseInsensitiveEquals(std::string_view s1, std::string_view s2);
-bool caseInsensitiveSearch(const std::string& text, const std::string& pattern);
-bool caseInsensitiveStarts(const std::string& text, const std::string& prefix);
-bool caseInsensitiveEnds(const std::string& text, const std::string& suffix);
+bool caseInsensitiveSearch(std::string_view text, std::string_view pattern);
+bool caseInsensitiveStarts(std::string_view text, std::string_view prefix);
+bool caseInsensitiveEnds(std::string_view text, std::string_view suffix);
 bool isNumeric(std::string_view s);
 std::string escapeJsonString(const std::string& input);
 
