@@ -4,3 +4,12 @@
 
 # Allow gemini-cli to read its own audit artifacts
 !audits/**
+
+!doc/audit/
+!doc/audit/**
+!doc/audits/
+!doc/audits/**
+!docs/audit/
+!docs/audit/**
+!docs/audits/
+!docs/audits/**
