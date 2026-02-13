@@ -33,12 +33,11 @@ The test suite relies on data files, which are expected in `tests/data` by defau
 cmake -B build -S . -DLOGANALYZER_TEST_DATA_DIR=/path/to/your/test/data
 ```
 
-Additionally, tests are configured to support various build options. For instance, if you've configured your build with sanitizers (like AddressSanitizer or UndefinedBehaviorSanitizer) or coverage enabled, these will automatically apply to the test executables, helping to ensure code quality and robustness. Refer to the main `CMakeLists.txt` and `cmake/compiler_settings.cmake` for details on enabling these features.
+Additionally, tests are configured to support various build options. For instance, if you've configured your build with sanitizers (like AddressSanitizer or UndefinedBehaviorSanitizer) or coverage enabled, these will automatically apply to the test executables, helping to ensure code quality and robustness. Refer to the main `c_make_lists.txt` and `cmake/compiler_settings.cmake` for details on enabling these features.
 
 
-### Developer Tools
 
-#### Code Formatting and Quality
+### Code Formatting and Quality
 
 To ensure consistent code style and quality, `logAnalyzer` uses `pre-commit` hooks. These hooks automatically run checks and formatters on your code before you commit.
 
@@ -59,20 +58,6 @@ Now, `pre-commit` will run automatically on `git commit`. You can also run it ma
 ```bash
 pre-commit run --all-files
 ```
-
-The following commands can be run from the `build` directory to assist with development and maintenance:
-
--   **Generate Documentation**:
-    Generates HTML documentation using Doxygen. The output will be in `build/docs/html/`.
-    ```bash
-    cmake --build . --target doc
-    ```
-
--   **Format Code**:
-    Automatically formats the C++ source code using `clang-format` according to the project's style guidelines. This is a good step to run before committing your changes.
-    ```bash
-    cmake --build . --target format
-    ```
 
 ### Implement your fix or feature
 
