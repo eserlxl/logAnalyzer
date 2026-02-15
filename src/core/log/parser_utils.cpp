@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (c) 2026 Eser KUBALI
 
-#include "utils/string.h"
-#include <regex>
+#include "core/log/parser_utils.h"
 
 namespace Utils {
     void parseStructuredData(const std::string& data, std::map<std::string, std::string>& targetMap, const std::regex& kvPattern) {
@@ -16,20 +15,21 @@ namespace Utils {
                 continue;
             }
             std::string key = match[1].str();
-                        std::string value;
-                        bool value_matched = false;
-                        // Iterate through all capture groups starting from index 2 to find the value
-                        // Selects the first non-empty capturing group after the key's capturing group
-                        for (size_t i = 2; i < match.size(); ++i) {
-                            if (match[i].matched) {
-                                value = match[i].str();
-                                value_matched = true;
-                                break;
-                            }
-                        }
-                        if (value_matched) { // Only add if a value capturing group was successfully matched
-                            targetMap[key] = value;
-                        }            ++next;
+            std::string value;
+            bool value_matched = false;
+            // Iterate through all capture groups starting from index 2 to find the value
+            // Selects the first non-empty capturing group after the key's capturing group
+            for (size_t i = 2; i < match.size(); ++i) {
+                if (match[i].matched) {
+                    value = match[i].str();
+                    value_matched = true;
+                    break;
+                }
+            }
+            if (value_matched) { // Only add if a value capturing group was successfully matched
+                targetMap[key] = value;
+            }
+            ++next;
         }
     }
 
