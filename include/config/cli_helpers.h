@@ -5,6 +5,7 @@
 #define CONFIG_CLI_HELPERS_H
 
 #include "config/common_types.h"
+#include "stats/core.h"
 #include <optional>
 #include <string>
 #include <utility>

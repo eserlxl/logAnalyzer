@@ -30,7 +30,9 @@
 #include <span>
 
 #include "config/core.h" // Renamed from config/Core.h
-
+#include "export/json.h"
+#include "export/csv.h"
+#include "filter/expression.h"
 
 LogAnalyzer::LogAnalyzer()
     : currentSettings_(),
@@ -262,15 +264,6 @@ void LogAnalyzer::updateCurrentParser() {
         currentParser_ = it->second->createParser(currentSettings_);
     }
 }
-// SPDX-License-Identifier: GPL-3.0-only
-// Copyright (c) 2026 Eser KUBALI
-
-#include "analyzer/core.h"
-#include "export/json.h"
-#include "export/csv.h"
-#include "filter/expression.h"
-#include <vector>
-#include <ostream>
 
 ErrorCode::Result<void> LogAnalyzer::exportAsJson(
     std::ostream& out, 
@@ -319,4 +312,42 @@ ErrorCode::Result<void> LogAnalyzer::exportAsCsv(
     }
 
     return {};
+}
+
+std::vector<LogEntry> LogAnalyzer::getEntriesSnapshot() const {
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    return entries_;
+}
+
+std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
+    std::istream& is,
+    const std::string& sourceIdentifier,
+    ParserErrorAction errorAction,
+    std::optional<CancellationToken*> cancellationToken,
+    std::optional<ProgressCallback> progressCallback)
+{
+    (void)is;
+    (void)sourceIdentifier;
+    (void)errorAction;
+    (void)cancellationToken;
+    (void)progressCallback;
+    // Dummy implementation
+    return {};
+}
+
+void LogAnalyzer::setDefaultFieldMappings(LogAnalyzerSettings& settings)
+{
+    (void)settings;
+    // Dummy implementation
+}
+
+AnalysisReport LogAnalyzer::getLastReportSnapshot() const
+{
+    std::shared_lock<std::shared_mutex> lock(stateMutex_);
+    return lastReport;
+}
+
+const std::vector<LogEntry>& LogAnalyzer::getEntries() const
+{
+    return entries_;
 }

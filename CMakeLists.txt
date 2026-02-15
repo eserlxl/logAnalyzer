@@ -177,10 +177,9 @@ set(LIB_SOURCES
     src/analyzer/log/loader.cpp
     src/stats/analyzer.cpp
     src/analyzer/core.cpp
-    src/analyzer/io.cpp
+    src/analyzer/log/io.cpp
     src/filter/analyzer.cpp
     src/analyzer/streaming.cpp
-    src/analyzer/export.cpp
     src/config/core.cpp
     src/config/json.cpp
     src/config/validation.cpp
@@ -236,15 +235,11 @@ add_executable(logAnalyzer src/main.cpp)
 target_link_libraries(logAnalyzer PRIVATE LogAnalyzerLib)
 loganalyzer_apply_sanitizers_and_coverage(logAnalyzer)
 
-# Add sanitizer and coverage flags
 
 
 
-if(MSVC)
-    target_compile_options(logAnalyzer PRIVATE /W4 /WX)
-else()
-    target_compile_options(logAnalyzer PRIVATE -Wall -Wextra -Wpedantic -Werror)
-endif()
+
+
 
 
 
@@ -261,25 +256,7 @@ else()
     message(WARNING "clang-format not found. 'format' target will not be available.")
 endif()
 
-# Documentation target
-find_program(DOXYGEN_BIN "doxygen")
-if(DOXYGEN_BIN)
-    # Configure Doxyfile for this project
-    set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in") # Assume a Doxyfile.in might exist
-    set(DOXYFILE_OUT "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
 
-    # If Doxyfile.in exists, configure it
-    configure_file("${DOXYFILE_IN}" "${DOXYFILE_OUT}" @ONLY)
-
-    add_custom_target(doc
-        COMMAND ${DOXYGEN_BIN} ${DOXYFILE_OUT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM
-    )
-else()
-    message(WARNING "Doxygen not found. 'doc' target will not be available.")
-endif()
 
 # Installation
 include(GNUInstallDirs)

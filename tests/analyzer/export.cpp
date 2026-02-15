@@ -69,7 +69,8 @@ TEST_F(LogAnalyzerExportTest, ConcurrentLoadAsyncWithFilterAndExport) {
         ASSERT_TRUE(filtered.has_value());
         std::stringstream jsonOut;
         ASSERT_NO_THROW(analyzer.exportAsJson(jsonOut, all, false));
-        ASSERT_NO_THROW((void)nlohmann::json::parse(jsonOut.str()));
+        nlohmann::json j;
+        ASSERT_NO_THROW(j = nlohmann::json::parse(jsonOut.str()));
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
