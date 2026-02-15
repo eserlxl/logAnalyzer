@@ -1,236 +1,325 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (c) 2026 Eser KUBALI
 
-cmake_minimum_required(VERSION 3.4)
-# Note: this is a header only library. If you have an older CMake than 3.4,
-# just add the CLI11/include directory and that's all you need to do.
+cmake_minimum_required(VERSION 3.14)
+project(logAnalyzer VERSION 1.0.0 LANGUAGES CXX)
 
-# Make sure users don't get warnings on a tested (3.4 to 3.22) version
-# of CMake. For most of the policies, the new version is better (hence the change).
-# We don't use the 3.4...3.21 syntax because of a bug in an older MSVC's
-# built-in and modified CMake 3.11
-if(${CMAKE_VERSION} VERSION_LESS 3.24)
-  cmake_policy(VERSION ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION})
-else()
-  cmake_policy(VERSION 3.24)
+# Prevent in-source builds
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
+    message(FATAL_ERROR "In-source builds are not allowed. Please create a separate build directory (e.g., mkdir build && cd build && cmake ..).")
 endif()
 
-set(VERSION_REGEX "#define CLI11_VERSION[ \t]+\"(.+)\"")
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Read in the line containing the version
-file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/include/CLI/Version.hpp" VERSION_STRING
-     REGEX ${VERSION_REGEX})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Pick out just the version
-string(REGEX REPLACE ${VERSION_REGEX} "\\1" VERSION_STRING "${VERSION_STRING}")
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
+option(ENABLE_COVERAGE "Enable code coverage instrumentation" OFF)
 
-# Add the project
-project(
-  CLI11
-  LANGUAGES CXX
-  VERSION ${VERSION_STRING})
+option(LOGANALYZER_FETCH_DEPS "Fetch third-party dependencies with FetchContent when not found locally" ON)
+option(LOGANALYZER_OFFLINE_DEPS "Disallow network dependency fetches; use system packages or local mirror/source dirs" OFF)
+set(LOGANALYZER_DEPS_MIRROR_DIR "" CACHE PATH "Local mirror root containing nlohmann_json/, cli11/, and googletest/ source trees")
+set(LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR "" CACHE PATH "Local source directory override for nlohmann_json")
+set(LOGANALYZER_CLI11_SOURCE_DIR "" CACHE PATH "Local source directory override for CLI11")
+set(LOGANALYZER_GTEST_SOURCE_DIR "" CACHE PATH "Local source directory override for googletest")
 
-list(APPEND CMAKE_MODULE_PATH "${CLI11_SOURCE_DIR}/cmake")
+include(FetchContent)
+include(CMakePackageConfigHelpers)
+include(cmake/compiler_settings.cmake)
 
-# Print the version number of CMake if this is the main project
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-  message(STATUS "CMake ${CMAKE_VERSION}")
+# nlohmann_json
+find_package(nlohmann_json 3.11.3 QUIET CONFIG)
+if(NOT TARGET nlohmann_json::nlohmann_json)
+    if(LOGANALYZER_FETCH_DEPS)
+        set(_nlohmann_json_source_dir "")
+        if(LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR)
+            if(NOT EXISTS "${LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR}/CMakeLists.txt")
+                message(FATAL_ERROR "LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR does not contain CMakeLists.txt: ${LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR}")
+            endif()
+            set(_nlohmann_json_source_dir "${LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR}")
+        elseif(LOGANALYZER_DEPS_MIRROR_DIR AND EXISTS "${LOGANALYZER_DEPS_MIRROR_DIR}/nlohmann_json/CMakeLists.txt")
+            set(_nlohmann_json_source_dir "${LOGANALYZER_DEPS_MIRROR_DIR}/nlohmann_json")
+        elseif(EXISTS "${CMAKE_SOURCE_DIR}/_deps/nlohmann_json-src/CMakeLists.txt")
+            set(_nlohmann_json_source_dir "${CMAKE_SOURCE_DIR}/_deps/nlohmann_json-src")
+        elseif(EXISTS "${CMAKE_SOURCE_DIR}/build/_deps/nlohmann_json-src/CMakeLists.txt")
+            set(_nlohmann_json_source_dir "${CMAKE_SOURCE_DIR}/build/_deps/nlohmann_json-src")
+        endif()
 
-  find_package(Doxygen)
-
-  if(CMAKE_VERSION VERSION_LESS 3.10)
-    message(STATUS "CMake 3.10+ adds Doxygen support. Update CMake to build documentation")
-  elseif(NOT Doxygen_FOUND)
-    message(STATUS "Doxygen not found, building docs has been disabled")
-  endif()
-
-  include(CTest)
-else()
-  if(NOT DEFINED BUILD_TESTING)
-    set(BUILD_TESTING OFF)
-  endif()
+        if(_nlohmann_json_source_dir)
+            FetchContent_Declare(
+                nlohmann_json
+                SOURCE_DIR "${_nlohmann_json_source_dir}"
+            )
+        elseif(LOGANALYZER_OFFLINE_DEPS)
+            message(FATAL_ERROR "nlohmann_json was not found and offline mode is enabled. Provide system package, LOGANALYZER_NLOHMANN_JSON_SOURCE_DIR, or LOGANALYZER_DEPS_MIRROR_DIR.")
+        else()
+            FetchContent_Declare(
+                nlohmann_json
+                GIT_REPOSITORY https://github.com/nlohmann/json.git
+                GIT_TAG v3.11.3
+            )
+        endif()
+        FetchContent_MakeAvailable(nlohmann_json)
+    else()
+        message(FATAL_ERROR "nlohmann_json was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")
+    endif()
 endif()
 
-include(CMakeDependentOption)
+# CLI11
+find_package(CLI11 2.6.0 QUIET CONFIG)
+if(NOT TARGET CLI11::CLI11)
+    if(LOGANALYZER_FETCH_DEPS)
+        set(_cli11_source_dir "")
+        if(LOGANALYZER_CLI11_SOURCE_DIR)
+            if(NOT EXISTS "${LOGANALYZER_CLI11_SOURCE_DIR}/CMakeLists.txt")
+                message(FATAL_ERROR "LOGANALYZER_CLI11_SOURCE_DIR does not contain CMakeLists.txt: ${LOGANALYZER_CLI11_SOURCE_DIR}")
+            endif()
+            set(_cli11_source_dir "${LOGANALYZER_CLI11_SOURCE_DIR}")
+        elseif(LOGANALYZER_DEPS_MIRROR_DIR AND EXISTS "${LOGANALYZER_DEPS_MIRROR_DIR}/cli11/CMakeLists.txt")
+            set(_cli11_source_dir "${LOGANALYZER_DEPS_MIRROR_DIR}/cli11")
+        elseif(EXISTS "${CMAKE_SOURCE_DIR}/_deps/cli11-src/CMakeLists.txt")
+            set(_cli11_source_dir "${CMAKE_SOURCE_DIR}/_deps/cli11-src")
+        elseif(EXISTS "${CMAKE_SOURCE_DIR}/build/_deps/cli11-src/CMakeLists.txt")
+            set(_cli11_source_dir "${CMAKE_SOURCE_DIR}/build/_deps/cli11-src")
+        endif()
+
+        if(_cli11_source_dir)
+            FetchContent_Declare(
+                cli11
+                SOURCE_DIR "${_cli11_source_dir}"
+            )
+        elseif(LOGANALYZER_OFFLINE_DEPS)
+            message(FATAL_ERROR "CLI11 was not found and offline mode is enabled. Provide system package, LOGANALYZER_CLI11_SOURCE_DIR, or LOGANALYZER_DEPS_MIRROR_DIR.")
+        else()
+            FetchContent_Declare(
+                cli11
+                GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+                GIT_TAG v2.6.0
+            )
+        endif()
+        FetchContent_MakeAvailable(cli11)
+    else()
+        message(FATAL_ERROR "CLI11 was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")
+    endif()
+endif()
+
+# GoogleTest
+find_package(GTest 1.14.0 QUIET CONFIG)
+if(NOT TARGET GTest::gtest AND NOT TARGET gtest)
+    if(LOGANALYZER_FETCH_DEPS)
+        set(_gtest_source_dir "")
+        if(LOGANALYZER_GTEST_SOURCE_DIR)
+            if(NOT EXISTS "${LOGANALYZER_GTEST_SOURCE_DIR}/CMakeLists.txt")
+                message(FATAL_ERROR "LOGANALYZER_GTEST_SOURCE_DIR does not contain CMakeLists.txt: ${LOGANALYZER_GTEST_SOURCE_DIR}")
+            endif()
+            set(_gtest_source_dir "${LOGANALYZER_GTEST_SOURCE_DIR}")
+        elseif(LOGANALYZER_DEPS_MIRROR_DIR AND EXISTS "${LOGANALYZER_DEPS_MIRROR_DIR}/googletest/CMakeLists.txt")
+            set(_gtest_source_dir "${LOGANALYZER_DEPS_MIRROR_DIR}/googletest")
+        elseif(EXISTS "${CMAKE_SOURCE_DIR}/_deps/googletest-src/CMakeLists.txt")
+            set(_gtest_source_dir "${CMAKE_SOURCE_DIR}/_deps/googletest-src")
+        elseif(EXISTS "${CMAKE_SOURCE_DIR}/build/_deps/googletest-src/CMakeLists.txt")
+            set(_gtest_source_dir "${CMAKE_SOURCE_DIR}/build/_deps/googletest-src")
+        endif()
+
+        # For Windows: Prevent overriding the parent project's compiler/linker settings
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        if(_gtest_source_dir)
+            FetchContent_Declare(
+                googletest
+                SOURCE_DIR "${_gtest_source_dir}"
+            )
+        elseif(LOGANALYZER_OFFLINE_DEPS)
+            message(FATAL_ERROR "GTest was not found and offline mode is enabled. Provide system package, LOGANALYZER_GTEST_SOURCE_DIR, or LOGANALYZER_DEPS_MIRROR_DIR.")
+        else()
+            FetchContent_Declare(
+                googletest
+                GIT_REPOSITORY https://github.com/google/googletest.git
+                GIT_TAG v1.14.0
+            )
+        endif()
+        FetchContent_MakeAvailable(googletest)
+    else()
+        message(FATAL_ERROR "GTest was not found. Install it locally or enable LOGANALYZER_FETCH_DEPS.")
+    endif()
+endif()
+include(GoogleTest)
+
+if(TARGET GTest::gtest AND NOT TARGET GTest::GTest)
+    add_library(GTest::GTest ALIAS GTest::gtest)
+endif()
+if(TARGET GTest::gtest_main AND NOT TARGET GTest::Main)
+    add_library(GTest::Main ALIAS GTest::gtest_main)
+endif()
+if(TARGET gtest AND NOT TARGET GTest::GTest)
+    add_library(GTest::GTest ALIAS gtest)
+endif()
+if(TARGET gtest_main AND NOT TARGET GTest::Main)
+    add_library(GTest::Main ALIAS gtest_main)
+endif()
+
+if(TARGET gtest)
+    if(NOT MSVC)
+        target_compile_options(gtest PRIVATE -Wno-character-conversion)
+        if(TARGET gtest_main)
+            target_compile_options(gtest_main PRIVATE -Wno-character-conversion)
+        endif()
+    endif()
+endif()
+
+# Library source files
+set(LIB_SOURCES
+    src/analyzer/log/reader.cpp
+    src/analyzer/log/writer.cpp
+    src/analyzer/log/loader.cpp
+    src/stats/analyzer.cpp
+    src/analyzer/core.cpp
+    src/analyzer/io.cpp
+    src/filter/analyzer.cpp
+    src/analyzer/streaming.cpp
+    src/analyzer/export.cpp
+    src/config/core.cpp
+    src/config/json.cpp
+    src/config/validation.cpp
+    src/config/utils.cpp
+    src/config/cli.cpp
+    src/config/cli_helpers.cpp
+    src/core/log/parser.cpp
+    src/core/log/parser_utils.cpp
+    src/core/log/json_parser.cpp
+    src/core/log/types.cpp
+    src/export/core.cpp
+    src/export/json.cpp
+    src/export/xml.cpp
+    src/export/csv.cpp
+    src/export/text.cpp
+    src/filter/enum_string_conversions.cpp
+    src/filter/expression.cpp
+    src/filter/concrete_filters.cpp
+    src/filter/condition_evaluation.cpp
+    src/filter/parser.cpp
+    src/stats/core.cpp
+    src/utils/ip_address.cpp
+    src/utils/version.cpp
+    src/utils/time.cpp
+    src/utils/time_parser.cpp
+    src/utils/timer.cpp
+    src/utils/string.cpp
+    src/utils/core.cpp
+)
+
+add_library(LogAnalyzerLib ${LIB_SOURCES})
+loganalyzer_apply_sanitizers_and_coverage(LogAnalyzerLib)
+target_include_directories(LogAnalyzerLib
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(LogAnalyzerLib
+    PUBLIC
+        $<BUILD_INTERFACE:nlohmann_json::nlohmann_json>
+    PRIVATE
+        $<BUILD_INTERFACE:CLI11::CLI11>
+)
+
+if(MSVC)
+    target_compile_options(LogAnalyzerLib PRIVATE /W4 /WX)
+else()
+    target_compile_options(LogAnalyzerLib PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-uninitialized)
+endif()
+
+# Main executable
+add_executable(logAnalyzer src/main.cpp)
+target_link_libraries(logAnalyzer PRIVATE LogAnalyzerLib)
+loganalyzer_apply_sanitizers_and_coverage(logAnalyzer)
+
+# Add sanitizer and coverage flags
+
+
+
+if(MSVC)
+    target_compile_options(logAnalyzer PRIVATE /W4 /WX)
+else()
+    target_compile_options(logAnalyzer PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
+
+
+# Formatting target
+find_program(CLANG_FORMAT_BIN "clang-format")
+if(CLANG_FORMAT_BIN)
+    file(GLOB_RECURSE ALL_CPP_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp" "${CMAKE_SOURCE_DIR}/include/*.h")
+    add_custom_target(format
+        COMMAND ${CLANG_FORMAT_BIN} -i ${ALL_CPP_FILES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Formatting C++ source code with clang-format"
+    )
+else()
+    message(WARNING "clang-format not found. 'format' target will not be available.")
+endif()
+
+# Documentation target
+find_program(DOXYGEN_BIN "doxygen")
+if(DOXYGEN_BIN)
+    # Configure Doxyfile for this project
+    set(DOXYFILE_IN "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in") # Assume a Doxyfile.in might exist
+    set(DOXYFILE_OUT "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
+
+    # If Doxyfile.in exists, configure it
+    configure_file("${DOXYFILE_IN}" "${DOXYFILE_OUT}" @ONLY)
+
+    add_custom_target(doc
+        COMMAND ${DOXYGEN_BIN} ${DOXYFILE_OUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
+else()
+    message(WARNING "Doxygen not found. 'doc' target will not be available.")
+endif()
+
+# Installation
 include(GNUInstallDirs)
+set(LOGANALYZER_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/logAnalyzer")
 
-if(NOT CMAKE_VERSION VERSION_LESS 3.11)
-  include(FetchContent)
-endif()
+install(TARGETS logAnalyzer
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+install(TARGETS LogAnalyzerLib
+    EXPORT logAnalyzerTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-list(APPEND force-libcxx "CMAKE_CXX_COMPILER_ID STREQUAL \"Clang\"")
-list(APPEND force-libcxx "CMAKE_SYSTEM_NAME STREQUAL \"Linux\"")
-list(APPEND force-libcxx "CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME")
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfig.cmake"
+    INSTALL_DESTINATION "${LOGANALYZER_INSTALL_CMAKEDIR}"
+)
 
-list(APPEND build-docs "CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME")
-list(APPEND build-docs "NOT CMAKE_VERSION VERSION_LESS 3.11")
-list(APPEND build-docs "Doxygen_FOUND")
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
 
-# Necessary to support paths with spaces, see #457
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/docs")
-  set(docs_EXIST TRUE)
-else()
-  set(docs_EXIST FALSE)
-endif()
-list(APPEND build-docs "docs_EXIST")
+install(EXPORT logAnalyzerTargets
+    FILE logAnalyzerTargets.cmake
+    NAMESPACE logAnalyzer::
+    DESTINATION "${LOGANALYZER_INSTALL_CMAKEDIR}"
+)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples")
-  set(examples_EXIST TRUE)
-else()
-  set(examples_EXIST FALSE)
-endif()
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/logAnalyzerConfigVersion.cmake"
+    DESTINATION "${LOGANALYZER_INSTALL_CMAKEDIR}"
+)
 
-option(CLI11_WARNINGS_AS_ERRORS "Turn all warnings into errors (for CI)")
-option(CLI11_SINGLE_FILE "Generate a single header file")
-option(CLI11_PRECOMPILED "Generate a precompiled static library instead of a header-only" OFF)
-cmake_dependent_option(CLI11_SANITIZERS "Download the sanitizers CMake config" OFF
-                       "NOT CMAKE_VERSION VERSION_LESS 3.11" OFF)
-
-cmake_dependent_option(CLI11_BUILD_DOCS "Build CLI11 documentation" ON "${build-docs}" OFF)
-
-cmake_dependent_option(CLI11_BUILD_TESTS "Build CLI11 tests" ON
-                       "BUILD_TESTING;CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME" OFF)
-
-cmake_dependent_option(CLI11_BUILD_EXAMPLES "Build CLI11 examples" ON
-                       "CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME;${examples_EXIST}" OFF)
-
-cmake_dependent_option(CLI11_BUILD_EXAMPLES_JSON "Build CLI11 json example" OFF
-                       "CLI11_BUILD_EXAMPLES;NOT CMAKE_VERSION VERSION_LESS 3.11" OFF)
-
-cmake_dependent_option(CLI11_SINGLE_FILE_TESTS "Duplicate all the tests for a single file build"
-                       OFF "BUILD_TESTING;CLI11_SINGLE_FILE" OFF)
-
-cmake_dependent_option(CLI11_INSTALL "Install the CLI11 folder to include during install process"
-                       ON "CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME" OFF)
-
-cmake_dependent_option(
-  CLI11_FORCE_LIBCXX "Force clang to use libc++ instead of libstdc++ (Linux only)" OFF
-  "${force-libcxx}" OFF)
-
-cmake_dependent_option(
-  CLI11_CUDA_TESTS "Build the tests with NVCC to check for warnings there - requires CMake 3.9+"
-  OFF "CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME" OFF)
-
-if(CLI11_PRECOMPILED AND CLI11_SINGLE_FILE)
-  # Sanity check
-  message(FATAL_ERROR "CLI11_PRECOMPILE and CLI11_SINGLE_FILE are mutually exclusive")
-endif()
-
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 11)
-endif()
-
-if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-
-if(NOT DEFINED CMAKE_CXX_STANDARD_REQUIRED)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
-# Allow IDE's to group targets into folders
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-endif()
-
-include(CLI11Warnings)
-
-add_subdirectory(src)
-
-# Allow tests to be run on CUDA
-if(CLI11_CUDA_TESTS)
-  enable_language(CUDA)
-
-  # Print out warning and error numbers
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcudafe --display_error_number")
-endif()
-
-# This folder should be installed
-if(CLI11_INSTALL)
-
-  # Use find_package on the installed package
-  # Since we have no custom code, we can directly write this
-  # to Config.cmake (otherwise we'd have a custom config and would
-  # import Targets.cmake
-
-  # Add the version in a CMake readable way
-  configure_file("cmake/CLI11ConfigVersion.cmake.in" "CLI11ConfigVersion.cmake" @ONLY)
-
-  # Make version available in the install
-  install(FILES "${PROJECT_BINARY_DIR}/CLI11ConfigVersion.cmake"
-          DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/CLI11")
-
-  # Install the export target as a file
-  install(
-    EXPORT CLI11Targets
-    FILE CLI11Config.cmake
-    NAMESPACE CLI11::
-    DESTINATION "${CMAKE_INSTALL_DATADIR}/cmake/CLI11")
-
-  # Use find_package on the installed package
-  export(
-    TARGETS CLI11
-    NAMESPACE CLI11::
-    FILE CLI11Targets.cmake)
-
-  include(cmake/CLI11GeneratePkgConfig.cmake)
-
-  # Register in the user cmake package registry
-  export(PACKAGE CLI11)
-endif()
-
-if(CLI11_BUILD_TESTS)
-  include(CTest)
-  add_subdirectory(tests)
-endif()
-
-if(CLI11_BUILD_EXAMPLES)
-  add_subdirectory(examples)
-endif()
-
-if(CLI11_BUILD_DOCS)
-  add_subdirectory(docs)
-endif()
-
-# From a build system, this might not be included.
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/book")
-  add_subdirectory(book)
-endif()
-
-# Packaging support
-set(CPACK_PACKAGE_VENDOR "github.com/CLIUtils/CLI11")
-set(CPACK_PACKAGE_CONTACT "https://${CPACK_PACKAGE_VENDOR}")
-set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR}) # Automatic in CMake 3.12+
-set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR}) # Automatic in CMake 3.12+
-set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH}) # Automatic in CMake 3.12+
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Command line parser with simple and intuitive interface")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/CLI11.CPack.Description.txt")
-set(CPACK_SOURCE_GENERATOR "TGZ;ZIP")
-
-# CPack collects *everything* except what's listed here.
-set(CPACK_SOURCE_IGNORE_FILES
-    /.git
-    /dist
-    /.*build.*
-    /\\\\.DS_Store
-    /.*\\\\.egg-info
-    /var
-    /azure-pipelines.yml
-    /.ci
-    /docs
-    /examples
-    /test_package
-    /book
-    /.travis.yml
-    .swp
-    /.all-contributorsrc
-    /.appveyor.yml
-    /.pre-commit.*yaml)
-
-set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "all")
-set(CPACK_DEBIAN_COMPRESSION_TYPE "xz")
-set(CPACK_DEBIAN_PACKAGE_NAME "libcli11-dev")
-
-include(CPack)
+# Enable testing
+enable_testing()
+add_subdirectory(tests)

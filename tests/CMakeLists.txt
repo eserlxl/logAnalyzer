@@ -146,8 +146,8 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
 
     # Link common libraries
     target_link_libraries(${TEST_NAME} PRIVATE
-        GTest::GTest
-        GTest::Main
+        GTest::gtest
+        GTest::gtest_main
         LogAnalyzerLib
         # Add GMock if enabled
         $<$<BOOL:${ENABLE_GMOCK}>:GMock::gmock GMock::gmock_main>

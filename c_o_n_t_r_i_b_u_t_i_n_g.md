@@ -39,24 +39,12 @@ Additionally, tests are configured to support various build options. For instanc
 
 ### Code Formatting and Quality
 
-To ensure consistent code style and quality, `logAnalyzer` uses `pre-commit` hooks. These hooks automatically run checks and formatters on your code before you commit.
+To ensure consistent code style and quality, `logAnalyzer` uses `clang-format`. A `format` target is provided to automatically format the C++ source code.
 
-First, install `pre-commit`:
-
-```bash
-pip install pre-commit
-```
-
-Next, set up the git hooks:
+After configuring the project, you can run the formatter with:
 
 ```bash
-pre-commit install
-```
-
-Now, `pre-commit` will run automatically on `git commit`. You can also run it manually on all files:
-
-```bash
-pre-commit run --all-files
+cmake --build build --target format
 ```
 
 ### Implement your fix or feature
