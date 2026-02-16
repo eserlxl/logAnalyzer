@@ -298,16 +298,21 @@ ErrorCode::Result<void> LogAnalyzer::exportAsCsv(
         return std::unexpected(result.error());
     }
 
-    // This is a placeholder implementation.
-    // A more robust implementation would use a proper CSV library.
     if (includeHeader) {
         out << "id,timestamp,level,message,source_file\n";
     }
     for (const auto& entry : result.value()) {
-        out << entry.id.value_or(0) << ","
-            // << entry.timestamp << ","
-            << static_cast<int>(entry.level) << ","
-            << "\"" << entry.message << "\","
+        out << entry.id.value_or(0) << ",";
+        if (entry.timestamp) {
+            out << Utils::formatTimestamp(*entry.timestamp) << ",";
+        } else {
+            out << "N/A,";
+        }
+        out << Utils::logLevelToString(entry.level) << ",";
+        
+        std::string escapedMessage = entry.message;
+        Utils::replaceAll(escapedMessage, "\"", "\"\"");
+        out << "\"" << escapedMessage << "\","
             << entry.sourceFile << "\n";
     }
 
@@ -326,19 +331,82 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
     std::optional<CancellationToken*> cancellationToken,
     std::optional<ProgressCallback> progressCallback)
 {
-    (void)is;
-    (void)sourceIdentifier;
-    (void)errorAction;
-    (void)cancellationToken;
-    (void)progressCallback;
-    // Dummy implementation
-    return {};
+    std::vector<LogEntry> parsedEntries;
+    AnalysisReport report;
+    report.status = ParseError::SUCCESS;
+
+    std::unique_ptr<ILogParser> parser;
+    {
+        std::shared_lock<std::shared_mutex> lock(stateMutex_);
+        if (currentParser_) {
+            parser = currentParser_->clone();
+        }
+    }
+
+    if (!parser) {
+        report.status = ParseError::UNKNOWN_ERROR;
+        report.parseErrors.emplace_back(ParseError::UNKNOWN_ERROR, "No parser initialized", 0);
+        return {parsedEntries, report};
+    }
+
+    std::string line;
+    size_t lineNumber = 0;
+    while (std::getline(is, line)) {
+        if (cancellationToken && (*cancellationToken)->isCancelled()) {
+            report.status = ParseError::CANCELLED;
+            break;
+        }
+        lineNumber++;
+        report.linesProcessed++;
+        
+        auto resOpt = parser->processLine(line, lineNumber, sourceIdentifier);
+        if (resOpt) {
+            if (resOpt->has_value()) {
+                LogEntry entry = std::move(**resOpt);
+                parsedEntries.push_back(std::move(entry));
+                report.successfulParses++;
+            } else {
+                if (errorAction == ParserErrorAction::Warn) {
+                    std::cerr << "Warning: Failed to parse line " << lineNumber << " in " << sourceIdentifier << ": " << resOpt->error().message << '\n';
+                }
+                report.parseErrors.emplace_back(ParseError::PARTIAL_FAILURE, resOpt->error().message, lineNumber, resOpt->error());
+            }
+        }
+
+        if (progressCallback && lineNumber % 1000 == 0) {
+            (*progressCallback)(0.0, "Parsing line " + std::to_string(lineNumber));
+        }
+    }
+
+    if (report.status != ParseError::CANCELLED) {
+        auto flushResults = parser->flushRemaining();
+        for (auto& result : flushResults) {
+            if (result.has_value()) {
+                LogEntry entry = std::move(*result);
+                parsedEntries.push_back(std::move(entry));
+                report.successfulParses++;
+            } else {
+                if (errorAction == ParserErrorAction::Warn) {
+                     std::cerr << "Warning: Failed to parse remaining buffer for " << sourceIdentifier << ": " << result.error().message << '\n';
+                }
+                report.parseErrors.emplace_back(ParseError::PARTIAL_FAILURE, result.error().message, 0, result.error());
+            }
+        }
+    }
+
+    if (!report.parseErrors.empty() && report.status == ParseError::SUCCESS) {
+        report.status = ParseError::PARTIAL_FAILURE;
+    }
+    
+    return {parsedEntries, report};
 }
 
 void LogAnalyzer::setDefaultFieldMappings(LogAnalyzerSettings& settings)
 {
-    (void)settings;
-    // Dummy implementation
+    settings.fieldMappings.clear();
+    settings.fieldMappings.emplace_back(LogEntryField::TIMESTAMP, std::make_optional<size_t>(1), std::vector<std::string>{"%Y-%m-%d %H:%M:%S"});
+    settings.fieldMappings.emplace_back(LogEntryField::LEVEL, std::make_optional<size_t>(2));
+    settings.fieldMappings.emplace_back(LogEntryField::MESSAGE, std::make_optional<size_t>(3));
 }
 
 AnalysisReport LogAnalyzer::getLastReportSnapshot() const
