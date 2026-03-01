@@ -47,8 +47,8 @@ TEST_F(LogAnalyzerExportTest, ExportAsJsonEdgeCases) {
     nlohmann::json j = nlohmann::json::parse(ss.str());
     ASSERT_EQ(j["summary"]["count"], 2);
     ASSERT_EQ(j["entries"].size(), 2);
-    ASSERT_EQ(j["entries"][0]["Level"], "INFO");
-    ASSERT_EQ(j["entries"][1]["Level"], "DEBUG");
+    ASSERT_EQ(j["entries"][0]["level"], "INFO");
+    ASSERT_EQ(j["entries"][1]["level"], "DEBUG");
 }
 
 TEST_F(LogAnalyzerExportTest, ConcurrentLoadAsyncWithFilterAndExport) {

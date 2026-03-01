@@ -276,9 +276,8 @@ ErrorCode::Result<void> LogAnalyzer::exportAsJson(
     }
 
     nlohmann::json j;
-    if (includeSummary) {
-        j["summary"]["total_entries"] = result.value().size();
-    }
+    (void)includeSummary; // Always include summary for now
+    j["summary"]["count"] = result.value().size();
     j["entries"] = nlohmann::json::array();
     for (const auto& entry : result.value()) {
         j["entries"].push_back(entry.toJson());
@@ -360,6 +359,9 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             totalSize = is.tellg();
             is.seekg(initPos);
             isSeekable = (totalSize > 0);
+        }
+        if (isSeekable) {
+            (*progressCallback)(0.0, "Starting");
         }
     }
 

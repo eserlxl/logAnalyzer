@@ -31,8 +31,8 @@ TEST_F(AnalyzerTestFixture, SortByLevelAscendingCriteria) {
     ASSERT_TRUE(result.has_value());
     ASSERT_EQ(result.value().size(), baseEntries.size());
     std::vector<LogLevel> expectedOrder = {
-        LogLevel::CRITICAL, LogLevel::DEBUG, LogLevel::DEBUG, LogLevel::ERROR, 
-        LogLevel::ERROR, LogLevel::INFO, LogLevel::INFO, LogLevel::WARNING
+        LogLevel::DEBUG, LogLevel::DEBUG, LogLevel::INFO, LogLevel::INFO, 
+        LogLevel::WARNING, LogLevel::ERROR, LogLevel::ERROR, LogLevel::CRITICAL
     };
     for (size_t i = 0; i < result.value().size(); ++i) {
         EXPECT_EQ(result.value()[i].level, expectedOrder[i]);

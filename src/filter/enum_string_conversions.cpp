@@ -122,7 +122,7 @@ std::optional<FilterValueType> fromStringToFilterValueType(const std::string& ty
     if (upperTypeStr == "AUTO") return FilterValueType::AUTO;
     if (upperTypeStr == "STRING") return FilterValueType::STRING;
     if (upperTypeStr == "INT") return FilterValueType::INT;
-    if (upperTypeStr == "DOUBLE") return FilterValueType::DOUBLE;
+    if (upperTypeStr == "DOUBLE" || upperTypeStr == "FLOAT") return FilterValueType::DOUBLE;
     if (upperTypeStr == "BOOL") return FilterValueType::BOOL;
     if (upperTypeStr == "DATETIME") return FilterValueType::DATETIME;
     if (upperTypeStr == "VERSION") return FilterValueType::VERSION;

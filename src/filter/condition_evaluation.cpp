@@ -16,6 +16,7 @@
 #include <cctype>
 #include <numeric>
 #include <nlohmann/json.hpp>
+#include <sstream>
 
 namespace filter {
 
@@ -122,7 +123,11 @@ ErrorCode::Result<bool> evaluateCondition(const FilterCondition& cond, const Log
                         for (const auto& element : j) {
                             if (element.is_string()) parsedValues.push_back(element.get<std::string>());
                             else if (element.is_number_integer()) parsedValues.push_back(std::to_string(element.get<int64_t>()));
-                            else if (element.is_number()) parsedValues.push_back(std::to_string(element.get<double>()));
+                            else if (element.is_number()) {
+                                std::ostringstream oss;
+                                oss << std::defaultfloat << element.get<double>();
+                                parsedValues.push_back(oss.str());
+                            }
                             else if (element.is_boolean()) parsedValues.push_back(element.get<bool>() ? "true" : "false");
                             else return std::unexpected(ErrorCode::Error(Code::InvalidArgument, "Invalid type in 'value' array for IN/NOT_IN."));
                         }

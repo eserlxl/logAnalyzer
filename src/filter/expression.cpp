@@ -99,6 +99,9 @@ ErrorCode::Result<void> FilterExpression::validate() const {
             return {};
         }
         case ExpressionType::LOGICAL:
+            if (expressions_.empty()) {
+                return std::unexpected(ErrorCode::Error(Code::ValidationError, "Filter expression is invalid: logical expression must have at least one operand."));
+            }
             for (const auto& expr : expressions_) {
                 auto result = expr.validate();
                 if (!result) return result;

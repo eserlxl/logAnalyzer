@@ -218,7 +218,7 @@ bool LogAnalyzer::lessByField(const LogEntry& lhs, const LogEntry& rhs, filter::
         case filter::SortBy::TIMESTAMP:
             return lhs.timestamp < rhs.timestamp;
         case filter::SortBy::LEVEL:
-            return Utils::logLevelToString(lhs.level) < Utils::logLevelToString(rhs.level);
+            return lhs.level < rhs.level;
         case filter::SortBy::MESSAGE:
             return lhs.message < rhs.message;
         case filter::SortBy::SOURCE:

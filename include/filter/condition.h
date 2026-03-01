@@ -8,6 +8,7 @@
 #include <variant>
 #include <vector>
 #include <regex>
+#include <sstream>
 #include <nlohmann/json.hpp>
 #include "core/error.h"
 #include "core/log/types.h"
@@ -151,9 +152,7 @@ inline void to_json(nlohmann::json& j, const FilterCondition& fc) {
     }
 
     j["value_type"] = toString(fc.valueType);
-    if (fc.caseSensitive) {
-        j["caseSensitive"] = fc.caseSensitive;
-    }
+    j["caseSensitive"] = fc.caseSensitive;
     if (fc.datetimeFormat) {
         j["datetimeFormat"] = *fc.datetimeFormat;
     }
@@ -184,15 +183,29 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
     }
     fc.op = *opOpt;
 
-    // value_type is required
-    auto vtRes = getRequired<std::string>(j, "value_type", current_path);
-    if(!vtRes) return std::unexpected(vtRes.error());
-    
-    auto typeOpt = fromStringToFilterValueType(*vtRes);
-    if (!typeOpt) {
-        return std::unexpected(makeError(Code::InvalidArgument, "Unrecognized value_type: " + *vtRes, current_path, "value_type"));
+    // value_type: defaults to AUTO when omitted; accepts string or integer
+    if (j.contains("value_type") && !j.at("value_type").is_null()) {
+        if (j.at("value_type").is_string()) {
+            auto vtStr = j.at("value_type").get<std::string>();
+            auto typeOpt = fromStringToFilterValueType(vtStr);
+            if (!typeOpt) {
+                return std::unexpected(makeError(Code::InvalidArgument, "Unrecognized value_type: " + vtStr, current_path, "value_type"));
+            }
+            fc.valueType = *typeOpt;
+        } else if (j.at("value_type").is_number_integer()) {
+            auto vtInt = j.at("value_type").get<int>();
+            auto vtCast = static_cast<FilterValueType>(vtInt);
+            auto vtName = toString(vtCast);
+            if (vtName.find("UNKNOWN") != std::string::npos && vtCast != FilterValueType::UNKNOWN) {
+                return std::unexpected(makeError(Code::InvalidArgument, "Invalid integer for 'value_type'.", current_path, "value_type"));
+            }
+            fc.valueType = vtCast;
+        } else {
+            return std::unexpected(makeError(Code::InvalidArgument, "Invalid integer for 'value_type'.", current_path, "value_type"));
+        }
+    } else {
+        fc.valueType = FilterValueType::AUTO;
     }
-    fc.valueType = *typeOpt;
 
     fc.caseSensitive = getOptional<bool>(j, "caseSensitive").value_or(false);
     fc.datetimeFormat = getOptional<std::string>(j, "datetimeFormat");
@@ -230,9 +243,9 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
                     int64_t val;
                     auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), val);
                     if (ec != std::errc{} || ptr != s.data() + s.size()) {
-                        return std::unexpected(makeError(Code::InvalidArgument, "Invalid integer value: " + s, current_path, "value"));
+                        return std::unexpected(makeError(Code::InvalidArgument, "Type mismatch: value '" + s + "' is not a valid integer.", current_path, "value"));
                     }
-                    fc.value = val;
+                    fc.value = s; // Store as string — evaluation will parse at runtime
                 } else {
                     return std::unexpected(makeError(Code::InvalidArgument, "Invalid type for 'value_type' INT.", current_path, "value_type"));
                 }
@@ -255,7 +268,7 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
                         if (processed != s.size() || !std::isfinite(d)) {
                              return std::unexpected(makeError(Code::InvalidArgument, "Invalid float value: " + s, current_path, "value"));
                         }
-                        fc.value = d;
+                        fc.value = s; // Store as string — evaluation will parse at runtime
                     } catch (...) {
                          return std::unexpected(makeError(Code::InvalidArgument, "Invalid float value: " + s, current_path, "value"));
                     }
@@ -323,7 +336,11 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
         for (const auto& element : valJson) {
             if (element.is_string()) values.push_back(element.get<std::string>());
             else if (element.is_number_integer()) values.push_back(std::to_string(element.get<int64_t>()));
-            else if (element.is_number()) values.push_back(std::to_string(element.get<double>()));
+            else if (element.is_number()) {
+                std::ostringstream oss;
+                oss << std::defaultfloat << element.get<double>();
+                values.push_back(oss.str());
+            }
             else if (element.is_boolean()) values.push_back(element.get<bool>() ? "true" : "false");
             else return std::unexpected(makeError(Code::InvalidArgument, "Invalid type in 'value' array for IN/NOT_IN.", current_path, "value"));
         }

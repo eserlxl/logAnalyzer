@@ -57,10 +57,10 @@ TEST_F(AnalyzerTestFixture, FilterAndSortCombined) {
     ASSERT_TRUE(result.has_value());
     
     ASSERT_EQ(result.value().size(), 4);
-    EXPECT_EQ(result.value()[0].message, "User logged out.");
-    EXPECT_EQ(result.value()[1].message, "User logged in.");
-    EXPECT_EQ(result.value()[2].message, "Request completed.");
-    EXPECT_EQ(result.value()[3].message, "Processing request.");
+    EXPECT_EQ(result.value()[0].message, "User logged in.");
+    EXPECT_EQ(result.value()[1].message, "Processing request.");
+    EXPECT_EQ(result.value()[2].message, "Debugging memory.");
+    EXPECT_EQ(result.value()[3].message, "Debugging cache.");
 }
 
 // Edge case: no matching entries but valid filter/sort

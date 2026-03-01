@@ -75,7 +75,7 @@ TEST_F(FilterJsonTest, FromJsonFailureMissingValue) {
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
 }
 
-TEST_F(FilterJsonTest, FromJsonFailureMissingValueType) {
+TEST_F(FilterJsonTest, FromJsonDefaultsToAutoWhenValueTypeMissing) {
     nlohmann::json j = {
         {"field", "message"},
         {"op", "CONTAINS"},
@@ -83,8 +83,8 @@ TEST_F(FilterJsonTest, FromJsonFailureMissingValueType) {
     };
     FilterCondition fc;
     auto result = from_json(j, fc);
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code, Code::InvalidArgument);
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(fc.valueType, FilterValueType::AUTO);
 }
 
 TEST_F(FilterJsonTest, FromJsonFailureInvalidValueTypeString) {
@@ -166,7 +166,7 @@ TEST_F(FilterJsonTest, FromJsonFailureWhitespacePaddedNumericValue) {
     auto result_int = from_json(j_int, fc_int);
     ASSERT_FALSE(result_int.has_value());
     EXPECT_EQ(result_int.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result_int.error().message, "Invalid integer value:  42");
+    EXPECT_EQ(result_int.error().message, "Type mismatch: value ' 42' is not a valid integer.");
 
     nlohmann::json j_float = {
         {"field", "message"},
@@ -192,7 +192,7 @@ TEST_F(FilterJsonTest, FromJsonFailurePlusPrefixedIntValue) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Invalid integer value: +42");
+    EXPECT_EQ(result.error().message, "Type mismatch: value '+42' is not a valid integer.");
 }
 
 // --- Additional from_json Deserialization Failure Tests ---
@@ -224,7 +224,7 @@ TEST_F(FilterJsonTest, FromJsonFailureIntNonNumericValue) {
     auto result = from_json(j, fc);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, Code::InvalidArgument);
-    EXPECT_EQ(result.error().message, "Invalid integer value: not_an_int");
+    EXPECT_EQ(result.error().message, "Type mismatch: value 'not_an_int' is not a valid integer.");
 }
 
 TEST_F(FilterJsonTest, FromJsonFailureBoolNonBooleanValue) {

@@ -70,7 +70,8 @@ bool SemanticVersion::operator==(const SemanticVersion& other) const {
     return major == other.major &&
            minor == other.minor &&
            patch == other.patch &&
-           prerelease == other.prerelease;
+           prerelease == other.prerelease &&
+           build == other.build;
 }
 
 bool SemanticVersion::operator!=(const SemanticVersion& other) const {

@@ -45,7 +45,7 @@ protected:
         const std::map<std::string, std::string>& customFields = {},
         std::optional<size_t> id = std::nullopt,
         std::optional<std::chrono::system_clock::time_point> timestamp = std::nullopt,
-        std::optional<unsigned int> sourceLineNumber = std::nullopt,
+        std::optional<size_t> sourceLineNumber = std::nullopt,
         std::optional<std::string> threadId = std::nullopt,
         std::optional<std::string> module = std::nullopt,
         std::optional<std::string> host = std::nullopt
@@ -145,13 +145,13 @@ inline LogEntry createLogEntry(
     std::optional<std::chrono::system_clock::time_point> timestamp = std::nullopt,
     const std::map<std::string, std::string>& customFields = {},
     const std::string& sourceFile = "",
-    std::optional<unsigned int> sourceLineNumber = std::nullopt
+    std::optional<size_t> sourceLineNumber = std::nullopt
 ) {
     LogEntry entry;
     entry.id = id;
     entry.level = level;
     entry.message = message;
-    entry.timestamp = timestamp.value_or(getFixedTimestamp());
+    entry.timestamp = timestamp;
     entry.customFields = customFields;
     entry.sourceFile = sourceFile;
     entry.sourceLineNumber = sourceLineNumber;

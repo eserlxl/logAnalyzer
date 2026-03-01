@@ -37,7 +37,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseUnix
 }
 } // namespace
 
-std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const std::string& durationStr, [[maybe_unused]] bool allowExtendedUnits) {
+std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits) {
     if (durationStr.empty()) {
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Empty duration string."));
     }
@@ -76,13 +76,15 @@ std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const s
     constexpr long long microsPerYearApprox = 365LL * microsPerDay;
 
     std::string unit = matches[2].str();
+
+    // Basic units: always accepted
     if (unit == "s" || unit == "second" || unit == "seconds") return toMicroseconds(microsPerSecond);
     if (unit == "m" || unit == "minute" || unit == "minutes") return toMicroseconds(microsPerMinute);
     if (unit == "h" || unit == "hour" || unit == "hours") return toMicroseconds(microsPerHour);
     if (unit == "d" || unit == "day" || unit == "days") return toMicroseconds(microsPerDay);
     
-    // For smaller units and longer approx units
-    if (!unit.empty()) {
+    // Extended units: gated behind allowExtendedUnits
+    if (allowExtendedUnits) {
         if (unit == "ms") return toMicroseconds(microsPerMillisecond);
         if (unit == "us") return toMicroseconds(microsPerMicrosecond);
         if (unit == "w" || unit == "week" || unit == "weeks") return toMicroseconds(microsPerWeek);
