@@ -74,7 +74,7 @@ TEST_F(AnalyzerTestFixture, FilterByTimeRangeCriteria) {
     auto exprRes = analyzer.createFilterExpressionFromCriteria(criteria);
     ASSERT_TRUE(exprRes.has_value());
     auto result = analyzer.getFilteredEntries(*exprRes);
-    ASSERT_TRUE(result.has_value());
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
     EXPECT_EQ(result.value().size(), 3); // Entries 3, 4, 5
     std::vector<LogEntry> expected_entries = {baseEntries[2], baseEntries[3], baseEntries[4]};
     EXPECT_TRUE(compareLogEntryVectors(result.value(), expected_entries));

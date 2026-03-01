@@ -292,6 +292,22 @@ inline ErrorCode::Result<void> from_json(const nlohmann::json& j, FilterConditio
                 fc.value = valJson.get<std::string>();
                 break;
             case FilterValueType::AUTO:
+                if (valJson.is_boolean()) {
+                    fc.valueType = FilterValueType::BOOL;
+                    fc.value = valJson.get<bool>();
+                } else if (valJson.is_number_integer()) {
+                    fc.valueType = FilterValueType::INT;
+                    fc.value = valJson.get<int64_t>();
+                } else if (valJson.is_number()) {
+                    fc.valueType = FilterValueType::DOUBLE;
+                    fc.value = valJson.get<double>();
+                } else if (valJson.is_string()) {
+                    fc.valueType = FilterValueType::AUTO; 
+                    fc.value = valJson.get<std::string>();
+                } else {
+                    return std::unexpected(makeError(Code::InvalidArgument, "Unsupported value type for AUTO deduction", current_path, "value"));
+                }
+                break;
             case FilterValueType::UNKNOWN:
             default:
                 return std::unexpected(makeError(Code::InvalidArgument, "Unsupported or ambiguous value_type: " + toString(fc.valueType), current_path, "value_type"));

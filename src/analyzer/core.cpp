@@ -349,6 +349,20 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
         return {parsedEntries, report};
     }
 
+    std::streampos totalSize = 0;
+    std::streampos currentPos = 0;
+    bool isSeekable = false;
+
+    if (progressCallback) {
+        auto initPos = is.tellg();
+        if (initPos != std::streampos(-1)) {
+            is.seekg(0, std::ios::end);
+            totalSize = is.tellg();
+            is.seekg(initPos);
+            isSeekable = (totalSize > 0);
+        }
+    }
+
     std::string line;
     size_t lineNumber = 0;
     while (std::getline(is, line)) {
@@ -373,9 +387,21 @@ std::pair<std::vector<LogEntry>, AnalysisReport> LogAnalyzer::parseAndReport(
             }
         }
 
-        if (progressCallback && lineNumber % 1000 == 0) {
-            (*progressCallback)(0.0, "Parsing line " + std::to_string(lineNumber));
+        if (progressCallback) {
+            if (isSeekable) {
+                currentPos = is.tellg();
+                if (currentPos != std::streampos(-1)) {
+                    double prog = (static_cast<double>(currentPos) / static_cast<double>(totalSize)) * 100.0;
+                    (*progressCallback)(std::clamp(prog, 0.0, 100.0), "Parsing line " + std::to_string(lineNumber));
+                }
+            } else if (lineNumber % 1000 == 0) {
+                (*progressCallback)(0.0, "Parsing line " + std::to_string(lineNumber));
+            }
         }
+    }
+
+    if (progressCallback && isSeekable && report.status != ParseError::CANCELLED) {
+        (*progressCallback)(100.0, "Complete");
     }
 
     if (report.status != ParseError::CANCELLED) {

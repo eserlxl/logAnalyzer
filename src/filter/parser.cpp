@@ -8,6 +8,7 @@
 #include <cctype>
 #include <string_view>
 #include <vector>
+#include <charconv>
 
 namespace filter {
 
@@ -22,6 +23,34 @@ enum class TokenKind {
     Comma,
     End
 };
+
+bool tryParseStrictInt64(std::string_view value, int64_t& out) {
+    if (value.empty()) return false;
+    // Disallow leading whitespace or '+' (std::from_chars handles '-', but is strict otherwise)
+    if (std::isspace(static_cast<unsigned char>(value.front())) || value.front() == '+') return false;
+
+    auto [p, ec] = std::from_chars(value.data(), value.data() + value.size(), out);
+    // Must consume the *entire* string and not overflow
+    return ec == std::errc() && p == value.data() + value.size();
+}
+
+bool tryParseStrictLongDouble(std::string_view value, long double& out) {
+    if (value.empty()) return false;
+    // Check for "NaN" or "Infinity" ignoring case (std::from_chars handles this in C++20, but let's be safe if using std::stold fallback)
+    std::string s(value); // Need null-terminated for strtold
+    char* end;
+    errno = 0;
+    out = std::strtold(s.c_str(), &end);
+    
+    // Check for conversion errors:
+    // 1. No characters consumed
+    // 2. Not all characters consumed (trailing garbage)
+    // 3. Overflow/Underflow (ERANGE)
+    if (end == s.c_str() || *end != '\0' || errno == ERANGE) {
+        return false;
+    }
+    return true;
+}
 
 struct Token {
     TokenKind kind{};
@@ -388,7 +417,21 @@ private:
             json_cond["field"] = Utils::logEntryFieldToString(field);
         }
         json_cond["op"] = toString(op);
-        json_cond["value"] = value;
+
+        int64_t iVal;
+        long double dVal;
+        
+        if (value == "true") {
+            json_cond["value"] = true;
+        } else if (value == "false") {
+            json_cond["value"] = false;
+        } else if (tryParseStrictInt64(value, iVal)) {
+            json_cond["value"] = iVal;
+        } else if (tryParseStrictLongDouble(value, dVal)) {
+            json_cond["value"] = static_cast<double>(dVal);
+        } else {
+            json_cond["value"] = value;
+        }
 
         // Determine case-sensitivity from operator
         if (op == FilterOperator::EQUALS_I || op == FilterOperator::NOT_EQUALS_I ||

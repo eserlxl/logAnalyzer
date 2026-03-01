@@ -63,8 +63,8 @@ ErrorCode::Result<filter::FilterExpression> LogAnalyzer::createFilterExpressionF
             levelExpressions.emplace_back(filter::FilterCondition(
                 LogEntryField::LEVEL,
                 filter::FilterOperator::EQUALS,
-                static_cast<int64_t>(l),
-                filter::FilterValueType::INT
+                Utils::logLevelToString(l),
+                filter::FilterValueType::LOG_LEVEL
             ));
         }
         if (levelExpressions.size() > 1) {
@@ -79,35 +79,45 @@ ErrorCode::Result<filter::FilterExpression> LogAnalyzer::createFilterExpressionF
             LogEntryField::MESSAGE,
             filter::FilterOperator::CONTAINS,
             criteria.keyword,
-            filter::FilterValueType::STRING
+            filter::FilterValueType::STRING,
+            criteria.keywordCaseSensitive
         ));
     }
 
     if (!criteria.regexPattern.empty()) {
+        try {
+            std::regex re(criteria.regexPattern);
+        } catch (const std::regex_error& e) {
+            return std::unexpected(ErrorCode::Error(Code::InvalidRegex, "Invalid regex pattern: " + criteria.regexPattern));
+        }
         expressions.emplace_back(filter::FilterCondition(
             LogEntryField::MESSAGE,
             filter::FilterOperator::REGEX,
             criteria.regexPattern,
-            filter::FilterValueType::STRING
+            filter::FilterValueType::REGEX
         ));
     }
 
     if (criteria.startTime.has_value()) {
-        expressions.emplace_back(filter::FilterCondition(
+        filter::FilterCondition startCond(
             LogEntryField::TIMESTAMP,
             filter::FilterOperator::GREATER_THAN_OR_EQUAL,
-            std::to_string(criteria.startTime.value().time_since_epoch().count()),
+            Utils::formatTimestamp(criteria.startTime.value()),
             filter::FilterValueType::DATETIME
-        ));
+        );
+        startCond.datetimeFormat = "%Y-%m-%d %H:%M:%S";
+        expressions.emplace_back(std::move(startCond));
     }
 
     if (criteria.endTime.has_value()) {
-        expressions.emplace_back(filter::FilterCondition(
+        filter::FilterCondition endCond(
             LogEntryField::TIMESTAMP,
             filter::FilterOperator::LESS_THAN_OR_EQUAL,
-            std::to_string(criteria.endTime.value().time_since_epoch().count()),
+            Utils::formatTimestamp(criteria.endTime.value()),
             filter::FilterValueType::DATETIME
-        ));
+        );
+        endCond.datetimeFormat = "%Y-%m-%d %H:%M:%S";
+        expressions.emplace_back(std::move(endCond));
     }
 
     if (expressions.empty()) {

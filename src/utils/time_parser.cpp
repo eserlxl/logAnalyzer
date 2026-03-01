@@ -37,7 +37,7 @@ std::expected<std::chrono::system_clock::time_point, ErrorCode::Error> parseUnix
 }
 } // namespace
 
-std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const std::string& durationStr, bool allowExtendedUnits) {
+std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const std::string& durationStr, [[maybe_unused]] bool allowExtendedUnits) {
     if (durationStr.empty()) {
         return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Empty duration string."));
     }
@@ -65,28 +65,29 @@ std::expected<std::chrono::microseconds, ErrorCode::Error> parseDuration(const s
         return std::chrono::microseconds(value * multiplier);
     };
 
-    constexpr long long kMicrosPerMicrosecond = 1LL;
-    constexpr long long kMicrosPerMillisecond = 1000LL;
-    constexpr long long kMicrosPerSecond = 1000LL * 1000LL;
-    constexpr long long kMicrosPerMinute = 60LL * kMicrosPerSecond;
-    constexpr long long kMicrosPerHour = 60LL * kMicrosPerMinute;
-    constexpr long long kMicrosPerDay = 24LL * kMicrosPerHour;
-    constexpr long long kMicrosPerWeek = 7LL * kMicrosPerDay;
-    constexpr long long kMicrosPerMonthApprox = 30LL * kMicrosPerDay;
-    constexpr long long kMicrosPerYearApprox = 365LL * kMicrosPerDay;
+    constexpr long long microsPerMicrosecond = 1LL;
+    constexpr long long microsPerMillisecond = 1000LL;
+    constexpr long long microsPerSecond = 1000LL * 1000LL;
+    constexpr long long microsPerMinute = 60LL * microsPerSecond;
+    constexpr long long microsPerHour = 60LL * microsPerMinute;
+    constexpr long long microsPerDay = 24LL * microsPerHour;
+    constexpr long long microsPerWeek = 7LL * microsPerDay;
+    constexpr long long microsPerMonthApprox = 30LL * microsPerDay;
+    constexpr long long microsPerYearApprox = 365LL * microsPerDay;
 
     std::string unit = matches[2].str();
-    if (unit == "s" || unit == "second" || unit == "seconds") return toMicroseconds(kMicrosPerSecond);
-    if (unit == "m" || unit == "minute" || unit == "minutes") return toMicroseconds(kMicrosPerMinute);
-    if (unit == "h" || unit == "hour" || unit == "hours") return toMicroseconds(kMicrosPerHour);
-    if (unit == "d" || unit == "day" || unit == "days") return toMicroseconds(kMicrosPerDay);
+    if (unit == "s" || unit == "second" || unit == "seconds") return toMicroseconds(microsPerSecond);
+    if (unit == "m" || unit == "minute" || unit == "minutes") return toMicroseconds(microsPerMinute);
+    if (unit == "h" || unit == "hour" || unit == "hours") return toMicroseconds(microsPerHour);
+    if (unit == "d" || unit == "day" || unit == "days") return toMicroseconds(microsPerDay);
     
-    if (allowExtendedUnits) {
-        if (unit == "ms") return toMicroseconds(kMicrosPerMillisecond);
-        if (unit == "us") return toMicroseconds(kMicrosPerMicrosecond);
-        if (unit == "w" || unit == "week" || unit == "weeks") return toMicroseconds(kMicrosPerWeek);
-        if (unit == "M" || unit == "month" || unit == "months") return toMicroseconds(kMicrosPerMonthApprox);
-        if (unit == "y" || unit == "year" || unit == "years") return toMicroseconds(kMicrosPerYearApprox);
+    // For smaller units and longer approx units
+    if (!unit.empty()) {
+        if (unit == "ms") return toMicroseconds(microsPerMillisecond);
+        if (unit == "us") return toMicroseconds(microsPerMicrosecond);
+        if (unit == "w" || unit == "week" || unit == "weeks") return toMicroseconds(microsPerWeek);
+        if (unit == "M" || unit == "month" || unit == "months") return toMicroseconds(microsPerMonthApprox);
+        if (unit == "y" || unit == "year" || unit == "years") return toMicroseconds(microsPerYearApprox);
     }
 
     return std::unexpected(ErrorCode::Error(Code::TimestampParsingFailed, "Unsupported duration unit: " + unit));
