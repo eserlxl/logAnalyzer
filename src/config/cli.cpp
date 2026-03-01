@@ -6,7 +6,7 @@
 #include "config/utils.h"
 #include "utils/core.h"
 #include "core/error.h"
-#include "core/ci_less.h"
+#include "core/CaseInsensitiveLess.h"
 #include "stats/core.h"
 #include "utils/version.h"
 #include <CLI/CLI.hpp>

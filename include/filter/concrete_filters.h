@@ -7,7 +7,7 @@
 #include "filter/expression.h"
 #include "core/log/types.h" // For LogLevel, PatternType etc.
 #include "core/error.h"    // For ErrorCode::Result
-#include "utils/core.h"    // For ci_less
+#include "utils/core.h"    // For CaseInsensitiveLess
 #include <string>
 #include <vector>
 #include <set>
@@ -289,7 +289,7 @@ public:
     bool matches(const LogEntry &entry) const override;
 protected:
     std::string fieldKey_;
-    std::set<std::string, LogAnalyzerInternal::ci_less> valueSetInsensitive_;
+    std::set<std::string, LogAnalyzerInternal::CaseInsensitiveLess> valueSetInsensitive_;
     std::set<std::string> valueSetSensitive_;
     bool caseSensitive_;
 };

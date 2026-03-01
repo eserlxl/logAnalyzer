@@ -232,20 +232,20 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
 
 
 
-std::map<std::string, std::shared_ptr<ILogParserFactory>, LogAnalyzerInternal::ci_less> LogAnalyzer::s_parserFactories_;
+std::map<std::string, std::shared_ptr<ILogParserFactory>, LogAnalyzerInternal::CaseInsensitiveLess> LogAnalyzer::parserFactories;
 
 ErrorCode::Result<void> LogAnalyzer::registerParserFactory(std::string_view formatIdentifier, std::shared_ptr<ILogParserFactory> factory) {
     if (!factory) {
         return std::unexpected(ErrorCode::Error::unexpected("Cannot register a null parser factory"));
     }
-    s_parserFactories_[std::string(formatIdentifier)] = std::move(factory);
+    parserFactories[std::string(formatIdentifier)] = std::move(factory);
     return {};
 }
 
 ErrorCode::Result<void> LogAnalyzer::selectParser(std::string_view formatIdentifier) {
     std::unique_lock<std::shared_mutex> lock(stateMutex_);
-    auto it = s_parserFactories_.find(std::string(formatIdentifier));
-    if (it == s_parserFactories_.end()) {
+    auto it = parserFactories.find(std::string(formatIdentifier));
+    if (it == parserFactories.end()) {
         return std::unexpected(ErrorCode::Error::unexpected("Parser factory not found for format: " + std::string(formatIdentifier)));
     }
     currentParserIdentifier_ = std::string(formatIdentifier);
@@ -259,8 +259,8 @@ std::string_view LogAnalyzer::getSelectedParserIdentifier() const {
 }
 
 void LogAnalyzer::updateCurrentParser() {
-    auto it = s_parserFactories_.find(currentParserIdentifier_);
-    if (it != s_parserFactories_.end()) {
+    auto it = parserFactories.find(currentParserIdentifier_);
+    if (it != parserFactories.end()) {
         currentParser_ = it->second->createParser(currentSettings_);
     }
 }

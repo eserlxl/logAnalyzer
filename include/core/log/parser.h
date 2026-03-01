@@ -6,7 +6,7 @@
 
 #include "core/log/types.h" // Includes LogEntryField, FieldMapping, etc.
 #include "core/error.h" // For Error struct and Result alias
-#include "core/ci_less.h" // For LogAnalyzer::LogAnalyzerInternal::ci_less
+#include "core/CaseInsensitiveLess.h" // For LogAnalyzer::LogAnalyzerInternal::CaseInsensitiveLess
 #include <functional>
 #include <istream>
 #include <map>
@@ -54,7 +54,7 @@ public:
     virtual const std::vector<FieldMapping>& getFieldMappings() const = 0;
 
     // New: Returns the custom log level mappings.
-    virtual const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& getCustomLevelMappings() const = 0;
+    virtual const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& getCustomLevelMappings() const = 0;
 
     // New: Returns the optional pattern string used to identify the start of a log entry.
     virtual std::optional<std::string> getLogEntryStartPatternString() const = 0;
@@ -88,7 +88,7 @@ public:
     static ErrorCode::Result<std::unique_ptr<DefaultLogParser>> create( // Changed to Result
         std::string pattern,
         std::vector<FieldMapping> fieldMappings,
-        const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
+        const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> &levelMappings,
         std::optional<std::string> logEntryStartPattern, // Reverted to string
         std::optional<bool> caseSensitive, // NEW: Case sensitivity for regex
         ParserErrorAction errorAction,
@@ -102,7 +102,7 @@ public:
         std::string patternString, // The original pattern string
         std::regex compiledLogPattern, // The compiled pattern
         std::vector<FieldMapping> fieldMappings,
-        const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &levelMappings,
+        const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> &levelMappings,
         std::optional<std::regex> compiledLogEntryStartRegex, // The compiled start regex
         std::optional<std::string> logEntryStartPatternString, // The original start regex string
         std::optional<bool> caseSensitive, // NEW
@@ -131,7 +131,7 @@ public:
     // New ILogParser overrides for introspection
     std::string getPatternString() const override { return patternString; }
     const std::vector<FieldMapping>& getFieldMappings() const override { return fieldMappings; }
-    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& getCustomLevelMappings() const override { return customLevelMappings; }
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& getCustomLevelMappings() const override { return customLevelMappings; }
     std::optional<std::string> getLogEntryStartPatternString() const override { return logEntryStartPatternString; }
     size_t getCurrentBufferedLineCount() const override { return bufferedLineNumbers.size(); }
     std::string_view getCurrentBufferedContent() const override { return currentLogEntryBuffer; }
@@ -140,7 +140,7 @@ private:
     std::regex logPattern;
     std::string patternString; // Store pattern string to allow cloning
     std::vector<FieldMapping> fieldMappings;
-    std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLevelMappings;
+    std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> customLevelMappings;
     std::optional<std::regex> logEntryStartRegex; // Optional regex to identify the start of a log entry
     std::optional<std::string> logEntryStartPatternString; // For cloning
     std::optional<bool> caseSensitive; // NEW
@@ -164,7 +164,7 @@ public:
     // Internal parsing logic helper
     ErrorCode::Result<LogEntry> parseLineInternal(std::string_view line, size_t lineNumber, const std::string& sourceFile) const; // Changed to ErrorCode::Result<LogEntry>
 
-    static const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> DEFAULT_LEVEL_MAPPINGS;
+    static const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> DEFAULT_LEVEL_MAPPINGS;
 
     ParserErrorAction _parserErrorAction; // New: To store the error action
 

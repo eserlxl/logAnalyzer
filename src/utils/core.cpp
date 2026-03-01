@@ -43,8 +43,8 @@ LogLevel stringToLogLevel(const std::string &levelStr) {
     return LogLevel::UNKNOWN;
 }
 
-LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &customMappings) {
-    // ci_less comparator handles case insensitivity directly for the map lookup.
+LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> &customMappings) {
+    // CaseInsensitiveLess comparator handles case insensitivity directly for the map lookup.
     auto it = customMappings.find(levelStr);
     if (it != customMappings.end()) {
         return it->second;

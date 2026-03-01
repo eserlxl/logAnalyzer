@@ -17,7 +17,7 @@
 #include <variant> // Required for std::variant
 #include <nlohmann/json.hpp> // Required for JSON serialization
 #include "core/error.h" // New: For Error struct and Result alias
-#include "core/ci_less.h" // Include the new header for ci_less comparator
+#include "core/CaseInsensitiveLess.h" // Include the new header for CaseInsensitiveLess comparator
 
 // Enum for different pattern matching types
 enum class PatternType { Literal, Regex, Wildcard };
@@ -35,7 +35,7 @@ enum class LogLevel {
 
 // Moved into Utils namespace
 namespace Utils {
-    LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> &customMappings);
+    LogLevel stringToLogLevel(const std::string &levelStr, const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> &customMappings);
     LogLevel stringToLogLevel(const std::string &levelStr);
     std::string logLevelToString(LogLevel level);
 }

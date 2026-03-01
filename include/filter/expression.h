@@ -188,61 +188,60 @@ inline void to_json(nlohmann::json& j, const FilterExpression& fe) {
 
 constexpr size_t MAX_JSON_RECURSION_DEPTH = 50;
 
-// Helper function for recursive from_json calls to manage JSON path
-inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, FilterExpression& fe, const std::string& current_path, size_t depth = 0) {
+inline ErrorCode::Result<void> from_json_recursive(const nlohmann::json& j, FilterExpression& fe, const std::string& currentPath, size_t depth = 0) {
     using namespace FilterJsonUtils;
 
     if (depth > MAX_JSON_RECURSION_DEPTH) {
-        return std::unexpected(makeError(Code::InvalidArgument, "Maximum recursion depth exceeded.", current_path, ""));
+        return std::unexpected(makeError(Code::InvalidArgument, "Maximum recursion depth exceeded.", currentPath, ""));
     }
 
-    bool current_negated = false;
+    bool currentNegated = false;
     if (j.contains("negated")) {
-        const auto& negated_json = j.at("negated");
-        if (!negated_json.is_boolean()) {
-            return std::unexpected(makeError(Code::InvalidArgument, "Invalid type for 'negated', must be boolean.", current_path, "negated"));
+        const auto& negatedJson = j.at("negated");
+        if (!negatedJson.is_boolean()) {
+            return std::unexpected(makeError(Code::InvalidArgument, "Invalid type for 'negated', must be boolean.", currentPath, "negated"));
         }
-        current_negated = negated_json.get<bool>();
+        currentNegated = negatedJson.get<bool>();
     }
 
     if (j.contains("condition") && j.at("condition").is_object()) {
         FilterCondition fc;
-        std::string next_path = (current_path == "/" ? "" : current_path) + "/condition";
-        auto result = from_json(j.at("condition"), fc, next_path);
+        std::string nextPath = (currentPath == "/" ? "" : currentPath) + "/condition";
+        auto result = from_json(j.at("condition"), fc, nextPath);
         if (!result) return std::unexpected(result.error());
         
-        fe = FilterExpression(std::move(fc), current_negated);
+        fe = FilterExpression(std::move(fc), currentNegated);
     } else if (j.contains("operator") && j.at("operator").is_string()) {
         auto opStr = j.at("operator").get<std::string>();
         auto opOpt = fromStringToFilterLogicalOperator(opStr);
         if (!opOpt) {
-            return std::unexpected(makeError(Code::InvalidArgument, "Unknown logical operator: " + opStr, current_path, "operator"));
+            return std::unexpected(makeError(Code::InvalidArgument, "Unknown logical operator: " + opStr, currentPath, "operator"));
         }
         
         FilterLogicalOperator op = *opOpt;
 
         if (!j.contains("operands") || !j.at("operands").is_array()) {
-             return std::unexpected(makeError(Code::InvalidArgument, "Operator " + opStr + " requires 'operands' array.", current_path, "operands"));
+             return std::unexpected(makeError(Code::InvalidArgument, "Operator " + opStr + " requires 'operands' array.", currentPath, "operands"));
         }
 
-        const auto& operands_array = j.at("operands");
-        if (operands_array.empty()) {
-            return std::unexpected(makeError(Code::InvalidArgument, "Operator " + opStr + " 'operands' array cannot be empty.", current_path, "operands"));
+        const auto& operandsArray = j.at("operands");
+        if (operandsArray.empty()) {
+            return std::unexpected(makeError(Code::InvalidArgument, "Operator " + opStr + " 'operands' array cannot be empty.", currentPath, "operands"));
         }
 
         std::vector<FilterExpression> operands;
-        for (size_t i = 0; i < operands_array.size(); ++i) {
-            FilterExpression operand_fe;
-            std::string next_path = (current_path == "/" ? "" : current_path) + "/operands[" + std::to_string(i) + "]";
-            auto result = from_json_recursive(operands_array[i], operand_fe, next_path, depth + 1);
+        for (size_t i = 0; i < operandsArray.size(); ++i) {
+            FilterExpression operandFe;
+            std::string nextPath = (currentPath == "/" ? "" : currentPath) + "/operands[" + std::to_string(i) + "]";
+            auto result = from_json_recursive(operandsArray[i], operandFe, nextPath, depth + 1);
             if (!result) return std::unexpected(result.error());
-            operands.push_back(std::move(operand_fe));
+            operands.push_back(std::move(operandFe));
         }
-        fe = FilterExpression(op, std::move(operands), current_negated);
+        fe = FilterExpression(op, std::move(operands), currentNegated);
     } else {
         // If neither 'condition' nor 'operator' is present, treat as EMPTY expression.
         // This allows correct round-trip serialization of default-constructed FilterExpression.
-        fe = FilterExpression::makeEmpty(current_negated);
+        fe = FilterExpression::makeEmpty(currentNegated);
     }
     
     return {}; // Success

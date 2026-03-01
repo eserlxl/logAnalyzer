@@ -5,7 +5,7 @@
 #define UTILS_H
 
 #include "core/log/types.h"   // For LogEntryField, LogLevel
-#include "core/ci_less.h"     // For ci_less comparator
+#include "core/CaseInsensitiveLess.h"     // For CaseInsensitiveLess comparator
 #include "core/error.h"      // For ErrorCode::Error
 #include "utils/time.h"      // For time utilities
 

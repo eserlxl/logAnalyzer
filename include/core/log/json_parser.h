@@ -9,7 +9,7 @@
 
 class JsonLogParser : public ILogParser {
 public:
-    JsonLogParser(const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
+    JsonLogParser(const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& levelMappings,
                   ParserErrorAction errorAction,
                   std::optional<std::function<void(const std::string&)>> warningLogger = std::nullopt);
 
@@ -28,13 +28,13 @@ public:
     // These are not applicable for a pure JSON parser that doesn't use regex patterns
     std::string getPatternString() const override { return "json"; }
     const std::vector<FieldMapping>& getFieldMappings() const override { return emptyFieldMappings_; }
-    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& getCustomLevelMappings() const override { return customLevelMappings_; }
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& getCustomLevelMappings() const override { return customLevelMappings_; }
     std::optional<std::string> getLogEntryStartPatternString() const override { return std::nullopt; }
     size_t getCurrentBufferedLineCount() const override { return 0; } // JSON parsing is line-by-line, no buffering
     std::string_view getCurrentBufferedContent() const override { return ""; } // No buffering
 
 private:
-    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLevelMappings_;
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> customLevelMappings_;
     ParserErrorAction parserErrorAction_;
     std::optional<std::function<void(const std::string&)>> warningLogger_;
     std::vector<FieldMapping> emptyFieldMappings_; // JSON parser doesn't use traditional FieldMappings

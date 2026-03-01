@@ -15,7 +15,7 @@ class RegexLogParser : public ILogParser {
 public:
     RegexLogParser(const std::string& pattern,
                    const std::vector<FieldMapping>& fieldMappings,
-                   const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
+                   const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& levelMappings,
                    ParserErrorAction errorAction);
 
     ErrorCode::Result<LogEntry> parseLine(std::string_view line, size_t lineNumber, const std::string& sourceFile) const override;
@@ -25,7 +25,7 @@ private:
     std::string patternString;
     std::regex logRegex;
     std::vector<FieldMapping> fieldMappings;
-    std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLevelMappings;
+    std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> customLevelMappings;
     ParserErrorAction parserErrorAction;
 };
 

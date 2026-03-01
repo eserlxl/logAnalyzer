@@ -6,7 +6,7 @@
 
 #include "core/log/types.h"
 #include "core/error.h"
-#include "core/ci_less.h"
+#include "core/CaseInsensitiveLess.h"
 #include <nlohmann/json_fwd.hpp>
 
 #include <atomic>
@@ -263,7 +263,7 @@ private:
     std::map<LogLevel, size_t> levelCounts;
     AnalysisReport lastReport;
     LogAnalyzerSettings currentSettings_;
-    std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLogLevelMapping_;
+    std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> customLogLevelMapping_;
     std::unique_ptr<ILogParser> currentParser_;
     std::vector<std::shared_ptr<IStatisticCollector>> collectors_;
 
@@ -271,7 +271,7 @@ private:
     std::mutex pendingAsyncTasksMutex_;
 
     // Internal map to store registered parser factories
-    static std::map<std::string, std::shared_ptr<ILogParserFactory>, LogAnalyzerInternal::ci_less> s_parserFactories_;
+    static std::map<std::string, std::shared_ptr<ILogParserFactory>, LogAnalyzerInternal::CaseInsensitiveLess> parserFactories;
     // The currently active parser factory identifier
     std::string currentParserIdentifier_;
 

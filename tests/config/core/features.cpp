@@ -4,6 +4,7 @@
 #include "gtest/gtest.h"
 #include <gmock/gmock.h>
 #include "config/settings.h"
+#include "export/core.h"
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>

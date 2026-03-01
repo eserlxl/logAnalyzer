@@ -17,7 +17,7 @@ namespace LogAnalyzerInternal {
 }
 
 // Static default log level mappings
-const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> DefaultLogParser::DEFAULT_LEVEL_MAPPINGS = {
+const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> DefaultLogParser::DEFAULT_LEVEL_MAPPINGS = {
     {"TRACE", LogLevel::TRACE},
     {"DEBUG", LogLevel::DEBUG},
     {"INFO", LogLevel::INFO},
@@ -32,7 +32,7 @@ const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> DefaultLogPa
 ErrorCode::Result<std::unique_ptr<DefaultLogParser>> DefaultLogParser::create(
     std::string pattern,
     std::vector<FieldMapping> fieldMappings,
-    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& levelMappings,
     std::optional<std::string> logEntryStartPattern,
     std::optional<bool> caseSensitive,
     ParserErrorAction errorAction,
@@ -84,7 +84,7 @@ DefaultLogParser::DefaultLogParser(
     std::string patternString,
     std::regex compiledLogPattern,
     std::vector<FieldMapping> fieldMappings,
-    const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& levelMappings,
     std::optional<std::regex> compiledLogEntryStartRegex,
     std::optional<std::string> logEntryStartPatternString,
     std::optional<bool> caseSensitive,

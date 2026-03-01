@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "cli_helper.h"
+#include "export/core.h"
 #include "filter/types.h" // For SortBy, SortOrder
 
 using namespace filter;

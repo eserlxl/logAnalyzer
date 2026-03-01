@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "helper.h"
+#include "export/core.h"
 
 // =============================================================================================================
 // Exporter::exportAsCsv Tests

@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include "config/settings.h"
 #include "export/core.h"
+#include "export/core.h"
 
 TEST(MergeTest, PartialMergeDoesNotOverwriteDefaults) {
     LogAnalyzerSettings base;

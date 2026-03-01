@@ -14,7 +14,7 @@
 #include <optional>
 #include <string_view>
 #include <expected>
-#include "core/ci_less.h" // Include for LogAnalyzer::ci_less
+#include "core/CaseInsensitiveLess.h" // Include for LogAnalyzer::CaseInsensitiveLess
 #include <filesystem>
 
 
@@ -37,7 +37,7 @@ struct LogAnalyzerSettings {
     // If fieldMappings is empty, LogAnalyzer may not be able to parse log entries correctly.
     std::vector<FieldMapping> fieldMappings;
     // Custom mappings for log level strings (e.g., "WARN" -> LogLevel::WARNING).
-    std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less> customLogLevelMappings;
+    std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess> customLogLevelMappings;
 
     // Optional regex pattern to identify the start of a new log entry, enabling multi-line parsing.
     // If set, the parser will buffer lines until a new start pattern is encountered or EOF.

@@ -12,7 +12,7 @@
 
 #include "core/error.h" // For ErrorCode::Result
 #include "core/log/types.h" // For LogLevel, PatternType etc.
-#include "utils/core.h"    // For ci_less
+#include "utils/core.h"    // For CaseInsensitiveLess
 #include "filter/enum_string_conversions.h" // For enum to string conversions
 #include "filter/json_utils.h"
 

@@ -11,7 +11,7 @@
 // For nlohmann::json_object_t
 #include <nlohmann/json.hpp>
 
-JsonLogParser::JsonLogParser(const std::map<std::string, LogLevel, LogAnalyzerInternal::ci_less>& levelMappings,
+JsonLogParser::JsonLogParser(const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& levelMappings,
                              ParserErrorAction errorAction,
                              std::optional<std::function<void(const std::string&)>> warningLogger)
     : customLevelMappings_(levelMappings),

@@ -3,6 +3,7 @@
 
 #include "gtest/gtest.h"
 #include "config/settings.h"
+#include "export/core.h"
 #include "core/log/types.h"
 #include "export/core.h" // For ExportFieldMapping
 #include "filter/types.h"
