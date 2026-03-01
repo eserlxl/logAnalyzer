@@ -5,13 +5,7 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <sstream>
-#include <vector>
-#include <limits>
-#include <chrono>
-#include <optional>
-#include <map>
-#include <regex>
+// std headers
 #include <string>
 #include <cstddef>
 #include <nlohmann/json.hpp>
@@ -19,11 +13,6 @@
 // Includes from the project
 #include "core/log/types.h"
 #include "utils/time.h"
-#include "utils/core.h"
-#include "utils/version.h"
-#include "utils/ip_address.h"
-#include "export/core.h"
-#include "filter/core.h"
 #include "filter/expression.h"
 #include "filter/enum_string_conversions.h"
 
@@ -58,14 +47,14 @@ protected:
         entry.message = message;
         entry.customFields = customFields;
         entry.sourceLineNumber = sourceLineNumber;
-        entry.threadId = threadId;
-        entry.module = module;
-        entry.host = host;
+        entry.threadId = std::move(threadId);
+        entry.module = std::move(module);
+        entry.host = std::move(host);
         return entry;
     }
 
     // Helper to create a FilterCondition
-    filter::FilterCondition createCondition(
+    static filter::FilterCondition createCondition(
         LogEntryField field,
         filter::FilterOperator op,
         const std::string& value,
@@ -79,12 +68,12 @@ protected:
         fc.value = value;
         fc.valueType = valueType;
         fc.caseSensitive = caseSensitive;
-        fc.customField = customField;
+        fc.customField = std::move(customField);
         return fc;
     }
 
     // Helper to create a FilterExpression from a Condition
-    filter::FilterExpression createExpr(
+    static filter::FilterExpression createExpr(
         LogEntryField field,
         filter::FilterOperator op,
         const std::string& value,
@@ -93,12 +82,12 @@ protected:
         std::optional<std::string> customField = std::nullopt,
         std::optional<std::string> datetimeFormat = std::nullopt
     ) {
-        auto fc = createCondition(field, op, value, valueType, caseSensitive, customField);
-        fc.datetimeFormat = datetimeFormat;
+        auto fc = createCondition(field, op, value, valueType, caseSensitive, std::move(customField));
+        fc.datetimeFormat = std::move(datetimeFormat);
         return filter::FilterExpression::create(fc);
     }
 
-    filter::FilterExpression createVectorExpr(
+    static filter::FilterExpression createVectorExpr(
         LogEntryField field,
         filter::FilterOperator op,
         const std::vector<std::string>& value,
@@ -112,7 +101,7 @@ protected:
         fc.value = value;
         fc.valueType = valueType;
         fc.caseSensitive = caseSensitive;
-        fc.customField = customField;
+        fc.customField = std::move(customField);
         return filter::FilterExpression::create(fc);
     }
 
