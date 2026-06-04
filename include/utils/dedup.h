@@ -19,14 +19,14 @@ namespace Utils {
 inline std::string getDedupKey(const LogEntry& entry, const std::string& field, size_t& absentIdx) {
     if (field == "level") return logLevelToString(entry.level);
     if (field == "message") return entry.message;
-    if (field == "source") return entry.sourceFile;
+    if (field == "source" || field == "source_file") return entry.sourceFile;
     auto it = entry.customFields.find(field);
     if (it == entry.customFields.end()) return "__absent__" + std::to_string(absentIdx++);
     return it->second;
 }
 
 // Keeps only the first entry per unique value of `field`.
-// Standard field names: "level", "message", "source". Any other name is
+// Standard field names: "level", "message", "source" / "source_file". Any other name is
 // treated as a custom field key. Entries where the custom field is absent
 // are each treated as unique (never merged with each other).
 inline void applyDedupField(std::vector<LogEntry>& entries, std::string_view field) {

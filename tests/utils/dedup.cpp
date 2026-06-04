@@ -103,3 +103,22 @@ TEST_F(DedupFieldTest, GetDedupKeyAbsent) {
     ASSERT_EQ(key, "__absent__5");
     ASSERT_EQ(idx, 6u);
 }
+
+TEST_F(DedupFieldTest, GetDedupKeySourceAlias) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg", "server.cpp");
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "source", idx), "server.cpp");
+    ASSERT_EQ(Utils::getDedupKey(e, "source_file", idx), "server.cpp");
+}
+
+TEST_F(DedupFieldTest, DedupBySourceFileAlias) {
+    std::vector<LogEntry> entries = {
+        makeEntry(LogLevel::INFO, "a", "alpha.cpp"),
+        makeEntry(LogLevel::INFO, "b", "alpha.cpp"),
+        makeEntry(LogLevel::INFO, "c", "beta.cpp"),
+    };
+    Utils::applyDedupField(entries, "source_file");
+    ASSERT_EQ(entries.size(), 2u);
+    ASSERT_EQ(entries[0].sourceFile, "alpha.cpp");
+    ASSERT_EQ(entries[1].sourceFile, "beta.cpp");
+}

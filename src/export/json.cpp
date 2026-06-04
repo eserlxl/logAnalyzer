@@ -191,6 +191,14 @@ void Exporter::exportAsNdjson(
     const ExportSettings& settings) {
 
     std::vector<ExportFieldMapping> fieldsToExport = getEffectiveExportFieldMappings(entries, settings);
+    // NDJSON default always includes standard fields not in the generic default
+    if (settings.fieldsToExport.empty()) {
+        fieldsToExport.emplace_back(LogEntryField::SOURCE_FILE, "SOURCE_FILE");
+        fieldsToExport.emplace_back(LogEntryField::LINE_NUMBER, "LINE_NUMBER");
+        fieldsToExport.emplace_back(LogEntryField::THREAD_ID, "THREAD_ID");
+        fieldsToExport.emplace_back(LogEntryField::MODULE, "MODULE");
+        fieldsToExport.emplace_back(LogEntryField::HOST, "HOST");
+    }
 
     for (const auto& entry : entries) {
         json entryJson;

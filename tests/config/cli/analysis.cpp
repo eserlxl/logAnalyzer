@@ -15,6 +15,15 @@ TEST_F(CLIConfigTest, EnabledStatistics) {
     ASSERT_EQ(options.enabledStatistics[1], "top_messages:5");
 }
 
+TEST_F(CLIConfigTest, TopMessagesBareName) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "top_messages"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TOP_MESSAGES);
+    ASSERT_FALSE(settings.statisticConfigs[0].params.contains("top_n"));
+}
+
 TEST_F(CLIConfigTest, LegacyTopMessagesWithWhitespaceValue) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "top_messages: 7 "});
     ASSERT_TRUE(result.has_value());
@@ -251,4 +260,12 @@ TEST_F(CLIConfigTest, FindGapsBareName) {
     auto& [settings, options] = result.value();
     ASSERT_EQ(settings.statisticConfigs.size(), 1u);
     ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::FIND_GAPS);
+}
+
+TEST_F(CLIConfigTest, StatsIntervalOption) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats-interval", "100"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.statsInterval.has_value());
+    ASSERT_EQ(options.statsInterval.value(), 100u);
 }

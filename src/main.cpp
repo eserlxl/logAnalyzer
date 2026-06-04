@@ -263,6 +263,15 @@ int main(int argc, char *argv[]) {
                 ++streamMatchCount;
                 if (statisticsEnabled) {
                     analyzer.processEntryForStatistics(entry);
+                    if (cliOptions.statsInterval && streamMatchCount % *cliOptions.statsInterval == 0) {
+                        auto reports = analyzer.getAllStatisticReports();
+                        std::ostream& statsOut = cliOptions.statsOutputPath.empty()
+                            ? std::cerr
+                            : *outputStream;
+                        for (const auto& reportPair : reports) {
+                            statsOut << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                        }
+                    }
                 }
                 if (!cliOptions.countOnly) {
                     if (cliOptions.outputFormat == "text") {

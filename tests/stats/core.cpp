@@ -266,6 +266,22 @@ TEST_F(StatisticsTest, CreateCollectorFactoryDefaultsMalformedTopNForTopMessages
     ASSERT_EQ(report["top_n"], 10);
 }
 
+TEST_F(StatisticsTest, TopMessagesCollectorDefaultTopN) {
+    StatisticConfig config;
+    config.type = StatisticType::TOP_MESSAGES;
+    // No top_n param — factory should default to 10
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    for (int i = 0; i < 12; ++i) {
+        LogEntry e;
+        e.message = "msg" + std::to_string(i);
+        collector->collect(e);
+    }
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["top_n"], 10);
+    ASSERT_EQ(report["messages"].size(), 10u);
+}
+
 TEST_F(StatisticsTest, CreateCollectorFactoryTimeBucketHistogramDefault) {
     StatisticConfig config;
     config.type = StatisticType::TIME_BUCKET_HISTOGRAM;

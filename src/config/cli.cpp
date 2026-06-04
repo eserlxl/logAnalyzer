@@ -180,7 +180,10 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     app.add_option("--dedup-field", appOptions.dedupField, "Keep only the first entry per unique value of FIELD (standard field: level, message, source; or a custom field name)");
 
-    app.add_option("--top-n", appOptions.topMessagesCount, "Number of top messages to show for top_messages statistic (Deprecated: use --stats \"type=TOP_MESSAGES,top_n=X\")") 
+    app.add_option("--stats-interval", appOptions.statsInterval, "In stream mode: emit a partial stats report every N matching entries (N must be > 0)")
+       ->check(CLI::PositiveNumber);
+
+    app.add_option("--top-n", appOptions.topMessagesCount, "Number of top messages to show for top_messages statistic (Deprecated: use --stats \"type=TOP_MESSAGES,top_n=X\")")
        ->check(CLI::PositiveNumber); 
 
     app.add_flag("--stream", appOptions.streamMode, "Enable streaming mode for large files");
@@ -301,6 +304,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     // The design says: "The simple --stats NAME syntax ... will be retained ... mapping to a default StatisticConfig"
     // What about --stats-window?
     if (statsWindowSec > 0) {
+        std::cerr << "Warning: --stats-window is deprecated and has no effect; use --stats entry_rate instead.\n";
         StatisticConfig sc;
         sc.type = StatisticType::ENTRY_RATE; // Assuming this maps to entry rate over window?
         // Actually ENTRY_RATE usually implies a window.

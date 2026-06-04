@@ -73,6 +73,7 @@ public:
         bool countOnly = false;       // --count: print only the match count
         std::string statsOutputPath;  // --stats-output PATH: write stats JSON here instead of stdout
         std::string dedupField;       // --dedup-field FIELD: keep only first entry per unique FIELD value
+        std::optional<size_t> statsInterval; // --stats-interval N: emit partial stats every N matching entries in stream mode
     };
 
     // CLI parsing function - now returns a pair of LogAnalyzerSettings and CLIOptions

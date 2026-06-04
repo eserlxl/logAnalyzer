@@ -70,3 +70,25 @@ TEST(ExporterNdjsonTest, EmptyEntriesProducesNoLines) {
 
     ASSERT_TRUE(ss.str().empty());
 }
+
+TEST(ExporterNdjsonTest, DefaultExportIncludesSourceFile) {
+    Exporter exporter;
+    std::vector<LogEntry> entries;
+    entries.push_back(createLogEntry(1, LogLevel::INFO, "msg", std::nullopt, {}, "server.cpp", 42));
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::NDJSON;
+
+    exporter.exportLogEntries(ss, entries, settings);
+
+    std::string line;
+    std::istringstream lineStream(ss.str());
+    std::getline(lineStream, line);
+    ASSERT_FALSE(line.empty());
+    json parsed = json::parse(line);
+    ASSERT_TRUE(parsed.contains("SOURCE_FILE"));
+    ASSERT_EQ(parsed["SOURCE_FILE"], "server.cpp");
+    ASSERT_TRUE(parsed.contains("LINE_NUMBER"));
+    ASSERT_EQ(parsed["LINE_NUMBER"], 42);
+}

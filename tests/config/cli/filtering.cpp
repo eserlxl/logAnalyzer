@@ -206,3 +206,19 @@ TEST_F(CLIConfigTest, DedupFieldOption) {
     auto& options = result.value().second;
     ASSERT_EQ(options.dedupField, "session_id");
 }
+
+TEST_F(CLIConfigTest, MinLevel) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--min-level", "WARNING"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.minLogLevel.has_value());
+    ASSERT_EQ(options.minLogLevel.value(), LogLevel::WARNING);
+}
+
+TEST_F(CLIConfigTest, MinLevelCaseInsensitive) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--min-level", "warning"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.minLogLevel.has_value());
+    ASSERT_EQ(options.minLogLevel.value(), LogLevel::WARNING);
+}
