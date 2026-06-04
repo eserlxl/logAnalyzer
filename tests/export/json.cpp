@@ -222,3 +222,43 @@ TEST(ExporterJsonTest, BoundaryValuesForIdAndLineNumber) {
     ASSERT_TRUE(j["entries"][1].at("LINE_NUMBER").is_number_integer()); // Ensure it's an integer
     ASSERT_EQ(j["entries"][1].at("LINE_NUMBER").get<size_t>(), std::numeric_limits<size_t>::max());
 }
+
+// Structured-field values that are valid JSON expand into a nested JSON object;
+// invalid JSON falls back to the raw string.
+TEST(ExporterJsonTest, StructuredFieldExpandsToNestedJson) {
+    Exporter exporter;
+    LogEntry entry = createLogEntry(1, LogLevel::INFO, "msg");
+    entry.structuredData = R"({"a":1,"b":[2,3]})";
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::JSON;
+    settings.jsonIndent = -1;
+    settings.fieldsToExport = { ExportFieldMapping(LogEntryField::STRUCTURED_FIELD) };
+
+    exporter.exportLogEntries(ss, {entry}, settings);
+    json j = json::parse(ss.str());
+    const json& sf = j["entries"][0]["STRUCTURED_FIELD"];
+    ASSERT_TRUE(sf.is_object());
+    ASSERT_EQ(sf["a"], 1);
+    ASSERT_TRUE(sf["b"].is_array());
+    ASSERT_EQ(sf["b"], (json{2, 3}));
+}
+
+TEST(ExporterJsonTest, StructuredFieldInvalidJsonFallsBackToRawString) {
+    Exporter exporter;
+    LogEntry entry = createLogEntry(1, LogLevel::INFO, "msg");
+    entry.structuredData = "{not valid json";
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::JSON;
+    settings.jsonIndent = -1;
+    settings.fieldsToExport = { ExportFieldMapping(LogEntryField::STRUCTURED_FIELD) };
+
+    exporter.exportLogEntries(ss, {entry}, settings);
+    json j = json::parse(ss.str());
+    const json& sf = j["entries"][0]["STRUCTURED_FIELD"];
+    ASSERT_TRUE(sf.is_string());
+    ASSERT_EQ(sf.get<std::string>(), "{not valid json");
+}
