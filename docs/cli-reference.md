@@ -107,7 +107,7 @@ ip(client_ip) = 10.0.0.1
 | `--limit N`             |           | Stops output after N matching entries. Applies to both batch and stream mode.                                                           |                                 |
 | `--offset N`            |           | Skips the first N matching entries before output begins. Combine with `--limit` for pagination (e.g., `--offset 200 --limit 100`).       | `0`                             |
 | `--count`               |           | Prints only the count of matching entries and exits (like `grep -c`). No per-entry output. Works in both batch and stream mode.         | `false`                         |
-| `--dedup-field FIELD`   |           | Keeps only the first entry per unique value of FIELD. Standard fields: `level`, `message`, `source`. Any other name is treated as a custom field key. Entries where the custom field is absent are each treated as unique. Applies before `--offset`/`--limit`. | |
+| `--dedup-field FIELD`   |           | Keeps only the first entry per unique value of FIELD. Standard fields: `level`, `message`, `source` (alias: `source_file`), `id`, `lineNumber` (alias: `line_number`), `threadId` (alias: `thread_id`), `module`, `host`, `timestamp`. Any other name is treated as a custom field key. Entries where an optional standard field or custom field is absent are each treated as unique. Applies before `--offset`/`--limit`. | |
 
 
 ### Statistics
@@ -115,7 +115,7 @@ ip(client_ip) = 10.0.0.1
 | Option             | Description                                                                                                       | Default |
 | :----------------- | :---------------------------------------------------------------------------------------------------------------- | :------ |
 | `--stats NAME`     | Enables a statistic collector. Can be used multiple times. Available names and shorthands: `unique_messages`, `top_messages[:N]`, `entry_rate`, `count_by_level`, `field_value_count`, `top_n_field_values`, `time_bucket_histogram[:BUCKET_SECONDS]`, `percentile_stats[:FIELD]` (FIELD may be a standard numeric field such as `lineNumber` or `id`, or any custom field key), `moving_average_rate[:BUCKET_SECONDS]`, `find_gaps[:THRESHOLD_MS]`. Also accepts key-value form: `type=TOP_MESSAGES,top_n=5`. Works in both batch and `--stream` mode. |         |
-| `--stats-output PATH` |         | Writes the statistics JSON report to PATH instead of stdout, preventing interleaving with piped entry output. Stats are still written even if no entries match. |  |
+| `--stats-output PATH` |         | Writes the statistics JSON report to PATH instead of stderr. When omitted, statistics are written to stderr (both batch and stream mode), so log entry output can be piped without interleaving. Stats are written even if no entries match. |  |
 | `--top-n N`        | Sets the number of top items to display for statistics like `top_messages` if not specified directly (e.g., `top_messages:10`). (Deprecated) | `10`    |
 | `--stats-window SEC` | Shows log frequency distribution over a time window in seconds. (Deprecated)                                                   |         |
 | `--find-gaps MS`   | Detects and reports time gaps in logs longer than MS milliseconds. Creates a `gap_detector` statistic collector reporting each gap's start, end, and duration. Equivalent to `--stats find_gaps:MS`. |         |

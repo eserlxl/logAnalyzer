@@ -125,6 +125,15 @@ TEST_F(CLIConfigTest, CountFlag) {
     ASSERT_TRUE(options.countOnly);
 }
 
+TEST_F(CLIConfigTest, CountWithStats) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--count", "--stats", "count_by_level"});
+    ASSERT_TRUE(result.has_value());
+    auto& [settings, options] = result.value();
+    ASSERT_TRUE(options.countOnly);
+    ASSERT_FALSE(settings.statisticConfigs.empty());
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::LOG_LEVEL_COUNT);
+}
+
 TEST_F(CLIConfigTest, TimeBucketHistogramStatBareName) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "time_bucket_histogram"});
     ASSERT_TRUE(result.has_value());

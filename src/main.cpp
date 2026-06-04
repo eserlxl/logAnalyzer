@@ -422,7 +422,35 @@ int main(int argc, char *argv[]) {
             filteredEntries.resize(*cliOptions.limit);
         }
 
-        // Apply --count: print count and exit
+        if (statisticsEnabled) {
+            // Collectors are configured via parsed settings; reset them and
+            // run statistics only on the final filtered entry set.
+            // NOTE: This block runs before --count so that --count + --stats
+            // both produce output (the early return below would otherwise skip stats).
+            analyzer.resetStatisticCollectors();
+            for (const auto& entry : filteredEntries) {
+                analyzer.processEntryForStatistics(entry);
+            }
+
+            auto reports = analyzer.getAllStatisticReports();
+            if (!cliOptions.statsOutputPath.empty()) {
+                std::ofstream statsFile(cliOptions.statsOutputPath);
+                if (!statsFile.is_open()) {
+                    std::cerr << "Error: Could not open stats output file: " << cliOptions.statsOutputPath << '\n';
+                    return 1;
+                }
+                for (const auto& reportPair : reports) {
+                    statsFile << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                }
+            } else {
+                std::cerr << "\n--- Statistics ---\n";
+                for (const auto& reportPair : reports) {
+                    std::cerr << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                }
+            }
+        }
+
+        // Apply --count: print count and exit (after stats so --count + --stats both work)
         if (cliOptions.countOnly) {
             *outputStream << filteredEntries.size() << '\n';
             return 0;
@@ -481,32 +509,6 @@ int main(int argc, char *argv[]) {
         } catch (const ExportException& e) {
             std::cerr << "Error exporting log entries: " << e.what() << '\n';
             return 1;
-        }
-
-        if (statisticsEnabled) {
-            // Collectors are configured via parsed settings; reset them and
-            // run statistics only on the final filtered entry set.
-            analyzer.resetStatisticCollectors();
-            for (const auto& entry : filteredEntries) {
-                analyzer.processEntryForStatistics(entry);
-            }
-
-            auto reports = analyzer.getAllStatisticReports();
-            if (!cliOptions.statsOutputPath.empty()) {
-                std::ofstream statsFile(cliOptions.statsOutputPath);
-                if (!statsFile.is_open()) {
-                    std::cerr << "Error: Could not open stats output file: " << cliOptions.statsOutputPath << '\n';
-                    return 1;
-                }
-                for (const auto& reportPair : reports) {
-                    statsFile << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
-                }
-            } else {
-                *outputStream << "\n--- Statistics ---\n";
-                for (const auto& reportPair : reports) {
-                    *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
-                }
-            }
         }
 }
 

@@ -122,3 +122,53 @@ TEST_F(DedupFieldTest, DedupBySourceFileAlias) {
     ASSERT_EQ(entries[0].sourceFile, "alpha.cpp");
     ASSERT_EQ(entries[1].sourceFile, "beta.cpp");
 }
+
+TEST_F(DedupFieldTest, GetDedupKeyId) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    e.id = 42;
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "id", idx), "42");
+    ASSERT_EQ(idx, 0u);
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyIdAbsent) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    size_t idx = 3;
+    std::string key = Utils::getDedupKey(e, "id", idx);
+    ASSERT_EQ(key, "__absent__3");
+    ASSERT_EQ(idx, 4u);
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyLineNumber) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    e.sourceLineNumber = 7;
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "lineNumber", idx), "7");
+    ASSERT_EQ(Utils::getDedupKey(e, "line_number", idx), "7");
+    ASSERT_EQ(idx, 0u);
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyThreadId) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    e.threadId = "t1";
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "threadId", idx), "t1");
+    ASSERT_EQ(Utils::getDedupKey(e, "thread_id", idx), "t1");
+    ASSERT_EQ(idx, 0u);
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyHost) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    e.host = "srv-01";
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "host", idx), "srv-01");
+    ASSERT_EQ(idx, 0u);
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyModule) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    e.module = "auth";
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "module", idx), "auth");
+    ASSERT_EQ(idx, 0u);
+}

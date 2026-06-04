@@ -233,3 +233,39 @@ These examples demonstrate more advanced command-line filtering and parsing capa
   ```bash
   logAnalyzer app.log --on-parse-error warn
   ```
+
+### Example 9: Counting and Deduplication
+
+- **Count matching entries (like `grep -c`):**
+  Prints only the number of matching entries and exits. No per-entry output is produced.
+  ```bash
+  logAnalyzer app.log --level ERROR --count
+  ```
+
+- **Count entries from the last hour:**
+  ```bash
+  logAnalyzer app.log --since 1h --count
+  ```
+
+- **Count matching entries AND write statistics to a file:**
+  Because `--count` exits before exporting entries, combining it with `--stats-output` lets you
+  capture the match count on stdout while saving statistics to a separate file.
+  ```bash
+  logAnalyzer app.log --level ERROR --count --stats "count_by_level" --stats-output stats.json
+  ```
+
+- **Deduplicate by message — keep only the first occurrence of each unique message:**
+  ```bash
+  logAnalyzer app.log --dedup-field message
+  ```
+
+- **Keep only the first error per source file:**
+  Combine `--level` with `--dedup-field source` to surface one representative error per module.
+  ```bash
+  logAnalyzer app.log --level ERROR --dedup-field source
+  ```
+
+- **Deduplicate by thread — keep only the first entry per thread ID:**
+  ```bash
+  logAnalyzer app.log --dedup-field threadId
+  ```
