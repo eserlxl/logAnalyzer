@@ -728,3 +728,80 @@ TEST_F(StatisticsTest, TopMessagesCollectorReset) {
     ASSERT_EQ(report["messages"].size(), 1u);
     ASSERT_EQ(report["messages"][0]["message"], "B");
 }
+
+TEST_F(StatisticsTest, LogLevelCountCollectorReset) {
+    LogLevelCountCollector collector;
+    LogEntry e1, e2;
+    e1.level = LogLevel::INFO; e1.message = "i";
+    e2.level = LogLevel::ERROR; e2.message = "e";
+    collector.collect(e1);
+    collector.collect(e2);
+    collector.reset();
+    LogEntry e3;
+    e3.level = LogLevel::WARNING; e3.message = "w";
+    collector.collect(e3);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["counts"].size(), 1u);
+    ASSERT_EQ(report["counts"]["WARNING"], 1);
+}
+
+TEST_F(StatisticsTest, FieldValueCountCollectorReset) {
+    FieldValueCountCollector collector("level");
+    LogEntry e1, e2, e3;
+    e1.level = LogLevel::INFO; e2.level = LogLevel::ERROR; e3.level = LogLevel::DEBUG;
+    collector.collect(e1);
+    collector.collect(e2);
+    collector.collect(e3);
+    collector.reset();
+    LogEntry e4;
+    e4.level = LogLevel::WARNING;
+    collector.collect(e4);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["total_unique_values"], 1);
+    ASSERT_EQ(report["counts"]["WARNING"], 1);
+}
+
+TEST_F(StatisticsTest, TopNFieldValuesCollectorReset) {
+    TopNFieldValuesCollector collector(5, "message");
+    auto makeMsg = [](const std::string& msg) {
+        LogEntry e; e.message = msg; return e;
+    };
+    for (int i = 0; i < 3; ++i) collector.collect(makeMsg("A"));
+    for (int i = 0; i < 2; ++i) collector.collect(makeMsg("B"));
+    collector.reset();
+    collector.collect(makeMsg("C"));
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["values"].size(), 1u);
+    ASSERT_EQ(report["values"][0]["value"], "C");
+}
+
+TEST_F(StatisticsTest, EntryRateCollectorSkipsNoTimestamp) {
+    EntryRateCollector collector;
+    LogEntry e1, e2, e3;
+    e1.message = "no ts 1";
+    e2.message = "no ts 2";
+    e3.message = "no ts 3";
+    collector.collect(e1);
+    collector.collect(e2);
+    collector.collect(e3);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["total_entries"], 0);
+    ASSERT_EQ(report["duration_sec"], 0);
+    ASSERT_EQ(report["average_rate_per_sec"], 0);
+}
+
+TEST_F(StatisticsTest, GapDetectorCollectorOutOfOrderEntries) {
+    GapDetectorCollector collector(100);
+    auto base = std::chrono::system_clock::from_time_t(90000);
+    LogEntry e0, e1, e2;
+    e0.message = "late";  e0.timestamp = base + std::chrono::milliseconds(300);
+    e1.message = "first"; e1.timestamp = base;
+    e2.message = "mid";   e2.timestamp = base + std::chrono::milliseconds(50);
+    // Collected out of order — after sort: [0, 50, 300]; gap 50→300 = 250ms > 100ms threshold
+    collector.collect(e0);
+    collector.collect(e1);
+    collector.collect(e2);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["gap_count"], 1);
+    ASSERT_EQ(report["gaps"][0]["duration_ms"], 250);
+}
