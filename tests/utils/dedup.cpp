@@ -172,3 +172,62 @@ TEST_F(DedupFieldTest, GetDedupKeyModule) {
     ASSERT_EQ(Utils::getDedupKey(e, "module", idx), "auth");
     ASSERT_EQ(idx, 0u);
 }
+
+TEST_F(DedupFieldTest, GetDedupKeyLineAlias) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    e.sourceLineNumber = 5;
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "line", idx), "5");
+    ASSERT_EQ(Utils::getDedupKey(e, "linenumber", idx), "5");
+    ASSERT_EQ(idx, 0u);
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyThreadAlias) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    e.threadId = "worker";
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "thread", idx), "worker");
+    ASSERT_EQ(Utils::getDedupKey(e, "threadid", idx), "worker");
+    ASSERT_EQ(Utils::getDedupKey(e, "tid", idx), "worker");
+    ASSERT_EQ(idx, 0u);
+}
+
+TEST_F(DedupFieldTest, GetDedupKeySourceFileNoUnderscore) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg", "app.cpp");
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "sourcefile", idx), "app.cpp");
+    ASSERT_EQ(idx, 0u);
+}
+
+TEST_F(DedupFieldTest, DedupByLineNumber) {
+    std::vector<LogEntry> entries = {
+        makeEntry(LogLevel::INFO, "a"),
+        makeEntry(LogLevel::INFO, "b"),
+        makeEntry(LogLevel::ERROR, "c"),
+        makeEntry(LogLevel::INFO, "d"),
+    };
+    entries[0].sourceLineNumber = 1;
+    entries[1].sourceLineNumber = 2;
+    entries[2].sourceLineNumber = 1; // duplicate of entries[0] line
+    entries[3].sourceLineNumber = 3;
+    Utils::applyDedupField(entries, "lineNumber");
+    ASSERT_EQ(entries.size(), 3u);
+    ASSERT_EQ(*entries[0].sourceLineNumber, 1u);
+    ASSERT_EQ(*entries[1].sourceLineNumber, 2u);
+    ASSERT_EQ(*entries[2].sourceLineNumber, 3u);
+}
+
+TEST_F(DedupFieldTest, DedupByThreadId) {
+    std::vector<LogEntry> entries = {
+        makeEntry(LogLevel::INFO, "a"),
+        makeEntry(LogLevel::INFO, "b"),
+        makeEntry(LogLevel::INFO, "c"),
+    };
+    entries[0].threadId = "t1";
+    entries[1].threadId = "t1"; // duplicate
+    entries[2].threadId = "t2";
+    Utils::applyDedupField(entries, "threadId");
+    ASSERT_EQ(entries.size(), 2u);
+    ASSERT_EQ(*entries[0].threadId, "t1");
+    ASSERT_EQ(*entries[1].threadId, "t2");
+}

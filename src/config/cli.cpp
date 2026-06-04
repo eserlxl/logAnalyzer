@@ -181,7 +181,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     app.add_option("--stats-output", appOptions.statsOutputPath, "Write statistics JSON to this file instead of stdout");
 
-    app.add_option("--dedup-field", appOptions.dedupField, "Keep only the first entry per unique value of FIELD (standard field: level, message, source; or a custom field name)");
+    app.add_option("--dedup-field", appOptions.dedupField, "Keep only the first entry per unique value of FIELD. Standard fields: level, message, source (alias: source_file), id, lineNumber (alias: line_number, line), threadId (alias: thread_id, tid), module, host, timestamp. Any other name is treated as a custom field key.");
 
     app.add_option("--stats-interval", appOptions.statsInterval, "In stream mode: emit a partial stats report every N matching entries (N must be > 0)")
        ->check(CLI::PositiveNumber);

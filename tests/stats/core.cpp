@@ -582,6 +582,19 @@ TEST_F(StatisticsTest, GapDetectorCollectorEmpty) {
     ASSERT_TRUE(report["gaps"].empty());
 }
 
+TEST_F(StatisticsTest, TimeBucketHistogramCollectorReset) {
+    TimeBucketHistogramCollector collector(10);
+    auto base = std::chrono::system_clock::from_time_t(10000);
+    LogEntry e0; e0.message = "pre"; e0.timestamp = base;
+    collector.collect(e0);
+    collector.reset();
+
+    LogEntry e1; e1.message = "post"; e1.timestamp = base + std::chrono::seconds(20);
+    collector.collect(e1);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["buckets"].size(), 1u); // only post-reset bucket
+}
+
 TEST_F(StatisticsTest, GapDetectorCollectorReset) {
     GapDetectorCollector collector(100);
     auto base = std::chrono::system_clock::from_time_t(30000);
@@ -938,6 +951,20 @@ TEST_F(StatisticsTest, PercentileStatsCollectorStandardNonNumericSkipped) {
     json report = collector.generateReport();
     EXPECT_EQ(report["count"], 0u);
     EXPECT_TRUE(report["p50"].is_null());
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorForId) {
+    PercentileStatsCollector collector("id");
+    LogEntry e1; e1.id = 10; e1.level = LogLevel::INFO; e1.message = "a";
+    LogEntry e2; e2.id = 20; e2.level = LogLevel::INFO; e2.message = "b";
+    LogEntry e3; e3.id = 30; e3.level = LogLevel::INFO; e3.message = "c";
+    LogEntry e4; e4.id = 40; e4.level = LogLevel::INFO; e4.message = "d";
+    LogEntry e5; e5.id = 50; e5.level = LogLevel::INFO; e5.message = "e";
+    LogEntry e6; /* no id */ e6.level = LogLevel::DEBUG; e6.message = "absent";
+    for (auto& e : {e1, e2, e3, e4, e5, e6}) collector.collect(e);
+    json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 5); // e6 skipped (no id)
+    EXPECT_NEAR(report["p50"].get<double>(), 30.0, 0.01); // median of {10,20,30,40,50}
 }
 
 TEST_F(StatisticsTest, TopNFieldValuesCollectorForId) {

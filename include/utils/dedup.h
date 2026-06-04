@@ -20,14 +20,14 @@ namespace Utils {
 inline std::string getDedupKey(const LogEntry& entry, const std::string& field, size_t& absentIdx) {
     if (field == "level") return logLevelToString(entry.level);
     if (field == "message") return entry.message;
-    if (field == "source" || field == "source_file") return entry.sourceFile;
+    if (field == "source" || field == "source_file" || field == "sourcefile") return entry.sourceFile;
     if (field == "id") {
         return entry.id ? std::to_string(*entry.id) : "__absent__" + std::to_string(absentIdx++);
     }
-    if (field == "line_number" || field == "lineNumber") {
+    if (field == "line_number" || field == "lineNumber" || field == "line" || field == "linenumber") {
         return entry.sourceLineNumber ? std::to_string(*entry.sourceLineNumber) : "__absent__" + std::to_string(absentIdx++);
     }
-    if (field == "thread_id" || field == "threadId") {
+    if (field == "thread_id" || field == "threadId" || field == "thread" || field == "threadid" || field == "tid") {
         return entry.threadId ? *entry.threadId : "__absent__" + std::to_string(absentIdx++);
     }
     if (field == "module") {

@@ -70,8 +70,7 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
             fr.op == filter::FilterOperator::GREATER_THAN_OR_EQUAL || fr.op == filter::FilterOperator::LESS_THAN_OR_EQUAL ||
             fr.op == filter::FilterOperator::EQUALS || fr.op == filter::FilterOperator::NOT_EQUALS) // Also applies to EQUALS and NOT_EQUALS for numeric fields
         {
-            if (fr.field == LogEntryField::ID || fr.field == LogEntryField::LINE_NUMBER ||
-                fr.field == LogEntryField::THREAD_ID)
+            if (fr.field == LogEntryField::ID || fr.field == LogEntryField::LINE_NUMBER)
             {
                 if (!isStrictInteger(fr.value)) {
                     errors.push_back("FilterRule operator for field '" + Utils::logEntryFieldToString(fr.field) +

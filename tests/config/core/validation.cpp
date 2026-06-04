@@ -248,6 +248,22 @@ TEST_F(ConfigValidationTest, ValidateFilterRule_ValueTypeMismatch_TrailingCharac
     EXPECT_THAT(errors[0], testing::HasSubstr("requires a numeric value, but got '12abc'"));
 }
 
+TEST_F(ConfigValidationTest, ValidateFilterRule_ThreadIdWithStringEqualityAccepted) {
+    settings.filterRules.push_back(
+        {LogEntryField::THREAD_ID, FilterOperator::EQUALS, "main-thread"}
+    );
+    errors = settings.validate();
+    EXPECT_TRUE(errors.empty()) << "THREAD_ID with string value should pass validation";
+}
+
+TEST_F(ConfigValidationTest, ValidateFilterRule_ThreadIdGreaterThanStringAccepted) {
+    settings.filterRules.push_back(
+        {LogEntryField::THREAD_ID, FilterOperator::GREATER_THAN, "non-numeric-tid"}
+    );
+    errors = settings.validate();
+    EXPECT_TRUE(errors.empty()) << "THREAD_ID is a string field; non-numeric values must not be rejected";
+}
+
 TEST_F(ConfigValidationTest, ValidateValidSettings) {
     // Settings are already created with createDefault() in SetUp()
     settings.exportSettings.fieldsToExport = {
