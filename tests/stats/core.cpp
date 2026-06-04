@@ -265,3 +265,44 @@ TEST_F(StatisticsTest, CreateCollectorFactoryDefaultsMalformedTopNForTopMessages
     ASSERT_EQ(report["name"], "top_messages");
     ASSERT_EQ(report["top_n"], 10);
 }
+
+TEST_F(StatisticsTest, CreateCollectorFactoryTimeBucketHistogramDefault) {
+    StatisticConfig config;
+    config.type = StatisticType::TIME_BUCKET_HISTOGRAM;
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    ASSERT_EQ(collector->getName(), "time_bucket_histogram");
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["bucket_seconds"], 60);
+    ASSERT_TRUE(report["buckets"].is_array());
+    ASSERT_TRUE(report["buckets"].empty());
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryTimeBucketHistogramBucketParam) {
+    StatisticConfig config;
+    config.type = StatisticType::TIME_BUCKET_HISTOGRAM;
+    config.params["bucket"] = "30";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    ASSERT_EQ(collector->getName(), "time_bucket_histogram");
+
+    LogEntry e;
+    auto tp = std::chrono::system_clock::from_time_t(1000);
+    e.timestamp = tp;
+    e.message = "test";
+    collector->collect(e);
+
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["bucket_seconds"], 30);
+    ASSERT_EQ(report["buckets"].size(), 1u);
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryTimeBucketHistogramInvalidBucketFallsBackToDefault) {
+    StatisticConfig config;
+    config.type = StatisticType::TIME_BUCKET_HISTOGRAM;
+    config.params["bucket"] = "0";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["bucket_seconds"], 60);
+}
