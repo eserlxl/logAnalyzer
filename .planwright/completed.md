@@ -38,3 +38,52 @@
       Development: Add `#include <climits>` to the standard-header include block (alongside <cstdlib> at line 9) in tests/utils/time.cpp; the macro is consumed at line 80 inside the stoll out_of_range test for parseDuration.
       Acceptance: The full project build completes with no compiler errors and the utils_time target's parseDuration overflow assertions pass unchanged.
       Verification: cmake --build build -j && ctest --test-dir build -R "^utils_time$" --output-on-failure
+
+- [x] Enforce --limit and --count in stream path
+      Mode: repair
+      Rationale: streamEntryCallback always returned true; --limit and --count had no effect in --stream mode.
+      Surfaces: src/main.cpp
+      Acceptance: --stream --limit N stops after N matches; --stream --count prints count and no entries; --stream --limit N --count prints count up to N.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$|^config_cli_analysis$" --output-on-failure
+
+- [x] Add TIME_BUCKET_HISTOGRAM factory tests with bucket param
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: Three factory tests cover default bucket, explicit bucket=30, and invalid bucket=0 fallback; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add TIME_BUCKET_HISTOGRAM CLI --stats parsing tests
+      Mode: improve
+      Surfaces: tests/config/cli/analysis.cpp
+      Acceptance: Bare-name and KV-form parsing verified; config_cli_analysis green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add NDJSON round-trip tests for ExportSettings
+      Mode: improve
+      Surfaces: tests/export/settings.cpp
+      Acceptance: NDJSON serializes to "NDJSON" and deserializes back to ExportFormat::NDJSON; export_settings green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^export_settings$" --output-on-failure
+
+- [x] Add --offset N CLI pagination option
+      Mode: develop
+      Surfaces: include/config/cli.h, src/config/cli.cpp, src/main.cpp, tests/config/cli/filtering.cpp
+      Acceptance: --offset N skips first N in batch path; --offset 2 --limit 2 returns entries 2-3; config_cli_filtering green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
+
+- [x] Add NDJSON support to stream mode
+      Mode: develop
+      Surfaces: src/main.cpp
+      Acceptance: --stream --format ndjson emits one JSON object per entry line; --stream --format xml still errors; full suite green.
+      Verification: cmake --build build -j && ctest --test-dir build --output-on-failure
+
+- [x] Add PERCENTILE_STATS statistic collector for numeric custom fields
+      Mode: develop (invent-tier)
+      Surfaces: include/stats/core.h, src/stats/core.cpp, src/stats/analyzer.cpp, src/utils/core.cpp, tests/stats/core.cpp
+      Acceptance: P50/P95/P99 computed for named numeric custom field; silently skips absent/non-numeric; factory returns nullptr for missing field param; round-trip passes; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Update docs/features.md with NDJSON, --limit/--offset/--count, stats
+      Mode: docs
+      Surfaces: docs/features.md
+      Acceptance: Flexible Export row updated with NDJSON; Statistical Analysis mentions time-bucket histograms and percentiles; Output Control row added.
+      Verification: cmake --build build -j --output-on-failure
