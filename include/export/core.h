@@ -18,6 +18,7 @@
 enum class ExportFormat {
     PLAINTEXT,
     JSON,
+    NDJSON,
     CSV,
     XML,
     UNKNOWN // Default for unrecognized formats
@@ -121,6 +122,12 @@ private:
 
     // New method for XML export
     void exportAsXml(
+        std::ostream& os,
+        const std::vector<LogEntry>& entries,
+        const ExportSettings& settings);
+
+    // New method for NDJSON export
+    void exportAsNdjson(
         std::ostream& os,
         const std::vector<LogEntry>& entries,
         const ExportSettings& settings);

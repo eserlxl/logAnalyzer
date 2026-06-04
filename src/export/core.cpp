@@ -60,6 +60,9 @@ void Exporter::exportLogEntries(
         case ExportFormat::PLAINTEXT:
             exportAsText(os, entries, settings);
             break;
+        case ExportFormat::NDJSON:
+            exportAsNdjson(os, entries, settings);
+            break;
         case ExportFormat::XML:
             exportAsXml(os, entries, settings);
             break;

@@ -118,8 +118,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     app.add_option("--field-map", appOptions.fieldMaps, "Map regex capture group to a field (e.g., '1=timestamp:%Y-%m-%d %H:%M:%S')");
 
-    app.add_option("--format", appOptions.outputFormat, "Output format (text, json, csv, xml)")
-       ->transform(CLI::IsMember({"text", "json", "csv", "xml"}, CLI::ignore_case));
+    app.add_option("--format", appOptions.outputFormat, "Output format (text, json, ndjson, csv, xml)")
+       ->transform(CLI::IsMember({"text", "json", "ndjson", "csv", "xml"}, CLI::ignore_case));
     app.add_option("--output", appOptions.outputPath, "Redirect output to a file");
     app.add_option("--text-format", appOptions.textOutputFormat, "Custom format string for text output. Available: {timestamp}, {level}, {message}, {id}, {sourceFile}, {lineNumber}, {threadId}, {module}, {host}, {customFields}.")
        ->check([](const std::string &str) -> std::string {
@@ -370,6 +370,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
             settings.exportSettings.format = ExportFormat::JSON;
         } else if (appOptions.outputFormat == "csv") {
             settings.exportSettings.format = ExportFormat::CSV;
+        } else if (appOptions.outputFormat == "ndjson") {
+            settings.exportSettings.format = ExportFormat::NDJSON;
         } else if (appOptions.outputFormat == "xml") {
             settings.exportSettings.format = ExportFormat::XML;
         } else if (appOptions.outputFormat == "text") {

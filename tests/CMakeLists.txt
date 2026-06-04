@@ -62,6 +62,7 @@ set(TEST_SOURCES
     "core/log/types.cpp"
     "export/core.cpp"
     "export/json.cpp"
+    "export/ndjson.cpp"
     "export/csv.cpp"
     "export/text.cpp"
     "export/field_mapping.cpp"

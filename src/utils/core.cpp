@@ -127,6 +127,7 @@ std::string exportFormatToString(ExportFormat format) {
     switch (format) {
         case ExportFormat::PLAINTEXT: return "PLAINTEXT";
         case ExportFormat::JSON: return "JSON";
+        case ExportFormat::NDJSON: return "NDJSON";
         case ExportFormat::CSV: return "CSV";
         case ExportFormat::XML: return "XML";
         default: return "UNKNOWN";
@@ -139,6 +140,7 @@ std::optional<ExportFormat> stringToExportFormat(const std::string& formatStr) {
 
     if (upperFormatStr == "PLAINTEXT" || upperFormatStr == "TEXT") return ExportFormat::PLAINTEXT;
     if (upperFormatStr == "JSON") return ExportFormat::JSON;
+    if (upperFormatStr == "NDJSON") return ExportFormat::NDJSON;
     if (upperFormatStr == "CSV") return ExportFormat::CSV;
     if (upperFormatStr == "XML") return ExportFormat::XML;
     return std::nullopt;
