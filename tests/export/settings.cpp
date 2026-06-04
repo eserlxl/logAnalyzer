@@ -182,3 +182,20 @@ TEST(ExportSettingsTest, FromJsonUseAnsiColorsNullResetsOptional) {
     ExportSettings es = j.get<ExportSettings>();
     ASSERT_FALSE(es.useAnsiColors.has_value());
 }
+
+TEST(ExportSettingsTest, NdjsonRoundTrip) {
+    ExportSettings es;
+    es.format = ExportFormat::NDJSON;
+    json j = es;
+    ASSERT_EQ(j["format"], "NDJSON");
+    ExportSettings es2 = j.get<ExportSettings>();
+    ASSERT_TRUE(es2.format.has_value());
+    ASSERT_EQ(es2.format.value(), ExportFormat::NDJSON);
+}
+
+TEST(ExportSettingsTest, FromJsonFormatNdjson) {
+    json j = {{"format", "NDJSON"}};
+    ExportSettings es = j.get<ExportSettings>();
+    ASSERT_TRUE(es.format.has_value());
+    ASSERT_EQ(es.format.value(), ExportFormat::NDJSON);
+}
