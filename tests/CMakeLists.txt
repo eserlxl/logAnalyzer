@@ -101,6 +101,7 @@ set(TEST_SOURCES
     "utils/time.cpp"
     "utils/enum.cpp"
     "utils/string.cpp"
+    "utils/dedup.cpp"
     "analyzer/types.cpp"
     "analyzer/log_writer.cpp"
     "analyzer/log_writer_correctness.cpp"

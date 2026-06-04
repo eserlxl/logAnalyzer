@@ -5,6 +5,7 @@
 #include "analyzer/core.h"
 #include "export/core.h"
 #include "utils/core.h"
+#include "utils/dedup.h"
 #include "utils/string.h"
 #include "config/cli.h"
 #include "filter/concrete_filters.h"
@@ -399,33 +400,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Apply --dedup-field: keep only first entry per unique value of the named field
-        if (!cliOptions.dedupField.empty()) {
-            const std::string& df = cliOptions.dedupField;
-            std::unordered_set<std::string> seen;
-            size_t dedupIdx = 0;
-            filteredEntries.erase(
-                std::remove_if(filteredEntries.begin(), filteredEntries.end(),
-                    [&](const LogEntry& entry) {
-                        std::string key;
-                        if (df == "level") {
-                            key = Utils::logLevelToString(entry.level);
-                        } else if (df == "message") {
-                            key = entry.message;
-                        } else if (df == "source") {
-                            key = entry.sourceFile;
-                        } else {
-                            auto it = entry.customFields.find(df);
-                            if (it == entry.customFields.end()) {
-                                // No value: treat each as unique via index
-                                key = "__absent__" + std::to_string(dedupIdx++);
-                            } else {
-                                key = it->second;
-                            }
-                        }
-                        return !seen.insert(key).second;
-                    }),
-                filteredEntries.end());
-        }
+        Utils::applyDedupField(filteredEntries, cliOptions.dedupField);
 
         // Apply --offset: skip first N matching entries
         if (cliOptions.offset && *cliOptions.offset > 0) {
