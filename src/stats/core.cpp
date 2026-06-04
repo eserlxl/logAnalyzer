@@ -121,7 +121,7 @@ json EntryRateCollector::generateReport() const {
     if (_timestamps.size() < 2) {
         report["average_rate_per_sec"] = 0;
         report["total_entries"] = _timestamps.size();
-        report["duration_sec"] = "0";
+        report["duration_sec"] = 0;
         return report;
     }
 
@@ -130,9 +130,10 @@ json EntryRateCollector::generateReport() const {
     auto secs = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
 
     double rate = (secs > 0) ? static_cast<double>(_timestamps.size()) / secs : static_cast<double>(_timestamps.size());
-    
+
     report["average_rate_per_sec"] = rate;
     report["total_entries"] = _timestamps.size();
+    report["duration_sec"] = secs;
     return report;
 }
 
