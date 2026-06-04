@@ -48,6 +48,19 @@ std::optional<StatisticConfig> parseStatisticConfig(const std::string& statStr) 
         return config;
     }
 
+    if (normalizedLower.rfind("moving_average_rate:", 0) == 0) {
+        std::string bucketStr = normalized.substr(20);
+        trimInPlace(bucketStr);
+        if (bucketStr.empty() || !std::all_of(bucketStr.begin(), bucketStr.end(), [](unsigned char c) {
+                return std::isdigit(c) != 0;
+            })) {
+            return std::nullopt;
+        }
+        config.type = StatisticType::MOVING_AVERAGE_RATE;
+        config.params["bucket"] = bucketStr;
+        return config;
+    }
+
     auto legacyType = Utils::stringToStatisticType(normalized);
     if (legacyType) {
         config.type = *legacyType;

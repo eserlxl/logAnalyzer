@@ -189,3 +189,19 @@ TEST_F(CLIConfigTest, MovingAverageRateStatKVForm) {
     ASSERT_TRUE(settings.statisticConfigs[0].params.contains("bucket"));
     ASSERT_EQ(settings.statisticConfigs[0].params.at("bucket"), "30");
 }
+
+TEST_F(CLIConfigTest, MovingAverageRateColonShorthand) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "moving_average_rate:30"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::MOVING_AVERAGE_RATE);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("bucket"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("bucket"), "30");
+}
+
+TEST_F(CLIConfigTest, MovingAverageRateColonShorthandEmptyBucketFails) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "moving_average_rate:"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
