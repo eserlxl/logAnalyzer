@@ -399,3 +399,39 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValuesIdAccepted) 
     errors = settings.validate();
     EXPECT_TRUE(errors.empty()) << "TOP_N_FIELD_VALUES target_field=id should be valid. Error: " << (errors.empty() ? "" : errors[0]);
 }
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_NonIntegerTopNRejected) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {
+            {std::string(config_keys::TARGET_FIELD), "level"},
+            {std::string(config_keys::TOP_N), "abc"}
+        }}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_THAT(errors[0], testing::HasSubstr("must be a positive integer."));
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_ZeroTopNRejected) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {
+            {std::string(config_keys::TARGET_FIELD), "level"},
+            {std::string(config_keys::TOP_N), "0"}
+        }}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_THAT(errors[0], testing::HasSubstr("must be a positive integer."));
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_NegativeTopNRejected) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {
+            {std::string(config_keys::TARGET_FIELD), "level"},
+            {std::string(config_keys::TOP_N), "-1"}
+        }}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_THAT(errors[0], testing::HasSubstr("must be a positive integer."));
+}

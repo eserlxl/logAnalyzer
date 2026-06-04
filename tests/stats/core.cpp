@@ -266,6 +266,31 @@ TEST_F(StatisticsTest, CreateCollectorFactoryDefaultsMalformedTopNForTopMessages
     ASSERT_EQ(report["top_n"], 10);
 }
 
+TEST_F(StatisticsTest, CreateCollectorFactoryTopMessagesWithValidTopN) {
+    StatisticConfig config;
+    config.type = StatisticType::TOP_MESSAGES;
+    config.params["top_n"] = "3";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    auto makeMsg = [](const std::string& msg) {
+        LogEntry e; e.message = msg; return e;
+    };
+    for (int i = 0; i < 5; ++i) collector->collect(makeMsg("A"));
+    for (int i = 0; i < 4; ++i) collector->collect(makeMsg("B"));
+    for (int i = 0; i < 3; ++i) collector->collect(makeMsg("C"));
+    for (int i = 0; i < 2; ++i) collector->collect(makeMsg("D"));
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["top_n"], 3);
+    ASSERT_EQ(report["messages"].size(), 3u);
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryUnknownTypeReturnsNull) {
+    StatisticConfig config;
+    config.type = StatisticType::UNKNOWN;
+    auto collector = Statistics::createCollector(config);
+    ASSERT_EQ(collector, nullptr);
+}
+
 TEST_F(StatisticsTest, TopMessagesCollectorDefaultTopN) {
     StatisticConfig config;
     config.type = StatisticType::TOP_MESSAGES;
@@ -692,6 +717,14 @@ TEST_F(StatisticsTest, CreateCollectorFactoryEntryRate) {
     ASSERT_EQ(collector->getName(), "entry_rate");
 }
 
+TEST_F(StatisticsTest, CreateCollectorFactoryUniqueMessages) {
+    StatisticConfig config;
+    config.type = StatisticType::UNIQUE_MESSAGES;
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    ASSERT_EQ(collector->getName(), "unique_messages");
+}
+
 TEST_F(StatisticsTest, UniqueMessagesCollectorBasic) {
     UniqueMessagesCollector collector;
     auto makeMsg = [](const std::string& msg) {
@@ -984,4 +1017,38 @@ TEST_F(StatisticsTest, TopNFieldValuesCollectorForId) {
     ASSERT_EQ(report["values"].size(), 2u); // top_n=2
     EXPECT_EQ(report["values"][0]["value"], "10");
     EXPECT_EQ(report["values"][0]["count"], 2);
+}
+
+TEST_F(StatisticsTest, FieldValueCountCollectorForHost) {
+    FieldValueCountCollector collector("host");
+    auto makeHostEntry = [](const std::string& host, const std::string& msg) {
+        LogEntry e; e.level = LogLevel::INFO; e.message = msg;
+        e.host = host; return e;
+    };
+    collector.collect(makeHostEntry("srv-a", "m1"));
+    collector.collect(makeHostEntry("srv-b", "m2"));
+    collector.collect(makeHostEntry("srv-a", "m3"));
+    LogEntry noHost; noHost.level = LogLevel::INFO; noHost.message = "m4";
+    collector.collect(noHost);
+    json report = collector.generateReport();
+    ASSERT_TRUE(report.contains("counts"));
+    EXPECT_EQ(report["counts"]["srv-a"], 2);
+    EXPECT_EQ(report["counts"]["srv-b"], 1);
+    EXPECT_EQ(report["total_unique_values"], 2u);
+}
+
+TEST_F(StatisticsTest, FieldValueCountCollectorForModule) {
+    FieldValueCountCollector collector("module");
+    auto makeModuleEntry = [](const std::string& mod, const std::string& msg) {
+        LogEntry e; e.level = LogLevel::INFO; e.message = msg;
+        e.module = mod; return e;
+    };
+    collector.collect(makeModuleEntry("auth", "m1"));
+    collector.collect(makeModuleEntry("api", "m2"));
+    collector.collect(makeModuleEntry("auth", "m3"));
+    json report = collector.generateReport();
+    ASSERT_TRUE(report.contains("counts"));
+    EXPECT_EQ(report["counts"]["auth"], 2);
+    EXPECT_EQ(report["counts"]["api"], 1);
+    EXPECT_EQ(report["total_unique_values"], 2u);
 }

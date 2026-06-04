@@ -244,3 +244,37 @@ TEST_F(DedupFieldTest, GetDedupKeyTimeAlias) {
     ASSERT_EQ(idx1, 0u);
     ASSERT_EQ(idx2, 0u);
 }
+
+TEST_F(DedupFieldTest, DedupByTimestamp) {
+    auto t0 = std::chrono::system_clock::from_time_t(0);
+    auto t1 = std::chrono::system_clock::from_time_t(1);
+    auto t2 = std::chrono::system_clock::from_time_t(2);
+    std::vector<LogEntry> entries;
+    for (auto [lvl, msg, ts] : std::initializer_list<std::tuple<LogLevel, const char*, std::chrono::system_clock::time_point>>{
+            {LogLevel::INFO, "a", t0}, {LogLevel::INFO, "b", t1},
+            {LogLevel::WARNING, "c", t0}, {LogLevel::ERROR, "d", t2}}) {
+        auto e = makeEntry(lvl, msg);
+        e.timestamp = ts;
+        entries.push_back(e);
+    }
+    Utils::applyDedupField(entries, "timestamp");
+    ASSERT_EQ(entries.size(), 3u);
+    ASSERT_EQ(entries[0].message, "a"); // first t0 kept
+    ASSERT_EQ(entries[1].message, "b"); // t1 kept
+    ASSERT_EQ(entries[2].message, "d"); // t2 kept
+}
+
+TEST_F(DedupFieldTest, DedupById) {
+    std::vector<LogEntry> entries;
+    for (auto [id, msg] : std::initializer_list<std::pair<size_t, const char*>>{
+            {5, "a"}, {6, "b"}, {5, "c"}, {7, "d"}}) {
+        auto e = makeEntry(LogLevel::INFO, msg);
+        e.id = id;
+        entries.push_back(e);
+    }
+    Utils::applyDedupField(entries, "id");
+    ASSERT_EQ(entries.size(), 3u);
+    ASSERT_EQ(entries[0].id.value(), 5u);
+    ASSERT_EQ(entries[1].id.value(), 6u);
+    ASSERT_EQ(entries[2].id.value(), 7u);
+}

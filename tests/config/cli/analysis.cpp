@@ -392,3 +392,12 @@ TEST_F(CLIConfigTest, EntryRateBareNameProducesConfig) {
     ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::ENTRY_RATE);
     ASSERT_TRUE(settings.statisticConfigs[0].params.empty());
 }
+
+TEST_F(CLIConfigTest, LogLevelCountAliasBareNameProducesConfig) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "log_level_count"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::LOG_LEVEL_COUNT);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.empty());
+}
