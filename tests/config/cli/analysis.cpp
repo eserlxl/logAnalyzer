@@ -98,9 +98,12 @@ TEST_F(CLIConfigTest, StatsWindow) {
 TEST_F(CLIConfigTest, FindGapsDuration) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--find-gaps", "5000"});
     ASSERT_TRUE(result.has_value());
-    auto& options = result.value().second;
+    auto& [settings, options] = result.value();
     ASSERT_TRUE(options.findGapsDuration.has_value());
     ASSERT_EQ(options.findGapsDuration.value(), std::chrono::milliseconds(5000));
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::FIND_GAPS);
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("threshold_ms"), "5000");
 }
 
 TEST_F(CLIConfigTest, CountFlag) {
@@ -202,6 +205,21 @@ TEST_F(CLIConfigTest, MovingAverageRateColonShorthand) {
 
 TEST_F(CLIConfigTest, MovingAverageRateColonShorthandEmptyBucketFails) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "moving_average_rate:"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, FindGapsColonShorthand) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "find_gaps:2000"});
+    ASSERT_TRUE(result.has_value());
+    auto& [settings, options] = result.value();
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::FIND_GAPS);
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("threshold_ms"), "2000");
+}
+
+TEST_F(CLIConfigTest, FindGapsColonShorthandEmptyThresholdFails) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "find_gaps:"});
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }

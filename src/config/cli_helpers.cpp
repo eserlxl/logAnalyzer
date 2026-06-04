@@ -61,6 +61,19 @@ std::optional<StatisticConfig> parseStatisticConfig(const std::string& statStr) 
         return config;
     }
 
+    if (normalizedLower.rfind("find_gaps:", 0) == 0) {
+        std::string threshStr = normalized.substr(10);
+        trimInPlace(threshStr);
+        if (threshStr.empty() || !std::all_of(threshStr.begin(), threshStr.end(), [](unsigned char c) {
+                return std::isdigit(c) != 0;
+            })) {
+            return std::nullopt;
+        }
+        config.type = StatisticType::FIND_GAPS;
+        config.params["threshold_ms"] = threshStr;
+        return config;
+    }
+
     auto legacyType = Utils::stringToStatisticType(normalized);
     if (legacyType) {
         config.type = *legacyType;
