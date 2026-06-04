@@ -183,3 +183,19 @@ TEST_F(CLIConfigTest, OffsetZeroIsValid) {
     ASSERT_TRUE(options.offset.has_value());
     ASSERT_EQ(*options.offset, 0u);
 }
+
+TEST_F(CLIConfigTest, SinceOption) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--since", "1h"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.startTime.has_value());
+    auto now = std::chrono::system_clock::now();
+    ASSERT_LT(options.startTime.value(), now);
+    ASSERT_GT(options.startTime.value(), now - std::chrono::hours(2));
+}
+
+TEST_F(CLIConfigTest, SinceConflictsWithStart) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--since", "1h", "--start", "2023-01-01 00:00:00"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}

@@ -94,6 +94,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     
     std::string durationStr;
     app.add_option("--duration", durationStr, "Duration for time filtering (e.g., '30m', '1h')");
+    std::string sinceStr;
+    app.add_option("--since", sinceStr, "Show entries from the last DURATION ago (e.g. 1h, 30m, 2d); shorthand for --start 'N ago'");
 
     // Sorting
     app.add_option("--sort-by", appOptions.sortBy, "Sort entries by field")
@@ -329,6 +331,17 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         } else if (!appOptions.startTime.has_value() && !appOptions.endTime.has_value()){
             return std::unexpected(ErrorCode::Error(::Code::InvalidArgument, "Error: --duration requires either --start or --end to be specified."));
         }
+    }
+
+    if (!sinceStr.empty()) {
+        if (appOptions.startTime.has_value()) {
+            return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, "--since and --start cannot be used together."));
+        }
+        auto parsedSince = Utils::parseDuration(sinceStr, false);
+        if (!parsedSince) {
+            return std::unexpected(ErrorCode::Error(::Code::InvalidCLIOption, "Error parsing --since: " + parsedSince.error().toString()));
+        }
+        appOptions.startTime = std::chrono::system_clock::now() - *parsedSince;
     }
 
     if(appOptions.tailMode) appOptions.tailInterval = std::chrono::milliseconds(tailIntervalMs);
