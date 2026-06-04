@@ -7,6 +7,7 @@
 #include <chrono>
 #include <optional>
 #include <cstdlib>
+#include <climits>
 
 namespace {
 class ScopedTimezone {
