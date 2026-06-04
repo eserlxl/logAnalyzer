@@ -335,6 +335,12 @@ int main(int argc, char *argv[]) {
             });
         }
 
+        // Apply --offset: skip first N matching entries
+        if (cliOptions.offset && *cliOptions.offset > 0) {
+            size_t skip = std::min(*cliOptions.offset, filteredEntries.size());
+            filteredEntries.erase(filteredEntries.begin(), filteredEntries.begin() + static_cast<std::ptrdiff_t>(skip));
+        }
+
         // Apply --limit: cap filtered entries
         if (cliOptions.limit && filteredEntries.size() > *cliOptions.limit) {
             filteredEntries.resize(*cliOptions.limit);

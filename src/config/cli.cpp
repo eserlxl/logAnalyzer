@@ -226,6 +226,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     app.add_option("--limit", appOptions.limit, "Stop after N matching entries")
        ->check(CLI::PositiveNumber);
+    app.add_option("--offset", appOptions.offset, "Skip first N matching entries")
+       ->check(CLI::NonNegativeNumber);
     app.add_flag("--count", appOptions.countOnly, "Print only the count of matching entries, then exit");
 
 

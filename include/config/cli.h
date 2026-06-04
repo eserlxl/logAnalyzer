@@ -68,8 +68,9 @@ public:
         bool readFromStdin = false; // New: Input from stdin
         bool exitAfterParse = false; // New: To handle --help, --version
         std::string configPath; // New: Path to the configuration file
-        std::optional<size_t> limit; // --limit N: cap output at N matching entries
-        bool countOnly = false;      // --count: print only the match count
+        std::optional<size_t> limit;  // --limit N: cap output at N matching entries
+        std::optional<size_t> offset; // --offset N: skip first N matching entries
+        bool countOnly = false;       // --count: print only the match count
     };
 
     // CLI parsing function - now returns a pair of LogAnalyzerSettings and CLIOptions

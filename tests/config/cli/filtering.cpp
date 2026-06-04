@@ -167,3 +167,19 @@ TEST_F(CLIConfigTest, LimitOption) {
     ASSERT_TRUE(options.limit.has_value());
     ASSERT_EQ(*options.limit, 2u);
 }
+
+TEST_F(CLIConfigTest, OffsetOption) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--offset", "5"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.offset.has_value());
+    ASSERT_EQ(*options.offset, 5u);
+}
+
+TEST_F(CLIConfigTest, OffsetZeroIsValid) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--offset", "0"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.offset.has_value());
+    ASSERT_EQ(*options.offset, 0u);
+}
