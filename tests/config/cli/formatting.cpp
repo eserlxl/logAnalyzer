@@ -66,6 +66,70 @@ TEST_F(CLIConfigTest, SortByCaseInsensitivity) {
     ASSERT_EQ(options.sortBy.value(), SortBy::TIMESTAMP);
 }
 
+TEST_F(CLIConfigTest, SortByTimestampAlias) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--sort-by", "timestamp"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.sortBy.has_value());
+    ASSERT_EQ(options.sortBy.value(), SortBy::TIMESTAMP);
+}
+
+TEST_F(CLIConfigTest, SortByLevel) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--sort-by", "level"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.sortBy.has_value());
+    ASSERT_EQ(options.sortBy.value(), SortBy::LEVEL);
+}
+
+TEST_F(CLIConfigTest, SortByMessage) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--sort-by", "message"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.sortBy.has_value());
+    ASSERT_EQ(options.sortBy.value(), SortBy::MESSAGE);
+}
+
+TEST_F(CLIConfigTest, SortByMsgAlias) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--sort-by", "msg"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.sortBy.has_value());
+    ASSERT_EQ(options.sortBy.value(), SortBy::MESSAGE);
+}
+
+TEST_F(CLIConfigTest, SortBySource) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--sort-by", "source"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.sortBy.has_value());
+    ASSERT_EQ(options.sortBy.value(), SortBy::SOURCE);
+}
+
+TEST_F(CLIConfigTest, SortBySourceFileAlias) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--sort-by", "source_file"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.sortBy.has_value());
+    ASSERT_EQ(options.sortBy.value(), SortBy::SOURCE);
+}
+
+TEST_F(CLIConfigTest, SortByThreadId) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--sort-by", "thread_id"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.sortBy.has_value());
+    ASSERT_EQ(options.sortBy.value(), SortBy::THREAD_ID);
+}
+
+TEST_F(CLIConfigTest, SortByThreadAlias) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--sort-by", "thread"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.sortBy.has_value());
+    ASSERT_EQ(options.sortBy.value(), SortBy::THREAD_ID);
+}
+
 TEST_F(CLIConfigTest, SortOrderCaseInsensitivity) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--order", "DESC"});
     ASSERT_TRUE(result.has_value());

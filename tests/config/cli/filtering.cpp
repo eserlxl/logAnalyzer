@@ -202,6 +202,14 @@ TEST_F(CLIConfigTest, OffsetZeroIsValid) {
     ASSERT_EQ(*options.offset, 0u);
 }
 
+TEST_F(CLIConfigTest, OffsetLargeValueAccepted) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--offset", "9999999"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.offset.has_value());
+    ASSERT_EQ(*options.offset, 9999999u);
+}
+
 TEST_F(CLIConfigTest, SinceOption) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--since", "1h"});
     ASSERT_TRUE(result.has_value());
@@ -216,6 +224,27 @@ TEST_F(CLIConfigTest, SinceConflictsWithStart) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--since", "1h", "--start", "2023-01-01 00:00:00"});
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, SinceInvalidFormat) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--since", "notaduration"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, SinceWithEndTime) {
+    std::string end_time_str = "2023-01-01 12:00:00";
+    auto expectedEndTime = Utils::parseTime(end_time_str).value();
+
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--since", "1h", "--end", end_time_str});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.startTime.has_value());
+    auto now = std::chrono::system_clock::now();
+    ASSERT_LT(options.startTime.value(), now);
+    ASSERT_GT(options.startTime.value(), now - std::chrono::hours(2));
+    ASSERT_TRUE(options.endTime.has_value());
+    ASSERT_EQ(options.endTime.value(), expectedEndTime);
 }
 
 TEST_F(CLIConfigTest, DedupFieldOption) {

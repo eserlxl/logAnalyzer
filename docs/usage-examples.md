@@ -176,6 +176,18 @@ You can specify timestamps in several formats:
 *   **ISO 8601 Format**: `YYYY-MM-DDTHH:MM:SSZ` or `YYYY-MM-DDTHH:MM:SS+HH:MM`.
 *   **Unix Timestamp**: Seconds since the Unix epoch.
 
+#### Using `--since`
+
+The `--since` flag is a shorthand for entries from the last N — equivalent to `--start 'N ago'`. It accepts the same duration formats as `--duration`.
+
+```bash
+# Get entries from the last hour
+logAnalyzer app.log --since 1h
+
+# Get errors from the last 30 minutes
+logAnalyzer app.log --since 30m --level ERROR
+```
+
 #### Using `--duration`
 
 The `--duration` flag can be combined with `--start` or `--end` to specify a time window. It accepts durations like `10s` (seconds), `5m` (minutes), `2h` (hours), or `3d` (days).
