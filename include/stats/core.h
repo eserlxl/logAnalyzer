@@ -22,6 +22,7 @@ enum class StatisticType {
     FIELD_VALUE_COUNT,      // New: Count occurrences of unique values for a specified field
     TOP_N_FIELD_VALUES,     // New: Report top N most frequent values for a specified field
     TIME_BUCKET_HISTOGRAM,  // Per-bucket entry count grouped by configurable time window
+    PERCENTILE_STATS,       // P50/P95/P99 for a named numeric custom field
     UNKNOWN
 };
 
@@ -205,6 +206,19 @@ public:
 private:
     int _bucketSeconds;
     std::map<long long, int> _counts; // key: bucket start epoch seconds
+};
+
+// P50/P95/P99 for a named numeric custom field
+class PercentileStatsCollector : public IStatisticCollector {
+public:
+    explicit PercentileStatsCollector(std::string fieldName);
+    void collect(const LogEntry& entry) override;
+    json generateReport() const override;
+    std::string getName() const override { return "percentile_stats"; }
+    void reset() override { _values.clear(); }
+private:
+    std::string _fieldName;
+    std::vector<double> _values;
 };
 
 namespace Statistics {

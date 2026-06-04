@@ -306,3 +306,77 @@ TEST_F(StatisticsTest, CreateCollectorFactoryTimeBucketHistogramInvalidBucketFal
     const json report = collector->generateReport();
     ASSERT_EQ(report["bucket_seconds"], 60);
 }
+
+TEST_F(StatisticsTest, PercentileStatsCollectorBasic) {
+    PercentileStatsCollector collector("latency_ms");
+    // Collect 5 numeric values: 10, 20, 30, 40, 50
+    for (double v : {10.0, 20.0, 30.0, 40.0, 50.0}) {
+        LogEntry e;
+        e.message = "test";
+        e.customFields["latency_ms"] = std::to_string(v);
+        collector.collect(e);
+    }
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["name"], "percentile_stats");
+    ASSERT_EQ(report["field"], "latency_ms");
+    ASSERT_EQ(report["count"], 5u);
+    // p50 of [10,20,30,40,50] = 30
+    ASSERT_DOUBLE_EQ(report["p50"].get<double>(), 30.0);
+    // p95: idx=3.8 → 40 + 0.8*(50-40) = 48.0
+    ASSERT_DOUBLE_EQ(report["p95"].get<double>(), 48.0);
+    // p99: idx=3.96 → 40 + 0.96*(50-40) = 49.6
+    ASSERT_DOUBLE_EQ(report["p99"].get<double>(), 49.6);
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorSkipsNonNumericAndAbsent) {
+    PercentileStatsCollector collector("latency_ms");
+    LogEntry good;
+    good.message = "ok";
+    good.customFields["latency_ms"] = "100";
+    collector.collect(good);
+
+    LogEntry bad;
+    bad.message = "bad";
+    bad.customFields["latency_ms"] = "not_a_number";
+    collector.collect(bad);
+
+    LogEntry absent;
+    absent.message = "absent";
+    collector.collect(absent);
+
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 1u);
+    ASSERT_DOUBLE_EQ(report["p50"].get<double>(), 100.0);
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorEmptyReturnsNullPercentiles) {
+    PercentileStatsCollector collector("latency_ms");
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 0u);
+    ASSERT_TRUE(report["p50"].is_null());
+    ASSERT_TRUE(report["p95"].is_null());
+    ASSERT_TRUE(report["p99"].is_null());
+}
+
+TEST_F(StatisticsTest, PercentileStatsRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::PERCENTILE_STATS), "PERCENTILE_STATS");
+    auto opt = Utils::stringToStatisticType("PERCENTILE_STATS");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::PERCENTILE_STATS);
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryPercentileStats) {
+    StatisticConfig config;
+    config.type = StatisticType::PERCENTILE_STATS;
+    config.params["field"] = "latency_ms";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    ASSERT_EQ(collector->getName(), "percentile_stats");
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryPercentileStatsMissingField) {
+    StatisticConfig config;
+    config.type = StatisticType::PERCENTILE_STATS;
+    auto collector = Statistics::createCollector(config);
+    ASSERT_EQ(collector, nullptr);
+}

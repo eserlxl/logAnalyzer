@@ -210,6 +210,14 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             }
             return std::make_shared<TimeBucketHistogramCollector>(bucketSeconds);
         }
+        case StatisticType::PERCENTILE_STATS: {
+            auto it = config.params.find("field");
+            if (it == config.params.end() || it->second.empty()) {
+                std::cerr << "Warning: PERCENTILE_STATS requires a 'field' param." << '\n';
+                return nullptr;
+            }
+            return std::make_shared<PercentileStatsCollector>(it->second);
+        }
         case StatisticType::UNKNOWN:
         default:
             std::cerr << "Warning: Attempted to create unknown statistic type." << '\n';

@@ -301,6 +301,44 @@ json TimeBucketHistogramCollector::generateReport() const {
     };
 }
 
+// PercentileStatsCollector
+PercentileStatsCollector::PercentileStatsCollector(std::string fieldName)
+    : _fieldName(std::move(fieldName)) {}
+
+void PercentileStatsCollector::collect(const LogEntry& entry) {
+    auto it = entry.customFields.find(_fieldName);
+    if (it == entry.customFields.end()) return;
+    try {
+        _values.push_back(std::stod(it->second));
+    } catch (...) {}
+}
+
+json PercentileStatsCollector::generateReport() const {
+    json report;
+    report["name"] = "percentile_stats";
+    report["field"] = _fieldName;
+    report["count"] = _values.size();
+    if (_values.empty()) {
+        report["p50"] = nullptr;
+        report["p95"] = nullptr;
+        report["p99"] = nullptr;
+        return report;
+    }
+    std::vector<double> sorted = _values;
+    std::sort(sorted.begin(), sorted.end());
+    auto percentile = [&](double p) -> double {
+        double idx = p * static_cast<double>(sorted.size() - 1);
+        size_t lo = static_cast<size_t>(idx);
+        double frac = idx - static_cast<double>(lo);
+        if (lo + 1 >= sorted.size()) return sorted.back();
+        return sorted[lo] + frac * (sorted[lo + 1] - sorted[lo]);
+    };
+    report["p50"] = percentile(0.50);
+    report["p95"] = percentile(0.95);
+    report["p99"] = percentile(0.99);
+    return report;
+}
+
 // Assuming 'Statistics' is a namespace based on header file content not defining a Statistics class.
 namespace Statistics {
 
@@ -387,6 +425,11 @@ namespace Statistics {
                     }
                 }
                 return std::make_unique<TimeBucketHistogramCollector>(bucketSeconds);
+            }
+            case StatisticType::PERCENTILE_STATS: {
+                auto it = config.params.find("field");
+                if (it == config.params.end() || it->second.empty()) return nullptr;
+                return std::make_unique<PercentileStatsCollector>(it->second);
             }
             case StatisticType::UNKNOWN:
             default:

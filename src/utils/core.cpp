@@ -156,6 +156,7 @@ std::string statisticTypeToString(StatisticType type) {
         case StatisticType::FIELD_VALUE_COUNT: return "FIELD_VALUE_COUNT";
         case StatisticType::TOP_N_FIELD_VALUES: return "TOP_N_FIELD_VALUES";
         case StatisticType::TIME_BUCKET_HISTOGRAM: return "TIME_BUCKET_HISTOGRAM";
+        case StatisticType::PERCENTILE_STATS: return "PERCENTILE_STATS";
         default: return "UNKNOWN";
     }
 }
@@ -171,6 +172,7 @@ std::optional<StatisticType> stringToStatisticType(const std::string& typeStr) {
     if (upperTypeStr == "FIELD_VALUE_COUNT") return StatisticType::FIELD_VALUE_COUNT;
     if (upperTypeStr == "TOP_N_FIELD_VALUES") return StatisticType::TOP_N_FIELD_VALUES;
     if (upperTypeStr == "TIME_BUCKET_HISTOGRAM") return StatisticType::TIME_BUCKET_HISTOGRAM;
+    if (upperTypeStr == "PERCENTILE_STATS") return StatisticType::PERCENTILE_STATS;
     return std::nullopt;
 }
 
