@@ -662,3 +662,69 @@ TEST_F(StatisticsTest, CreateCollectorFactoryEntryRate) {
     ASSERT_NE(collector, nullptr);
     ASSERT_EQ(collector->getName(), "entry_rate");
 }
+
+TEST_F(StatisticsTest, UniqueMessagesCollectorBasic) {
+    UniqueMessagesCollector collector;
+    auto makeMsg = [](const std::string& msg) {
+        LogEntry e; e.message = msg; return e;
+    };
+    collector.collect(makeMsg("alpha"));
+    collector.collect(makeMsg("beta"));
+    collector.collect(makeMsg("alpha"));
+    collector.collect(makeMsg("gamma"));
+    collector.collect(makeMsg("beta"));
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["total_unique_messages"], 3);
+    ASSERT_EQ(report["counts"].size(), 3u);
+}
+
+TEST_F(StatisticsTest, UniqueMessagesCollectorReset) {
+    UniqueMessagesCollector collector;
+    auto makeMsg = [](const std::string& msg) {
+        LogEntry e; e.message = msg; return e;
+    };
+    collector.collect(makeMsg("x"));
+    collector.collect(makeMsg("y"));
+    collector.reset();
+    collector.collect(makeMsg("z"));
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["total_unique_messages"], 1);
+}
+
+TEST_F(StatisticsTest, TopMessagesCollectorBasic) {
+    TopMessagesCollector collector(5);
+    auto makeMsg = [](const std::string& msg) {
+        LogEntry e; e.message = msg; return e;
+    };
+    for (int i = 0; i < 3; ++i) collector.collect(makeMsg("A"));
+    for (int i = 0; i < 2; ++i) collector.collect(makeMsg("B"));
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["messages"][0]["message"], "A");
+    ASSERT_EQ(report["messages"][0]["count"], 3);
+}
+
+TEST_F(StatisticsTest, TopMessagesCollectorRespectN) {
+    TopMessagesCollector collector(2);
+    auto makeMsg = [](const std::string& msg) {
+        LogEntry e; e.message = msg; return e;
+    };
+    for (int i = 0; i < 3; ++i) collector.collect(makeMsg("A"));
+    for (int i = 0; i < 2; ++i) collector.collect(makeMsg("B"));
+    collector.collect(makeMsg("C"));
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["messages"].size(), 2u);
+}
+
+TEST_F(StatisticsTest, TopMessagesCollectorReset) {
+    TopMessagesCollector collector(5);
+    auto makeMsg = [](const std::string& msg) {
+        LogEntry e; e.message = msg; return e;
+    };
+    collector.collect(makeMsg("A"));
+    collector.collect(makeMsg("A"));
+    collector.reset();
+    collector.collect(makeMsg("B"));
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["messages"].size(), 1u);
+    ASSERT_EQ(report["messages"][0]["message"], "B");
+}
