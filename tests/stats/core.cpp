@@ -516,3 +516,90 @@ TEST_F(StatisticsTest, MovingAverageRateCollectorReset) {
     ASSERT_EQ(report["total_entries"], 1);
     ASSERT_DOUBLE_EQ(report["mean_per_bucket"].get<double>(), 1.0);
 }
+
+TEST_F(StatisticsTest, GapDetectorCollectorDetectsGap) {
+    GapDetectorCollector collector(100);
+    auto base = std::chrono::system_clock::from_time_t(10000);
+    LogEntry e0, e1, e2;
+    e0.message = "a"; e0.timestamp = base;
+    e1.message = "b"; e1.timestamp = base + std::chrono::milliseconds(50);
+    e2.message = "c"; e2.timestamp = base + std::chrono::milliseconds(300);
+    collector.collect(e0);
+    collector.collect(e1);
+    collector.collect(e2);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["gap_count"], 1);
+    ASSERT_EQ(report["gaps"].size(), 1u);
+    ASSERT_EQ(report["gaps"][0]["duration_ms"], 250);
+}
+
+TEST_F(StatisticsTest, GapDetectorCollectorSkipsBelowThreshold) {
+    GapDetectorCollector collector(100);
+    auto base = std::chrono::system_clock::from_time_t(20000);
+    LogEntry e0, e1, e2;
+    e0.message = "a"; e0.timestamp = base;
+    e1.message = "b"; e1.timestamp = base + std::chrono::milliseconds(50);
+    e2.message = "c"; e2.timestamp = base + std::chrono::milliseconds(80);
+    collector.collect(e0);
+    collector.collect(e1);
+    collector.collect(e2);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["gap_count"], 0);
+    ASSERT_TRUE(report["gaps"].empty());
+}
+
+TEST_F(StatisticsTest, GapDetectorCollectorSkipsNoTimestamp) {
+    GapDetectorCollector collector(100);
+    LogEntry e;
+    e.message = "no ts";
+    collector.collect(e);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["gap_count"], 0);
+    ASSERT_TRUE(report["gaps"].empty());
+}
+
+TEST_F(StatisticsTest, GapDetectorCollectorEmpty) {
+    GapDetectorCollector collector(100);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["name"], "gap_detector");
+    ASSERT_EQ(report["gap_count"], 0);
+    ASSERT_TRUE(report["gaps"].empty());
+}
+
+TEST_F(StatisticsTest, GapDetectorCollectorReset) {
+    GapDetectorCollector collector(100);
+    auto base = std::chrono::system_clock::from_time_t(30000);
+    LogEntry e0, e1;
+    e0.message = "pre0"; e0.timestamp = base;
+    e1.message = "pre1"; e1.timestamp = base + std::chrono::milliseconds(500);
+    collector.collect(e0);
+    collector.collect(e1);
+    collector.reset();
+
+    auto base2 = std::chrono::system_clock::from_time_t(40000);
+    LogEntry e2, e3;
+    e2.message = "post0"; e2.timestamp = base2;
+    e3.message = "post1"; e3.timestamp = base2 + std::chrono::milliseconds(50);
+    collector.collect(e2);
+    collector.collect(e3);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["gap_count"], 0);
+}
+
+TEST_F(StatisticsTest, GapDetectorRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::FIND_GAPS), "FIND_GAPS");
+    auto opt = Utils::stringToStatisticType("FIND_GAPS");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::FIND_GAPS);
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryGapDetectorThresholdParam) {
+    StatisticConfig config;
+    config.type = StatisticType::FIND_GAPS;
+    config.params["threshold_ms"] = "200";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    ASSERT_EQ(collector->getName(), "gap_detector");
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["threshold_ms"], 200);
+}
