@@ -324,6 +324,17 @@ int main(int argc, char *argv[]) {
             });
         }
 
+        // Apply --limit: cap filtered entries
+        if (cliOptions.limit && filteredEntries.size() > *cliOptions.limit) {
+            filteredEntries.resize(*cliOptions.limit);
+        }
+
+        // Apply --count: print count and exit
+        if (cliOptions.countOnly) {
+            *outputStream << filteredEntries.size() << '\n';
+            return 0;
+        }
+
         ExportSettings exportSettings;
         exportSettings.useAnsiColors = useColors;
         exportSettings.separator = cliOptions.csvSeparator;
@@ -361,6 +372,8 @@ int main(int argc, char *argv[]) {
         } else if (cliOptions.outputFormat == "json") {
             exportSettings.format = ExportFormat::JSON;
             exportSettings.fieldsToExport = convertCliFieldsToExportMappings(analyzerSettings.exportSettings.jsonFields);
+        } else if (cliOptions.outputFormat == "ndjson") {
+            exportSettings.format = ExportFormat::NDJSON;
         } else if (cliOptions.outputFormat == "xml") {
             exportSettings.format = ExportFormat::XML;
         } else {

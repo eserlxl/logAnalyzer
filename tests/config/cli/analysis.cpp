@@ -102,3 +102,10 @@ TEST_F(CLIConfigTest, FindGapsDuration) {
     ASSERT_TRUE(options.findGapsDuration.has_value());
     ASSERT_EQ(options.findGapsDuration.value(), std::chrono::milliseconds(5000));
 }
+
+TEST_F(CLIConfigTest, CountFlag) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--count"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.countOnly);
+}

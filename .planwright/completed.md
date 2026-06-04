@@ -1,3 +1,10 @@
+- [x] Add --limit N and --count CLI options
+      Mode: develop
+      Rationale: invent-tier: filtering pipeline had no count ceiling (--limit) and no match-count-only output (--count / grep -c behavior).
+      Surfaces: include/config/cli.h, src/config/cli.cpp, src/main.cpp, tests/config/cli/filtering.cpp, tests/config/cli/analysis.cpp
+      Acceptance: --limit N truncates filteredEntries to N before export; --count prints entry count and exits 0 with no other output.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$|^config_cli_analysis$" --output-on-failure
+
 - [x] Add TIME_BUCKET_HISTOGRAM statistic collector
       Mode: develop
       Rationale: invent-tier: StatisticType had ENTRY_RATE but no time-bucket histogram; users cannot identify log volume spikes without per-bucket counts grouped by configurable time window.

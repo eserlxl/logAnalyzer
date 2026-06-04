@@ -159,3 +159,11 @@ TEST_F(CLIConfigTest, CustomLogLevelMappingTrimsWhitespace) {
     ASSERT_EQ(settings.customLogLevelMappings.size(), 1);
     ASSERT_EQ(settings.customLogLevelMappings.at("CRITICAL"), LogLevel::FATAL);
 }
+
+TEST_F(CLIConfigTest, LimitOption) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--limit", "2"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.limit.has_value());
+    ASSERT_EQ(*options.limit, 2u);
+}

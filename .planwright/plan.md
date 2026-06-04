@@ -20,7 +20,7 @@
       Acceptance: --stats "type=TIME_BUCKET_HISTOGRAM,bucket=60" outputs per-minute entry counts sorted by timestamp; entries without timestamps are silently skipped; stats_core test suite passes.
       Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
 
-- [ ] Add --limit N CLI option to cap output at N matching entries
+- [x] Add --limit N CLI option to cap output at N matching entries
       Mode: develop
       Rationale: invent-tier: the filtering pipeline returns all matching entries with no count ceiling; users inspecting large logs have no built-in way to stop after the first N matches — standard grep-m / head behavior — and must pipe through an external tool.
       Evidence: CLIOptions in include/config/cli.h has no limit field; parseCLI in src/config/cli.cpp registers no --limit option; src/main.cpp processes filteredEntries vector without any count ceiling in both the batch and stream paths.
@@ -29,7 +29,7 @@
       Acceptance: --limit 5 caps output at 5 entries regardless of how many match; stats collectors run only on the limited set; no existing test is broken.
       Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
 
-- [ ] Add --count flag to print only the match count
+- [x] Add --count flag to print only the match count
       Mode: develop
       Rationale: invent-tier: users frequently need only the count of matching entries (e.g. "how many ERRORs in the last hour?") but currently must run a full export and pipe to wc -l; a --count flag (grep -c behavior) would short-circuit the export pipeline and print a single integer.
       Evidence: CLIOptions in include/config/cli.h has no countOnly field; parseCLI in src/config/cli.cpp registers no --count flag; src/main.cpp always proceeds to full format/export output after filtering.
