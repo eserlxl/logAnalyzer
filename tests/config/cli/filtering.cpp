@@ -222,3 +222,19 @@ TEST_F(CLIConfigTest, MinLevelCaseInsensitive) {
     ASSERT_TRUE(options.minLogLevel.has_value());
     ASSERT_EQ(options.minLogLevel.value(), LogLevel::WARNING);
 }
+
+TEST_F(CLIConfigTest, MaxLevel) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--max-level", "WARNING"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.maxLogLevel.has_value());
+    ASSERT_EQ(options.maxLogLevel.value(), LogLevel::WARNING);
+}
+
+TEST_F(CLIConfigTest, MaxLevelCaseInsensitive) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--max-level", "warning"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.maxLogLevel.has_value());
+    ASSERT_EQ(options.maxLogLevel.value(), LogLevel::WARNING);
+}

@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "core/log/types.h"
+#include "utils/core.h"
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -50,6 +52,7 @@ inline std::optional<std::string> normalizeTargetFieldName(std::string_view rawF
     if (field == "module") return "module";
     if (field == "host") return "host";
     if (field == "custom" || field == "custom_fields" || field == "customfields") return "customFields";
+    if (field == "id") return "id";
     return std::nullopt;
 }
 
@@ -61,6 +64,36 @@ inline void trimInPlace(std::string& value) {
     }
     const auto last = value.find_last_not_of(" \t");
     value = value.substr(first, last - first + 1);
+}
+
+inline std::string extractFieldValue(const LogEntry& entry,
+                                     std::string_view targetField,
+                                     std::string_view customFieldKey) {
+    if (targetField == "level") {
+        return Utils::logLevelToString(entry.level);
+    } else if (targetField == "message") {
+        return entry.message;
+    } else if (targetField == "sourceFile") {
+        return entry.sourceFile;
+    } else if (targetField == "timestamp" && entry.timestamp) {
+        return Utils::formatTimestamp(*entry.timestamp);
+    } else if (targetField == "lineNumber" && entry.sourceLineNumber) {
+        return std::to_string(*entry.sourceLineNumber);
+    } else if (targetField == "threadId" && entry.threadId) {
+        return *entry.threadId;
+    } else if (targetField == "module" && entry.module) {
+        return *entry.module;
+    } else if (targetField == "host" && entry.host) {
+        return *entry.host;
+    } else if (targetField == "customFields" && !customFieldKey.empty()) {
+        auto it = entry.customFields.find(std::string(customFieldKey));
+        if (it != entry.customFields.end()) {
+            return it->second;
+        }
+    } else if (targetField == "id" && entry.id) {
+        return std::to_string(*entry.id);
+    }
+    return "";
 }
 
 } // namespace stats::detail

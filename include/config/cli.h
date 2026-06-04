@@ -29,6 +29,7 @@ public:
         std::string lineParsePattern = std::string(DEFAULT_LOG_REGEX_PATTERN_INTERNAL); // Added to match tests
         std::vector<LogLevel> filterLevels;
         std::optional<LogLevel> minLogLevel;
+        std::optional<LogLevel> maxLogLevel;
         std::vector<std::string> filterKeywords;
         std::vector<std::string> excludeKeywords;
         bool keywordCaseSensitive = false;

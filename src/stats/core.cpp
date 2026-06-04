@@ -10,6 +10,7 @@
 using stats::detail::normalizeTargetFieldName;
 using stats::detail::trimInPlace;
 using stats::detail::tryParseStrictPositiveInt;
+using stats::detail::extractFieldValue;
 
 // UniqueMessagesCollector implementation
 void UniqueMessagesCollector::collect(const LogEntry& entry) {
@@ -111,30 +112,7 @@ FieldValueCountCollector::FieldValueCountCollector(const std::string& targetFiel
     : _targetFieldName(normalizeTargetFieldName(targetFieldName).value_or(targetFieldName)), _customFieldKey(customFieldKey) {}
 
 std::string FieldValueCountCollector::getFieldValueAsString(const LogEntry& entry) const {
-    if (_targetFieldName == "level") {
-        // Assuming logLevelToString is available globally or via included headers
-        return Utils::logLevelToString(entry.level);
-    } else if (_targetFieldName == "message") {
-        return entry.message;
-    } else if (_targetFieldName == "sourceFile") {
-        return entry.sourceFile;
-    } else if (_targetFieldName == "timestamp" && entry.timestamp) {
-        return Utils::formatTimestamp(*entry.timestamp);
-    } else if (_targetFieldName == "lineNumber" && entry.sourceLineNumber) {
-        return std::to_string(*entry.sourceLineNumber);
-    } else if (_targetFieldName == "threadId" && entry.threadId) {
-        return *entry.threadId;
-    } else if (_targetFieldName == "module" && entry.module) {
-        return *entry.module;
-    } else if (_targetFieldName == "host" && entry.host) {
-        return *entry.host;
-    } else if (_targetFieldName == "customFields" && !_customFieldKey.empty()) {
-        auto it = entry.customFields.find(_customFieldKey);
-        if (it != entry.customFields.end()) {
-            return it->second;
-        }
-    }
-    return ""; // Default for unknown field or missing custom field
+    return stats::detail::extractFieldValue(entry, _targetFieldName, _customFieldKey);
 }
 
 void FieldValueCountCollector::collect(const LogEntry& entry) {
@@ -164,30 +142,7 @@ TopNFieldValuesCollector::TopNFieldValuesCollector(int topN, const std::string& 
     : _topN(topN), _targetFieldName(normalizeTargetFieldName(targetFieldName).value_or(targetFieldName)), _customFieldKey(customFieldKey) {}
 
 std::string TopNFieldValuesCollector::getFieldValueAsString(const LogEntry& entry) const {
-    if (_targetFieldName == "level") {
-        // Assuming logLevelToString is available globally or via included headers
-        return Utils::logLevelToString(entry.level);
-    } else if (_targetFieldName == "message") {
-        return entry.message;
-    } else if (_targetFieldName == "sourceFile") {
-        return entry.sourceFile;
-    } else if (_targetFieldName == "timestamp" && entry.timestamp) {
-        return Utils::formatTimestamp(*entry.timestamp);
-    } else if (_targetFieldName == "lineNumber" && entry.sourceLineNumber) {
-        return std::to_string(*entry.sourceLineNumber);
-    } else if (_targetFieldName == "threadId" && entry.threadId) {
-        return *entry.threadId;
-    } else if (_targetFieldName == "module" && entry.module) {
-        return *entry.module;
-    } else if (_targetFieldName == "host" && entry.host) {
-        return *entry.host;
-    } else if (_targetFieldName == "customFields" && !_customFieldKey.empty()) {
-        auto it = entry.customFields.find(_customFieldKey);
-        if (it != entry.customFields.end()) {
-            return it->second;
-        }
-    }
-    return ""; // Default for unknown field or missing custom field
+    return stats::detail::extractFieldValue(entry, _targetFieldName, _customFieldKey);
 }
 
 void TopNFieldValuesCollector::collect(const LogEntry& entry) {

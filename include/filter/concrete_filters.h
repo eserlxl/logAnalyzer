@@ -181,6 +181,16 @@ private:
     LogLevel minLevel_;
 };
 
+class MaxLevelFilter : public IFilter {
+public:
+    explicit MaxLevelFilter(LogLevel level) : maxLevel_(level) {}
+    bool matches(const LogEntry& entry) const override {
+        return entry.level <= maxLevel_;
+    }
+private:
+    LogLevel maxLevel_;
+};
+
 class KeywordFilter : public IFilter {
 public:
     enum class Logic { OR, AND };

@@ -118,6 +118,7 @@ int main(int argc, char *argv[]) {
         toCompositeLogic(cliOptions.filterLogic.value_or(filter::FilterLogicalOperator::AND));
     auto inclusionFilters = std::make_shared<CompositeFilter>(inclusionLogic);
     if (cliOptions.minLogLevel) inclusionFilters->add(std::make_shared<MinLevelFilter>(*cliOptions.minLogLevel));
+    if (cliOptions.maxLogLevel) inclusionFilters->add(std::make_shared<MaxLevelFilter>(*cliOptions.maxLogLevel));
     if (!cliOptions.filterLevels.empty()) {
         auto levelSet = std::make_shared<CompositeFilter>(CompositeFilter::Logic::OR);
         for (auto l : cliOptions.filterLevels) levelSet->add(std::make_shared<LevelFilter>(l));
@@ -359,9 +360,9 @@ int main(int argc, char *argv[]) {
                     statsFile << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
                 }
             } else {
-                *outputStream << "\n--- Statistics ---\n";
+                std::cerr << "\n--- Statistics ---\n";
                 for (const auto& reportPair : reports) {
-                    *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                    std::cerr << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
                 }
             }
         }

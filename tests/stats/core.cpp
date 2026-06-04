@@ -881,3 +881,39 @@ TEST_F(StatisticsTest, TopNFieldValuesRoundTrip) {
     ASSERT_TRUE(opt.has_value());
     ASSERT_EQ(*opt, StatisticType::TOP_N_FIELD_VALUES);
 }
+
+TEST_F(StatisticsTest, FieldValueCountCollectorForId) {
+    FieldValueCountCollector collector("id");
+    LogEntry e1;
+    e1.id = 42;
+    e1.level = LogLevel::INFO;
+    e1.message = "msg1";
+    LogEntry e2;
+    e2.id = 99;
+    e2.level = LogLevel::INFO;
+    e2.message = "msg2";
+    LogEntry e3;
+    e3.id = 42;
+    e3.level = LogLevel::DEBUG;
+    e3.message = "msg3";
+    LogEntry e4; // no id
+    e4.level = LogLevel::WARNING;
+    e4.message = "msg4";
+    collector.collect(e1);
+    collector.collect(e2);
+    collector.collect(e3);
+    collector.collect(e4);
+    json report = collector.generateReport();
+    ASSERT_TRUE(report.contains("counts"));
+    EXPECT_EQ(report["counts"]["42"], 2);
+    EXPECT_EQ(report["counts"]["99"], 1);
+    EXPECT_EQ(report["total_unique_values"], 2u);
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryFieldValueCountId) {
+    StatisticConfig config;
+    config.type = StatisticType::FIELD_VALUE_COUNT;
+    config.params["target_field"] = "id";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+}

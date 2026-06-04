@@ -323,3 +323,11 @@ TEST_F(ConfigValidationTest, ValidateTopNFieldValuesWithoutTopNRejected) {
     ASSERT_FALSE(errors.empty());
     EXPECT_THAT(errors[0], testing::HasSubstr("top_n"));
 }
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCountIdAccepted) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "id"}}}
+    };
+    errors = settings.validate();
+    EXPECT_TRUE(errors.empty()) << "target_field=id should be valid. Error: " << (errors.empty() ? "" : errors[0]);
+}

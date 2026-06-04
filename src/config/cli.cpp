@@ -48,6 +48,9 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     app.add_option("--min-level", appOptions.minLogLevel, "Filter entries with level greater than or equal to a specified level")
        ->transform(CLI::CheckedTransformer(Config::LogLevelMap, CLI::ignore_case));
 
+    app.add_option("--max-level", appOptions.maxLogLevel, "Filter entries with level less than or equal to a specified level")
+       ->transform(CLI::CheckedTransformer(Config::LogLevelMap, CLI::ignore_case));
+
     app.add_option("--keyword", appOptions.filterKeywords, "Filter messages containing specific text");
     app.add_option("--exclude-keyword", appOptions.excludeKeywords, "Exclude log entries containing a specific keyword");
        
@@ -304,7 +307,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     // The design says: "The simple --stats NAME syntax ... will be retained ... mapping to a default StatisticConfig"
     // What about --stats-window?
     if (statsWindowSec > 0) {
-        std::cerr << "Warning: --stats-window is deprecated and has no effect; use --stats entry_rate instead.\n";
+        std::cerr << "Warning: --stats-window is deprecated; prefer --stats entry_rate. A basic entry_rate collector will still be activated.\n";
         StatisticConfig sc;
         sc.type = StatisticType::ENTRY_RATE; // Assuming this maps to entry rate over window?
         // Actually ENTRY_RATE usually implies a window.

@@ -86,7 +86,7 @@ logAnalyzer app.log --expression 'not level=DEBUG and msg contains "session"'
 logAnalyzer large_log.log --stream --level ERROR --output filtered_errors.txt
 ```
 
-**Note:** When using `--stream`, features that require full log data (like sorting or certain statistics) are not available.
+**Note:** When using `--stream`, features that require buffering all entries (like `--sort-by`) are not available. Statistics and deduplication work normally in stream mode.
 
 ### Example 5: Process Logs from Standard Input
 

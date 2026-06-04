@@ -254,6 +254,22 @@ TEST_F(CLIConfigTest, StreamWithOrderDescParsesSuccessfully) {
     ASSERT_EQ(options.sortOrder.value(), SortOrder::DESCENDING);
 }
 
+TEST_F(CLIConfigTest, TimeBucketHistogramColonShorthand) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "time_bucket_histogram:30"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TIME_BUCKET_HISTOGRAM);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("bucket"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("bucket"), "30");
+}
+
+TEST_F(CLIConfigTest, TimeBucketHistogramColonShorthandEmptyBucketFails) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "time_bucket_histogram:"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
 TEST_F(CLIConfigTest, FindGapsBareName) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "find_gaps"});
     ASSERT_TRUE(result.has_value());
