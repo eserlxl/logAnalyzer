@@ -135,3 +135,39 @@
       Surfaces: include/config/cli.h, src/config/cli.cpp, src/main.cpp, tests/config/cli/filtering.cpp
       Acceptance: --dedup-field message keeps first per unique message; absent custom field treats each entry as unique; config_cli_filtering green.
       Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
+
+- [x] Enforce --dedup-field in stream path
+      Mode: repair
+      Surfaces: src/main.cpp
+      Acceptance: --stream --dedup-field field deduplicates in stream path same as batch; stats+stream no longer silent.
+      Verification: cmake --build build -j && ctest --test-dir build --output-on-failure
+
+- [x] Fix --stats --stream silent no-op
+      Mode: repair
+      Surfaces: src/main.cpp
+      Acceptance: --stream --stats emits stats block; --stream --stats --stats-output writes to file.
+      Verification: cmake --build build -j && ctest --test-dir build --output-on-failure
+
+- [x] Add MOVING_AVERAGE_RATE bare-name, KV-form CLI tests and reset test
+      Mode: improve
+      Surfaces: tests/config/cli/analysis.cpp, tests/stats/core.cpp
+      Acceptance: bare-name, KV-form, and reset tests pass; suites green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$|^stats_core$" --output-on-failure
+
+- [x] Extract and unit-test applyDedupField helper
+      Mode: improve
+      Surfaces: include/utils/dedup.h, src/main.cpp, tests/utils/dedup.cpp, tests/CMakeLists.txt
+      Acceptance: 5 behavioral dedup tests pass; full suite green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^utils_dedup$" --output-on-failure
+
+- [x] Add moving_average_rate:N colon shorthand
+      Mode: develop
+      Surfaces: src/config/cli_helpers.cpp, tests/config/cli/analysis.cpp
+      Acceptance: --stats moving_average_rate:30 sets bucket=30; empty bucket fails; tests green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Update docs/cli-reference.md for Cycle 1-3 features
+      Mode: docs
+      Surfaces: docs/cli-reference.md
+      Acceptance: --since, --limit, --offset, --count, --dedup-field, --stats-output, ndjson, time_bucket_histogram, percentile_stats, moving_average_rate all documented.
+      Verification: cmake --build build -j --output-on-failure
