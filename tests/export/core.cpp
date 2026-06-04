@@ -190,3 +190,52 @@ TEST(ExporterXmlTest, SanitizesCustomFieldKeys) {
     ASSERT_EQ(output.find("<1bad&key>"), std::string::npos);
     ASSERT_EQ(output.find("<a b>"), std::string::npos);
 }
+
+// Structured-field values are valid JSON expanded into nested XML by jsonToXml.
+TEST(ExporterXmlTest, StructuredFieldExpandsToNestedXml) {
+    Exporter exporter;
+    std::vector<LogEntry> entries;
+    LogEntry entry = createLogEntry(1, LogLevel::INFO, "msg");
+    entry.structuredData = R"({"user":{"name":"bob","age":30},"tags":["x","y"]})";
+    entries.push_back(entry);
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::XML;
+    settings.fieldsToExport = { ExportFieldMapping(LogEntryField::STRUCTURED_FIELD) };
+
+    exporter.exportLogEntries(ss, entries, settings);
+    const std::string output = ss.str();
+    SCOPED_TRACE(output);
+
+    // Numeric leaf renders without quotes and is well-formed.
+    ASSERT_NE(output.find("<age>30</age>"), std::string::npos);
+    // Nested object key produces matching open/close tags.
+    ASSERT_NE(output.find("<name>"), std::string::npos);
+    ASSERT_NE(output.find("</name>"), std::string::npos);
+    // Array elements render as <item> entries.
+    ASSERT_NE(output.find("<item>"), std::string::npos);
+    // No closing tag may be emitted without its '>'.
+    ASSERT_EQ(output.find("</age\n"), std::string::npos);
+    ASSERT_EQ(output.find("</name\n"), std::string::npos);
+}
+
+// Structured data that is not valid JSON falls back to a CDATA section.
+TEST(ExporterXmlTest, StructuredFieldInvalidJsonUsesCdata) {
+    Exporter exporter;
+    std::vector<LogEntry> entries;
+    LogEntry entry = createLogEntry(1, LogLevel::INFO, "msg");
+    entry.structuredData = "{not valid json";
+    entries.push_back(entry);
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::XML;
+    settings.fieldsToExport = { ExportFieldMapping(LogEntryField::STRUCTURED_FIELD) };
+
+    exporter.exportLogEntries(ss, entries, settings);
+    const std::string output = ss.str();
+    SCOPED_TRACE(output);
+
+    ASSERT_NE(output.find("<![CDATA[{not valid json]]>"), std::string::npos);
+}
