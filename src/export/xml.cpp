@@ -6,84 +6,154 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cctype>
+#include <nlohmann/json.hpp>
 
+using json = nlohmann::json;
+
+// Helper namespace for XML utilities
 namespace {
-// Function to escape characters for XML
-std::string escapeXml(const std::string &value) {
-    std::string escaped;
-    escaped.reserve(value.length());
-    for (char c : value) {
-        switch (c) {
-            case '&':  escaped += "&amp;";       break;
-            case '<':  escaped += "&lt;";        break;
-            case '>':  escaped += "&gt;";        break;
-            case '"':  escaped += "&quot;";      break;
-            case '\'': escaped += "&apos;";      break;
-            default:   escaped += c;             break;
+    std::string xmlEscape(const std::string& data) {
+        std::string buffer;
+        buffer.reserve(data.size());
+        for (char c : data) {
+            switch (c) {
+                case '&':  buffer.append("&amp;");       break;
+                case '"': buffer.append("&quot;");      break;
+                case '\'': buffer.append("&apos;");      break;
+                case '<':  buffer.append("&lt;");        break;
+                case '>':  buffer.append("&gt;");        break;
+                default:   buffer.push_back(c);         break;
+            }
+        }
+        return buffer;
+    }
+
+    // Coerce an arbitrary key into a well-formed XML element name. XML Names start
+    // with a letter, '_' or ':' and may otherwise contain digits, '-' and '.'. Any
+    // other character (e.g. '&', '<', a space) is mapped to '_', and a '_' is
+    // prepended when the first character is not a valid start char (e.g. a leading
+    // digit), so an arbitrary log key never produces malformed XML.
+    std::string sanitizeXmlName(const std::string& key) {
+        const auto isNameStart = [](unsigned char c) {
+            return std::isalpha(c) != 0 || c == '_' || c == ':';
+        };
+        const auto isNameChar = [&](unsigned char c) {
+            return isNameStart(c) || std::isdigit(c) != 0 || c == '-' || c == '.';
+        };
+        std::string result;
+        result.reserve(key.size() + 1);
+        for (char ch : key) {
+            const auto uc = static_cast<unsigned char>(ch);
+            result += isNameChar(uc) ? ch : '_';
+        }
+        if (result.empty() || !isNameStart(static_cast<unsigned char>(result.front()))) {
+            result.insert(result.begin(), '_');
+        }
+        return result;
+    }
+
+    void jsonToXml(const json& j, std::ostream& os, int indentLevel) {
+        std::string indent(indentLevel * 2, ' ');
+        if (j.is_object()) {
+            for (auto it = j.begin(); it != j.end(); ++it) {
+                const std::string tag = sanitizeXmlName(it.key());
+                os << indent << "<" << tag << ">";
+                if (it.value().is_primitive() || it.value().is_null()) {
+                    os << xmlEscape(it.value().dump());
+                } else {
+                    os << '\n';
+                    jsonToXml(it.value(), os, indentLevel + 1);
+                    os << indent;
+                }
+                os << "</" << tag << ">" << '\n';
+            }
+        } else if (j.is_array()) {
+            for (const auto& item : j) {
+                os << indent << "<item>";
+                if (item.is_primitive() || item.is_null()) {
+                    os << xmlEscape(item.dump());
+                } else {
+                    os << '\n';
+                    jsonToXml(item, os, indentLevel + 1);
+                    os << indent;
+                }
+                os << "</item>" << '\n';
+            }
         }
     }
-    return escaped;
 }
-
-void writeXmlField(std::ostream& os, const std::string& name, const std::string& value, int indent) {
-    if (value.empty()) return;
-    os << std::string(indent, ' ') << "<" << name << ">" << escapeXml(value) << "</" << name << ">" << '\n';
-}
-
-} // namespace
 
 void Exporter::exportAsXml(
     std::ostream& os,
     const std::vector<LogEntry>& entries,
     const ExportSettings& settings) {
 
-    int indent = settings.jsonIndent.value_or(0);
-    bool pretty = indent > 0;
+    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << '\n';
+    os << "<log>" << '\n';
 
-    os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << (pretty ? "\n" : "");
-    os << "<logs>" << (pretty ? "\n" : "");
+    std::vector<ExportFieldMapping> fieldsToConsider = getEffectiveExportFieldMappings(entries, settings);
 
     for (const auto& entry : entries) {
-        os << std::string(pretty ? indent : 0, ' ') << "<entry>" << (pretty ? "\n" : "");
+        os << "  <entry>" << '\n';
+        for (const auto& fieldMapping : fieldsToConsider) {
+            std::string tagName;
+            std::string value;
+            bool isStructured = false;
 
-        int fieldIndent = pretty ? indent * 2 : 0;
-        if (entry.id) {
-            writeXmlField(os, "id", std::to_string(*entry.id), fieldIndent);
-        }
-        if (entry.timestamp) {
-            writeXmlField(os, "timestamp", Utils::formatTimestamp(*entry.timestamp), fieldIndent);
-        }
-        writeXmlField(os, "level", Utils::logLevelToString(entry.level), fieldIndent);
-        writeXmlField(os, "message", entry.message, fieldIndent);
-        if (!entry.sourceFile.empty()) {
-            writeXmlField(os, "sourceFile", entry.sourceFile, fieldIndent);
-        }
-        if (entry.sourceLineNumber) {
-            writeXmlField(os, "lineNumber", std::to_string(*entry.sourceLineNumber), fieldIndent);
-        }
-        if (entry.threadId) {
-            writeXmlField(os, "threadId", *entry.threadId, fieldIndent);
-        }
-        if (entry.module) {
-            writeXmlField(os, "module", *entry.module, fieldIndent);
-        }
-        if (entry.host) {
-            writeXmlField(os, "host", *entry.host, fieldIndent);
-        }
+            std::visit([&](auto&& arg) {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, std::string>) {
+                    tagName = fieldMapping.customHeader.empty() ? arg : fieldMapping.customHeader;
+                    if (entry.customFields.count(arg)) {
+                        value = entry.customFields.at(arg);
+                    }
+                } else if constexpr (std::is_same_v<T, LogEntryField>) {
+                    tagName = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(arg) : fieldMapping.customHeader;
+                    switch (arg) {
+                        case LogEntryField::ID: value = entry.id.has_value() ? std::to_string(entry.id.value()) : ""; break;
+                        case LogEntryField::TIMESTAMP:
+                            if (entry.timestamp.has_value()) {
+                                value = fieldMapping.datetimeFormat.has_value() ? Utils::formatTimestamp(entry.timestamp.value(), *fieldMapping.datetimeFormat) : Utils::formatTimestamp(entry.timestamp.value());
+                            }
+                            break;
+                        case LogEntryField::LEVEL: value = Utils::logLevelToString(entry.level); break;
+                        case LogEntryField::MESSAGE: value = entry.message; break;
+                        case LogEntryField::SOURCE_FILE: value = entry.sourceFile; break;
+                        case LogEntryField::LINE_NUMBER: value = entry.sourceLineNumber.has_value() ? std::to_string(entry.sourceLineNumber.value()) : ""; break;
+                        case LogEntryField::THREAD_ID: value = entry.threadId.value_or(""); break;
+                        case LogEntryField::MODULE: value = entry.module.value_or(""); break;
+                        case LogEntryField::HOST: value = entry.host.value_or(""); break;
+                        case LogEntryField::STRUCTURED_FIELD:
+                            isStructured = true;
+                            if (entry.structuredData.has_value()) {
+                                value = *entry.structuredData;
+                            }
+                            break;
+                        default: break;
+                    }
+                }
+            }, fieldMapping.field);
 
-        if (!entry.customFields.empty()) {
-            os << std::string(fieldIndent, ' ') << "<customFields>" << (pretty ? "\n" : "");
-            for (const auto& [key, value] : entry.customFields) {
-                // Basic XML sanitization for key
-                std::string safe_key = key;
-                Utils::replaceAll(safe_key, " ", "_");
-                writeXmlField(os, safe_key, value, pretty ? indent * 3 : 0);
+            if (!tagName.empty()) {
+                const std::string xmlTag = sanitizeXmlName(tagName);
+                os << "    <" << xmlTag << ">";
+                if (isStructured) {
+                    try {
+                        json structuredJson = json::parse(value);
+                        os << '\n';
+                        jsonToXml(structuredJson, os, 3);
+                        os << "    ";
+                    } catch (const json::parse_error&) {
+                        os << "<![CDATA[" << value << "]]>";
+                    }
+                } else {
+                    os << xmlEscape(value);
+                }
+                os << "</" << xmlTag << ">" << '\n';
             }
-            os << std::string(fieldIndent, ' ') << "</customFields>" << (pretty ? "\n" : "");
         }
-
-        os << std::string(pretty ? indent : 0, ' ') << "</entry>" << (pretty ? "\n" : "");
+        os << "  </entry>" << '\n';
     }
-
-    os << "</logs>" << (pretty ? "\n" : "");
+    os << "</log>" << '\n';
 }
