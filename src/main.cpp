@@ -236,8 +236,13 @@ int main(int argc, char *argv[]) {
         }
 
         size_t streamMatchCount = 0;
+        size_t streamSkipCount = 0;
         auto streamEntryCallback = [&](const LogEntry &entry) -> bool {
             if (rootFilter->matches(entry) && expressionMatches(entry)) {
+                if (cliOptions.offset && streamSkipCount < *cliOptions.offset) {
+                    ++streamSkipCount;
+                    return true;
+                }
                 if (cliOptions.limit && streamMatchCount >= *cliOptions.limit) {
                     return false;
                 }
