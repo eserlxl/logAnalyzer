@@ -603,3 +603,62 @@ TEST_F(StatisticsTest, CreateCollectorFactoryGapDetectorThresholdParam) {
     const json report = collector->generateReport();
     ASSERT_EQ(report["threshold_ms"], 200);
 }
+
+TEST_F(StatisticsTest, EntryRateCollectorBasic) {
+    EntryRateCollector collector;
+    auto base = std::chrono::system_clock::from_time_t(50000);
+    for (int i = 0; i < 4; ++i) {
+        LogEntry e;
+        e.message = "x";
+        e.timestamp = base + std::chrono::seconds(i == 3 ? 4 : i);
+        collector.collect(e);
+    }
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["total_entries"], 4);
+    ASSERT_EQ(report["duration_sec"], 4);
+    ASSERT_NEAR(report["average_rate_per_sec"].get<double>(), 1.0, 0.01);
+}
+
+TEST_F(StatisticsTest, EntryRateCollectorSingleEntry) {
+    EntryRateCollector collector;
+    LogEntry e;
+    e.message = "only";
+    e.timestamp = std::chrono::system_clock::from_time_t(60000);
+    collector.collect(e);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["total_entries"], 1);
+    ASSERT_EQ(report["duration_sec"], 0);
+    ASSERT_EQ(report["average_rate_per_sec"], 0);
+}
+
+TEST_F(StatisticsTest, EntryRateCollectorReset) {
+    EntryRateCollector collector;
+    auto base = std::chrono::system_clock::from_time_t(70000);
+    for (int i = 0; i < 3; ++i) {
+        LogEntry e; e.message = "pre"; e.timestamp = base + std::chrono::seconds(i);
+        collector.collect(e);
+    }
+    collector.reset();
+    auto base2 = std::chrono::system_clock::from_time_t(80000);
+    for (int i = 0; i < 2; ++i) {
+        LogEntry e; e.message = "post"; e.timestamp = base2 + std::chrono::seconds(i);
+        collector.collect(e);
+    }
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["total_entries"], 2);
+}
+
+TEST_F(StatisticsTest, EntryRateRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::ENTRY_RATE), "ENTRY_RATE");
+    auto opt = Utils::stringToStatisticType("ENTRY_RATE");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::ENTRY_RATE);
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryEntryRate) {
+    StatisticConfig config;
+    config.type = StatisticType::ENTRY_RATE;
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    ASSERT_EQ(collector->getName(), "entry_rate");
+}
