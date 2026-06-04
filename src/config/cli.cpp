@@ -309,12 +309,13 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
         appOptions.statsWindow = std::chrono::seconds(statsWindowSec); // Keep for legacy compatibility if used elsewhere
     }
     
-    // What about --find-gaps? No direct statistic type for "Gaps" in Statistics.h yet, but maybe implicitly handled or I missed it.
-    // Statistics.h has: UNIQUE_MESSAGES, TOP_MESSAGES, ENTRY_RATE, LOG_LEVEL_COUNT, FIELD_VALUE_COUNT, TOP_N_FIELD_VALUES.
-    // No FIND_GAPS.
-    // If FIND_GAPS is not in StatisticType, I cannot map it to StatisticConfig.
-    // So I leave it as is in appOptions for legacy handling.
-    if(gapDurationMs > 0) appOptions.findGapsDuration = std::chrono::milliseconds(gapDurationMs);
+    if (gapDurationMs > 0) {
+        appOptions.findGapsDuration = std::chrono::milliseconds(gapDurationMs);
+        StatisticConfig sc;
+        sc.type = StatisticType::FIND_GAPS;
+        sc.params["threshold_ms"] = std::to_string(gapDurationMs);
+        settings.statisticConfigs.push_back(sc);
+    }
 
 
     // Post-processing options

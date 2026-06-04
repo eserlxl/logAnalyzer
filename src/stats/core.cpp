@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <chrono>
+#include <limits>
 #include <vector>
 #include <optional>
 
@@ -339,6 +341,38 @@ json PercentileStatsCollector::generateReport() const {
     return report;
 }
 
+// GapDetectorCollector
+GapDetectorCollector::GapDetectorCollector(long long thresholdMs)
+    : _thresholdMs(thresholdMs > 0 ? thresholdMs : 1000) {}
+
+void GapDetectorCollector::collect(const LogEntry& entry) {
+    if (entry.timestamp) _timestamps.push_back(*entry.timestamp);
+}
+
+json GapDetectorCollector::generateReport() const {
+    json report;
+    report["name"] = "gap_detector";
+    report["threshold_ms"] = _thresholdMs;
+    json gaps = json::array();
+    if (_timestamps.size() >= 2) {
+        std::vector<std::chrono::system_clock::time_point> sorted = _timestamps;
+        std::sort(sorted.begin(), sorted.end());
+        for (size_t i = 1; i < sorted.size(); ++i) {
+            auto gapMs = std::chrono::duration_cast<std::chrono::milliseconds>(sorted[i] - sorted[i-1]).count();
+            if (gapMs > _thresholdMs) {
+                gaps.push_back({
+                    {"start", Utils::formatTimestamp(sorted[i-1])},
+                    {"end",   Utils::formatTimestamp(sorted[i])},
+                    {"duration_ms", gapMs}
+                });
+            }
+        }
+    }
+    report["gap_count"] = static_cast<int>(gaps.size());
+    report["gaps"] = gaps;
+    return report;
+}
+
 // MovingAverageRateCollector
 MovingAverageRateCollector::MovingAverageRateCollector(int bucketSeconds)
     : _bucketSeconds(bucketSeconds > 0 ? bucketSeconds : 60) {}
@@ -477,6 +511,20 @@ namespace Statistics {
                     }
                 }
                 return std::make_unique<MovingAverageRateCollector>(bucketSeconds);
+            }
+            case StatisticType::FIND_GAPS: {
+                long long thresholdMs = 1000;
+                auto it = config.params.find("threshold_ms");
+                if (it != config.params.end() && !it->second.empty()) {
+                    long long parsed = 0;
+                    const char* begin = it->second.data();
+                    const char* end = begin + it->second.size();
+                    auto [ptr, ec] = std::from_chars(begin, end, parsed);
+                    if (ec == std::errc{} && ptr == end && parsed > 0) {
+                        thresholdMs = parsed;
+                    }
+                }
+                return std::make_unique<GapDetectorCollector>(thresholdMs);
             }
             case StatisticType::UNKNOWN:
             default:

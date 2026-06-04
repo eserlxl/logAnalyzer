@@ -24,6 +24,7 @@ enum class StatisticType {
     TIME_BUCKET_HISTOGRAM,  // Per-bucket entry count grouped by configurable time window
     PERCENTILE_STATS,       // P50/P95/P99 for a named numeric custom field
     MOVING_AVERAGE_RATE,    // Mean/min/max entries per configurable time bucket
+    FIND_GAPS,              // Detect time gaps between adjacent entries exceeding a threshold
     UNKNOWN
 };
 
@@ -220,6 +221,18 @@ public:
 private:
     std::string _fieldName;
     std::vector<double> _values;
+};
+
+class GapDetectorCollector : public IStatisticCollector {
+public:
+    explicit GapDetectorCollector(long long thresholdMs = 1000);
+    void collect(const LogEntry& entry) override;
+    json generateReport() const override;
+    std::string getName() const override { return "gap_detector"; }
+    void reset() override { _timestamps.clear(); }
+private:
+    long long _thresholdMs;
+    std::vector<std::chrono::system_clock::time_point> _timestamps;
 };
 
 class MovingAverageRateCollector : public IStatisticCollector {

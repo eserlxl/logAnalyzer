@@ -229,6 +229,20 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             }
             return std::make_shared<MovingAverageRateCollector>(bucketSeconds);
         }
+        case StatisticType::FIND_GAPS: {
+            long long thresholdMs = 1000;
+            auto itThresh = config.params.find("threshold_ms");
+            if (itThresh != config.params.end() && !itThresh->second.empty()) {
+                long long parsed = 0;
+                const char* begin = itThresh->second.data();
+                const char* end = begin + itThresh->second.size();
+                auto [ptr, ec] = std::from_chars(begin, end, parsed);
+                if (ec == std::errc{} && ptr == end && parsed > 0) {
+                    thresholdMs = parsed;
+                }
+            }
+            return std::make_shared<GapDetectorCollector>(thresholdMs);
+        }
         case StatisticType::UNKNOWN:
         default:
             std::cerr << "Warning: Attempted to create unknown statistic type." << '\n';
