@@ -199,3 +199,10 @@ TEST_F(CLIConfigTest, SinceConflictsWithStart) {
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }
+
+TEST_F(CLIConfigTest, DedupFieldOption) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--dedup-field", "session_id"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_EQ(options.dedupField, "session_id");
+}

@@ -178,6 +178,8 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     app.add_option("--stats-output", appOptions.statsOutputPath, "Write statistics JSON to this file instead of stdout");
 
+    app.add_option("--dedup-field", appOptions.dedupField, "Keep only the first entry per unique value of FIELD (standard field: level, message, source; or a custom field name)");
+
     app.add_option("--top-n", appOptions.topMessagesCount, "Number of top messages to show for top_messages statistic (Deprecated: use --stats \"type=TOP_MESSAGES,top_n=X\")") 
        ->check(CLI::PositiveNumber); 
 
