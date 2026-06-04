@@ -306,12 +306,31 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_EmptyField)
     EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'field' parameter"));
 }
 
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_WhitespaceFieldRejected) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::PERCENTILE_STATS, {{"field", "  "}}}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'field' parameter"));
+}
+
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_Valid) {
     settings.statisticConfigs = {
         StatisticConfig{StatisticType::PERCENTILE_STATS, {{"field", "latency_ms"}}}
     };
     errors = settings.validate();
     ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_StandardFieldAccepted) {
+    for (const auto& fieldName : {"lineNumber", "id", "line_number"}) {
+        settings.statisticConfigs = {
+            StatisticConfig{StatisticType::PERCENTILE_STATS, {{"field", fieldName}}}
+        };
+        errors = settings.validate();
+        EXPECT_TRUE(errors.empty()) << "Standard field '" << fieldName << "' should pass PERCENTILE_STATS validation";
+    }
 }
 
 TEST_F(ConfigValidationTest, ValidateTopMessagesNoTopNAccepted) {

@@ -106,6 +106,18 @@ logAnalyzer system.log --level ERROR --stats top_messages:5
 
 # Get the top 10 messages using the new, more flexible syntax
 logAnalyzer system.log --stats "type=TOP_MESSAGES,top_n=10"
+
+# Compute P50/P95/P99 percentiles for the response_time field across all errors
+logAnalyzer api.log --level ERROR --stats "percentile_stats:response_time"
+
+# Compute a moving average rate of log entries per 30-second bucket
+logAnalyzer app.log --stats "moving_average_rate:30"
+
+# Stream a large file and emit a percentile report every 500 matching entries
+logAnalyzer app.log --stream --stats "percentile_stats:response_time" --stats-interval 500
+
+# Stream and emit a moving average rate report every 1000 entries (60s buckets)
+logAnalyzer app.log --stream --stats "moving_average_rate:60" --stats-interval 1000
 ```
 
 ### Example 7: Custom Export

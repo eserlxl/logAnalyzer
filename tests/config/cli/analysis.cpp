@@ -182,6 +182,26 @@ TEST_F(CLIConfigTest, PercentileStatsColonShorthand) {
     ASSERT_EQ(settings.statisticConfigs[0].params.at("field"), "latency_ms");
 }
 
+TEST_F(CLIConfigTest, PercentileStatsColonShorthandLineNumber) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "percentile_stats:lineNumber"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::PERCENTILE_STATS);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("field"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("field"), "lineNumber");
+}
+
+TEST_F(CLIConfigTest, PercentileStatsColonShorthandId) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "percentile_stats:id"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::PERCENTILE_STATS);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("field"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("field"), "id");
+}
+
 TEST_F(CLIConfigTest, PercentileStatsColonShorthandEmptyFieldFails) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "percentile_stats:"});
     ASSERT_FALSE(result.has_value());
