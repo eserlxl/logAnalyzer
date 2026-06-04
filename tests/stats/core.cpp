@@ -500,3 +500,19 @@ TEST_F(StatisticsTest, CreateCollectorFactoryMovingAverageRateBucketParam) {
     const json report = collector->generateReport();
     ASSERT_EQ(report["bucket_seconds"], 30);
 }
+
+TEST_F(StatisticsTest, MovingAverageRateCollectorReset) {
+    MovingAverageRateCollector collector(10);
+    auto base = std::chrono::system_clock::from_time_t(5000);
+    LogEntry e1; e1.message = "pre"; e1.timestamp = base;
+    collector.collect(e1);
+    collector.reset();
+
+    LogEntry e2; e2.message = "post"; e2.timestamp = base + std::chrono::seconds(10);
+    collector.collect(e2);
+
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["bucket_count"], 1);
+    ASSERT_EQ(report["total_entries"], 1);
+    ASSERT_DOUBLE_EQ(report["mean_per_bucket"].get<double>(), 1.0);
+}

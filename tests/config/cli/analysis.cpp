@@ -170,3 +170,22 @@ TEST_F(CLIConfigTest, StatsOutputPath) {
     auto& options = result.value().second;
     ASSERT_EQ(options.statsOutputPath, "stats.json");
 }
+
+TEST_F(CLIConfigTest, MovingAverageRateStatBareName) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "moving_average_rate"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::MOVING_AVERAGE_RATE);
+    ASSERT_FALSE(settings.statisticConfigs[0].params.contains("bucket"));
+}
+
+TEST_F(CLIConfigTest, MovingAverageRateStatKVForm) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=moving_average_rate,bucket=30"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::MOVING_AVERAGE_RATE);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("bucket"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("bucket"), "30");
+}
