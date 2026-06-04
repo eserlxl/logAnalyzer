@@ -331,3 +331,28 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCountIdAccepted) 
     errors = settings.validate();
     EXPECT_TRUE(errors.empty()) << "target_field=id should be valid. Error: " << (errors.empty() ? "" : errors[0]);
 }
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCountIdCaseInsensitive) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "ID"}}}
+    };
+    errors = settings.validate();
+    EXPECT_TRUE(errors.empty()) << "target_field=ID (uppercase) should be valid. Error: " << (errors.empty() ? "" : errors[0]);
+
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::FIELD_VALUE_COUNT, {{std::string(config_keys::TARGET_FIELD), "Id"}}}
+    };
+    errors = settings.validate();
+    EXPECT_TRUE(errors.empty()) << "target_field=Id (mixed case) should be valid. Error: " << (errors.empty() ? "" : errors[0]);
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValuesIdAccepted) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {
+            {std::string(config_keys::TARGET_FIELD), "id"},
+            {std::string(config_keys::TOP_N), "5"}
+        }}
+    };
+    errors = settings.validate();
+    EXPECT_TRUE(errors.empty()) << "TOP_N_FIELD_VALUES target_field=id should be valid. Error: " << (errors.empty() ? "" : errors[0]);
+}

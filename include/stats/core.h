@@ -22,7 +22,7 @@ enum class StatisticType {
     FIELD_VALUE_COUNT,      // New: Count occurrences of unique values for a specified field
     TOP_N_FIELD_VALUES,     // New: Report top N most frequent values for a specified field
     TIME_BUCKET_HISTOGRAM,  // Per-bucket entry count grouped by configurable time window
-    PERCENTILE_STATS,       // P50/P95/P99 for a named numeric custom field
+    PERCENTILE_STATS,       // P50/P95/P99 for a named numeric field (standard LogEntry or custom field key)
     MOVING_AVERAGE_RATE,    // Mean/min/max entries per configurable time bucket
     FIND_GAPS,              // Detect time gaps between adjacent entries exceeding a threshold
     UNKNOWN
@@ -210,7 +210,7 @@ private:
     std::map<long long, int> _counts; // key: bucket start epoch seconds
 };
 
-// P50/P95/P99 for a named numeric custom field
+// P50/P95/P99 for a named numeric field (standard LogEntry field such as lineNumber or id, or a custom field key)
 class PercentileStatsCollector : public IStatisticCollector {
 public:
     explicit PercentileStatsCollector(std::string fieldName);

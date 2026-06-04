@@ -210,10 +210,18 @@ PercentileStatsCollector::PercentileStatsCollector(std::string fieldName)
     : _fieldName(std::move(fieldName)) {}
 
 void PercentileStatsCollector::collect(const LogEntry& entry) {
-    auto it = entry.customFields.find(_fieldName);
-    if (it == entry.customFields.end()) return;
+    std::string valueStr;
+    auto normalized = normalizeTargetFieldName(_fieldName);
+    if (normalized) {
+        valueStr = extractFieldValue(entry, *normalized, "");
+    } else {
+        auto it = entry.customFields.find(_fieldName);
+        if (it == entry.customFields.end()) return;
+        valueStr = it->second;
+    }
+    if (valueStr.empty()) return;
     try {
-        _values.push_back(std::stod(it->second));
+        _values.push_back(std::stod(valueStr));
     } catch (...) {}
 }
 

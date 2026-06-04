@@ -135,6 +135,25 @@ TEST_F(FilterTest, MinLevelFilterTest) {
     EXPECT_FALSE(filter.matches(entry_debug));
 }
 
+TEST_F(FilterTest, MaxLevelFilterTest) {
+    MaxLevelFilter filter(LogLevel::WARNING);
+    auto entry_trace   = createLogEntry(1, "app.log", now, LogLevel::TRACE,    "Trace message");
+    auto entry_debug   = createLogEntry(2, "app.log", now, LogLevel::DEBUG,    "Debug message");
+    auto entry_info    = createLogEntry(3, "app.log", now, LogLevel::INFO,     "Info message");
+    auto entry_warning = createLogEntry(4, "app.log", now, LogLevel::WARNING,  "Warning message");
+    auto entry_error   = createLogEntry(5, "app.log", now, LogLevel::ERROR,    "Error occurred");
+    auto entry_critical= createLogEntry(6, "app.log", now, LogLevel::CRITICAL, "Critical failure");
+    auto entry_fatal   = createLogEntry(7, "app.log", now, LogLevel::FATAL,    "Fatal error");
+
+    EXPECT_TRUE(filter.matches(entry_trace));
+    EXPECT_TRUE(filter.matches(entry_debug));
+    EXPECT_TRUE(filter.matches(entry_info));
+    EXPECT_TRUE(filter.matches(entry_warning));
+    EXPECT_FALSE(filter.matches(entry_error));
+    EXPECT_FALSE(filter.matches(entry_critical));
+    EXPECT_FALSE(filter.matches(entry_fatal));
+}
+
 TEST_F(FilterTest, BoolFilterTest) {
     BoolFilter filter_true("flag", true);
     EXPECT_TRUE(filter_true.matches(createLogEntry(1, "log", now, LogLevel::INFO, "msg", {{"flag", "true"}})));

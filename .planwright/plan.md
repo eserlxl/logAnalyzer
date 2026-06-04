@@ -1,65 +1,74 @@
 # planwright Plan — .
 <!-- Session: 2026-06-05T00:00:00Z -->
 
-- [x] Fix --stats-interval partial stats routing to outputStream
-      Mode: repair
-      Rationale: When --stats-interval fires, partial stats are routed to *outputStream when statsOutputPath is set (main.cpp:268-270), which corrupts the main data output (e.g., mixes stats JSON into an NDJSON log file). Partial stats are informational metadata and should always go to stderr.
-      Evidence: src/main.cpp:264-274 — after `++streamMatchCount` the interval block does `std::ostream& statsOut = cliOptions.statsOutputPath.empty() ? std::cerr : *outputStream;`; the end-of-stream path (lines 342-358) correctly opens a separate std::ofstream for statsOutputPath; the interval path bypasses that and writes to the main output stream.
-      Surfaces: src/main.cpp
-      Development: In src/main.cpp, change the interval stats ostream selection to always use std::cerr: replace `std::ostream& statsOut = cliOptions.statsOutputPath.empty() ? std::cerr : *outputStream;` with `std::ostream& statsOut = std::cerr;` — the end-of-stream path still writes to statsOutputPath correctly; partial-interval output is always informational and must not interleave with data.
-      Acceptance: Interval stats always write to stderr; end-of-stream stats still write to statsOutputPath when set; no data corruption of outputStream; config_cli_analysis green.
-      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+- [ ] Add --max-level to docs/cli-reference.md Filtering table and update features.md
+      Mode: docs
+      Rationale: --max-level was implemented in Cycle 10 but the CLI reference still has no --max-level row; docs/features.md line 9 "Keyword & Regex Filtering" row also omits range filtering. Users relying on docs to discover options will not find the feature.
+      Evidence: docs/cli-reference.md:50 — has --min-level row but no --max-level row; grep for "max.level" in docs/cli-reference.md returns nothing; docs/features.md:9 — says "Filter by log level, keywords" with no mention of --min-level or --max-level; include/config/cli.h now has maxLogLevel field; src/config/cli.cpp has the --max-level registration; tests pass.
+      Surfaces: docs/cli-reference.md, docs/features.md
+      Development: In docs/cli-reference.md, insert a `--max-level LEVEL` row immediately after the `--min-level LEVEL` row (line 50), describing it as "Includes log entries with a level equal to or less severe than the specified level (e.g., `WARNING` will include `TRACE`, `DEBUG`, `INFO`, `WARNING`). Case-insensitive." In docs/features.md line 9, update the "Keyword & Regex Filtering" row description to mention level range filtering: add "Supports `--min-level` / `--max-level` for severity range filtering (inclusive)."
+      Acceptance: grep -n "max-level" docs/cli-reference.md shows the new row; grep "max-level\|min-level" docs/features.md shows the updated row; no existing test breaks.
+      Verification: grep -n "max-level" /opt/lxl/c++/logAnalyzer/docs/cli-reference.md && grep "min-level\|max-level" /opt/lxl/c++/logAnalyzer/docs/features.md
 
-- [x] Fix validation rejects TOP_MESSAGES without top_n param
-      Mode: repair
-      Rationale: LogAnalyzerSettings::validate() (validation.cpp:135-143) errors when a TOP_MESSAGES StatisticConfig has no top_n param, but both factories (stats/core.cpp and stats/analyzer.cpp) default topN=10 when top_n is absent — making bare --stats top_messages configs impossible to use from JSON files.
-      Evidence: src/config/validation.cpp:135 checks `sc.type == StatisticType::TOP_MESSAGES || sc.type == StatisticType::TOP_N_FIELD_VALUES` and errors when !has_top_n; tests/config/core/validation.cpp:262 always passes top_n="5" for TOP_MESSAGES (no test without top_n); stats/core.cpp:424-433 sets `int topN = 10;` then optionally reads top_n; TOP_N_FIELD_VALUES genuinely requires top_n (factory returns nullptr without it).
-      Surfaces: src/config/validation.cpp, tests/config/core/validation.cpp
-      Development: In src/config/validation.cpp, change the condition at line 135 from `StatisticType::TOP_MESSAGES || StatisticType::TOP_N_FIELD_VALUES` to only `StatisticType::TOP_N_FIELD_VALUES`; add a separate block for TOP_MESSAGES that only validates the format of top_n when it IS present; in tests/config/core/validation.cpp add a test ValidateTopMessagesNoTopNAccepted that constructs {TOP_MESSAGES, {}} and asserts errors.empty().
-      Acceptance: TOP_MESSAGES with no top_n passes validate(); TOP_MESSAGES with invalid top_n still errors; TOP_N_FIELD_VALUES without top_n still errors; validation tests green.
+- [ ] Add MaxLevelFilterTest unit test to tests/filter/core/unit/basic.cpp
+      Mode: improve
+      Rationale: tests/filter/core/unit/basic.cpp has a MinLevelFilterTest (line 123) that directly exercises MinLevelFilter::matches, but MaxLevelFilter was added in Cycle 10 without a symmetric filter-level unit test — its behavior (entry.level <= maxLevel_) is only indirectly covered by the CLI option test.
+      Evidence: tests/filter/core/unit/basic.cpp:123-135 — MinLevelFilterTest creates MinLevelFilter(WARNING) and asserts FATAL/ERROR/WARNING pass, INFO/DEBUG fail; no MaxLevelFilterTest exists; tests/config/cli/filtering.cpp:226 MaxLevel only confirms the CLI option sets maxLogLevel.has_value() but never exercises the filter's matches() method.
+      Surfaces: tests/filter/core/unit/basic.cpp
+      Development: After the MinLevelFilterTest block (line 135), add TEST_F(FilterTest, MaxLevelFilterTest) creating MaxLevelFilter(WARNING) and asserting entry_trace/debug/info/warning pass (level <= WARNING), and entry_error/critical/fatal fail (level > WARNING) — mirror the structure of MinLevelFilterTest.
+      Acceptance: MaxLevelFilterTest covers all 7 LogLevel values; filter_core_unit_basic green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^filter_core_unit_basic$" --output-on-failure
+
+- [ ] Add MaxLevelInvalid and MinLevelMaxLevelRange CLI option tests
+      Mode: improve
+      Rationale: tests/config/cli/filtering.cpp has InvalidLogLevel (for --level INVALID) but no parallel for --max-level INVALID; it also tests --min-level and --max-level individually but never together, leaving the AND-combination (range filter) behavior unconfirmed.
+      Evidence: tests/config/cli/filtering.cpp:28 InvalidLogLevel tests "--level INVALID" → Code::InvalidCLIOption; MaxLevel (line 226) and MinLevel (line 210) test valid values only; no MinLevelMaxLevelRange test verifying both options are set simultaneously; the filterLevels AND logic that combines them is what users actually rely on.
+      Surfaces: tests/config/cli/filtering.cpp
+      Development: Add TEST_F(CLIConfigTest, MaxLevelInvalid) parsing "--max-level INVALID" asserting !result.has_value() with Code::InvalidCLIOption — mirror InvalidLogLevel. Add TEST_F(CLIConfigTest, MinLevelMaxLevelRange) parsing "--min-level INFO --max-level WARNING" asserting both minLogLevel=INFO and maxLogLevel=WARNING are set.
+      Acceptance: MaxLevelInvalid rejects, MinLevelMaxLevelRange parses both correctly; config_cli_filtering green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
+
+- [ ] Add TopNFieldValuesCollectorForId and ValidateStatisticConfig_TopNFieldValuesIdAccepted tests
+      Mode: improve
+      Rationale: FieldValueCountCollectorForId tests the id field for FieldValueCountCollector; both collector types use stats::detail::extractFieldValue via getFieldValueAsString, but TopNFieldValuesCollector's id path (including its top-N sort-and-truncate logic) is untested. ValidateStatisticConfig_FieldValueCountIdAccepted exists but no parallel for TOP_N_FIELD_VALUES.
+      Evidence: tests/stats/core.cpp — FieldValueCountCollectorForId added in C10; TopNFieldValuesCollector tests exist for message/thread_id but not for id field; tests/config/core/validation.cpp — ValidateStatisticConfig_FieldValueCountIdAccepted exists; TOP_N_FIELD_VALUES with target_field=id untested.
+      Surfaces: tests/stats/core.cpp, tests/config/core/validation.cpp
+      Development: In tests/stats/core.cpp add TEST_F(StatisticsTest, TopNFieldValuesCollectorForId): create TopNFieldValuesCollector(2, "id"), collect 4 entries with ids {10, 10, 20, 30} (entry with no id skipped), assert report["values"][0]["value"]=="10" (most frequent, count 2); assert only 2 values returned (top_n=2). In tests/config/core/validation.cpp add ValidateStatisticConfig_TopNFieldValuesIdAccepted: FIELD_VALUE_COUNT-like config with TOP_N_FIELD_VALUES type, target_field=id, top_n=5, assert errors.empty().
+      Acceptance: Both new tests pass; existing tests unaffected; stats_core and config_core_validation green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$|^config_core_validation$" --output-on-failure
+
+- [ ] Add case-insensitive id field tests to config/core/validation
+      Mode: improve
+      Rationale: normalizeTargetFieldName lowercases the input before matching, so "ID", "Id", "iD" all map to "id" — but no test verifies this for the newly added id field specifically (existing case-insensitive tests only cover "LeVeL" and similar standard fields).
+      Evidence: include/stats/helpers.h:43-55 — std::transform to lowercase then if (field == "id") return "id"; tests/config/core/validation.cpp:172 — ValidateStatisticConfig_TopNFieldValues_CaseInsensitiveTargetField uses "LeVeL" to verify lowercasing; no test with "ID" or "Id" in target_field.
+      Surfaces: tests/config/core/validation.cpp
+      Development: In tests/config/core/validation.cpp add TEST_F(ConfigValidationTest, ValidateStatisticConfig_FieldValueCountIdCaseInsensitive): pass target_field="ID" (uppercase) for FIELD_VALUE_COUNT, assert errors.empty(). Add a second case with "Id" (mixed) in the same test or a separate test. Mirror the ValidateStatisticConfig_TopNFieldValues_CaseInsensitiveTargetField pattern.
+      Acceptance: target_field="ID" and target_field="Id" both pass validation; config_core_validation green.
       Verification: cmake --build build -j && ctest --test-dir build -R "^config_core_validation$" --output-on-failure
 
-- [x] Consolidate third normalizeTargetFieldName copy from validation.cpp
-      Mode: improve
-      Rationale: src/config/validation.cpp has a third anonymous-namespace copy of normalizeTargetFieldName (lines 15-39) identical to the stats::detail version in include/stats/helpers.h; Cycle 8 only deduplicated the two stats/ copies and missed this third one — future drift in field alias handling (e.g., adding a new alias) must still be applied in two places.
-      Evidence: src/config/validation.cpp:15 defines `std::optional<std::string> normalizeTargetFieldName(std::string_view rawField)` in an anonymous namespace; include/stats/helpers.h provides the identical `stats::detail::normalizeTargetFieldName`; the bodies are byte-for-byte identical.
-      Surfaces: src/config/validation.cpp
-      Development: In src/config/validation.cpp, remove the anonymous-namespace normalizeTargetFieldName definition (lines 13-40) and add `#include "stats/helpers.h"` plus `using stats::detail::normalizeTargetFieldName;` — the dependency is appropriate since validation.cpp already validates statistic configs which are stats-domain objects.
-      Acceptance: Build succeeds; all validation tests pass; no anonymous normalizeTargetFieldName definition remains in validation.cpp.
-      Verification: cmake --build build -j && ctest --test-dir build -R "^config_core_validation$" --output-on-failure
+- [ ] Extend PercentileStatsCollector to support standard LogEntry numeric fields
+      Mode: develop
+      Rationale: PercentileStatsCollector::collect only looks up customFields by key; extractFieldValue in helpers.h supports lineNumber (std::to_string(*entry.sourceLineNumber)), id (std::to_string(*entry.id)), timestamp (formatted string), and other standard fields — any numeric-valued standard field (lineNumber, id) can produce meaningful percentile results. Users cannot do --stats percentile_stats:lineNumber today.
+      Evidence: src/stats/core.cpp:212-218 — collect does entry.customFields.find(_fieldName) only; stats/helpers.h extractFieldValue handles all LogEntry fields; include/stats/core.h:213 comment says "named numeric custom field"; docs/cli-reference.md stats table does not clarify field scope; --stats percentile_stats:lineNumber would silently produce zero-count output today.
+      Surfaces: src/stats/core.cpp, include/stats/core.h, tests/stats/core.cpp, docs/cli-reference.md
+      Development: In src/stats/core.cpp PercentileStatsCollector::collect, replace the bare customFields.find with: (1) call normalizeTargetFieldName(_fieldName); (2) if it resolves, call extractFieldValue(entry, *normalized, "") for valueStr; (3) else fall through to customFields.find(_fieldName) as before; (4) if valueStr.empty() return; (5) stod as before. Update include/stats/core.h line 213 comment from "named numeric custom field" to "named numeric field (standard LogEntry field or custom field key)". In tests/stats/core.cpp add PercentileStatsCollectorForLineNumber: create collector("lineNumber") or ("line_number" alias), collect fixture entries (sourceLineNumber 1-7), assert p50 ≈ 4. Update docs/cli-reference.md percentile_stats row to mention standard field support.
+      Acceptance: --stats percentile_stats:lineNumber collects line number values; --stats percentile_stats:latency_ms still works (custom field); non-numeric fields silently produce zero samples; stats_core green; docs updated.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
 
-- [x] Add validate() call after analyzerSettings.merge() in main.cpp
+- [ ] Add MinLevelInvalid test parallel to MaxLevelInvalid
       Mode: improve
-      Rationale: main.cpp calls analyzerSettings.merge(cliSettings) at line 75 but never calls analyzerSettings.validate() — invalid CLI-originated settings (bad regex patterns in --pattern, invalid filter rules, etc.) are silently accepted and may cause runtime failures deep in the pipeline instead of being reported at startup.
-      Evidence: src/main.cpp:75 merges CLI settings; src/config/json.cpp:370 calls validate() in the JSON config path; src/main.cpp has no validate() call; src/config/validation.cpp validates lineParsePattern with std::regex (line 68) which would catch bad regexes early.
-      Surfaces: src/main.cpp
-      Development: In src/main.cpp, after line 75 (`analyzerSettings.merge(cliSettings);`), add `auto validationErrors = analyzerSettings.validate(); if (!validationErrors.empty()) { for (const auto& e : validationErrors) std::cerr << "Configuration error: " << e << '\n'; return 1; }` — this reports all validation errors to stderr and exits cleanly before any analysis begins.
-      Acceptance: Invalid settings (e.g., bad regex in lineParsePattern from CLI) produce an error message and exit code 1; valid settings proceed normally; full test suite passes.
-      Verification: cmake --build build -j && ctest --test-dir build --output-on-failure
+      Rationale: InvalidLogLevel tests --level INVALID and MaxLevelInvalid (from item 3) tests --max-level INVALID; --min-level also uses the same CLI11 CheckedTransformer and should have its own rejection test for completeness, but none exists.
+      Evidence: tests/config/cli/filtering.cpp — InvalidLogLevel (line 28) covers --level; no MinLevelInvalid test; MaxLevelInvalid is being added by the preceding plan item; --min-level uses transform(CLI::CheckedTransformer(Config::LogLevelMap, CLI::ignore_case)) same as --max-level.
+      Surfaces: tests/config/cli/filtering.cpp
+      Development: In tests/config/cli/filtering.cpp add TEST_F(CLIConfigTest, MinLevelInvalid) parsing "--min-level INVALID" asserting !result.has_value() with Code::InvalidCLIOption — single test, mirrors MaxLevelInvalid. This can be added in the same editing pass as the MaxLevelInvalid test (item 3) if execution order allows, or as its own small commit.
+      Acceptance: MinLevelInvalid rejects with InvalidCLIOption; config_cli_filtering green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
 
-- [x] Add warning when --stats-interval is used without --stream
+- [ ] Add PercentileStatsCollectorReset test
       Mode: improve
-      Rationale: --stats-interval only has effect in stream mode (the interval check is in the stream callback); in batch mode the option is silently ignored — users have no indication their interval setting is ineffective.
-      Evidence: src/main.cpp:266 interval check is inside the `if (cliOptions.streamMode)` block at line 186; src/config/cli.cpp:183 adds the option with no stream-mode validation; if a user runs `logAnalyzer myfile.log --stats-interval 100 --stats unique_messages` they see no intervals and no warning.
-      Surfaces: src/config/cli.cpp
-      Development: In src/config/cli.cpp parseCLI, in the post-parse validation section (around line 358), add a check: if `app.count("--stats-interval") && !appOptions.streamMode`, emit `std::cerr << "Warning: --stats-interval has no effect without --stream mode.\n";` — not an error (it's a valid config, just non-functional).
-      Acceptance: Using --stats-interval without --stream emits a warning to stderr; parsing still succeeds; using --stats-interval with --stream emits no warning; config_cli_analysis green.
-      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
-
-- [x] Add test that --stats-interval 0 is rejected by CLI validation
-      Mode: improve
-      Rationale: --stats-interval uses CLI::PositiveNumber which should reject 0, but this constraint is untested — if the validator was accidentally removed, 0 would silently enter the code and cause an immediate stats flush on every entry (every-match modulo 0 is undefined behavior / divide-by-zero).
-      Evidence: src/config/cli.cpp:184 `->check(CLI::PositiveNumber)`; main.cpp:266 `streamMatchCount % *cliOptions.statsInterval == 0` — if statsInterval were 0, this is UB; tests/config/cli/analysis.cpp StatsIntervalOption tests N=100 but not N=0; CLI::PositiveNumber should reject 0 (requires >0) but is not directly exercised.
-      Surfaces: tests/config/cli/analysis.cpp
-      Development: In tests/config/cli/analysis.cpp add TEST_F(CLIConfigTest, StatsIntervalZeroRejected) that parses {"log_analyzer","dummy_log_file.log","--stats-interval","0"} and asserts !result.has_value() with code InvalidCLIOption; add TEST_F(CLIConfigTest, StatsIntervalNegativeRejected) for "--stats-interval","-1" similarly.
-      Acceptance: Both tests pass; config_cli_analysis green.
-      Verification: ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
-
-- [x] Consolidate dual stat collector factories into single createCollector
-      Mode: reorganize
-      Rationale: Statistics::createCollector (stats/core.cpp:418+) and LogAnalyzer::createStatisticCollector (stats/analyzer.cpp:82+) implement the same switch-on-StatisticType dispatch with near-identical code for all 10 types — any new StatisticType must be added in both places, and subtle bugs (like different FIND_GAPS parse paths) can diverge silently.
-      Evidence: src/stats/core.cpp:418-535 and src/stats/analyzer.cpp:82-255 both contain full switch statements over all StatisticType values; both are called from different contexts (Statistics::addConfiguredCollectors vs LogAnalyzer internal stats); Cycle 8 consolidated the helpers but left both factory bodies untouched.
-      Surfaces: src/stats/core.cpp, src/stats/analyzer.cpp, include/stats/core.h, include/analyzer/core.h
-      Development: Make LogAnalyzer::createStatisticCollector delegate to Statistics::createCollector: in src/stats/core.cpp, ensure Statistics::createCollector returns std::unique_ptr<IStatisticCollector>; in src/stats/analyzer.cpp, replace the full switch-case body with a single `return Statistics::createCollector(config);` call, adjusting the return type if needed (shared_ptr vs unique_ptr); delete the duplicate switch cases; run stats tests to verify both call paths exercise the same factory.
-      Acceptance: Build succeeds; all stats tests pass; src/stats/analyzer.cpp createStatisticCollector no longer contains a switch-case over StatisticType.
-      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_" --output-on-failure
+      Rationale: Every IStatisticCollector has a reset() method; stats/core.h line 220 defines PercentileStatsCollector::reset() as { _values.clear(); }; no test verifies that reset() discards accumulated samples so the collector can be reused (e.g., in --stats-interval windows) — only the ENTRY_RATE reset test and some MovingAverage tests cover this pattern.
+      Evidence: tests/stats/core.cpp — scanning existing reset tests: MovingAverageRateCollectorReset exists; no PercentileStatsCollectorReset test; the pattern is: collect some entries, call reset(), re-collect, assert report reflects only post-reset entries.
+      Surfaces: tests/stats/core.cpp
+      Development: In tests/stats/core.cpp add TEST_F(StatisticsTest, PercentileStatsCollectorReset): create PercentileStatsCollector("latency_ms"), collect one entry with latency_ms="100", call reset(), collect one entry with latency_ms="200", call generateReport(), assert count==1 and p50≈200 (only post-reset sample counted) — mirror the MovingAverageRateCollectorReset pattern.
+      Acceptance: PercentileStatsCollectorReset passes; stats_core green; existing percentile tests unaffected.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure

@@ -384,3 +384,29 @@
       Surfaces: src/stats/analyzer.cpp
       Acceptance: Build succeeds; all stats tests pass; createStatisticCollector delegates to Statistics::createCollector.
       Verification: cmake --build build -j && ctest --test-dir build -R "^stats_" --output-on-failure
+
+## Cycle 10 — commit 9d29898
+
+- [x] Fix stream mode end-of-stream stats written to outputStream
+      Mode: repair | Surfaces: src/main.cpp
+
+- [x] Fix misleading --stats-window deprecation message claiming "no effect"
+      Mode: repair | Surfaces: src/config/cli.cpp
+
+- [x] Implement time_bucket_histogram:N colon shorthand in parseStatisticConfig
+      Mode: repair | Surfaces: src/config/cli_helpers.cpp
+
+- [x] Fix incorrect claim that statistics are unavailable in stream mode in usage-examples.md
+      Mode: docs | Surfaces: docs/usage-examples.md
+
+- [x] Extract duplicate getFieldValueAsString to stats::detail::extractFieldValue
+      Mode: improve | Surfaces: include/stats/helpers.h, src/stats/core.cpp
+
+- [x] Add test for time_bucket_histogram:N colon shorthand
+      Mode: improve | Surfaces: tests/config/cli/analysis.cpp
+
+- [x] Add --max-level option for upper-bound severity filtering
+      Mode: develop | Surfaces: include/filter/concrete_filters.h, include/config/cli.h, src/config/cli.cpp, src/main.cpp, tests/config/cli/filtering.cpp
+
+- [x] Add id field to normalizeTargetFieldName and extractFieldValue
+      Mode: develop | Surfaces: include/stats/helpers.h, src/stats/core.cpp, tests/stats/core.cpp

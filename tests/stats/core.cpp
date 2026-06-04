@@ -917,3 +917,44 @@ TEST_F(StatisticsTest, CreateCollectorFactoryFieldValueCountId) {
     auto collector = Statistics::createCollector(config);
     ASSERT_NE(collector, nullptr);
 }
+
+TEST_F(StatisticsTest, PercentileStatsCollectorForLineNumber) {
+    PercentileStatsCollector collector("line_number");
+    // fixture entries have sourceLineNumber 1-7
+    for (const auto& entry : entries) {
+        collector.collect(entry);
+    }
+    json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 7);
+    EXPECT_NEAR(report["p50"].get<double>(), 4.0, 0.01);
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorStandardNonNumericSkipped) {
+    // "message" is a standard field that always returns non-numeric strings — stod throws, entries skipped
+    PercentileStatsCollector collector("message");
+    for (const auto& entry : entries) {
+        collector.collect(entry);
+    }
+    json report = collector.generateReport();
+    EXPECT_EQ(report["count"], 0u);
+    EXPECT_TRUE(report["p50"].is_null());
+}
+
+TEST_F(StatisticsTest, TopNFieldValuesCollectorForId) {
+    TopNFieldValuesCollector collector(2, "id");
+    LogEntry e1; e1.id = 10; e1.level = LogLevel::INFO; e1.message = "a";
+    LogEntry e2; e2.id = 10; e2.level = LogLevel::INFO; e2.message = "b";
+    LogEntry e3; e3.id = 20; e3.level = LogLevel::INFO; e3.message = "c";
+    LogEntry e4; e4.id = 30; e4.level = LogLevel::INFO; e4.message = "d";
+    LogEntry e5; /* no id */ e5.level = LogLevel::DEBUG; e5.message = "e";
+    collector.collect(e1);
+    collector.collect(e2);
+    collector.collect(e3);
+    collector.collect(e4);
+    collector.collect(e5);
+    json report = collector.generateReport();
+    ASSERT_TRUE(report.contains("values"));
+    ASSERT_EQ(report["values"].size(), 2u); // top_n=2
+    EXPECT_EQ(report["values"][0]["value"], "10");
+    EXPECT_EQ(report["values"][0]["count"], 2);
+}
