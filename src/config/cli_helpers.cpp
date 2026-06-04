@@ -39,6 +39,15 @@ std::optional<StatisticConfig> parseStatisticConfig(const std::string& statStr) 
         return config;
     }
 
+    if (normalizedLower.rfind("percentile_stats:", 0) == 0) {
+        std::string fieldName = normalized.substr(17);
+        trimInPlace(fieldName);
+        if (fieldName.empty()) return std::nullopt;
+        config.type = StatisticType::PERCENTILE_STATS;
+        config.params["field"] = fieldName;
+        return config;
+    }
+
     auto legacyType = Utils::stringToStatisticType(normalized);
     if (legacyType) {
         config.type = *legacyType;
