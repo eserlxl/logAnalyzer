@@ -203,6 +203,55 @@ TEST_F(StatisticsTest, CreateCollectorFactoryRejectsWhitespaceOnlyCustomFieldKey
     ASSERT_EQ(invalidCollector, nullptr);
 }
 
+TEST_F(StatisticsTest, TimeBucketHistogramCollector) {
+    // 6 entries spanning 3 one-minute buckets: t, t+61s, t+61s, t+122s, t+122s, t+122s
+    auto base = std::chrono::system_clock::now();
+    // Align base to a minute boundary to avoid bucket edge ambiguity
+    auto epoch_s = std::chrono::duration_cast<std::chrono::seconds>(base.time_since_epoch()).count();
+    long long aligned = (epoch_s / 60) * 60;
+    auto t0 = std::chrono::system_clock::time_point(std::chrono::seconds(aligned));
+
+    std::vector<LogEntry> histEntries = {
+        {0, "", 1, t0,             LogLevel::INFO, "a", {}, {}, {}, {}, {}},
+        {0, "", 2, t0 + 61s,       LogLevel::INFO, "b", {}, {}, {}, {}, {}},
+        {0, "", 3, t0 + 61s,       LogLevel::INFO, "c", {}, {}, {}, {}, {}},
+        {0, "", 4, t0 + 122s,      LogLevel::INFO, "d", {}, {}, {}, {}, {}},
+        {0, "", 5, t0 + 122s,      LogLevel::INFO, "e", {}, {}, {}, {}, {}},
+        {0, "", 6, t0 + 122s,      LogLevel::INFO, "f", {}, {}, {}, {}, {}},
+    };
+    // Entry without timestamp — must be silently skipped
+    LogEntry noTs{0, "", 7, std::nullopt, LogLevel::DEBUG, "no-ts", {}, {}, {}, {}, {}};
+
+    TimeBucketHistogramCollector collector(60);
+    for (const auto& e : histEntries) collector.collect(e);
+    collector.collect(noTs);
+
+    json report = collector.generateReport();
+    ASSERT_EQ(report["name"], "time_bucket_histogram");
+    ASSERT_EQ(report["bucket_seconds"], 60);
+    ASSERT_EQ(report["buckets"].size(), 3u);
+
+    // Buckets must be sorted ascending
+    long long prev = -1;
+    for (const auto& b : report["buckets"]) {
+        long long start = b["start_time"].get<long long>();
+        ASSERT_GT(start, prev);
+        prev = start;
+    }
+
+    // Counts: bucket0=1, bucket1=2, bucket2=3
+    ASSERT_EQ(report["buckets"][0]["count"], 1);
+    ASSERT_EQ(report["buckets"][1]["count"], 2);
+    ASSERT_EQ(report["buckets"][2]["count"], 3);
+}
+
+TEST_F(StatisticsTest, TimeBucketHistogramRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::TIME_BUCKET_HISTOGRAM), "TIME_BUCKET_HISTOGRAM");
+    auto opt = Utils::stringToStatisticType("TIME_BUCKET_HISTOGRAM");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::TIME_BUCKET_HISTOGRAM);
+}
+
 TEST_F(StatisticsTest, CreateCollectorFactoryDefaultsMalformedTopNForTopMessages) {
     StatisticConfig config;
     config.type = StatisticType::TOP_MESSAGES;

@@ -21,6 +21,7 @@ enum class StatisticType {
     LOG_LEVEL_COUNT,        // New: Count occurrences of each LogLevel
     FIELD_VALUE_COUNT,      // New: Count occurrences of unique values for a specified field
     TOP_N_FIELD_VALUES,     // New: Report top N most frequent values for a specified field
+    TIME_BUCKET_HISTOGRAM,  // Per-bucket entry count grouped by configurable time window
     UNKNOWN
 };
 
@@ -191,6 +192,19 @@ private:
 
     // Helper to extract the value as string based on targetFieldName
     std::string getFieldValueAsString(const LogEntry& entry) const;
+};
+
+// Per-bucket entry count grouped by configurable time window
+class TimeBucketHistogramCollector : public IStatisticCollector {
+public:
+    explicit TimeBucketHistogramCollector(int bucketSeconds = 60);
+    void collect(const LogEntry& entry) override;
+    json generateReport() const override;
+    std::string getName() const override { return "time_bucket_histogram"; }
+    void reset() override { _counts.clear(); }
+private:
+    int _bucketSeconds;
+    std::map<long long, int> _counts; // key: bucket start epoch seconds
 };
 
 namespace Statistics {

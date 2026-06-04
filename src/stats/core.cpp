@@ -277,6 +277,30 @@ json TopNFieldValuesCollector::generateReport() const {
 
 // --- New functionality for Iteration 11 ---
 
+// TimeBucketHistogramCollector
+TimeBucketHistogramCollector::TimeBucketHistogramCollector(int bucketSeconds)
+    : _bucketSeconds(bucketSeconds > 0 ? bucketSeconds : 60) {}
+
+void TimeBucketHistogramCollector::collect(const LogEntry& entry) {
+    if (!entry.timestamp) return;
+    long long epoch = std::chrono::duration_cast<std::chrono::seconds>(
+        entry.timestamp->time_since_epoch()).count();
+    long long bucket = (epoch / _bucketSeconds) * _bucketSeconds;
+    _counts[bucket]++;
+}
+
+json TimeBucketHistogramCollector::generateReport() const {
+    json buckets = json::array();
+    for (const auto& [start, count] : _counts) {
+        buckets.push_back({{"start_time", start}, {"count", count}});
+    }
+    return {
+        {"name", "time_bucket_histogram"},
+        {"bucket_seconds", _bucketSeconds},
+        {"buckets", buckets}
+    };
+}
+
 // Assuming 'Statistics' is a namespace based on header file content not defining a Statistics class.
 namespace Statistics {
 
@@ -353,6 +377,16 @@ namespace Statistics {
                     }
                     return std::make_unique<TopNFieldValuesCollector>(topN, targetField);
                 }
+            }
+            case StatisticType::TIME_BUCKET_HISTOGRAM: {
+                int bucketSeconds = 60;
+                if (config.params.count("bucket")) {
+                    int parsed = 0;
+                    if (tryParseStrictPositiveInt(config.params.at("bucket"), parsed)) {
+                        bucketSeconds = parsed;
+                    }
+                }
+                return std::make_unique<TimeBucketHistogramCollector>(bucketSeconds);
             }
             case StatisticType::UNKNOWN:
             default:

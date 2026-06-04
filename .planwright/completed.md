@@ -1,3 +1,10 @@
+- [x] Add TIME_BUCKET_HISTOGRAM statistic collector
+      Mode: develop
+      Rationale: invent-tier: StatisticType had ENTRY_RATE but no time-bucket histogram; users cannot identify log volume spikes without per-bucket counts grouped by configurable time window.
+      Surfaces: include/stats/core.h, src/stats/core.cpp, src/stats/analyzer.cpp, src/utils/core.cpp, tests/stats/core.cpp
+      Acceptance: TimeBucketHistogramCollector buckets entries by floor(epoch/bucketSeconds)*bucketSeconds, silently skips entries without timestamps, sorts ascending; statisticTypeToString/stringToStatisticType round-trip passes.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
 - [x] Add NDJSON export format
       Mode: develop
       Rationale: invent-tier: the log-streaming ecosystem (jq, logstash, fluentd, Elasticsearch Bulk API) expects newline-delimited JSON — one compact JSON object per line — which the Exporter cannot currently produce, forcing users to post-process full JSON arrays.

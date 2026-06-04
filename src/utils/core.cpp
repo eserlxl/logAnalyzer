@@ -155,6 +155,7 @@ std::string statisticTypeToString(StatisticType type) {
         case StatisticType::LOG_LEVEL_COUNT: return "COUNT_BY_LEVEL";
         case StatisticType::FIELD_VALUE_COUNT: return "FIELD_VALUE_COUNT";
         case StatisticType::TOP_N_FIELD_VALUES: return "TOP_N_FIELD_VALUES";
+        case StatisticType::TIME_BUCKET_HISTOGRAM: return "TIME_BUCKET_HISTOGRAM";
         default: return "UNKNOWN";
     }
 }
@@ -169,6 +170,7 @@ std::optional<StatisticType> stringToStatisticType(const std::string& typeStr) {
     if (upperTypeStr == "COUNT_BY_LEVEL" || upperTypeStr == "LOG_LEVEL_COUNT") return StatisticType::LOG_LEVEL_COUNT;
     if (upperTypeStr == "FIELD_VALUE_COUNT") return StatisticType::FIELD_VALUE_COUNT;
     if (upperTypeStr == "TOP_N_FIELD_VALUES") return StatisticType::TOP_N_FIELD_VALUES;
+    if (upperTypeStr == "TIME_BUCKET_HISTOGRAM") return StatisticType::TIME_BUCKET_HISTOGRAM;
     return std::nullopt;
 }
 

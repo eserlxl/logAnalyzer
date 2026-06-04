@@ -11,7 +11,7 @@
       Acceptance: --format ndjson emits one compact JSON object per line with no array wrapper; each line independently parses; existing JSON/CSV/text/XML export tests remain green.
       Verification: cmake --build build -j && ctest --test-dir build -R "^export_ndjson$|^export_json$" --output-on-failure
 
-- [ ] Add TIME_BUCKET_HISTOGRAM statistic collector
+- [x] Add TIME_BUCKET_HISTOGRAM statistic collector
       Mode: develop
       Rationale: invent-tier: StatisticType has ENTRY_RATE (average rate over full run) but no time-bucket histogram; users cannot identify when log volume spikes occurred — a core log-analysis use case — without a per-bucket count grouped by configurable time window.
       Evidence: StatisticType enum in include/stats/core.h enumerates {UNIQUE_MESSAGES, TOP_MESSAGES, ENTRY_RATE, LOG_LEVEL_COUNT, FIELD_VALUE_COUNT, TOP_N_FIELD_VALUES, UNKNOWN} — no histogram type; Statistics::createCollector switch in src/stats/core.cpp has no histogram case; LogAnalyzer::createStatisticCollector in src/stats/analyzer.cpp likewise has no histogram case.
