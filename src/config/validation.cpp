@@ -3,42 +3,13 @@
 
 #include "config/settings.h"
 #include "config/utils.h"
-#include <algorithm>
-#include <cctype>
+#include "stats/helpers.h"
 #include <charconv>
 #include <regex>
 #include <set>
 #include <optional>
 
-namespace {
-
-std::optional<std::string> normalizeTargetFieldName(std::string_view rawField) {
-    if (rawField.empty()) {
-        return std::nullopt;
-    }
-    std::string field(rawField);
-    const auto first = field.find_first_not_of(" \t");
-    if (first == std::string::npos) {
-        return std::nullopt;
-    }
-    const auto last = field.find_last_not_of(" \t");
-    field = field.substr(first, last - first + 1);
-    std::transform(field.begin(), field.end(), field.begin(), [](unsigned char c) {
-        return static_cast<char>(std::tolower(c));
-    });
-    if (field == "level") return "level";
-    if (field == "message") return "message";
-    if (field == "source" || field == "source_file" || field == "sourcefile") return "sourceFile";
-    if (field == "timestamp" || field == "time") return "timestamp";
-    if (field == "line" || field == "line_number" || field == "linenumber") return "lineNumber";
-    if (field == "thread" || field == "thread_id" || field == "threadid" || field == "tid") return "threadId";
-    if (field == "module") return "module";
-    if (field == "host") return "host";
-    if (field == "custom" || field == "custom_fields" || field == "customfields") return "customFields";
-    return std::nullopt;
-}
-
-} // namespace
+using stats::detail::normalizeTargetFieldName;
 
 std::vector<std::string> LogAnalyzerSettings::validate() const {
     std::vector<std::string> errors;
@@ -132,13 +103,18 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
         auto it_target_field = sc.params.find(std::string(config_keys::TARGET_FIELD));
         bool has_target_field = (it_target_field != sc.params.end());
 
-        if (sc.type == StatisticType::TOP_MESSAGES || sc.type == StatisticType::TOP_N_FIELD_VALUES) {
+        if (sc.type == StatisticType::TOP_N_FIELD_VALUES) {
             if (!has_top_n) {
                 errors.push_back("Statistic '" + typeStr + "' requires a 'top_n' parameter.");
             } else {
                 if (!isStrictPositiveInteger(it_top_n->second)) {
                     errors.push_back("Parameter 'top_n' for statistic '" + typeStr + "' must be a positive integer.");
                 }
+            }
+        }
+        if (sc.type == StatisticType::TOP_MESSAGES && has_top_n) {
+            if (!isStrictPositiveInteger(it_top_n->second)) {
+                errors.push_back("Parameter 'top_n' for statistic '" + typeStr + "' must be a positive integer.");
             }
         }
 

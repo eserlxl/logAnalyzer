@@ -3,19 +3,12 @@
 
 #include "analyzer/core.h"
 #include "stats/core.h"
-#include "stats/helpers.h"
-#include <iostream>
 #include <memory>
 #include <vector>
 #include <map>
 #include <nlohmann/json.hpp>
 
-const int DEFAULT_TOP_N_STATISTIC_VALUE = 10;
-
 using json = nlohmann::json;
-using stats::detail::normalizeTargetFieldName;
-using stats::detail::trimInPlace;
-using stats::detail::tryParseStrictPositiveInt;
 
 void LogAnalyzer::addStatisticCollector(std::shared_ptr<IStatisticCollector> collector) {
     if (collector) {
@@ -72,125 +65,5 @@ std::map<std::string, json> LogAnalyzer::getAllStatisticReports() const {
 
 // Factory method for creating statistic collectors
 std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const StatisticConfig& config) {
-    std::string targetField;
-    std::string customFieldKey;
-    int topN = DEFAULT_TOP_N_STATISTIC_VALUE; // Default value
-    auto itTopN = config.params.find("top_n");
-    if (itTopN != config.params.end()) {
-        int parsedTopN = 0;
-        if (tryParseStrictPositiveInt(itTopN->second, parsedTopN)) {
-            topN = parsedTopN;
-        } else {
-            std::cerr << "Warning: Invalid 'top_n' parameter for statistic. Defaulting to " << DEFAULT_TOP_N_STATISTIC_VALUE << ".\n";
-        }
-    }
-
-    switch (config.type) {
-        case StatisticType::UNIQUE_MESSAGES:
-            return std::make_shared<UniqueMessagesCollector>();
-        case StatisticType::TOP_MESSAGES:
-            return std::make_shared<TopMessagesCollector>(topN); // Reusing topN for backward compatibility
-        case StatisticType::ENTRY_RATE:
-            return std::make_shared<EntryRateCollector>();
-        case StatisticType::LOG_LEVEL_COUNT:
-            return std::make_shared<LogLevelCountCollector>();
-        case StatisticType::FIELD_VALUE_COUNT: {
-            // Extract common parameters first if not already done
-            auto itTargetField = config.params.find("target_field");
-            if (itTargetField != config.params.end()) {
-                auto normalized = normalizeTargetFieldName(itTargetField->second);
-                if (normalized) {
-                    targetField = *normalized;
-                }
-            }
-            auto itCustomFieldKey = config.params.find("custom_field_key");
-            if (itCustomFieldKey != config.params.end()) {
-                customFieldKey = itCustomFieldKey->second;
-                trimInPlace(customFieldKey);
-            }
-
-            if (targetField.empty()) {
-                std::cerr << "Warning: FieldValueCountCollector requires 'target_field' parameter. Collector disabled." << '\n';
-                return nullptr;
-            }
-            if (targetField == "customFields" && customFieldKey.empty()) {
-                std::cerr << "Warning: FieldValueCountCollector with target_field 'customFields' requires 'custom_field_key' parameter. Collector disabled." << '\n';
-                return nullptr;
-            }
-            return std::make_shared<FieldValueCountCollector>(targetField, customFieldKey);
-        }
-        case StatisticType::TOP_N_FIELD_VALUES: {
-            // Extract common parameters first if not already done
-            auto itTargetField = config.params.find("target_field");
-            if (itTargetField != config.params.end()) {
-                auto normalized = normalizeTargetFieldName(itTargetField->second);
-                if (normalized) {
-                    targetField = *normalized;
-                }
-            }
-            auto itCustomFieldKey = config.params.find("custom_field_key");
-            if (itCustomFieldKey != config.params.end()) {
-                customFieldKey = itCustomFieldKey->second;
-                trimInPlace(customFieldKey);
-            }
-
-            if (targetField.empty()) {
-                std::cerr << "Warning: TopNFieldValuesCollector requires 'target_field' parameter. Collector disabled." << '\n';
-                return nullptr;
-            }
-            if (targetField == "customFields" && customFieldKey.empty()) {
-                std::cerr << "Warning: TopNFieldValuesCollector with target_field 'customFields' requires 'custom_field_key' parameter. Collector disabled." << '\n';
-                return nullptr;
-            }
-            return std::make_shared<TopNFieldValuesCollector>(topN, targetField, customFieldKey);
-        }
-        case StatisticType::TIME_BUCKET_HISTOGRAM: {
-            int bucketSeconds = 60;
-            auto itBucket = config.params.find("bucket");
-            if (itBucket != config.params.end()) {
-                int parsed = 0;
-                if (tryParseStrictPositiveInt(itBucket->second, parsed)) {
-                    bucketSeconds = parsed;
-                }
-            }
-            return std::make_shared<TimeBucketHistogramCollector>(bucketSeconds);
-        }
-        case StatisticType::PERCENTILE_STATS: {
-            auto it = config.params.find("field");
-            if (it == config.params.end() || it->second.empty()) {
-                std::cerr << "Warning: PERCENTILE_STATS requires a 'field' param." << '\n';
-                return nullptr;
-            }
-            return std::make_shared<PercentileStatsCollector>(it->second);
-        }
-        case StatisticType::MOVING_AVERAGE_RATE: {
-            int bucketSeconds = 60;
-            auto itBucket = config.params.find("bucket");
-            if (itBucket != config.params.end()) {
-                int parsed = 0;
-                if (tryParseStrictPositiveInt(itBucket->second, parsed)) {
-                    bucketSeconds = parsed;
-                }
-            }
-            return std::make_shared<MovingAverageRateCollector>(bucketSeconds);
-        }
-        case StatisticType::FIND_GAPS: {
-            long long thresholdMs = 1000;
-            auto itThresh = config.params.find("threshold_ms");
-            if (itThresh != config.params.end() && !itThresh->second.empty()) {
-                long long parsed = 0;
-                const char* begin = itThresh->second.data();
-                const char* end = begin + itThresh->second.size();
-                auto [ptr, ec] = std::from_chars(begin, end, parsed);
-                if (ec == std::errc{} && ptr == end && parsed > 0) {
-                    thresholdMs = parsed;
-                }
-            }
-            return std::make_shared<GapDetectorCollector>(thresholdMs);
-        }
-        case StatisticType::UNKNOWN:
-        default:
-            std::cerr << "Warning: Attempted to create unknown statistic type." << '\n';
-            return nullptr;
-    }
+    return Statistics::createCollector(config);
 }

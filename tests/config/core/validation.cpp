@@ -80,12 +80,12 @@ TEST_F(ConfigValidationTest, Validate_MultipleErrors) {
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopMessages_MissingTopN) {
+    // Missing top_n is now valid for TOP_MESSAGES — factory defaults to 10.
     settings.statisticConfigs = {
         StatisticConfig{StatisticType::TOP_MESSAGES, {}}
     };
     errors = settings.validate();
-    ASSERT_EQ(errors.size(), 1);
-    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'top_n' parameter"));
+    ASSERT_TRUE(errors.empty()) << "TOP_MESSAGES without top_n should use factory default";
 }
 
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_TopNFieldValues_MissingTopN) {
@@ -296,4 +296,30 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_Valid) {
     };
     errors = settings.validate();
     ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ConfigValidationTest, ValidateTopMessagesNoTopNAccepted) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_MESSAGES, {}}
+    };
+    errors = settings.validate();
+    ASSERT_TRUE(errors.empty()) << "TOP_MESSAGES without top_n should use factory default of 10";
+}
+
+TEST_F(ConfigValidationTest, ValidateTopMessagesInvalidTopNStillRejected) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_MESSAGES, {{"top_n", "abc"}}}
+    };
+    errors = settings.validate();
+    ASSERT_FALSE(errors.empty());
+    EXPECT_THAT(errors[0], testing::HasSubstr("top_n"));
+}
+
+TEST_F(ConfigValidationTest, ValidateTopNFieldValuesWithoutTopNRejected) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TOP_N_FIELD_VALUES, {{std::string(config_keys::TARGET_FIELD), "level"}}}
+    };
+    errors = settings.validate();
+    ASSERT_FALSE(errors.empty());
+    EXPECT_THAT(errors[0], testing::HasSubstr("top_n"));
 }

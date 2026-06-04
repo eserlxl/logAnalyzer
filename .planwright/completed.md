@@ -249,3 +249,138 @@
       Surfaces: docs/cli-reference.md
       Acceptance: Expression Filter Reference subsection present; build passes.
       Verification: cmake --build build -j --output-on-failure
+
+- [x] Fix --order DESC + --stream warning to also cover sort-order
+      Mode: repair
+      Rationale: The stream sort warning added in Cycle 6 checks only sortBy != TIMESTAMP, missing the case where a user passes --stream --order desc (descending timestamp). In batch mode, both non-default sortBy and non-default sortOrder trigger a sort; stream mode silently ignores both. The warning was already broadened in implementation (checking nonDefaultSortOrder), but needs a test verifying --stream --order desc is parsed and the combination is accepted (warning-only, not error).
+      Surfaces: tests/config/cli/analysis.cpp, src/main.cpp
+      Acceptance: StreamWithOrderDescParsesSuccessfully and extended warning check pass; config_cli_analysis green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add find_gaps bare-name CLI test
+      Mode: improve
+      Surfaces: tests/config/cli/analysis.cpp
+      Acceptance: FindGapsBareName test passes; config_cli_analysis green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add MovingAverageRate invalid-bucket fallback test
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: CreateCollectorFactoryMovingAverageRateInvalidBucketFallsBackToDefault passes; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add GapDetector exact-threshold boundary test
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: GapDetectorCollectorExactlyAtThresholdNotReported passes; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add round-trip tests for remaining StatisticTypes
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: UniqueMessagesRoundTrip, TopMessagesRoundTrip, LogLevelCountRoundTrip, FieldValueCountRoundTrip, TopNFieldValuesRoundTrip all pass; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Update README.md to mention NDJSON, pagination, dedup, gap detection
+      Mode: docs
+      Surfaces: README.md
+      Acceptance: Features section updated; build passes.
+      Verification: cmake --build build -j --output-on-failure
+
+- [x] Fix getDedupKey missing "source_file" alias
+      Mode: repair
+      Surfaces: include/utils/dedup.h, tests/utils/dedup.cpp
+      Acceptance: getDedupKey("source_file", ...) returns entry.sourceFile; utils_dedup passes.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^utils_dedup$" --output-on-failure
+
+- [x] Add SOURCE_FILE and related fields to batch NDJSON default export
+      Mode: improve
+      Surfaces: src/export/json.cpp, tests/export/ndjson.cpp
+      Acceptance: Batch NDJSON output includes SOURCE_FILE; export_ndjson passes.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^export_ndjson$" --output-on-failure
+
+- [x] Add --min-level CLI parsing test
+      Mode: improve
+      Surfaces: tests/config/cli/filtering.cpp
+      Acceptance: MinLevel and MinLevelCaseInsensitive pass; config_cli_filtering green.
+      Verification: ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
+
+- [x] Add --stats top_messages bare-name parsing test
+      Mode: improve
+      Surfaces: tests/config/cli/analysis.cpp
+      Acceptance: TopMessagesBareName passes; config_cli_analysis green.
+      Verification: ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Emit deprecation warning for --stats-window
+      Mode: improve
+      Surfaces: src/config/cli.cpp
+      Acceptance: --stats-window emits warning to stderr; parsing succeeds; tests green.
+      Verification: ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add TOP_MESSAGES factory test for bare name (no top_n param)
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: TopMessagesCollectorDefaultTopN passes; stats_core green.
+      Verification: ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Consolidate duplicate stat helpers into include/stats/helpers.h
+      Mode: reorganize
+      Surfaces: src/stats/core.cpp, src/stats/analyzer.cpp
+      New Surfaces: include/stats/helpers.h
+      Acceptance: Build succeeds; stats tests pass; no duplicate definitions remain.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_" --output-on-failure
+
+- [x] Add --stats-interval N option for periodic stats in stream mode
+      Mode: develop
+      Surfaces: include/config/cli.h, src/config/cli.cpp, src/main.cpp, tests/config/cli/analysis.cpp
+      Acceptance: --stats-interval N parses to CLIOptions::statsInterval==N; config_cli_analysis green.
+      Verification: ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Fix --stats-interval partial stats routing to outputStream
+      Mode: repair
+      Rationale: Interval stats were routed to *outputStream when statsOutputPath was set, corrupting data output with stats JSON.
+      Surfaces: src/main.cpp
+      Acceptance: Interval stats always write to stderr; end-of-stream stats still write to statsOutputPath when set.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Fix validation rejects TOP_MESSAGES without top_n param
+      Mode: repair
+      Rationale: validate() errored on TOP_MESSAGES with no top_n, but factories default topN=10 when absent — making bare --stats top_messages impossible from JSON configs.
+      Surfaces: src/config/validation.cpp, tests/config/core/validation.cpp
+      Acceptance: TOP_MESSAGES with no top_n passes validate(); invalid top_n still errors; TOP_N_FIELD_VALUES without top_n still errors.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_core_validation$" --output-on-failure
+
+- [x] Consolidate third normalizeTargetFieldName copy from validation.cpp
+      Mode: improve
+      Rationale: validation.cpp had a third anonymous-namespace copy of normalizeTargetFieldName identical to stats::detail version.
+      Surfaces: src/config/validation.cpp
+      Acceptance: Build succeeds; all validation tests pass; no anonymous normalizeTargetFieldName in validation.cpp.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_core_validation$" --output-on-failure
+
+- [x] Add validate() call after analyzerSettings.merge() in main.cpp
+      Mode: improve
+      Rationale: main.cpp never called validate() after merging CLI settings — invalid configs silently passed and caused runtime failures.
+      Surfaces: src/main.cpp
+      Acceptance: Invalid settings produce error message and exit code 1; valid settings proceed; full suite passes.
+      Verification: cmake --build build -j && ctest --test-dir build --output-on-failure
+
+- [x] Add warning when --stats-interval is used without --stream
+      Mode: improve
+      Rationale: --stats-interval only has effect in stream mode; in batch mode it is silently ignored with no user indication.
+      Surfaces: src/config/cli.cpp
+      Acceptance: Using --stats-interval without --stream emits a warning; parsing still succeeds.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add test that --stats-interval 0 is rejected by CLI validation
+      Mode: improve
+      Rationale: CLI::PositiveNumber rejects 0 but was untested; 0 would cause UB (modulo 0) at runtime.
+      Surfaces: tests/config/cli/analysis.cpp
+      Acceptance: StatsIntervalZeroRejected and StatsIntervalNegativeRejected tests pass.
+      Verification: ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Consolidate dual stat collector factories into single createCollector
+      Mode: reorganize
+      Rationale: Statistics::createCollector and LogAnalyzer::createStatisticCollector both had full switch-on-StatisticType dispatch; new types required updates in both places.
+      Surfaces: src/stats/analyzer.cpp
+      Acceptance: Build succeeds; all stats tests pass; createStatisticCollector delegates to Statistics::createCollector.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_" --output-on-failure

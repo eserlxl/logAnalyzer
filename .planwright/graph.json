@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "graph_built_at_sha": "379219576477caa35128604ab6f1889fd6a880a8",
-  "built_at": "2026-06-04T19:40:12Z",
+  "graph_built_at_sha": "edf1ca6d8689040322ad7fb4eec08c7b5720db39",
+  "built_at": "2026-06-04T21:24:28Z",
   "target": ".",
   "ranking_signal": "centrality",
   "params": {
@@ -22,9 +22,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     ".clang-tidy": {
       "sha256": "43b855b1dbe12e4b069d706cbf7223f0904983918ef36d960910ab7c26781235",
@@ -38,9 +38,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     ".geminiignore": {
       "sha256": "5ff25e991cc8ea3b4393893872604e0246c10e98f12367459f662ea709249984",
@@ -54,9 +54,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     ".github/workflows/ci.yml": {
       "sha256": "3988859fce3365cf78b1d943e6ea8b39f8067c0c3d6215b010334dce45b14d35",
@@ -70,9 +70,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     ".gitignore": {
       "sha256": "d28d2a56e0074a4425095e1115d86836451bdf1bbacc38b4899ea69a34950944",
@@ -86,9 +86,105 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
+    },
+    ".planwright/completed.md": {
+      "sha256": "8f15d2c8172fb4d8c18bd487c88a3dc8c0e84bed2a292c6447c2ae112fcb4607",
+      "loc": 288,
+      "branch_count": 0,
+      "branch_at": {},
+      "lang": "markdown",
+      "git_churn": 7,
+      "defines": [],
+      "defines_at": {},
+      "imports": [],
+      "is_test": false,
+      "covered_by_test": false,
+      "pagerank": 0.002787,
+      "is_articulation": false,
+      "last_audited_sha": null
+    },
+    ".planwright/digest.md": {
+      "sha256": "805ccd1625a3d0982fe74f61574d1fa40a708b5fc50f6fb06b1152828e6a611f",
+      "loc": 153,
+      "branch_count": 0,
+      "branch_at": {},
+      "lang": "markdown",
+      "git_churn": 1,
+      "defines": [],
+      "defines_at": {},
+      "imports": [],
+      "is_test": false,
+      "covered_by_test": false,
+      "pagerank": 0.002787,
+      "is_articulation": false,
+      "last_audited_sha": null
+    },
+    ".planwright/graph.json": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "loc": 0,
+      "branch_count": 0,
+      "branch_at": {},
+      "lang": "json",
+      "git_churn": 1,
+      "defines": [],
+      "defines_at": {},
+      "imports": [],
+      "is_test": false,
+      "covered_by_test": false,
+      "pagerank": 0.002787,
+      "is_articulation": false,
+      "last_audited_sha": null
+    },
+    ".planwright/plan.md": {
+      "sha256": "5b5b8e48274b9aa66c060c028b2e7e022dcb288610fb0011776cb5217a0c7c71",
+      "loc": 2,
+      "branch_count": 0,
+      "branch_at": {},
+      "lang": "markdown",
+      "git_churn": 7,
+      "defines": [],
+      "defines_at": {},
+      "imports": [],
+      "is_test": false,
+      "covered_by_test": false,
+      "pagerank": 0.002787,
+      "is_articulation": false,
+      "last_audited_sha": null
+    },
+    ".planwright/plans/plan_2026-06-04T00-00-00Z.md": {
+      "sha256": "faa3b7fb4119e3642c1081934f7e30bcc66aae0a8bf7d1fae10b646fe1f544cb",
+      "loc": 39,
+      "branch_count": 0,
+      "branch_at": {},
+      "lang": "markdown",
+      "git_churn": 1,
+      "defines": [],
+      "defines_at": {},
+      "imports": [],
+      "is_test": false,
+      "covered_by_test": false,
+      "pagerank": 0.002787,
+      "is_articulation": false,
+      "last_audited_sha": null
+    },
+    ".planwright/rejected.md": {
+      "sha256": "24d6eaa3d72bc8706203cfcc398bb8bf3f72a4a5ed676c34b53d374b42bef40b",
+      "loc": 5,
+      "branch_count": 0,
+      "branch_at": {},
+      "lang": "markdown",
+      "git_churn": 1,
+      "defines": [],
+      "defines_at": {},
+      "imports": [],
+      "is_test": false,
+      "covered_by_test": false,
+      "pagerank": 0.002787,
+      "is_articulation": false,
+      "last_audited_sha": null
     },
     "CMakeLists.txt": {
       "sha256": "d6b09c5b59dcf464625f7629c61b0362b548c36fb2f04041a39336cbbb40ecda",
@@ -102,9 +198,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "CMakePresets.json": {
       "sha256": "cde05b1440a3afcfb5d97003eef548280c591a5625198cc215140727417c0491",
@@ -118,9 +214,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "CODE_OF_CONDUCT.md": {
       "sha256": "2a44b6d5482e83c9de0e16b3203bed92355e8e1f27d3e23f8ad267539092b8d7",
@@ -134,9 +230,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "CONTRIBUTING.md": {
       "sha256": "ccd7c2ab7c2f5287ca55ce19450de09fbfe8bb01e4279497f58cb51694b8e44f",
@@ -150,9 +246,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "LICENSE": {
       "sha256": "a614603251d50947dfcf9a96adda62626be43e34c30ec4412df8d3dfa0c70edf",
@@ -166,17 +262,17 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "README.md": {
-      "sha256": "dd1d881e2da4fbc11d61520796dbcdc89204b58489a1c7fd583caf3a63ab294c",
-      "loc": 166,
+      "sha256": "b3a02b2d41d52971c0bf7f4d3d12bf181e52f60c3fd49b69820544c35bd6a37d",
+      "loc": 167,
       "branch_count": 0,
       "branch_at": {},
       "lang": "markdown",
-      "git_churn": 9,
+      "git_churn": 10,
       "defines": [],
       "defines_at": {},
       "imports": [
@@ -195,9 +291,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "cmake/_r_e_a_d_m_e.md": {
       "sha256": "5084daf267e034b4e538aff4b9b789a8bee37ffe4fece5b53c1916641f02e85d",
@@ -211,9 +307,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "cmake/compiler_settings.cmake": {
       "sha256": "f4ec8ed1356854818a01f23ddbb17aea68a2d305eae3f4370ff024edf7141c56",
@@ -227,9 +323,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "cmake/config.cmake.in": {
       "sha256": "cb06097589af14dfb7e21b5ae79d56b3df8ad7dfc849fa95375d1898a4f9ce1b",
@@ -243,9 +339,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/_doxyfile.in": {
       "sha256": "dcbca2c1d36f42a545233697ebd65cbff807d5fdd0ec106290d0e67f90eca96b",
@@ -259,9 +355,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/api-reference.md": {
       "sha256": "178e228fb18795b8150ef8057f86df900305e39ac4ab672532c7f0020eaf8408",
@@ -275,9 +371,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/audit/codex.md": {
       "sha256": "e7590dece3a6282f8735fb98023cc7e689a2bedfaa40ad2d198c19f261743fec",
@@ -285,15 +381,15 @@
       "branch_count": 0,
       "branch_at": {},
       "lang": "markdown",
-      "git_churn": 24,
+      "git_churn": 4,
       "defines": [],
       "defines_at": {},
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/build.md": {
       "sha256": "ebaaabc243eaf5fa77e98eb721926f0bca3ebd35af2905293a83276fc5f4b3ad",
@@ -307,25 +403,25 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/cli-reference.md": {
-      "sha256": "eb18f5f585349431a8a55114e0f48221d322f72a8e6334cc4bfacc3ebb0ab8db",
-      "loc": 86,
+      "sha256": "38370ff5633097ab3a0fcddd9fbbbf46c948be40261869ead85eb1a3b49f5b2d",
+      "loc": 120,
       "branch_count": 0,
       "branch_at": {},
       "lang": "markdown",
-      "git_churn": 8,
+      "git_churn": 11,
       "defines": [],
       "defines_at": {},
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.004398,
+      "pagerank": 0.004253,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/configuration.md": {
       "sha256": "1092040261c501a5e1db6633a1e1d95520fc0d9d39a675cd3094669683786909",
@@ -339,25 +435,25 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/features.md": {
-      "sha256": "5a5dd56f566ae2155e0bce0545f3abeace237c6eda9ec72bae084c3ff6f034da",
-      "loc": 21,
+      "sha256": "b2e5a369529f19c2c753945cda8c1bf7d98cc822a6e12e1a335154ddfcaae81d",
+      "loc": 22,
       "branch_count": 0,
       "branch_at": {},
       "lang": "markdown",
-      "git_churn": 2,
+      "git_churn": 4,
       "defines": [],
       "defines_at": {},
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/installation.md": {
       "sha256": "da5b602c2613be8b5e4ae9904db119c3d7c014939ab6f4ac8e0c25d266e20603",
@@ -371,9 +467,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/project-structure.md": {
       "sha256": "7416c27ccaf55a941d4791b93700a92b62fdd896764e521fe1070fce9b0da130",
@@ -387,9 +483,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/quick-start.md": {
       "sha256": "af1b25271ae4a8b412d15771cc8d8e9e2478f7e7e38e119817959ba0c656e3ee",
@@ -406,9 +502,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/usage-examples.md": {
       "sha256": "3fc01af9613a3650cfb0dabd8c126db93d10586803f59cba3103091cf338857b",
@@ -422,9 +518,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.004398,
+      "pagerank": 0.004253,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "docs/why-loganalyzer.md": {
       "sha256": "2c3508a8d90fb95f4847d0cbb4a64f21868980124bdbc8a5be338b8ca6c9f299",
@@ -438,9 +534,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003086,
+      "pagerank": 0.002984,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "gemini-cli-health.db": {
       "sha256": "3f871aea9c03478d9adab7450791b7986008069d20b0ed5f17714f43bd0ed328",
@@ -454,9 +550,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/analyzer/core.h": {
       "sha256": "e1aa9d3c09df476157ebbfac11b0300b67bada526651442b09b048a3171e622a",
@@ -536,9 +632,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/analyzer/log/reader.h": {
       "sha256": "4685fee9d844b4e182234892e50f7adfe6b0cd1c307b10cac2afd490910ee310",
@@ -572,9 +668,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.00609,
+      "pagerank": 0.005889,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/analyzer/log/writer.h": {
       "sha256": "bf3f09226106f3dbeac5e3a1f7bdde4892a31d7c394a55d0eec352f4c67619be",
@@ -597,9 +693,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.00609,
+      "pagerank": 0.005771,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/analyzer/types.h": {
       "sha256": "a4317c2e5fd4e3e93a0b0df9ac2e1b8024ce0b89c0de9aef14d999b7c78a8612",
@@ -619,13 +715,13 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/config/cli.h": {
-      "sha256": "c6195fa5f4d3209e7b4a5a11935b996f282b52538c2ba90e4fb30dbf8a795988",
-      "loc": 77,
+      "sha256": "ea4132dcf5813b8aba4e47a02d0beddafe0306dddf7225828c98b42494ffc942",
+      "loc": 82,
       "branch_count": 3,
       "branch_at": {
         "and": 0,
@@ -634,7 +730,7 @@
         "CLIOptions": 1
       },
       "lang": "c",
-      "git_churn": 3,
+      "git_churn": 7,
       "defines": [
         "and",
         "CLIConfig",
@@ -654,9 +750,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.01412,
+      "pagerank": 0.013536,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/config/cli_helpers.h": {
       "sha256": "51239d9b50d1c35c2f2d12a0c178122d43b226f0c80a8ad7ad2930421649a578",
@@ -672,9 +768,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003699,
+      "pagerank": 0.003577,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/config/common_types.h": {
       "sha256": "c7b1a16ccc1427a311b96323f328c4e9062d21b38b1b8d072d1a1a63c87e505a",
@@ -696,9 +792,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.013497,
+      "pagerank": 0.013018,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/config/core.h": {
       "sha256": "b70283946ecd737bd136870b046a25107ed13dfe1dce3e726a5a9e2408ea0e86",
@@ -714,9 +810,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/config/settings.h": {
       "sha256": "644cc1e0c9835c4d56a9bca942ec7961b78b73ffb19ce506d8b82bb6697f00f8",
@@ -786,9 +882,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.029145,
+      "pagerank": 0.02815,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/config/utils.h": {
       "sha256": "c80da41aae7594976169e2496750751e61a6d59b5ef8ebcbdba9c58012c9b008",
@@ -804,9 +900,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.010844,
+      "pagerank": 0.010486,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/CaseInsensitiveLess.h": {
       "sha256": "dfd0a40e30b41d1322f62deb84fd304b1cc701cd9803478eb8b13687defc7f9c",
@@ -838,9 +934,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.044027,
+      "pagerank": 0.042518,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/error.h": {
       "sha256": "39cd1d41bc2afd3b6c4cab0cf0accc4295f815512389c4baf787d89930f5ca9f",
@@ -890,9 +986,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.093377,
+      "pagerank": 0.091077,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/log/i_parser_factory.h": {
       "sha256": "1c8798ebcc2880f9cd29d08ba291df689caca32ca5de843bf1416a2218f6979d",
@@ -912,9 +1008,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.006907,
+      "pagerank": 0.006679,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/log/json_parser.h": {
       "sha256": "55940313fafaa4b1b77444a5b58f22f425463ec62d991d257597547603a00b3a",
@@ -934,9 +1030,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.007373,
+      "pagerank": 0.00713,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/log/json_parser_factory.h": {
       "sha256": "1521bd468f067122ac083bfe71737685ff54f57910d8a730353533dfc0bed99a",
@@ -959,9 +1055,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/log/parser.h": {
       "sha256": "3b7b19c3a6473096125f2dec52ff8424df53c5874b5a14b86f5be9491451d107",
@@ -993,9 +1089,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/log/parser_utils.h": {
       "sha256": "d4bdd05acdb23cdb3def1a10e437a73e49997ef3e47e30116ba2113205f20bd9",
@@ -1009,9 +1105,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.008598,
+      "pagerank": 0.008314,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/log/regex_parser.h": {
       "sha256": "b572bfd8329f18d461d80e489a9efcb20a5e74a33b1a756ac2a91e9a43de2a48",
@@ -1033,9 +1129,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/log/regex_parser_factory.h": {
       "sha256": "19959c8401fc46ce4b22ffdf4ea34a009cc52bc12e86d763277ed60405b5b29a",
@@ -1057,9 +1153,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/core/log/types.h": {
       "sha256": "c4dfe96a265c0dcc054007d2e7dd85172b93c2c94baaeb221687ec623d60aaaf",
@@ -1127,24 +1223,24 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/export/core.h": {
-      "sha256": "074ea0643cb2692a914b851ccf001227b47f8156a9ffc55f95b0c0b272da9129",
-      "loc": 154,
-      "branch_count": 14,
+      "sha256": "c6b79468c5da25b27733b2505deeb684e0af1d2716ad88e144f79129d71aafc2",
+      "loc": 161,
+      "branch_count": 15,
       "branch_at": {
         "class": 1,
         "ExportException": 0,
         "ExportFieldMapping": 3,
         "ExportSettings": 4,
         "LogAnalyzer": 0,
-        "Exporter": 4
+        "Exporter": 5
       },
       "lang": "c",
-      "git_churn": 2,
+      "git_churn": 3,
       "defines": [
         "class",
         "ExportException",
@@ -1155,18 +1251,18 @@
       ],
       "defines_at": {
         "class": 18,
-        "ExportException": 34,
-        "ExportFieldMapping": 40,
-        "ExportSettings": 56,
-        "LogAnalyzer": 93,
-        "Exporter": 95
+        "ExportException": 35,
+        "ExportFieldMapping": 41,
+        "ExportSettings": 57,
+        "LogAnalyzer": 94,
+        "Exporter": 96
       },
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/export/csv.h": {
       "sha256": "b4586c66860eabb0980dc2ac4a1d9a4461bca1de4a9109837d1c736c6700437f",
@@ -1180,9 +1276,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003232,
+      "pagerank": 0.003125,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/export/json.h": {
       "sha256": "e117d210b56289af64f1d3cc042a5d21c65a6688fa75b4e90e972e90f6aa9b8f",
@@ -1196,9 +1292,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.003232,
+      "pagerank": 0.003125,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/export/text.h": {
       "sha256": "43aba3e604800c81303eb221a29ba9230f3bf2bae33caf7b3fe411b85326ae2f",
@@ -1212,9 +1308,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/export/xml.h": {
       "sha256": "43aba3e604800c81303eb221a29ba9230f3bf2bae33caf7b3fe411b85326ae2f",
@@ -1228,9 +1324,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/concrete_filters.h": {
       "sha256": "5e3d61b8e1ea05fe206f29fbb714bccfeda86b6820f37ed9e7df932f537a03e6",
@@ -1323,9 +1419,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.011334,
+      "pagerank": 0.010841,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/condition.h": {
       "sha256": "179b7e09fe922ff4d3dd316a00095a7f26dae0a2cdf168eda6506b67d483eff1",
@@ -1388,9 +1484,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.036835,
+      "pagerank": 0.035756,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/condition_evaluation.h": {
       "sha256": "108d66492e42063fd826864c9e285fdcc0bb6e1cc361255efd8ee0100d5505d5",
@@ -1407,9 +1503,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.00364,
+      "pagerank": 0.00352,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/core.h": {
       "sha256": "e87e7ecb877e2729de7ad77408ec36317cf45eb5550563488f839da3ae8397a6",
@@ -1429,9 +1525,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/enum_string_conversions.h": {
       "sha256": "179da60d7be474df3527a7cccb8210465ed906de7aff2a0dfe214a904a11a86e",
@@ -1445,9 +1541,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.032316,
+      "pagerank": 0.032076,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/expression.h": {
       "sha256": "dcb9b46be5fc73484de00c88d05f6a680b306c03ed1638d5357c1809a30e251d",
@@ -1520,9 +1616,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.032655,
+      "pagerank": 0.032215,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/i_filter.h": {
       "sha256": "4d4f5341fff9c34dde7b2adc7e86c37ff7660dcb8ab9bb4ab97bfe2fb7db383c",
@@ -1542,9 +1638,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.007196,
+      "pagerank": 0.006925,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/json_utils.h": {
       "sha256": "6ee585006ffff3c6ea13f0747ec3c2a81fd33077ea82d537b87110fd6d58c4eb",
@@ -1576,9 +1672,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.01721,
+      "pagerank": 0.016797,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/legacy.h": {
       "sha256": "d315c0acb145fd2ca468543407ae089d1167c527739f5d1465841331100c85a8",
@@ -1620,9 +1716,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.007659,
+      "pagerank": 0.007406,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/parser.h": {
       "sha256": "114e4a235be214f7b8e15fe03d76f6bcabd1f1923ec147760d7e29f977feac5b",
@@ -1639,9 +1735,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/filter/types.h": {
       "sha256": "aeb46ee73ff2ec77416d96522acff31e5aaa0ef88057690ea072b785cc13c15d",
@@ -1661,16 +1757,16 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/stats/core.h": {
-      "sha256": "5af7db3d504f5cc3558fa60f993517a1053810e6d42613cff13b907e1aff0699",
-      "loc": 198,
-      "branch_count": 21,
+      "sha256": "7bb3d446db34c6539ddc3b7d193e4b2cb514195e334702cda0d709937fcec1cc",
+      "loc": 253,
+      "branch_count": 23,
       "branch_at": {
-        "class": 2,
+        "class": 3,
         "to_json": 0,
         "from_json": 2,
         "StatisticConfig": 0,
@@ -1680,10 +1776,14 @@
         "EntryRateCollector": 1,
         "LogLevelCountCollector": 1,
         "FieldValueCountCollector": 3,
-        "TopNFieldValuesCollector": 2
+        "TopNFieldValuesCollector": 2,
+        "TimeBucketHistogramCollector": 1,
+        "PercentileStatsCollector": 0,
+        "GapDetectorCollector": 0,
+        "MovingAverageRateCollector": 0
       },
       "lang": "c",
-      "git_churn": 2,
+      "git_churn": 6,
       "defines": [
         "class",
         "StatisticConfig",
@@ -1694,28 +1794,36 @@
         "LogLevelCountCollector",
         "FieldValueCountCollector",
         "TopNFieldValuesCollector",
+        "TimeBucketHistogramCollector",
+        "PercentileStatsCollector",
+        "GapDetectorCollector",
+        "MovingAverageRateCollector",
         "to_json",
         "from_json"
       ],
       "defines_at": {
         "class": 17,
-        "StatisticConfig": 44,
-        "IStatisticCollector": 85,
-        "UniqueMessagesCollector": 98,
-        "TopMessagesCollector": 109,
-        "EntryRateCollector": 122,
-        "LogLevelCountCollector": 133,
-        "FieldValueCountCollector": 144,
-        "TopNFieldValuesCollector": 170,
-        "to_json": 26,
-        "from_json": 30
+        "StatisticConfig": 48,
+        "IStatisticCollector": 89,
+        "UniqueMessagesCollector": 102,
+        "TopMessagesCollector": 113,
+        "EntryRateCollector": 126,
+        "LogLevelCountCollector": 137,
+        "FieldValueCountCollector": 148,
+        "TopNFieldValuesCollector": 174,
+        "TimeBucketHistogramCollector": 201,
+        "PercentileStatsCollector": 214,
+        "GapDetectorCollector": 226,
+        "MovingAverageRateCollector": 238,
+        "to_json": 30,
+        "from_json": 34
       },
       "imports": [],
       "is_test": false,
-      "covered_by_test": false,
-      "pagerank": 0.002882,
+      "covered_by_test": true,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/utils/core.h": {
       "sha256": "d5515781fba717bff6305d20137d2e8386dbd66ca1d32a85b620ca59918605ca",
@@ -1742,9 +1850,37 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
+    },
+    "include/utils/dedup.h": {
+      "sha256": "4b40628c08686b0957005ff33f80924c2f61840cb318fb772904bdc25b4da129",
+      "loc": 45,
+      "branch_count": 6,
+      "branch_at": {
+        "getDedupKey": 4,
+        "applyDedupField": 1,
+        "remove_if": 0
+      },
+      "lang": "c",
+      "git_churn": 2,
+      "defines": [
+        "getDedupKey",
+        "applyDedupField",
+        "remove_if"
+      ],
+      "defines_at": {
+        "getDedupKey": 19,
+        "applyDedupField": 32,
+        "remove_if": 38
+      },
+      "imports": [],
+      "is_test": false,
+      "covered_by_test": true,
+      "pagerank": 0.00563,
+      "is_articulation": true,
+      "last_audited_sha": null
     },
     "include/utils/ip_address.h": {
       "sha256": "fe76b15a5f8cb3da3af61f8432d7d159c2152db5b55c0c17675900a36652a29e",
@@ -1770,9 +1906,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.011717,
+      "pagerank": 0.011349,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/utils/string.h": {
       "sha256": "143cda0bb083e955fe50813c0ed3138c1c8ab8384ff8ba2648f07e273eaa4832",
@@ -1786,9 +1922,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.040093,
+      "pagerank": 0.038671,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/utils/time.h": {
       "sha256": "a1c831d52da6d888c81b499d3167d8c01e0384d3502d07fe8cebc88e71b71484",
@@ -1813,9 +1949,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.035101,
+      "pagerank": 0.03468,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "include/utils/version.h": {
       "sha256": "b2e64fbde31e18bb6cc47b239d0b8620a1d9fe57aa5d6fe6083edaf37fe6bc89",
@@ -1835,9 +1971,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.0109,
+      "pagerank": 0.01056,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "lxl/examples/README.md": {
       "sha256": "c1d1adaf488547f2b266dff9ae9c0938fbb1442a469c67294bee45ecce2b59ba",
@@ -1851,9 +1987,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "lxl/examples/errors.json": {
       "sha256": "b2e3549e67cb75d097439458d104f4d4fddbc9bff22c085d2e4a66e3726935dc",
@@ -1867,9 +2003,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/CMakeLists.txt": {
       "sha256": "12e14181e94c0bfb03a2e445f9280f4edef6b783843c61ca9aa3ff129cd7fa6e",
@@ -1883,9 +2019,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/analyzer/core.cpp": {
       "sha256": "70f86f81f86df2cfe03abfe586c0c5f04f9cef865c864d4eb3a95a1602ecb53c",
@@ -1958,9 +2094,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/analyzer/log/io.cpp": {
       "sha256": "c82aafc5cf7a5fb5745332d08fba6aeb9bfd6822a3c84528abb0d0f7dcf373e7",
@@ -1980,9 +2116,9 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/analyzer/log/loader.cpp": {
       "sha256": "435d3c68e32cf9d4eff6f7d7aa073ef7111fd3a5314abbc37e10bb9ea6db015d",
@@ -2024,9 +2160,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/analyzer/log/reader.cpp": {
       "sha256": "fbd29d2063a6c944b21706ebbcbed4f93bf929fd66ea5dbc0de9263e7736ae5c",
@@ -2103,9 +2239,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/analyzer/log/writer.cpp": {
       "sha256": "c42c67b003ab5f3eae5ebb3b5b98b03de2d3d91ad54cd6fd55c4120fac4cc12c",
@@ -2139,9 +2275,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/analyzer/streaming.cpp": {
       "sha256": "a7f13acfc5ef49a216b641ede59f494e47fd9524f3a4f8cbe35aa34fb29d50f5",
@@ -2198,27 +2334,27 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/config/cli.cpp": {
-      "sha256": "bb097bdfbf0446c11c6ac23c9f98ed6e7191b344ab0dd447b7bc02f552538977",
-      "loc": 454,
-      "branch_count": 114,
+      "sha256": "e68910a08701d08fbc0cb00160056acbdb707203f7ad80a39639248d3c8919e5",
+      "loc": 480,
+      "branch_count": 116,
       "branch_at": {
-        "parseCLI": 33,
-        "transform": 81
+        "parseCLI": 34,
+        "transform": 82
       },
       "lang": "c",
-      "git_churn": 6,
+      "git_churn": 13,
       "defines": [
         "parseCLI",
         "transform"
       ],
       "defines_at": {
         "parseCLI": 33,
-        "transform": 195
+        "transform": 201
       },
       "imports": [
         "include/config/cli.h",
@@ -2230,21 +2366,21 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/config/cli_helpers.cpp": {
-      "sha256": "2b368444bc0d9924b1525cb9177aa4adea1629c1757902e949c022d6b5046a30",
-      "loc": 103,
-      "branch_count": 20,
+      "sha256": "87b8e98aab248fa942915c1833a51f2b108ef2972492b78ea59fa17d6c842c7f",
+      "loc": 138,
+      "branch_count": 28,
       "branch_at": {
         "trimInPlace": 1,
-        "parseStatisticConfig": 14,
+        "parseStatisticConfig": 22,
         "parseFieldAlias": 5
       },
       "lang": "c",
-      "git_churn": 2,
+      "git_churn": 5,
       "defines": [
         "trimInPlace",
         "parseStatisticConfig",
@@ -2253,7 +2389,7 @@
       "defines_at": {
         "trimInPlace": 12,
         "parseStatisticConfig": 22,
-        "parseFieldAlias": 86
+        "parseFieldAlias": 121
       },
       "imports": [
         "include/config/cli_helpers.h",
@@ -2261,10 +2397,10 @@
         "include/config/utils.h"
       ],
       "is_test": false,
-      "covered_by_test": false,
-      "pagerank": 0.002882,
+      "covered_by_test": true,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/config/core.cpp": {
       "sha256": "f2c083aeb13a0b02a45f8c5148df218099c2b742758a25ad32ad75723d224a31",
@@ -2289,9 +2425,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/config/json.cpp": {
       "sha256": "69cfa4b170f884bb8b58eb38e05fae76992f6bd2bba568615efe85aac558ab84",
@@ -2331,9 +2467,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/config/utils.cpp": {
       "sha256": "c07bd349be1fe82b30bc4061b4133b4c4263ef2fbce4a7e6f9d8345c9d8b4c4c",
@@ -2361,21 +2497,21 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/config/validation.cpp": {
-      "sha256": "84a4f5dcc4c379114960c28444f99ae580c4aa6c6711dd80c9d5d509641288aa",
-      "loc": 166,
-      "branch_count": 67,
+      "sha256": "668d1249be0746ec1125407d12cd243988b1a028a781dfc3c6542380613fe1bb",
+      "loc": 173,
+      "branch_count": 70,
       "branch_at": {
         "normalizeTargetFieldName": 2,
         "transform": 19,
-        "validate": 46
+        "validate": 49
       },
       "lang": "c",
-      "git_churn": 3,
+      "git_churn": 4,
       "defines": [
         "normalizeTargetFieldName",
         "transform",
@@ -2391,10 +2527,10 @@
         "include/config/utils.h"
       ],
       "is_test": false,
-      "covered_by_test": false,
-      "pagerank": 0.002882,
+      "covered_by_test": true,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/core/log/json_parser.cpp": {
       "sha256": "411fc4409e30298cd3a40f95b2a2045d0165983a2c4f26f37b1be6b759a9f794",
@@ -2436,9 +2572,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/core/log/parser.cpp": {
       "sha256": "996d689a6bc61580bc20652f5043a5a694f36bc3a15c5d3d8faa410122d442c0",
@@ -2486,9 +2622,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/core/log/parser_utils.cpp": {
       "sha256": "3c3e64bb8b8ea2fbde7a6d621c611ecb41f104fbe5a19db48d0f97da648bb6cf",
@@ -2513,9 +2649,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/core/log/types.cpp": {
       "sha256": "bc38ed326e2eb0ff28921927eea5c222aca8eee2857fc5ad54ff446e334afbf0",
@@ -2537,22 +2673,22 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/export/core.cpp": {
-      "sha256": "ecaf8f317f3d1479032825d2fe7ae7c0210faa6cbd7d79c13ed2e6cd817f3e03",
-      "loc": 110,
-      "branch_count": 41,
+      "sha256": "44cc631df0debf62a081933128890116ff72caf9d200b3dd70d8d24688b1a1da",
+      "loc": 113,
+      "branch_count": 42,
       "branch_at": {
         "merge": 23,
-        "exportLogEntries": 6,
+        "exportLogEntries": 7,
         "getEffectiveExportFieldMappings": 4,
         "formatCsvField": 7
       },
       "lang": "c",
-      "git_churn": 4,
+      "git_churn": 5,
       "defines": [
         "merge",
         "exportLogEntries",
@@ -2562,17 +2698,17 @@
       "defines_at": {
         "merge": 19,
         "exportLogEntries": 44,
-        "getEffectiveExportFieldMappings": 71,
-        "formatCsvField": 97
+        "getEffectiveExportFieldMappings": 74,
+        "formatCsvField": 100
       },
       "imports": [
         "include/utils/string.h"
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/export/csv.cpp": {
       "sha256": "70ad7cd32bab6aaa5bb8963e6ea584689b950ddaf92302d25baed4c8c03fcba7",
@@ -2600,45 +2736,48 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/export/json.cpp": {
-      "sha256": "5543741327ad4da4cd641dacd40328e946232bcb645b4c0d421f2b7bb3e3bb66",
-      "loc": 289,
-      "branch_count": 91,
+      "sha256": "3e09a54bedd627be5fe99433d99f76d4493869f9c774f30d4ca56894c8d09328",
+      "loc": 384,
+      "branch_count": 121,
       "branch_at": {
         "to_json": 0,
         "visit": 1,
         "constexpr": 3,
         "from_json": 20,
-        "exportAsJson": 2
+        "exportAsJson": 2,
+        "exportAsNdjson": 2
       },
       "lang": "c",
-      "git_churn": 5,
+      "git_churn": 6,
       "defines": [
         "to_json",
         "visit",
         "constexpr",
         "from_json",
-        "exportAsJson"
+        "exportAsJson",
+        "exportAsNdjson"
       ],
       "defines_at": {
         "to_json": 14,
         "visit": 15,
         "constexpr": 17,
         "from_json": 28,
-        "exportAsJson": 83
+        "exportAsJson": 83,
+        "exportAsNdjson": 187
       },
       "imports": [
         "include/utils/string.h"
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/export/text.cpp": {
       "sha256": "782d49d1e0eee5c7d17b120c9a30b75aaf1ed4e73de7e91060fe953a399fef23",
@@ -2663,9 +2802,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/export/xml.cpp": {
       "sha256": "c91eb46ad72e7c0df79f167b58c18a30d9b5d15c712308b10e0971385a32786a",
@@ -2702,9 +2841,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/filter/analyzer.cpp": {
       "sha256": "74d4a6dddfe43c9bbc5ec905dd4e33c82a199e58aeb8873456848c705a1ee124",
@@ -2746,9 +2885,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/filter/concrete_filters.cpp": {
       "sha256": "85bca30758fb090ae5033395e2d3864bfabbdc2959d12e403b315a9f0b2dc4a4",
@@ -2853,9 +2992,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/filter/condition_evaluation.cpp": {
       "sha256": "fee48034ccfda1079f96f2fb469270ef4606e447d7c21f312545720506904b5c",
@@ -2903,9 +3042,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/filter/enum_string_conversions.cpp": {
       "sha256": "60e2a2e2df96faeabae36e27de042fa49dcceab8b72fb1c6bd95db2baaaf9db8",
@@ -2948,9 +3087,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/filter/expression.cpp": {
       "sha256": "44786962136fb0b68ad79b704181b2546d3323f3be30a25b7540502ea4f43040",
@@ -3017,9 +3156,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/filter/parser.cpp": {
       "sha256": "a45dfc5ed0f1cf6ba501ca5309e033794719749a681cf5b3214eeacfca534b1d",
@@ -3141,25 +3280,25 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/main.cpp": {
-      "sha256": "92d9e5e481cd48943808d751ac90a5dfec9a0127358b7399c0473a33e8f6d6d9",
-      "loc": 397,
-      "branch_count": 107,
+      "sha256": "0dc0d03b0509a0949f3ac6105d34a84ed0083a5a8e3e2a5dbe714e7370ecd640",
+      "loc": 496,
+      "branch_count": 146,
       "branch_at": {
         "toCompositeLogic": 1,
         "writeCsvEscaped": 4,
-        "main": 44,
+        "main": 49,
         "visit": 1,
-        "constexpr": 7,
-        "sort": 15,
-        "for": 6
+        "constexpr": 23,
+        "sort": 21,
+        "for": 10
       },
       "lang": "c",
-      "git_churn": 11,
+      "git_churn": 23,
       "defines": [
         "for",
         "toCompositeLogic",
@@ -3170,30 +3309,31 @@
         "sort"
       ],
       "defines_at": {
-        "for": 371,
-        "toCompositeLogic": 29,
-        "writeCsvEscaped": 34,
-        "main": 48,
-        "visit": 220,
-        "constexpr": 222,
-        "sort": 305
+        "for": 459,
+        "toCompositeLogic": 31,
+        "writeCsvEscaped": 36,
+        "main": 50,
+        "visit": 228,
+        "constexpr": 230,
+        "sort": 371
       },
       "imports": [
         "include/analyzer/log/writer.h",
+        "include/utils/dedup.h",
         "include/utils/string.h",
         "include/config/cli.h",
         "include/filter/concrete_filters.h"
       ],
       "is_test": false,
-      "covered_by_test": false,
-      "pagerank": 0.002882,
-      "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "covered_by_test": true,
+      "pagerank": 0.002787,
+      "is_articulation": true,
+      "last_audited_sha": null
     },
     "src/stats/analyzer.cpp": {
-      "sha256": "a73f9db99e0419685415ac5e14555e6beba243c5abef7fa0b793970e6eead2f5",
-      "loc": 207,
-      "branch_count": 60,
+      "sha256": "b12cbf75b30380c09ec9ecfa4a716b1e3b85c3ec6c3782bba65468e86e65e69e",
+      "loc": 251,
+      "branch_count": 75,
       "branch_at": {
         "tryParseStrictPositiveInt": 4,
         "normalizeTargetFieldName": 2,
@@ -3206,10 +3346,10 @@
         "resetStatisticCollectors": 2,
         "processEntriesForStatistics": 1,
         "getAllStatisticReports": 2,
-        "createStatisticCollector": 25
+        "createStatisticCollector": 40
       },
       "lang": "c",
-      "git_churn": 1,
+      "git_churn": 5,
       "defines": [
         "tryParseStrictPositiveInt",
         "normalizeTargetFieldName",
@@ -3240,15 +3380,15 @@
       },
       "imports": [],
       "is_test": false,
-      "covered_by_test": false,
-      "pagerank": 0.002882,
+      "covered_by_test": true,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/stats/core.cpp": {
-      "sha256": "b667dd273aaeff306237e4b2f5e882131ad3ab38cfe6aa8b1eabb845c4b5103c",
-      "loc": 364,
-      "branch_count": 99,
+      "sha256": "794ee0b807bf6d968af653070f54431ec4623d5767a0aad2675149d4ec5633f2",
+      "loc": 537,
+      "branch_count": 132,
       "branch_at": {
         "tryParseStrictPositiveInt": 4,
         "normalizeTargetFieldName": 2,
@@ -3261,10 +3401,14 @@
         "FieldValueCountCollector": 0,
         "getFieldValueAsString": 17,
         "TopNFieldValuesCollector": 0,
-        "createCollector": 23
+        "TimeBucketHistogramCollector": 1,
+        "PercentileStatsCollector": 0,
+        "GapDetectorCollector": 1,
+        "MovingAverageRateCollector": 1,
+        "createCollector": 38
       },
       "lang": "c",
-      "git_churn": 2,
+      "git_churn": 7,
       "defines": [
         "tryParseStrictPositiveInt",
         "normalizeTargetFieldName",
@@ -3277,33 +3421,41 @@
         "FieldValueCountCollector",
         "getFieldValueAsString",
         "TopNFieldValuesCollector",
+        "TimeBucketHistogramCollector",
+        "PercentileStatsCollector",
+        "GapDetectorCollector",
+        "MovingAverageRateCollector",
         "createCollector"
       ],
       "defines_at": {
-        "tryParseStrictPositiveInt": 12,
-        "normalizeTargetFieldName": 27,
-        "transform": 39,
-        "trimInPlace": 53,
-        "collect": 67,
-        "generateReport": 70,
-        "TopMessagesCollector": 80,
-        "sort": 88,
-        "FieldValueCountCollector": 158,
-        "getFieldValueAsString": 163,
-        "TopNFieldValuesCollector": 211,
-        "createCollector": 286
+        "tryParseStrictPositiveInt": 14,
+        "normalizeTargetFieldName": 29,
+        "transform": 41,
+        "trimInPlace": 55,
+        "collect": 69,
+        "generateReport": 72,
+        "TopMessagesCollector": 82,
+        "sort": 90,
+        "FieldValueCountCollector": 161,
+        "getFieldValueAsString": 166,
+        "TopNFieldValuesCollector": 214,
+        "TimeBucketHistogramCollector": 284,
+        "PercentileStatsCollector": 308,
+        "GapDetectorCollector": 346,
+        "MovingAverageRateCollector": 378,
+        "createCollector": 420
       },
       "imports": [],
       "is_test": false,
-      "covered_by_test": false,
-      "pagerank": 0.002882,
+      "covered_by_test": true,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/utils/core.cpp": {
-      "sha256": "1c272fde68c2b86b7b857a0eb52a1d1192320049cfebc523f8ae1b294b0b6e36",
-      "loc": 324,
-      "branch_count": 147,
+      "sha256": "1efbb490aa59f762c825f3e761863175776a902356bc97131ec3fbc8a978f739",
+      "loc": 334,
+      "branch_count": 157,
       "branch_at": {
         "toUpperInPlaceAsciiSafe": 0,
         "transform": 0,
@@ -3316,10 +3468,10 @@
         "conversions": 1,
         "logEntryFieldToString": 11,
         "stringToLogEntryField": 29,
-        "exportFormatToString": 4,
-        "stringToExportFormat": 5,
-        "statisticTypeToString": 6,
-        "stringToStatisticType": 7,
+        "exportFormatToString": 5,
+        "stringToExportFormat": 6,
+        "statisticTypeToString": 10,
+        "stringToStatisticType": 11,
         "patternTypeToString": 3,
         "stringToPatternType": 3,
         "parseErrorToString": 4,
@@ -3332,7 +3484,7 @@
         "generateLogEntryId": 0
       },
       "lang": "c",
-      "git_churn": 5,
+      "git_churn": 10,
       "defines": [
         "conversions",
         "toUpperInPlaceAsciiSafe",
@@ -3373,28 +3525,28 @@
         "logEntryFieldToString": 89,
         "stringToLogEntryField": 105,
         "exportFormatToString": 126,
-        "stringToExportFormat": 135,
-        "statisticTypeToString": 148,
-        "stringToStatisticType": 159,
-        "patternTypeToString": 174,
-        "stringToPatternType": 182,
-        "parseErrorToString": 194,
-        "stringToParseError": 203,
-        "sortByToString": 216,
-        "stringToSortBy": 226,
-        "sortOrderToString": 240,
-        "stringToSortOrder": 247,
-        "parseHumanReadableSize": 256,
-        "generateLogEntryId": 312
+        "stringToExportFormat": 136,
+        "statisticTypeToString": 150,
+        "stringToStatisticType": 165,
+        "patternTypeToString": 184,
+        "stringToPatternType": 192,
+        "parseErrorToString": 204,
+        "stringToParseError": 213,
+        "sortByToString": 226,
+        "stringToSortBy": 236,
+        "sortOrderToString": 250,
+        "stringToSortOrder": 257,
+        "parseHumanReadableSize": 266,
+        "generateLogEntryId": 322
       },
       "imports": [
         "include/utils/string.h"
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/utils/ip_address.cpp": {
       "sha256": "6db40ba3e34423cb29efac19f20fb53ac37acd87b27e5ce8c92c37d90e65ea00",
@@ -3419,9 +3571,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/utils/string.cpp": {
       "sha256": "9fc3a838ee266ce89578e7bcf21d8df7de716123cc773bb2d2fc5206a413235b",
@@ -3491,9 +3643,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/utils/time.cpp": {
       "sha256": "cf169feeb77946bda89774480a55f90e8d67e2ff968d6b78a84546cd10fa0af4",
@@ -3552,9 +3704,9 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/utils/time_parser.cpp": {
       "sha256": "175d42ce1bb23273380520cbc4c7a428358a6a076c4dedf701ae0fdbc8e5cec9",
@@ -3601,9 +3753,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/utils/timer.cpp": {
       "sha256": "8c33c403648e5fd4eed260861839f8db6ac9123885d754219edf22d3ea5a70da",
@@ -3643,9 +3795,9 @@
       ],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "src/utils/version.cpp": {
       "sha256": "f2e6dc0c22e74107d38bf97104a51162c04040456395a68ff9ed635f4ff9d9f3",
@@ -3677,25 +3829,25 @@
       ],
       "is_test": false,
       "covered_by_test": true,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/CMakeLists.txt": {
-      "sha256": "9418637771efdcf49d09e26827fbaf54369448675af7b8e0bd1b279df100f563",
-      "loc": 165,
+      "sha256": "4f16c3da90d390c624df0f50daefb5b643b4cb0ee054020e5246d40112026fc5",
+      "loc": 167,
       "branch_count": 0,
       "branch_at": {},
       "lang": "unknown",
-      "git_churn": 11,
+      "git_churn": 13,
       "defines": [],
       "defines_at": {},
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/core.cpp": {
       "sha256": "6654e76e1f6d601e852fee1d27ccaba8b8e16d177a9b7026016169db100113e2",
@@ -3721,9 +3873,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/export.cpp": {
       "sha256": "28faef9fcb800f8c78afd220c565d48b1e138dade44f62af3d1decde75967ae3",
@@ -3743,9 +3895,9 @@
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/filter.cpp": {
       "sha256": "7efd2eefb28426b6845e796394df053f9336e7495eaed57e2a66f0f9af872df7",
@@ -3770,9 +3922,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/filter_logic/criteria.cpp": {
       "sha256": "f4d023a09032be4619870091f05beb4d704d56b8b3c850dd29f0b8bc9c91988f",
@@ -3797,9 +3949,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/filter_logic/expressions.cpp": {
       "sha256": "6258ce1ab1474f52a7a38a05bbf410711b90685bdd737d705d712183c35f079f",
@@ -3822,9 +3974,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/filter_logic/sorting.cpp": {
       "sha256": "2d56070f43301830943b4ae1c5c4e2996f4c095db7b5512f27537a64b49f7076",
@@ -3844,9 +3996,9 @@
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/log_writer.cpp": {
       "sha256": "e0270c2c551982ef0cc3c602b5c13bfb49c9c68c190d0905206de12a9217f586",
@@ -3876,9 +4028,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/log_writer_correctness.cpp": {
       "sha256": "d5464b23c242988b0951c3a46f423489f5a166b008ba2c0cfb17c71d09df74b2",
@@ -3917,9 +4069,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/stream.cpp": {
       "sha256": "fd9c59d9603c70007cd82d0f0e3c9f6f70ba3506b97fce65ee9ae70fd25f3539",
@@ -3939,9 +4091,9 @@
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/analyzer/types.cpp": {
       "sha256": "f6b4eda7b54698b61541480a28ecf3f0eeae85b131c0a01cd2d12e28291e401c",
@@ -3961,33 +4113,33 @@
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/cli/analysis.cpp": {
-      "sha256": "303c8729cc372abf62dc2b8dfd023e5c3efe0a8f957e67c5b13a3277347b9ad4",
-      "loc": 104,
+      "sha256": "c6c1a83a9934a9799fd8740424751f2fa4bc73d86dae392237887855fd0528ad",
+      "loc": 254,
       "branch_count": 0,
       "branch_at": {
         "CLIConfigTest": 0
       },
       "lang": "c",
-      "git_churn": 3,
+      "git_churn": 13,
       "defines": [
         "CLIConfigTest"
       ],
       "defines_at": {
-        "CLIConfigTest": 6
+        "CLIConfigTest": 9
       },
       "imports": [
         "tests/support/cli_helper.h"
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/cli/defaults.cpp": {
       "sha256": "b3e83f0372278f5687cc0bed3ada77b430fcec9186da5ac16843b8c890398e4b",
@@ -4009,9 +4161,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/cli/errors.cpp": {
       "sha256": "5135222694eeb29bbc6a3db7eff5e0f4fa88001f48008c447f6c1f6749b22815",
@@ -4036,19 +4188,19 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/cli/filtering.cpp": {
-      "sha256": "3f806728c228fe22b9cbf0ee1a13d70d1e5acb6effc29adcfa7928456b33351d",
-      "loc": 161,
+      "sha256": "211cf6276c73b28e99fdc6f5900c5708cfb22d84d7366a8ef220409ddd9957da",
+      "loc": 208,
       "branch_count": 1,
       "branch_at": {
         "CLIConfigTest": 0
       },
       "lang": "c",
-      "git_churn": 3,
+      "git_churn": 7,
       "defines": [
         "CLIConfigTest"
       ],
@@ -4061,9 +4213,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/cli/formatting.cpp": {
       "sha256": "3fc1759b25b8c95d684cf15006d17a3f7832433bab5ad40f97799e1bfc1ff9b4",
@@ -4088,9 +4240,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/cli/input_output.cpp": {
       "sha256": "b8496b868ca1c60017127b58a1b8697f250735ae84e6e6684a3de07d98d5ab94",
@@ -4112,9 +4264,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/cli/new_feature.cpp": {
       "sha256": "37168cca14c59181d46b6034de05543ea57bda33aeb9f60143f1fc7b8d249304",
@@ -4136,9 +4288,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/core/basic.cpp": {
       "sha256": "ad8cdd3280f266f5d11223ba083b8b65bfc16c097866bd9c2c228b6932a37c07",
@@ -4181,9 +4333,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/core/features.cpp": {
       "sha256": "3ab0f2c762e4351071f8a279135c39b9f938f02cf38e359916de7f179499de25",
@@ -4211,9 +4363,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/core/json/deserialization.cpp": {
       "sha256": "c839c2a566b5a168d274552e72f563a5696a7b79c231da32020cab598a7a70d7",
@@ -4235,19 +4387,19 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/core/json/serialization.cpp": {
-      "sha256": "5e83828de016725ede5ef8f0b33c2885e97da42cdd6804ed358bfb2dbf3a81ab",
-      "loc": 74,
-      "branch_count": 0,
+      "sha256": "9a54cf9ffcb9ae33d7e06034e72424df224cca4850e09abc9653c052f7534e08",
+      "loc": 99,
+      "branch_count": 1,
       "branch_at": {
         "LogAnalyzerConfigTest": 0
       },
       "lang": "c",
-      "git_churn": 1,
+      "git_churn": 2,
       "defines": [
         "LogAnalyzerConfigTest"
       ],
@@ -4259,19 +4411,19 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/core/validation.cpp": {
-      "sha256": "0a2bac30206fddeb376cfe6cfc8673617705861a945a8eebf3e4fd973cfd0c27",
-      "loc": 273,
+      "sha256": "9af85c3fd864d4abab9022c3ddec42815c895aaefb33e87da7af4fc12d8b2a7d",
+      "loc": 299,
       "branch_count": 7,
       "branch_at": {
         "ConfigValidationTest": 1
       },
       "lang": "c",
-      "git_churn": 2,
+      "git_churn": 3,
       "defines": [
         "ConfigValidationTest"
       ],
@@ -4284,9 +4436,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/merge.cpp": {
       "sha256": "202c53369dc7935fab8abd7baf372fc015aa5d55e77217a8252aabf2d59038a3",
@@ -4308,9 +4460,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/config/utils.cpp": {
       "sha256": "d5278851565bec4c97ce680c73dd919195a24da44ac875ca6caaa47fc88fee06",
@@ -4332,9 +4484,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/core/log/json_parser.cpp": {
       "sha256": "3559d7ae0cf4bfeb69e68c438fcc4f47b61e9b3fca25b87d46a692a4fc84ee61",
@@ -4356,9 +4508,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/core/log/parser.cpp": {
       "sha256": "9d98f50b0accbe1c187c5351f64f58cde95136ee3b46587b29e23a472f19d06a",
@@ -4383,9 +4535,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/core/log/parser_utils.cpp": {
       "sha256": "273819b66e88de36518b649bbb32872022ee99cd4e505d52040fc1c51ff2ac63",
@@ -4407,9 +4559,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/core/log/types.cpp": {
       "sha256": "bfd33becb0e72560a9ddbec3470812f1b43d9d9414ea4a8f7f5772faefc42125",
@@ -4440,9 +4592,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/export/core.cpp": {
       "sha256": "b05f4c419b0a61b31f5c87440bed3539578570309981fa7d6d6cab7b49cd7b5f",
@@ -4473,9 +4625,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/export/csv.cpp": {
       "sha256": "d2de5bc4bf0d9c6ee6480f1663b24e65d684ad04097e84c25e1a2013f3b6272c",
@@ -4497,9 +4649,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/export/field_mapping.cpp": {
       "sha256": "af75cc081a4ee86c68c4ef280fa826e68cf03f0ea1ab0163c026acacd55ac1db",
@@ -4521,9 +4673,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/export/json.cpp": {
       "sha256": "4aee8fa11cd933f045678d1ec083f6e1f59754d3ab93b37760398dae49b78ec6",
@@ -4545,19 +4697,43 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
+    },
+    "tests/export/ndjson.cpp": {
+      "sha256": "a839ff28def9017ebe6d86839c7a2a0c5c524fa16925b540740049c3d54e087a",
+      "loc": 72,
+      "branch_count": 3,
+      "branch_at": {
+        "ExporterNdjsonTest": 3
+      },
+      "lang": "c",
+      "git_churn": 1,
+      "defines": [
+        "ExporterNdjsonTest"
+      ],
+      "defines_at": {
+        "ExporterNdjsonTest": 10
+      },
+      "imports": [
+        "tests/support/helper.h"
+      ],
+      "is_test": true,
+      "covered_by_test": false,
+      "pagerank": 0.002787,
+      "is_articulation": false,
+      "last_audited_sha": null
     },
     "tests/export/settings.cpp": {
-      "sha256": "24d4ed9297e5f90708bbdc24b27237a3b54e2ca6ef89b9dcfdecfee20accf65f",
-      "loc": 184,
+      "sha256": "7bec92ee7fc7df5886aca56127bfc42ce8b17f1fff8652136407bb47ee1782b5",
+      "loc": 201,
       "branch_count": 0,
       "branch_at": {
         "ExportSettingsTest": 0
       },
       "lang": "c",
-      "git_churn": 5,
+      "git_churn": 6,
       "defines": [
         "ExportSettingsTest"
       ],
@@ -4569,9 +4745,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/export/text.cpp": {
       "sha256": "9f7c01369be81d974c31e23581b0dbc69dbad83c7d70bb751d34089fb1e1ba83",
@@ -4593,9 +4769,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/export/utils.cpp": {
       "sha256": "d568c6ff96f21703366b3930daf3469b1bf4d3469728ff9b53ca7fe7a1edd701",
@@ -4620,9 +4796,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/advanced.cpp": {
       "sha256": "4643ac337d56f2aaeb1839b6a135f6ccffc58934211a48875c6b52b1fa668aa4",
@@ -4644,9 +4820,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core/unit/advanced.cpp": {
       "sha256": "63922697ce181c0216e5f131c9b5232cba483b9f3a8803f029023868c6502d17",
@@ -4670,9 +4846,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core/unit/basic.cpp": {
       "sha256": "bcd22e6a5e63dd439df725a96f61162172ece74d6cc97675eb0dbee44ee552f5",
@@ -4699,9 +4875,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core/unit/field.cpp": {
       "sha256": "bfd5b67fda77b0ccb3cd8e39c7b7dbc47fabf6afda25716a95c4079eeeabf1b1",
@@ -4724,9 +4900,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core_json/basic/deserialization.cpp": {
       "sha256": "41c993ee4b46d408573a44872d28328440d3f9a8a13a62f00f291b5c2e7f4e9c",
@@ -4751,9 +4927,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core_json/basic/serialization.cpp": {
       "sha256": "ab123d6abf8147190f3b561bb131d24a9ff781fea95a43ab25997702e73c53c6",
@@ -4776,9 +4952,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core_json/basic/serialization_advanced.cpp": {
       "sha256": "1db0579bb1814831909f50262aefa7c9a920d543983d185d96e47ea6b3854bec",
@@ -4801,9 +4977,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core_json/condition/deserialization.cpp": {
       "sha256": "46145c8e98e45fe8adcdc1cb5a9ba4468438c14faa1a9c58de678e61615be0dd",
@@ -4825,9 +5001,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core_json/condition/factory_function.cpp": {
       "sha256": "8fcc1db0ee040ddad80843c04dbc4a54195e3cfa9cbe1cc98edd6ac3c9329796",
@@ -4849,9 +5025,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core_json/condition/serialization.cpp": {
       "sha256": "be685eb71837941c1eee9bab1f61a8b098dbd755ab32da35426e3d2129aca93d",
@@ -4873,9 +5049,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core_json/expression.cpp": {
       "sha256": "3bb7468f8fc589c70d0bf67d4e9d6ea573aa8f20e374673a2e650f4f4fec93c1",
@@ -4898,9 +5074,9 @@
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/core_json/rule.cpp": {
       "sha256": "c9c9cfcee31f33b1c3a52bdace1c43435cd1f2021c12f5bf085b82d4cbaa625a",
@@ -4922,9 +5098,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/evaluation.cpp": {
       "sha256": "9ac28073dc29706cf72a48ec9ded2dc848e08346a9f18e634ad72e72d8733730",
@@ -4946,9 +5122,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/evaluation_extended.cpp": {
       "sha256": "a0bf025daf81321dab49a8e4a86cdd9c713be019c67e356fe553309bee5652ec",
@@ -4973,9 +5149,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/fluent_api.cpp": {
       "sha256": "49e383c2fcf6f32895db24880db83667bb666548ecc4843111046ccf83bf2d19",
@@ -4997,9 +5173,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/ip_address.cpp": {
       "sha256": "5060906984da9a223ce484ce42a43732148df9d43b9f3b8b363e8d087545c1ea",
@@ -5021,9 +5197,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/iteration/13.cpp": {
       "sha256": "4b185de0bd073d408761ac2a2138805e43d3cddecb84c8c07c214f6f11696524",
@@ -5046,9 +5222,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/iteration/15.cpp": {
       "sha256": "bc67cb62451dd35f2abdf087de3134e9cbcf777fad4d44fcc33f478cf5ae2c6e",
@@ -5076,9 +5252,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/iteration/2.cpp": {
       "sha256": "a0a0c6a1e535e1ce6b3543a17d87bfa72bc100f2bcc6602f264d46d7ff978c11",
@@ -5105,9 +5281,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/legacy.cpp": {
       "sha256": "33be4f9854c7df173c6d79cc2820fe937678b859bfd28fc7471fd7be35db6227",
@@ -5130,9 +5306,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/logical_negation.cpp": {
       "sha256": "7e0bdd98b38b9d4a35789dec471790aa19c685157e5b0d5ade80747a71dfafab",
@@ -5154,9 +5330,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/filter/version.cpp": {
       "sha256": "db41497e183b8a04dc798e70f77ad5d34adc3dc6b25cf0dd1997dcbbc3fb387b",
@@ -5181,19 +5357,19 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/stats/core.cpp": {
-      "sha256": "a054fd73a823dc4fa205921f7d65281521a2ea605905085493c871d698d42206",
-      "loc": 218,
-      "branch_count": 12,
+      "sha256": "ad60cf5aa602d3a581f244e35b68038533941d6cb3b97ad5b6368f61152e4120",
+      "loc": 867,
+      "branch_count": 28,
       "branch_at": {
         "StatisticsTest": 0
       },
       "lang": "c",
-      "git_churn": 2,
+      "git_churn": 13,
       "defines": [
         "StatisticsTest"
       ],
@@ -5203,9 +5379,9 @@
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/support/cli_helper.h": {
       "sha256": "fe5f862a9353a1a6a4efc947fae182d8cc35a2e29b9aad14711d483dd0199010",
@@ -5231,9 +5407,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.016356,
+      "pagerank": 0.015816,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/support/filter_json_fixture.h": {
       "sha256": "ec97737aeefa12a8af193ebe56c5e8fdb671db5cda1e0cc698478909c7091e3a",
@@ -5255,9 +5431,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.013293,
+      "pagerank": 0.012855,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/support/fixture.h": {
       "sha256": "fb562667dd7582a9fb0946eaec2b4b087a079bd123313e412349ec1773362e33",
@@ -5277,9 +5453,9 @@
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.007782,
+      "pagerank": 0.007525,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/support/helper.h": {
       "sha256": "8bb9bdfffbdb713c7fa95653dcf97445748b79ce9b134945241464b450ad2af6",
@@ -5321,9 +5497,33 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.039832,
+      "pagerank": 0.040887,
       "is_articulation": true,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
+    },
+    "tests/utils/dedup.cpp": {
+      "sha256": "a1d121c814bb616d82af207bbd98386e6698c30d10583fd3c942527eff798227",
+      "loc": 105,
+      "branch_count": 0,
+      "branch_at": {
+        "DedupFieldTest": 0
+      },
+      "lang": "c",
+      "git_churn": 2,
+      "defines": [
+        "DedupFieldTest"
+      ],
+      "defines_at": {
+        "DedupFieldTest": 22
+      },
+      "imports": [
+        "include/utils/dedup.h"
+      ],
+      "is_test": true,
+      "covered_by_test": false,
+      "pagerank": 0.002787,
+      "is_articulation": false,
+      "last_audited_sha": null
     },
     "tests/utils/enum.cpp": {
       "sha256": "2c463380172de8fcefa2a1970c0299fb9cdeb634b53fe20e77f0c024a3be7dc3",
@@ -5349,9 +5549,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/utils/string.cpp": {
       "sha256": "99db5a2870671b977816fbfb2b770a8d79f2b1401e661292ae6339cad603a968",
@@ -5373,9 +5573,9 @@
       ],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tests/utils/time.cpp": {
       "sha256": "9648cde00c4cb920e9ce459a0cffc2d52eaecde2a926bba8b7869a035e0d56cd",
@@ -5401,9 +5601,9 @@
       "imports": [],
       "is_test": true,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     },
     "tools/README.md": {
       "sha256": "d1786fada540dbeeeae1ac529abaede04d8af03db09aa993b8c16be9313c2336",
@@ -5417,12 +5617,18 @@
       "imports": [],
       "is_test": false,
       "covered_by_test": false,
-      "pagerank": 0.002882,
+      "pagerank": 0.002787,
       "is_articulation": false,
-      "last_audited_sha": "379219576477caa35128604ab6f1889fd6a880a8"
+      "last_audited_sha": null
     }
   },
   "coupling_edges": [
+    {
+      "a": ".planwright/completed.md",
+      "b": ".planwright/plan.md",
+      "cooccur": 7,
+      "weight": 1.0
+    },
     {
       "a": "CMakeLists.txt",
       "b": "CONTRIBUTING.md",
@@ -5487,7 +5693,7 @@
       "a": "CMakeLists.txt",
       "b": "src/utils/core.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.3333
     },
     {
       "a": "CMakeLists.txt",
@@ -5517,7 +5723,7 @@
       "a": "README.md",
       "b": "include/config/cli.h",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "README.md",
@@ -5559,13 +5765,13 @@
       "a": "README.md",
       "b": "src/config/cli.cpp",
       "cooccur": 3,
-      "weight": 0.5
+      "weight": 0.3
     },
     {
       "a": "README.md",
       "b": "src/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "README.md",
@@ -5575,9 +5781,15 @@
     },
     {
       "a": "README.md",
+      "b": "src/main.cpp",
+      "cooccur": 3,
+      "weight": 0.3
+    },
+    {
+      "a": "README.md",
       "b": "src/utils/core.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.3
     },
     {
       "a": "README.md",
@@ -5601,7 +5813,7 @@
       "a": "README.md",
       "b": "tests/CMakeLists.txt",
       "cooccur": 3,
-      "weight": 0.3333
+      "weight": 0.3
     },
     {
       "a": "README.md",
@@ -5618,8 +5830,8 @@
     {
       "a": "README.md",
       "b": "tests/config/cli/analysis.cpp",
-      "cooccur": 3,
-      "weight": 1.0
+      "cooccur": 4,
+      "weight": 0.4
     },
     {
       "a": "README.md",
@@ -5637,7 +5849,7 @@
       "a": "README.md",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "README.md",
@@ -5691,7 +5903,7 @@
       "a": "README.md",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.5
     },
     {
       "a": "README.md",
@@ -5754,6 +5966,12 @@
       "weight": 0.6
     },
     {
+      "a": "README.md",
+      "b": "tests/stats/core.cpp",
+      "cooccur": 3,
+      "weight": 0.3
+    },
+    {
       "a": "include/analyzer/core.h",
       "b": "include/analyzer/log/reader.h",
       "cooccur": 3,
@@ -5763,7 +5981,7 @@
       "a": "include/analyzer/core.h",
       "b": "include/config/cli.h",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/analyzer/core.h",
@@ -5925,7 +6143,7 @@
       "a": "include/analyzer/core.h",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/analyzer/core.h",
@@ -5943,7 +6161,7 @@
       "a": "include/analyzer/core.h",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/analyzer/core.h",
@@ -6075,7 +6293,7 @@
       "a": "include/analyzer/log/reader.h",
       "b": "include/config/cli.h",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/analyzer/log/reader.h",
@@ -6171,7 +6389,7 @@
       "a": "include/analyzer/log/reader.h",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/analyzer/log/reader.h",
@@ -6189,7 +6407,7 @@
       "a": "include/analyzer/log/reader.h",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/analyzer/log/reader.h",
@@ -6303,61 +6521,67 @@
       "a": "include/config/cli.h",
       "b": "include/config/common_types.h",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/cli.h",
       "b": "include/filter/condition.h",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "include/config/cli.h",
       "b": "include/filter/expression.h",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "include/config/cli.h",
       "b": "src/analyzer/log/reader.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/cli.h",
       "b": "src/analyzer/log/writer.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "src/analyzer/streaming.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/cli.h",
       "b": "src/config/cli.cpp",
-      "cooccur": 3,
+      "cooccur": 7,
       "weight": 1.0
     },
     {
       "a": "include/config/cli.h",
       "b": "src/export/core.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "src/filter/condition_evaluation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
+    },
+    {
+      "a": "include/config/cli.h",
+      "b": "src/main.cpp",
+      "cooccur": 6,
+      "weight": 0.8571
     },
     {
       "a": "include/config/cli.h",
       "b": "src/utils/core.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "include/config/cli.h",
@@ -6375,7 +6599,7 @@
       "a": "include/config/cli.h",
       "b": "src/utils/version.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/cli.h",
@@ -6392,14 +6616,14 @@
     {
       "a": "include/config/cli.h",
       "b": "tests/config/cli/analysis.cpp",
-      "cooccur": 3,
-      "weight": 1.0
+      "cooccur": 5,
+      "weight": 0.7143
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/config/cli/defaults.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/cli.h",
@@ -6410,14 +6634,14 @@
     {
       "a": "include/config/cli.h",
       "b": "tests/config/cli/filtering.cpp",
-      "cooccur": 3,
-      "weight": 1.0
+      "cooccur": 6,
+      "weight": 0.8571
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/config/cli/formatting.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
@@ -6429,97 +6653,97 @@
       "a": "include/config/cli.h",
       "b": "tests/config/core/basic.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/export/core.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/export/csv.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/export/field_mapping.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/export/json.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/export/text.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/export/utils.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/filter/advanced.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/filter/core/unit/advanced.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/filter/evaluation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/filter/fluent_api.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/filter/ip_address.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/filter/legacy.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/filter/logical_negation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/cli.h",
       "b": "tests/filter/version.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "include/config/common_types.h",
@@ -6675,7 +6899,7 @@
       "a": "include/config/common_types.h",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/common_types.h",
@@ -6693,7 +6917,7 @@
       "a": "include/config/common_types.h",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/common_types.h",
@@ -6915,7 +7139,7 @@
       "a": "include/config/settings.h",
       "b": "src/config/validation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "include/config/settings.h",
@@ -7542,6 +7766,30 @@
       "weight": 1.0
     },
     {
+      "a": "include/export/core.h",
+      "b": "src/config/cli.cpp",
+      "cooccur": 3,
+      "weight": 1.0
+    },
+    {
+      "a": "include/export/core.h",
+      "b": "src/export/core.cpp",
+      "cooccur": 3,
+      "weight": 1.0
+    },
+    {
+      "a": "include/export/core.h",
+      "b": "src/export/json.cpp",
+      "cooccur": 3,
+      "weight": 1.0
+    },
+    {
+      "a": "include/export/core.h",
+      "b": "src/utils/core.cpp",
+      "cooccur": 3,
+      "weight": 1.0
+    },
+    {
       "a": "include/filter/concrete_filters.h",
       "b": "include/filter/condition.h",
       "cooccur": 3,
@@ -7725,13 +7973,13 @@
       "a": "include/filter/condition.h",
       "b": "src/config/cli.cpp",
       "cooccur": 3,
-      "weight": 0.5
+      "weight": 0.375
     },
     {
       "a": "include/filter/condition.h",
       "b": "src/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "include/filter/condition.h",
@@ -7773,7 +8021,7 @@
       "a": "include/filter/condition.h",
       "b": "src/utils/core.cpp",
       "cooccur": 4,
-      "weight": 0.8
+      "weight": 0.5
     },
     {
       "a": "include/filter/condition.h",
@@ -7827,7 +8075,7 @@
       "a": "include/filter/condition.h",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.375
     },
     {
       "a": "include/filter/condition.h",
@@ -7845,7 +8093,7 @@
       "a": "include/filter/condition.h",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "include/filter/condition.h",
@@ -7893,7 +8141,7 @@
       "a": "include/filter/condition.h",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.5
     },
     {
       "a": "include/filter/condition.h",
@@ -8079,7 +8327,7 @@
       "a": "include/filter/expression.h",
       "b": "src/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "include/filter/expression.h",
@@ -8109,7 +8357,7 @@
       "a": "include/filter/expression.h",
       "b": "src/utils/core.cpp",
       "cooccur": 5,
-      "weight": 1.0
+      "weight": 0.8333
     },
     {
       "a": "include/filter/expression.h",
@@ -8157,7 +8405,7 @@
       "a": "include/filter/expression.h",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "include/filter/expression.h",
@@ -8175,7 +8423,7 @@
       "a": "include/filter/expression.h",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "include/filter/expression.h",
@@ -8235,7 +8483,7 @@
       "a": "include/filter/expression.h",
       "b": "tests/export/settings.cpp",
       "cooccur": 4,
-      "weight": 0.8
+      "weight": 0.6667
     },
     {
       "a": "include/filter/expression.h",
@@ -8442,6 +8690,36 @@
       "weight": 1.0
     },
     {
+      "a": "include/stats/core.h",
+      "b": "src/config/cli.cpp",
+      "cooccur": 3,
+      "weight": 0.5
+    },
+    {
+      "a": "include/stats/core.h",
+      "b": "src/stats/analyzer.cpp",
+      "cooccur": 4,
+      "weight": 0.8
+    },
+    {
+      "a": "include/stats/core.h",
+      "b": "src/stats/core.cpp",
+      "cooccur": 6,
+      "weight": 1.0
+    },
+    {
+      "a": "include/stats/core.h",
+      "b": "src/utils/core.cpp",
+      "cooccur": 6,
+      "weight": 1.0
+    },
+    {
+      "a": "include/stats/core.h",
+      "b": "tests/stats/core.cpp",
+      "cooccur": 5,
+      "weight": 0.8333
+    },
+    {
       "a": "include/utils/core.h",
       "b": "src/config/cli.cpp",
       "cooccur": 3,
@@ -8559,7 +8837,7 @@
       "a": "include/utils/string.h",
       "b": "src/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "include/utils/string.h",
@@ -8607,7 +8885,7 @@
       "a": "src/analyzer/core.cpp",
       "b": "src/config/cli.cpp",
       "cooccur": 4,
-      "weight": 0.6667
+      "weight": 0.4
     },
     {
       "a": "src/analyzer/core.cpp",
@@ -8625,7 +8903,7 @@
       "a": "src/analyzer/core.cpp",
       "b": "src/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/analyzer/core.cpp",
@@ -8661,7 +8939,7 @@
       "a": "src/analyzer/core.cpp",
       "b": "src/utils/core.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.3
     },
     {
       "a": "src/analyzer/core.cpp",
@@ -8721,7 +8999,7 @@
       "a": "src/analyzer/core.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.5
     },
     {
       "a": "src/analyzer/core.cpp",
@@ -8829,7 +9107,7 @@
       "a": "src/analyzer/log/reader.cpp",
       "b": "src/config/validation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/analyzer/log/reader.cpp",
@@ -8913,7 +9191,7 @@
       "a": "src/analyzer/log/reader.cpp",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/analyzer/log/reader.cpp",
@@ -8931,7 +9209,7 @@
       "a": "src/analyzer/log/reader.cpp",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/analyzer/log/reader.cpp",
@@ -9069,7 +9347,7 @@
       "a": "src/analyzer/log/writer.cpp",
       "b": "src/config/validation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/analyzer/log/writer.cpp",
@@ -9093,7 +9371,7 @@
       "a": "src/analyzer/log/writer.cpp",
       "b": "src/export/core.cpp",
       "cooccur": 4,
-      "weight": 1.0
+      "weight": 0.8
     },
     {
       "a": "src/analyzer/log/writer.cpp",
@@ -9165,7 +9443,7 @@
       "a": "src/analyzer/log/writer.cpp",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "src/analyzer/log/writer.cpp",
@@ -9183,7 +9461,7 @@
       "a": "src/analyzer/log/writer.cpp",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "src/analyzer/log/writer.cpp",
@@ -9327,7 +9605,7 @@
       "a": "src/analyzer/streaming.cpp",
       "b": "src/config/validation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/analyzer/streaming.cpp",
@@ -9411,7 +9689,7 @@
       "a": "src/analyzer/streaming.cpp",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/analyzer/streaming.cpp",
@@ -9429,7 +9707,7 @@
       "a": "src/analyzer/streaming.cpp",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/analyzer/streaming.cpp",
@@ -9555,7 +9833,7 @@
       "a": "src/config/cli.cpp",
       "b": "src/config/validation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/config/cli.cpp",
@@ -9578,14 +9856,14 @@
     {
       "a": "src/config/cli.cpp",
       "b": "src/export/core.cpp",
-      "cooccur": 4,
+      "cooccur": 5,
       "weight": 1.0
     },
     {
       "a": "src/config/cli.cpp",
       "b": "src/export/json.cpp",
-      "cooccur": 3,
-      "weight": 0.6
+      "cooccur": 4,
+      "weight": 0.6667
     },
     {
       "a": "src/config/cli.cpp",
@@ -9601,9 +9879,21 @@
     },
     {
       "a": "src/config/cli.cpp",
+      "b": "src/main.cpp",
+      "cooccur": 6,
+      "weight": 0.4615
+    },
+    {
+      "a": "src/config/cli.cpp",
+      "b": "src/stats/core.cpp",
+      "cooccur": 3,
+      "weight": 0.4286
+    },
+    {
+      "a": "src/config/cli.cpp",
       "b": "src/utils/core.cpp",
-      "cooccur": 4,
-      "weight": 0.8
+      "cooccur": 6,
+      "weight": 0.6
     },
     {
       "a": "src/config/cli.cpp",
@@ -9625,6 +9915,12 @@
     },
     {
       "a": "src/config/cli.cpp",
+      "b": "tests/CMakeLists.txt",
+      "cooccur": 3,
+      "weight": 0.2308
+    },
+    {
+      "a": "src/config/cli.cpp",
       "b": "tests/analyzer/core.cpp",
       "cooccur": 3,
       "weight": 1.0
@@ -9638,8 +9934,8 @@
     {
       "a": "src/config/cli.cpp",
       "b": "tests/config/cli/analysis.cpp",
-      "cooccur": 3,
-      "weight": 1.0
+      "cooccur": 5,
+      "weight": 0.3846
     },
     {
       "a": "src/config/cli.cpp",
@@ -9656,7 +9952,7 @@
     {
       "a": "src/config/cli.cpp",
       "b": "tests/config/cli/filtering.cpp",
-      "cooccur": 3,
+      "cooccur": 7,
       "weight": 1.0
     },
     {
@@ -9693,7 +9989,7 @@
       "a": "src/config/cli.cpp",
       "b": "tests/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.5
+      "weight": 0.4286
     },
     {
       "a": "src/config/cli.cpp",
@@ -9717,7 +10013,7 @@
       "a": "src/config/cli.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 4,
-      "weight": 0.8
+      "weight": 0.6667
     },
     {
       "a": "src/config/cli.cpp",
@@ -9778,6 +10074,12 @@
       "b": "tests/filter/version.cpp",
       "cooccur": 3,
       "weight": 0.6
+    },
+    {
+      "a": "src/config/cli_helpers.cpp",
+      "b": "tests/config/cli/analysis.cpp",
+      "cooccur": 4,
+      "weight": 0.8
     },
     {
       "a": "src/config/core.cpp",
@@ -9849,7 +10151,7 @@
       "a": "src/config/validation.cpp",
       "b": "src/core/log/json_parser.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/config/validation.cpp",
@@ -9861,11 +10163,17 @@
       "a": "src/config/validation.cpp",
       "b": "src/export/core.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/config/validation.cpp",
       "b": "src/export/json.cpp",
+      "cooccur": 3,
+      "weight": 0.75
+    },
+    {
+      "a": "src/config/validation.cpp",
+      "b": "tests/config/core/validation.cpp",
       "cooccur": 3,
       "weight": 1.0
     },
@@ -10028,26 +10336,26 @@
     {
       "a": "src/export/core.cpp",
       "b": "src/export/json.cpp",
-      "cooccur": 3,
-      "weight": 0.75
+      "cooccur": 4,
+      "weight": 0.8
     },
     {
       "a": "src/export/core.cpp",
       "b": "src/filter/condition_evaluation.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "src/filter/expression.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "src/utils/core.cpp",
-      "cooccur": 3,
-      "weight": 0.75
+      "cooccur": 4,
+      "weight": 0.8
     },
     {
       "a": "src/export/core.cpp",
@@ -10069,6 +10377,12 @@
     },
     {
       "a": "src/export/core.cpp",
+      "b": "tests/CMakeLists.txt",
+      "cooccur": 3,
+      "weight": 0.6
+    },
+    {
+      "a": "src/export/core.cpp",
       "b": "tests/analyzer/core.cpp",
       "cooccur": 3,
       "weight": 1.0
@@ -10083,7 +10397,7 @@
       "a": "src/export/core.cpp",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
@@ -10101,13 +10415,13 @@
       "a": "src/export/core.cpp",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/config/cli/formatting.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
@@ -10125,97 +10439,103 @@
       "a": "src/export/core.cpp",
       "b": "tests/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/export/csv.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/export/field_mapping.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/export/json.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/export/text.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/export/utils.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/filter/advanced.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/filter/core/unit/advanced.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/filter/evaluation.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/filter/fluent_api.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/filter/ip_address.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/filter/legacy.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/filter/logical_negation.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
     },
     {
       "a": "src/export/core.cpp",
       "b": "tests/filter/version.cpp",
       "cooccur": 3,
-      "weight": 0.75
+      "weight": 0.6
+    },
+    {
+      "a": "src/export/json.cpp",
+      "b": "src/utils/core.cpp",
+      "cooccur": 3,
+      "weight": 0.5
     },
     {
       "a": "src/export/json.cpp",
       "b": "tests/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.5
     },
     {
       "a": "src/filter/analyzer.cpp",
@@ -10251,7 +10571,7 @@
       "a": "src/filter/condition_evaluation.cpp",
       "b": "src/utils/core.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.5
     },
     {
       "a": "src/filter/condition_evaluation.cpp",
@@ -10305,7 +10625,7 @@
       "a": "src/filter/condition_evaluation.cpp",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "src/filter/condition_evaluation.cpp",
@@ -10323,7 +10643,7 @@
       "a": "src/filter/condition_evaluation.cpp",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "src/filter/condition_evaluation.cpp",
@@ -10371,7 +10691,7 @@
       "a": "src/filter/condition_evaluation.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.5
     },
     {
       "a": "src/filter/condition_evaluation.cpp",
@@ -10461,7 +10781,55 @@
       "a": "src/main.cpp",
       "b": "src/utils/core.cpp",
       "cooccur": 3,
+      "weight": 0.3
+    },
+    {
+      "a": "src/main.cpp",
+      "b": "tests/CMakeLists.txt",
+      "cooccur": 3,
+      "weight": 0.2308
+    },
+    {
+      "a": "src/main.cpp",
+      "b": "tests/config/cli/analysis.cpp",
+      "cooccur": 6,
+      "weight": 0.4615
+    },
+    {
+      "a": "src/main.cpp",
+      "b": "tests/config/cli/filtering.cpp",
+      "cooccur": 5,
+      "weight": 0.7143
+    },
+    {
+      "a": "src/stats/analyzer.cpp",
+      "b": "src/stats/core.cpp",
+      "cooccur": 4,
+      "weight": 0.8
+    },
+    {
+      "a": "src/stats/analyzer.cpp",
+      "b": "src/utils/core.cpp",
+      "cooccur": 5,
+      "weight": 1.0
+    },
+    {
+      "a": "src/stats/analyzer.cpp",
+      "b": "tests/stats/core.cpp",
+      "cooccur": 3,
       "weight": 0.6
+    },
+    {
+      "a": "src/stats/core.cpp",
+      "b": "src/utils/core.cpp",
+      "cooccur": 6,
+      "weight": 0.8571
+    },
+    {
+      "a": "src/stats/core.cpp",
+      "b": "tests/stats/core.cpp",
+      "cooccur": 5,
+      "weight": 0.7143
     },
     {
       "a": "src/utils/core.cpp",
@@ -10484,8 +10852,8 @@
     {
       "a": "src/utils/core.cpp",
       "b": "tests/CMakeLists.txt",
-      "cooccur": 3,
-      "weight": 0.6
+      "cooccur": 4,
+      "weight": 0.4
     },
     {
       "a": "src/utils/core.cpp",
@@ -10503,7 +10871,7 @@
       "a": "src/utils/core.cpp",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.3
     },
     {
       "a": "src/utils/core.cpp",
@@ -10521,7 +10889,7 @@
       "a": "src/utils/core.cpp",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "src/utils/core.cpp",
@@ -10557,7 +10925,7 @@
       "a": "src/utils/core.cpp",
       "b": "tests/export/core.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.4286
     },
     {
       "a": "src/utils/core.cpp",
@@ -10575,19 +10943,19 @@
       "a": "src/utils/core.cpp",
       "b": "tests/export/json.cpp",
       "cooccur": 4,
-      "weight": 0.8
+      "weight": 0.6667
     },
     {
       "a": "src/utils/core.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 4,
-      "weight": 0.8
+      "weight": 0.6667
     },
     {
       "a": "src/utils/core.cpp",
       "b": "tests/export/text.cpp",
       "cooccur": 4,
-      "weight": 0.8
+      "weight": 0.6667
     },
     {
       "a": "src/utils/core.cpp",
@@ -10648,6 +11016,12 @@
       "b": "tests/filter/version.cpp",
       "cooccur": 3,
       "weight": 0.6
+    },
+    {
+      "a": "src/utils/core.cpp",
+      "b": "tests/stats/core.cpp",
+      "cooccur": 5,
+      "weight": 0.5
     },
     {
       "a": "src/utils/core.cpp",
@@ -10977,7 +11351,7 @@
       "a": "src/utils/version.cpp",
       "b": "tests/config/cli/analysis.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/utils/version.cpp",
@@ -10995,7 +11369,7 @@
       "a": "src/utils/version.cpp",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "src/utils/version.cpp",
@@ -11133,7 +11507,7 @@
       "a": "tests/CMakeLists.txt",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 0.6
+      "weight": 0.5
     },
     {
       "a": "tests/CMakeLists.txt",
@@ -11469,7 +11843,7 @@
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/config/cli/defaults.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "tests/config/cli/analysis.cpp",
@@ -11480,14 +11854,14 @@
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/config/cli/filtering.cpp",
-      "cooccur": 3,
-      "weight": 1.0
+      "cooccur": 4,
+      "weight": 0.5714
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/config/cli/formatting.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
@@ -11499,97 +11873,103 @@
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/config/core/basic.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/export/core.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/export/csv.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/export/field_mapping.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/export/json.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/export/text.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/export/utils.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/filter/advanced.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/filter/core/unit/advanced.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/filter/evaluation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/filter/fluent_api.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/filter/ip_address.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/filter/legacy.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/filter/logical_negation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/analysis.cpp",
       "b": "tests/filter/version.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
+    },
+    {
+      "a": "tests/config/cli/analysis.cpp",
+      "b": "tests/stats/core.cpp",
+      "cooccur": 4,
+      "weight": 0.3077
     },
     {
       "a": "tests/config/cli/defaults.cpp",
@@ -11601,7 +11981,7 @@
       "a": "tests/config/cli/defaults.cpp",
       "b": "tests/config/cli/filtering.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "tests/config/cli/defaults.cpp",
@@ -11829,7 +12209,7 @@
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/config/cli/formatting.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
@@ -11841,97 +12221,97 @@
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/config/core/basic.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.75
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/export/core.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.4286
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/export/csv.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/export/field_mapping.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/export/json.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/export/text.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.5
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/export/utils.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/filter/advanced.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/filter/core/unit/advanced.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/filter/evaluation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/filter/fluent_api.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/filter/ip_address.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/filter/legacy.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/filter/logical_negation.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/filtering.cpp",
       "b": "tests/filter/version.cpp",
       "cooccur": 3,
-      "weight": 1.0
+      "weight": 0.6
     },
     {
       "a": "tests/config/cli/formatting.cpp",
@@ -12333,7 +12713,7 @@
       "a": "tests/export/core.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 4,
-      "weight": 0.8
+      "weight": 0.6667
     },
     {
       "a": "tests/export/core.cpp",
@@ -12549,7 +12929,7 @@
       "a": "tests/export/json.cpp",
       "b": "tests/export/settings.cpp",
       "cooccur": 5,
-      "weight": 1.0
+      "weight": 0.8333
     },
     {
       "a": "tests/export/json.cpp",
@@ -12615,7 +12995,7 @@
       "a": "tests/export/settings.cpp",
       "b": "tests/export/text.cpp",
       "cooccur": 5,
-      "weight": 1.0
+      "weight": 0.8333
     },
     {
       "a": "tests/export/settings.cpp",
@@ -12991,6 +13371,7 @@
         "include/filter/legacy.h",
         "include/filter/parser.h",
         "include/utils/core.h",
+        "include/utils/dedup.h",
         "include/utils/ip_address.h",
         "include/utils/string.h",
         "include/utils/time.h",
@@ -13055,6 +13436,7 @@
         "tests/export/csv.cpp",
         "tests/export/field_mapping.cpp",
         "tests/export/json.cpp",
+        "tests/export/ndjson.cpp",
         "tests/export/settings.cpp",
         "tests/export/text.cpp",
         "tests/export/utils.cpp",
@@ -13082,6 +13464,7 @@
         "tests/support/cli_helper.h",
         "tests/support/filter_json_fixture.h",
         "tests/support/helper.h",
+        "tests/utils/dedup.cpp",
         "tests/utils/enum.cpp",
         "tests/utils/string.cpp"
       ]
@@ -13151,209 +13534,251 @@
     },
     {
       "id": 8,
+      "label": ".planwright",
+      "members": [
+        ".planwright/completed.md"
+      ]
+    },
+    {
+      "id": 9,
+      "label": ".planwright",
+      "members": [
+        ".planwright/digest.md"
+      ]
+    },
+    {
+      "id": 10,
+      "label": ".planwright",
+      "members": [
+        ".planwright/graph.json"
+      ]
+    },
+    {
+      "id": 11,
+      "label": ".planwright",
+      "members": [
+        ".planwright/plan.md"
+      ]
+    },
+    {
+      "id": 12,
+      "label": ".planwright/plans",
+      "members": [
+        ".planwright/plans/plan_2026-06-04T00-00-00Z.md"
+      ]
+    },
+    {
+      "id": 13,
+      "label": ".planwright",
+      "members": [
+        ".planwright/rejected.md"
+      ]
+    },
+    {
+      "id": 14,
       "label": "(root)",
       "members": [
         "CMakeLists.txt"
       ]
     },
     {
-      "id": 9,
+      "id": 15,
       "label": "(root)",
       "members": [
         "CMakePresets.json"
       ]
     },
     {
-      "id": 10,
+      "id": 16,
       "label": "(root)",
       "members": [
         "CODE_OF_CONDUCT.md"
       ]
     },
     {
-      "id": 11,
+      "id": 17,
       "label": "cmake",
       "members": [
         "cmake/_r_e_a_d_m_e.md"
       ]
     },
     {
-      "id": 12,
+      "id": 18,
       "label": "cmake",
       "members": [
         "cmake/compiler_settings.cmake"
       ]
     },
     {
-      "id": 13,
+      "id": 19,
       "label": "cmake",
       "members": [
         "cmake/config.cmake.in"
       ]
     },
     {
-      "id": 14,
+      "id": 20,
       "label": "docs",
       "members": [
         "docs/_doxyfile.in"
       ]
     },
     {
-      "id": 15,
+      "id": 21,
       "label": "docs/audit",
       "members": [
         "docs/audit/codex.md"
       ]
     },
     {
-      "id": 16,
+      "id": 22,
       "label": "(root)",
       "members": [
         "gemini-cli-health.db"
       ]
     },
     {
-      "id": 17,
+      "id": 23,
       "label": "include/analyzer",
       "members": [
         "include/analyzer/types.h"
       ]
     },
     {
-      "id": 18,
+      "id": 24,
       "label": "include/export",
       "members": [
         "include/export/core.h"
       ]
     },
     {
-      "id": 19,
+      "id": 25,
       "label": "include/export",
       "members": [
         "include/export/text.h"
       ]
     },
     {
-      "id": 20,
+      "id": 26,
       "label": "include/export",
       "members": [
         "include/export/xml.h"
       ]
     },
     {
-      "id": 21,
+      "id": 27,
       "label": "include/filter",
       "members": [
         "include/filter/types.h"
       ]
     },
     {
-      "id": 22,
+      "id": 28,
       "label": "include/stats",
       "members": [
         "include/stats/core.h"
       ]
     },
     {
-      "id": 23,
+      "id": 29,
       "label": "lxl/examples",
       "members": [
         "lxl/examples/README.md"
       ]
     },
     {
-      "id": 24,
+      "id": 30,
       "label": "lxl/examples",
       "members": [
         "lxl/examples/errors.json"
       ]
     },
     {
-      "id": 25,
+      "id": 31,
       "label": "src",
       "members": [
         "src/CMakeLists.txt"
       ]
     },
     {
-      "id": 26,
+      "id": 32,
       "label": "src/analyzer/log",
       "members": [
         "src/analyzer/log/io.cpp"
       ]
     },
     {
-      "id": 27,
+      "id": 33,
       "label": "src/stats",
       "members": [
         "src/stats/analyzer.cpp"
       ]
     },
     {
-      "id": 28,
+      "id": 34,
       "label": "src/stats",
       "members": [
         "src/stats/core.cpp"
       ]
     },
     {
-      "id": 29,
+      "id": 35,
       "label": "tests",
       "members": [
         "tests/CMakeLists.txt"
       ]
     },
     {
-      "id": 30,
+      "id": 36,
       "label": "tests/analyzer",
       "members": [
         "tests/analyzer/export.cpp"
       ]
     },
     {
-      "id": 31,
+      "id": 37,
       "label": "tests/analyzer/filter_logic",
       "members": [
         "tests/analyzer/filter_logic/sorting.cpp"
       ]
     },
     {
-      "id": 32,
+      "id": 38,
       "label": "tests/analyzer",
       "members": [
         "tests/analyzer/stream.cpp"
       ]
     },
     {
-      "id": 33,
+      "id": 39,
       "label": "tests/analyzer",
       "members": [
         "tests/analyzer/types.cpp"
       ]
     },
     {
-      "id": 34,
+      "id": 40,
       "label": "tests/filter/core_json",
       "members": [
         "tests/filter/core_json/expression.cpp"
       ]
     },
     {
-      "id": 35,
+      "id": 41,
       "label": "tests/stats",
       "members": [
         "tests/stats/core.cpp"
       ]
     },
     {
-      "id": 36,
+      "id": 42,
       "label": "tests/utils",
       "members": [
         "tests/utils/time.cpp"
       ]
     },
     {
-      "id": 37,
+      "id": 43,
       "label": "tools",
       "members": [
         "tools/README.md"
@@ -13363,8 +13788,8 @@
   "ranked": [
     "include/core/error.h",
     "include/core/CaseInsensitiveLess.h",
-    "include/utils/string.h",
     "tests/support/helper.h",
+    "include/utils/string.h",
     "include/filter/condition.h",
     "include/utils/time.h",
     "include/filter/expression.h",
@@ -13385,8 +13810,8 @@
   "ranked_code": [
     "include/core/error.h",
     "include/core/CaseInsensitiveLess.h",
-    "include/utils/string.h",
     "tests/support/helper.h",
+    "include/utils/string.h",
     "include/filter/condition.h",
     "include/utils/time.h",
     "include/filter/expression.h",
@@ -13407,109 +13832,263 @@
   "ranked_cold": [
     "include/analyzer/types.h",
     "src/export/csv.cpp",
-    "src/stats/analyzer.cpp",
     "src/utils/timer.cpp",
     "tests/analyzer/filter.cpp",
     "tests/config/cli/new_feature.cpp",
     "tests/config/core/json/deserialization.cpp",
     "tests/core/log/parser_utils.cpp",
+    "tests/export/ndjson.cpp",
     "tests/filter/core_json/basic/deserialization.cpp",
     "tests/filter/core_json/condition/factory_function.cpp",
     "tests/filter/iteration/13.cpp",
     "tests/filter/iteration/15.cpp",
-    "include/export/core.h",
     "include/filter/parser.h",
-    "include/stats/core.h",
-    "src/config/cli_helpers.cpp",
     "src/config/utils.cpp",
     "src/export/text.cpp",
     "src/export/xml.cpp",
-    "src/filter/concrete_filters.cpp"
+    "src/filter/concrete_filters.cpp",
+    "tests/analyzer/filter_logic/criteria.cpp",
+    "tests/analyzer/filter_logic/expressions.cpp",
+    "tests/analyzer/filter_logic/sorting.cpp"
   ],
   "import_cycles": [],
   "dirty": {
-    "is_first_run": false,
-    "whole_graph": false,
-    "reason": "incremental",
-    "changed": [
-      "src/export/json.cpp",
-      "src/export/text.cpp",
-      "src/export/xml.cpp",
-      "tests/export/core.cpp",
-      "tests/export/json.cpp",
-      "tests/export/text.cpp"
-    ],
+    "is_first_run": true,
+    "whole_graph": true,
+    "reason": "first-run",
+    "changed": [],
     "nodes": [
+      ".clang-format",
+      ".clang-tidy",
+      ".geminiignore",
+      ".github/workflows/ci.yml",
+      ".gitignore",
+      ".planwright/completed.md",
+      ".planwright/digest.md",
+      ".planwright/graph.json",
+      ".planwright/plan.md",
+      ".planwright/plans/plan_2026-06-04T00-00-00Z.md",
+      ".planwright/rejected.md",
+      "CMakeLists.txt",
+      "CMakePresets.json",
+      "CODE_OF_CONDUCT.md",
+      "CONTRIBUTING.md",
+      "LICENSE",
       "README.md",
+      "cmake/_r_e_a_d_m_e.md",
+      "cmake/compiler_settings.cmake",
+      "cmake/config.cmake.in",
+      "docs/_doxyfile.in",
+      "docs/api-reference.md",
+      "docs/audit/codex.md",
+      "docs/build.md",
+      "docs/cli-reference.md",
+      "docs/configuration.md",
+      "docs/features.md",
+      "docs/installation.md",
+      "docs/project-structure.md",
+      "docs/quick-start.md",
+      "docs/usage-examples.md",
+      "docs/why-loganalyzer.md",
+      "gemini-cli-health.db",
       "include/analyzer/core.h",
       "include/analyzer/log/reader.h",
+      "include/analyzer/log/writer.h",
+      "include/analyzer/types.h",
       "include/config/cli.h",
+      "include/config/cli_helpers.h",
       "include/config/common_types.h",
+      "include/config/core.h",
       "include/config/settings.h",
+      "include/config/utils.h",
+      "include/core/CaseInsensitiveLess.h",
+      "include/core/error.h",
+      "include/core/log/i_parser_factory.h",
       "include/core/log/json_parser.h",
+      "include/core/log/json_parser_factory.h",
       "include/core/log/parser.h",
+      "include/core/log/parser_utils.h",
       "include/core/log/regex_parser.h",
+      "include/core/log/regex_parser_factory.h",
       "include/core/log/types.h",
+      "include/export/core.h",
+      "include/export/csv.h",
+      "include/export/json.h",
+      "include/export/text.h",
+      "include/export/xml.h",
       "include/filter/concrete_filters.h",
       "include/filter/condition.h",
+      "include/filter/condition_evaluation.h",
+      "include/filter/core.h",
+      "include/filter/enum_string_conversions.h",
       "include/filter/expression.h",
+      "include/filter/i_filter.h",
+      "include/filter/json_utils.h",
       "include/filter/legacy.h",
+      "include/filter/parser.h",
+      "include/filter/types.h",
+      "include/stats/core.h",
       "include/utils/core.h",
+      "include/utils/dedup.h",
+      "include/utils/ip_address.h",
       "include/utils/string.h",
+      "include/utils/time.h",
+      "include/utils/version.h",
+      "lxl/examples/README.md",
+      "lxl/examples/errors.json",
+      "src/CMakeLists.txt",
       "src/analyzer/core.cpp",
+      "src/analyzer/log/io.cpp",
       "src/analyzer/log/loader.cpp",
       "src/analyzer/log/reader.cpp",
       "src/analyzer/log/writer.cpp",
       "src/analyzer/streaming.cpp",
       "src/config/cli.cpp",
+      "src/config/cli_helpers.cpp",
       "src/config/core.cpp",
       "src/config/json.cpp",
+      "src/config/utils.cpp",
       "src/config/validation.cpp",
       "src/core/log/json_parser.cpp",
       "src/core/log/parser.cpp",
+      "src/core/log/parser_utils.cpp",
       "src/core/log/types.cpp",
       "src/export/core.cpp",
+      "src/export/csv.cpp",
       "src/export/json.cpp",
       "src/export/text.cpp",
       "src/export/xml.cpp",
+      "src/filter/analyzer.cpp",
+      "src/filter/concrete_filters.cpp",
       "src/filter/condition_evaluation.cpp",
+      "src/filter/enum_string_conversions.cpp",
+      "src/filter/expression.cpp",
+      "src/filter/parser.cpp",
+      "src/main.cpp",
+      "src/stats/analyzer.cpp",
+      "src/stats/core.cpp",
       "src/utils/core.cpp",
       "src/utils/ip_address.cpp",
+      "src/utils/string.cpp",
       "src/utils/time.cpp",
+      "src/utils/time_parser.cpp",
+      "src/utils/timer.cpp",
       "src/utils/version.cpp",
       "tests/CMakeLists.txt",
       "tests/analyzer/core.cpp",
+      "tests/analyzer/export.cpp",
+      "tests/analyzer/filter.cpp",
+      "tests/analyzer/filter_logic/criteria.cpp",
+      "tests/analyzer/filter_logic/expressions.cpp",
+      "tests/analyzer/filter_logic/sorting.cpp",
+      "tests/analyzer/log_writer.cpp",
       "tests/analyzer/log_writer_correctness.cpp",
+      "tests/analyzer/stream.cpp",
+      "tests/analyzer/types.cpp",
       "tests/config/cli/analysis.cpp",
       "tests/config/cli/defaults.cpp",
       "tests/config/cli/errors.cpp",
       "tests/config/cli/filtering.cpp",
       "tests/config/cli/formatting.cpp",
       "tests/config/cli/input_output.cpp",
+      "tests/config/cli/new_feature.cpp",
       "tests/config/core/basic.cpp",
       "tests/config/core/features.cpp",
+      "tests/config/core/json/deserialization.cpp",
+      "tests/config/core/json/serialization.cpp",
+      "tests/config/core/validation.cpp",
       "tests/config/merge.cpp",
+      "tests/config/utils.cpp",
+      "tests/core/log/json_parser.cpp",
+      "tests/core/log/parser.cpp",
+      "tests/core/log/parser_utils.cpp",
+      "tests/core/log/types.cpp",
       "tests/export/core.cpp",
       "tests/export/csv.cpp",
       "tests/export/field_mapping.cpp",
       "tests/export/json.cpp",
+      "tests/export/ndjson.cpp",
       "tests/export/settings.cpp",
       "tests/export/text.cpp",
       "tests/export/utils.cpp",
       "tests/filter/advanced.cpp",
       "tests/filter/core/unit/advanced.cpp",
+      "tests/filter/core/unit/basic.cpp",
+      "tests/filter/core/unit/field.cpp",
+      "tests/filter/core_json/basic/deserialization.cpp",
+      "tests/filter/core_json/basic/serialization.cpp",
+      "tests/filter/core_json/basic/serialization_advanced.cpp",
+      "tests/filter/core_json/condition/deserialization.cpp",
+      "tests/filter/core_json/condition/factory_function.cpp",
+      "tests/filter/core_json/condition/serialization.cpp",
+      "tests/filter/core_json/expression.cpp",
+      "tests/filter/core_json/rule.cpp",
       "tests/filter/evaluation.cpp",
+      "tests/filter/evaluation_extended.cpp",
       "tests/filter/fluent_api.cpp",
       "tests/filter/ip_address.cpp",
+      "tests/filter/iteration/13.cpp",
+      "tests/filter/iteration/15.cpp",
+      "tests/filter/iteration/2.cpp",
       "tests/filter/legacy.cpp",
       "tests/filter/logical_negation.cpp",
       "tests/filter/version.cpp",
-      "tests/support/helper.h"
+      "tests/stats/core.cpp",
+      "tests/support/cli_helper.h",
+      "tests/support/filter_json_fixture.h",
+      "tests/support/fixture.h",
+      "tests/support/helper.h",
+      "tests/utils/dedup.cpp",
+      "tests/utils/enum.cpp",
+      "tests/utils/string.cpp",
+      "tests/utils/time.cpp",
+      "tools/README.md"
     ],
     "clusters": [
       0,
       1,
-      29
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43
     ]
   }
 }

@@ -269,3 +269,15 @@ TEST_F(CLIConfigTest, StatsIntervalOption) {
     ASSERT_TRUE(options.statsInterval.has_value());
     ASSERT_EQ(options.statsInterval.value(), 100u);
 }
+
+TEST_F(CLIConfigTest, StatsIntervalZeroRejected) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats-interval", "0"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, StatsIntervalNegativeRejected) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats-interval", "-1"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}

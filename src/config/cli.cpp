@@ -356,6 +356,9 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     if(appOptions.tailMode) appOptions.tailInterval = std::chrono::milliseconds(tailIntervalMs);
 
     // Logic Validation for input sources and mode compatibility
+    if (app.count("--stats-interval") && !appOptions.streamMode) {
+        std::cerr << "Warning: --stats-interval has no effect without --stream mode.\n";
+    }
 
     bool stdinViaDash = (std::find(appOptions.filePaths.begin(), appOptions.filePaths.end(), "-") != appOptions.filePaths.end());
 

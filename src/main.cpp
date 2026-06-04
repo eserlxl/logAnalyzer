@@ -73,6 +73,17 @@ int main(int argc, char *argv[]) {
     }
 
     analyzerSettings.merge(cliSettings);
+
+    {
+        auto validationErrors = analyzerSettings.validate();
+        if (!validationErrors.empty()) {
+            for (const auto& e : validationErrors) {
+                std::cerr << "Configuration error: " << e << '\n';
+            }
+            return 1;
+        }
+    }
+
     const bool statisticsEnabled = !analyzerSettings.statisticConfigs.empty();
 
     LogAnalyzer analyzer(analyzerSettings); // Construct with settings
@@ -265,11 +276,8 @@ int main(int argc, char *argv[]) {
                     analyzer.processEntryForStatistics(entry);
                     if (cliOptions.statsInterval && streamMatchCount % *cliOptions.statsInterval == 0) {
                         auto reports = analyzer.getAllStatisticReports();
-                        std::ostream& statsOut = cliOptions.statsOutputPath.empty()
-                            ? std::cerr
-                            : *outputStream;
                         for (const auto& reportPair : reports) {
-                            statsOut << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                            std::cerr << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
                         }
                     }
                 }
