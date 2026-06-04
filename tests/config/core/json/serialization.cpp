@@ -66,9 +66,34 @@ TEST_F(LogAnalyzerConfigTest, ToJsonSerialization) {
             .setCaseSensitiveParsing(true)
             .clearFieldMappings()
             .addFieldMapping(LogEntryField::MESSAGE, 1);
-    
+
     std::string jsonString = settings.toJson();
     nlohmann::json j = nlohmann::json::parse(jsonString);
     ASSERT_EQ(j["lineParsePattern"], "new_test_pattern");
     ASSERT_TRUE(j["caseSensitiveParsing"]);
+}
+
+TEST_F(LogAnalyzerConfigTest, StatisticConfigJsonRoundTrip) {
+    LogAnalyzerSettings settings;
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::TIME_BUCKET_HISTOGRAM, {{"bucket", "30"}}},
+        StatisticConfig{StatisticType::PERCENTILE_STATS, {{"field", "latency"}}},
+        StatisticConfig{StatisticType::MOVING_AVERAGE_RATE, {{"bucket", "60"}}},
+        StatisticConfig{StatisticType::FIND_GAPS, {{"threshold_ms", "500"}}},
+    };
+
+    const std::string jsonStr = settings.toJson();
+    auto result = LogAnalyzerSettings::fromJson(jsonStr);
+    ASSERT_TRUE(result.has_value()) << (result.has_value() ? "" : result.error()[0]);
+
+    const auto& loaded = result.value();
+    ASSERT_EQ(loaded.statisticConfigs.size(), 4u);
+    ASSERT_EQ(loaded.statisticConfigs[0].type, StatisticType::TIME_BUCKET_HISTOGRAM);
+    ASSERT_EQ(loaded.statisticConfigs[0].params.at("bucket"), "30");
+    ASSERT_EQ(loaded.statisticConfigs[1].type, StatisticType::PERCENTILE_STATS);
+    ASSERT_EQ(loaded.statisticConfigs[1].params.at("field"), "latency");
+    ASSERT_EQ(loaded.statisticConfigs[2].type, StatisticType::MOVING_AVERAGE_RATE);
+    ASSERT_EQ(loaded.statisticConfigs[2].params.at("bucket"), "60");
+    ASSERT_EQ(loaded.statisticConfigs[3].type, StatisticType::FIND_GAPS);
+    ASSERT_EQ(loaded.statisticConfigs[3].params.at("threshold_ms"), "500");
 }

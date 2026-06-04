@@ -55,6 +55,34 @@ Run `logAnalyzer --help` for a full list of commands.
 | `--duration DURATION`    |           | Specifies a time window when used with `--start` or `--end`. Accepts units like `s` (seconds), `m` (minutes), `h` (hours), or `d` (days).                                                                                                                                                                                                                           |           |
 | `--expression "EXPR"`    |           | A powerful filter using a logical expression language. Supports fields, nested `and`/`or`/`not` logic, and rich operators like `contains_i` (case-insensitive), `in` (set), `>` (numeric), `startswith`, `is present`, and type casting (e.g., `ip(client_ip)`) for advanced filtering. Example: `(level=ERROR and msg contains_i "database") or not status_code in [200, 304]` |           |
 
+#### Expression Filter Reference
+
+**Fields:** `level`, `message` (alias: `msg`), `source` (alias: `source_file`), `timestamp`, `line_number`, `thread_id`, `module`, `host`. Any other name is treated as a custom field key.
+
+**Operators:**
+
+| Category | Operators | Notes |
+|----------|-----------|-------|
+| Equality | `=`, `!=` | Case-sensitive by default |
+| Case-insensitive | `=_i`, `!=_i`, `contains_i`, `not contains_i`, `startswith_i`, `endswith_i` | Suffix `_i` means case-insensitive |
+| String | `contains`, `not contains`, `startswith`, `endswith`, `matches` | `matches` uses regex |
+| Numeric / relational | `>`, `<`, `>=`, `<=`, `==`, `!=` | Field value is parsed as a number |
+| Set | `in [v1, v2, ...]`, `not in [v1, v2, ...]` | Bracket syntax |
+| Presence | `is present`, `is absent` | Field must / must not exist in the entry |
+
+**Type casts (wrap the field name):** `ip(FIELD)` — compare as IP address; `version(FIELD)` — compare as semantic version.
+
+**Logic and precedence:** `not` > `and` > `or`. Use parentheses to override: `(A or B) and C`.
+
+**Examples:**
+```
+level = ERROR and message contains_i "timeout"
+(level in [WARNING, ERROR]) and source startswith "db/"
+not status_code in [200, 204, 304]
+version(app_version) >= 2.1.0
+ip(client_ip) = 10.0.0.1
+```
+
 
 ### Sorting
 
