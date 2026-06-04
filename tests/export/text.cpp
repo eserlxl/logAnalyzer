@@ -118,3 +118,21 @@ TEST(ExporterTextTest, CustomFieldsPlaceholder) {
     exporter.exportLogEntries(ss, {entry}, settings);
     EXPECT_EQ(ss.str(), "k1:v1;k2:v2\n");
 }
+
+// A field value that itself contains a placeholder token must be emitted
+// literally — log data must never be re-interpreted as a format placeholder.
+TEST(ExporterTextTest, FieldValueContainingPlaceholderIsNotReinterpreted) {
+    Exporter exporter;
+    LogEntry entry = createLogEntry(1, LogLevel::INFO, "literal {host} and {level}");
+    entry.host = "node-z";
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::PLAINTEXT;
+    settings.textFormatString = "{message}";
+    settings.useAnsiColors = false;
+
+    exporter.exportLogEntries(ss, {entry}, settings);
+    // The {host}/{level} inside the message value are not substituted.
+    EXPECT_EQ(ss.str(), "literal {host} and {level}\n");
+}
