@@ -235,45 +235,52 @@ int main(int argc, char *argv[]) {
             *outputStream << '\n';
         }
 
-        auto streamEntryCallback = [&](const LogEntry &entry) {
+        size_t streamMatchCount = 0;
+        auto streamEntryCallback = [&](const LogEntry &entry) -> bool {
             if (rootFilter->matches(entry) && expressionMatches(entry)) {
-                 if (cliOptions.outputFormat == "text") {
-                    FormattingOptions fmtOptions;
-                    fmtOptions.useColor = useColors;
-                    fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
-                    *outputStream << logWriter.formatEntry(entry, fmtOptions) << '\n';
-                 } else { // CSV
-                    for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
-                        const auto& fieldMapping = csvFieldsToExport[i];
-                        std::string value;
-                        
-                        std::visit([&](auto&& arg) {
-                            using T = std::decay_t<decltype(arg)>;
-                            if constexpr (std::is_same_v<T, LogEntryField>) {
-                                switch (arg) {
-                                    case LogEntryField::ID: if (entry.id) value = std::to_string(*entry.id); break;
-                                    case LogEntryField::TIMESTAMP: if (entry.timestamp) value = Utils::formatTimestamp(*entry.timestamp); break;
-                                    case LogEntryField::LEVEL: value = Utils::logLevelToString(entry.level); break;
-                                    case LogEntryField::MESSAGE: value = entry.message; break;
-                                    case LogEntryField::SOURCE_FILE: value = entry.sourceFile; break;
-                                    case LogEntryField::LINE_NUMBER: if (entry.sourceLineNumber) value = std::to_string(*entry.sourceLineNumber); break;
-                                    case LogEntryField::THREAD_ID: if (entry.threadId) value = *entry.threadId; break;
-                                    case LogEntryField::MODULE: if (entry.module) value = *entry.module; break;
-                                    case LogEntryField::HOST: if (entry.host) value = *entry.host; break;
-                                    default: break;
-                                }
-                            } else if constexpr (std::is_same_v<T, std::string>) {
-                                if (entry.customFields.count(arg)) {
-                                    value = entry.customFields.at(arg);
-                                }
-                            }
-                        }, fieldMapping.field);
+                if (cliOptions.limit && streamMatchCount >= *cliOptions.limit) {
+                    return false;
+                }
+                ++streamMatchCount;
+                if (!cliOptions.countOnly) {
+                    if (cliOptions.outputFormat == "text") {
+                        FormattingOptions fmtOptions;
+                        fmtOptions.useColor = useColors;
+                        fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
+                        *outputStream << logWriter.formatEntry(entry, fmtOptions) << '\n';
+                    } else { // CSV
+                        for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
+                            const auto& fieldMapping = csvFieldsToExport[i];
+                            std::string value;
 
-                        writeCsvEscaped(*outputStream, value, cliOptions.csvSeparator);
-                        if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
+                            std::visit([&](auto&& arg) {
+                                using T = std::decay_t<decltype(arg)>;
+                                if constexpr (std::is_same_v<T, LogEntryField>) {
+                                    switch (arg) {
+                                        case LogEntryField::ID: if (entry.id) value = std::to_string(*entry.id); break;
+                                        case LogEntryField::TIMESTAMP: if (entry.timestamp) value = Utils::formatTimestamp(*entry.timestamp); break;
+                                        case LogEntryField::LEVEL: value = Utils::logLevelToString(entry.level); break;
+                                        case LogEntryField::MESSAGE: value = entry.message; break;
+                                        case LogEntryField::SOURCE_FILE: value = entry.sourceFile; break;
+                                        case LogEntryField::LINE_NUMBER: if (entry.sourceLineNumber) value = std::to_string(*entry.sourceLineNumber); break;
+                                        case LogEntryField::THREAD_ID: if (entry.threadId) value = *entry.threadId; break;
+                                        case LogEntryField::MODULE: if (entry.module) value = *entry.module; break;
+                                        case LogEntryField::HOST: if (entry.host) value = *entry.host; break;
+                                        default: break;
+                                    }
+                                } else if constexpr (std::is_same_v<T, std::string>) {
+                                    if (entry.customFields.count(arg)) {
+                                        value = entry.customFields.at(arg);
+                                    }
+                                }
+                            }, fieldMapping.field);
+
+                            writeCsvEscaped(*outputStream, value, cliOptions.csvSeparator);
+                            if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
+                        }
+                        *outputStream << '\n';
                     }
-                    *outputStream << '\n';
-                 }
+                }
             }
             return true;
         };
@@ -281,6 +288,10 @@ int main(int argc, char *argv[]) {
         if(auto res = analyzer.analyzeStream(inputPaths, streamEntryCallback, cliOptions.parserErrorAction); !res) {
             std::cerr << "Error during stream analysis: " << res.error().toString() << '\n';
             return 1;
+        }
+
+        if (cliOptions.countOnly) {
+            *outputStream << streamMatchCount << '\n';
         }
 
     } else {
