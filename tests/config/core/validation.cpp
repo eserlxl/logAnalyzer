@@ -271,3 +271,29 @@ TEST_F(ConfigValidationTest, ValidateValidSettings) {
     errors = settings.validate();
     ASSERT_TRUE(errors.empty()) << "Validation errors: " << (errors.empty() ? "" : errors[0]);
 }
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_MissingField) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::PERCENTILE_STATS, {}}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'field' parameter"));
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_EmptyField) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::PERCENTILE_STATS, {{"field", ""}}}
+    };
+    errors = settings.validate();
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_THAT(errors[0], testing::HasSubstr("requires a 'field' parameter"));
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_Valid) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::PERCENTILE_STATS, {{"field", "latency_ms"}}}
+    };
+    errors = settings.validate();
+    ASSERT_TRUE(errors.empty());
+}

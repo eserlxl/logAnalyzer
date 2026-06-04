@@ -160,6 +160,13 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
                 }
             }
         }
+
+        if (sc.type == StatisticType::PERCENTILE_STATS) {
+            auto it_field = sc.params.find("field");
+            if (it_field == sc.params.end() || it_field->second.empty()) {
+                errors.push_back("Statistic 'PERCENTILE_STATS' requires a 'field' parameter.");
+            }
+        }
     }
 
     return errors;
