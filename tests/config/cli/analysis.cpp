@@ -109,3 +109,22 @@ TEST_F(CLIConfigTest, CountFlag) {
     auto& options = result.value().second;
     ASSERT_TRUE(options.countOnly);
 }
+
+TEST_F(CLIConfigTest, TimeBucketHistogramStatBareName) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "time_bucket_histogram"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TIME_BUCKET_HISTOGRAM);
+    ASSERT_FALSE(settings.statisticConfigs[0].params.contains("bucket"));
+}
+
+TEST_F(CLIConfigTest, TimeBucketHistogramStatKVForm) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=time_bucket_histogram,bucket=30"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TIME_BUCKET_HISTOGRAM);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("bucket"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("bucket"), "30");
+}
