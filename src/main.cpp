@@ -182,8 +182,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (cliOptions.streamMode) {
-        if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv") {
-            std::cerr << "Error: Streaming mode only supports 'text' or 'csv' output format." << '\n';
+        if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv" && cliOptions.outputFormat != "ndjson") {
+            std::cerr << "Error: Streaming mode only supports 'text', 'csv', or 'ndjson' output format." << '\n';
             return 1;
         }
 
@@ -248,6 +248,20 @@ int main(int argc, char *argv[]) {
                         fmtOptions.useColor = useColors;
                         fmtOptions.dateTimeFormat = "%Y-%m-%d %H:%M:%S";
                         *outputStream << logWriter.formatEntry(entry, fmtOptions) << '\n';
+                    } else if (cliOptions.outputFormat == "ndjson") {
+                        using json = nlohmann::json;
+                        json entryJson;
+                        if (entry.id) entryJson["ID"] = *entry.id;
+                        if (entry.timestamp) entryJson["TIMESTAMP"] = Utils::formatTimestamp(*entry.timestamp);
+                        entryJson["LEVEL"] = Utils::logLevelToString(entry.level);
+                        entryJson["MESSAGE"] = entry.message;
+                        entryJson["SOURCE_FILE"] = entry.sourceFile;
+                        if (entry.sourceLineNumber) entryJson["LINE_NUMBER"] = *entry.sourceLineNumber;
+                        if (entry.threadId) entryJson["THREAD_ID"] = *entry.threadId;
+                        if (entry.module) entryJson["MODULE"] = *entry.module;
+                        if (entry.host) entryJson["HOST"] = *entry.host;
+                        for (const auto& [k, v] : entry.customFields) entryJson[k] = v;
+                        *outputStream << entryJson.dump() << '\n';
                     } else { // CSV
                         for (size_t i = 0; i < csvFieldsToExport.size(); ++i) {
                             const auto& fieldMapping = csvFieldsToExport[i];
