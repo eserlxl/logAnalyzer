@@ -36,7 +36,7 @@ inline std::string getDedupKey(const LogEntry& entry, const std::string& field, 
     if (field == "host") {
         return entry.host ? *entry.host : "__absent__" + std::to_string(absentIdx++);
     }
-    if (field == "timestamp") {
+    if (field == "timestamp" || field == "time") {
         return entry.timestamp ? Utils::formatTimestamp(*entry.timestamp) : "__absent__" + std::to_string(absentIdx++);
     }
     auto it = entry.customFields.find(field);
@@ -45,10 +45,11 @@ inline std::string getDedupKey(const LogEntry& entry, const std::string& field, 
 }
 
 // Keeps only the first entry per unique value of `field`.
-// Standard field names: "level", "message", "source" / "source_file", "id",
-// "lineNumber" (alias: "line_number"), "threadId" (alias: "thread_id"),
-// "module", "host", "timestamp". Any other name is treated as a custom field
-// key. Entries where an optional standard field or custom field is absent
+// Standard field names: "level", "message", "source" / "source_file" / "sourcefile", "id",
+// "lineNumber" (alias: "line_number", "line", "linenumber"),
+// "threadId" (alias: "thread_id", "thread", "threadid", "tid"),
+// "module", "host", "timestamp" (alias: "time"). Any other name is treated as a
+// custom field key. Entries where an optional standard field or custom field is absent
 // are each treated as unique (never merged with each other).
 inline void applyDedupField(std::vector<LogEntry>& entries, std::string_view field) {
     if (field.empty()) return;

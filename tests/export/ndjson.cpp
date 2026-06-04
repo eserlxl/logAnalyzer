@@ -92,3 +92,32 @@ TEST(ExporterNdjsonTest, DefaultExportIncludesSourceFile) {
     ASSERT_TRUE(parsed.contains("LINE_NUMBER"));
     ASSERT_EQ(parsed["LINE_NUMBER"], 42);
 }
+
+TEST(ExporterNdjsonTest, AbsentOptionalFieldsAreNull) {
+    Exporter exporter;
+    std::vector<LogEntry> entries;
+    // No timestamp, no threadId, no module, no host, no sourceLineNumber
+    entries.push_back(createLogEntry(1, LogLevel::INFO, "msg"));
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::NDJSON;
+
+    exporter.exportLogEntries(ss, entries, settings);
+
+    std::string line;
+    std::istringstream lineStream(ss.str());
+    std::getline(lineStream, line);
+    ASSERT_FALSE(line.empty());
+    json parsed = json::parse(line);
+    ASSERT_TRUE(parsed.contains("TIMESTAMP"));
+    ASSERT_TRUE(parsed["TIMESTAMP"].is_null());
+    ASSERT_TRUE(parsed.contains("LINE_NUMBER"));
+    ASSERT_TRUE(parsed["LINE_NUMBER"].is_null());
+    ASSERT_TRUE(parsed.contains("THREAD_ID"));
+    ASSERT_TRUE(parsed["THREAD_ID"].is_null());
+    ASSERT_TRUE(parsed.contains("MODULE"));
+    ASSERT_TRUE(parsed["MODULE"].is_null());
+    ASSERT_TRUE(parsed.contains("HOST"));
+    ASSERT_TRUE(parsed["HOST"].is_null());
+}

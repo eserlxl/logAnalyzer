@@ -3,6 +3,7 @@
 
 #include "utils/dedup.h"
 #include "core/log/types.h"
+#include "utils/time.h"
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -230,4 +231,16 @@ TEST_F(DedupFieldTest, DedupByThreadId) {
     ASSERT_EQ(entries.size(), 2u);
     ASSERT_EQ(*entries[0].threadId, "t1");
     ASSERT_EQ(*entries[1].threadId, "t2");
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyTimeAlias) {
+    LogEntry e = makeEntry(LogLevel::INFO, "msg");
+    e.timestamp = std::chrono::system_clock::from_time_t(0); // epoch
+    size_t idx1 = 0;
+    size_t idx2 = 0;
+    std::string keyTimestamp = Utils::getDedupKey(e, "timestamp", idx1);
+    std::string keyTime = Utils::getDedupKey(e, "time", idx2);
+    ASSERT_EQ(keyTimestamp, keyTime);
+    ASSERT_EQ(idx1, 0u);
+    ASSERT_EQ(idx2, 0u);
 }

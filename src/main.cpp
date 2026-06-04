@@ -291,15 +291,15 @@ int main(int argc, char *argv[]) {
                     } else if (cliOptions.outputFormat == "ndjson") {
                         using json = nlohmann::json;
                         json entryJson;
-                        if (entry.id) entryJson["ID"] = *entry.id;
-                        if (entry.timestamp) entryJson["TIMESTAMP"] = Utils::formatTimestamp(*entry.timestamp);
+                        entryJson["ID"] = entry.id ? json(*entry.id) : json(nullptr);
+                        entryJson["TIMESTAMP"] = entry.timestamp ? json(Utils::formatTimestamp(*entry.timestamp)) : json(nullptr);
                         entryJson["LEVEL"] = Utils::logLevelToString(entry.level);
                         entryJson["MESSAGE"] = entry.message;
                         entryJson["SOURCE_FILE"] = entry.sourceFile;
-                        if (entry.sourceLineNumber) entryJson["LINE_NUMBER"] = *entry.sourceLineNumber;
-                        if (entry.threadId) entryJson["THREAD_ID"] = *entry.threadId;
-                        if (entry.module) entryJson["MODULE"] = *entry.module;
-                        if (entry.host) entryJson["HOST"] = *entry.host;
+                        entryJson["LINE_NUMBER"] = entry.sourceLineNumber ? json(*entry.sourceLineNumber) : json(nullptr);
+                        entryJson["THREAD_ID"] = entry.threadId ? json(*entry.threadId) : json(nullptr);
+                        entryJson["MODULE"] = entry.module ? json(*entry.module) : json(nullptr);
+                        entryJson["HOST"] = entry.host ? json(*entry.host) : json(nullptr);
                         for (const auto& [k, v] : entry.customFields) entryJson[k] = v;
                         *outputStream << entryJson.dump() << '\n';
                     } else { // CSV

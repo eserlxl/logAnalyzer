@@ -49,6 +49,15 @@ TEST_F(CLIConfigTest, DurationWithoutTimeBoundariesError) {
     ASSERT_EQ(result.error().code, Code::InvalidArgument);
 }
 
+TEST_F(CLIConfigTest, DurationWithBothStartAndEndError) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log",
+                         "--start", "2023-01-01 00:00:00",
+                         "--end", "2023-01-01 12:00:00",
+                         "--duration", "1h"});
+    ASSERT_FALSE(result.has_value());
+    ASSERT_EQ(result.error().code, Code::InvalidArgument);
+}
+
 TEST_F(CLIConfigTest, OnParseErrorThrow) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--on-parse-error", "throw"});
     ASSERT_TRUE(result.has_value());

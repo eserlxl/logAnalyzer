@@ -134,6 +134,24 @@ TEST_F(CLIConfigTest, FilterDurationWithStartTime) {
     ASSERT_EQ(options.duration.value(), std::chrono::hours(1));
 }
 
+TEST_F(CLIConfigTest, FilterDurationWithEndTime) {
+    std::string end_time_str = "2023-01-01 12:00:00";
+    std::string duration_str = "2h";
+    auto expectedEndTime = Utils::parseTime(end_time_str).value();
+    auto expectedStartTime = expectedEndTime - std::chrono::hours(2);
+
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--end", end_time_str, "--duration", duration_str});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+
+    ASSERT_TRUE(options.startTime.has_value());
+    ASSERT_EQ(options.startTime.value(), expectedStartTime);
+    ASSERT_TRUE(options.endTime.has_value());
+    ASSERT_EQ(options.endTime.value(), expectedEndTime);
+    ASSERT_TRUE(options.duration.has_value());
+    ASSERT_EQ(options.duration.value(), std::chrono::hours(2));
+}
+
 TEST_F(CLIConfigTest, LogLevelCaseInsensitivity) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--level", "debug", "--level", "WARNING"});
     ASSERT_TRUE(result.has_value());
