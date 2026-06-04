@@ -380,3 +380,50 @@ TEST_F(StatisticsTest, CreateCollectorFactoryPercentileStatsMissingField) {
     auto collector = Statistics::createCollector(config);
     ASSERT_EQ(collector, nullptr);
 }
+
+TEST_F(StatisticsTest, PercentileStatsCollectorSingleValue) {
+    PercentileStatsCollector collector("latency_ms");
+    LogEntry e;
+    e.message = "test";
+    e.customFields["latency_ms"] = "42.0";
+    collector.collect(e);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 1u);
+    ASSERT_DOUBLE_EQ(report["p50"].get<double>(), 42.0);
+    ASSERT_DOUBLE_EQ(report["p95"].get<double>(), 42.0);
+    ASSERT_DOUBLE_EQ(report["p99"].get<double>(), 42.0);
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorTwoValues) {
+    PercentileStatsCollector collector("latency_ms");
+    for (const char* v : {"10.0", "20.0"}) {
+        LogEntry e;
+        e.message = "test";
+        e.customFields["latency_ms"] = v;
+        collector.collect(e);
+    }
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 2u);
+    // p50: idx=0.5*1=0.5, lo=0, frac=0.5 → 10+0.5*10=15
+    ASSERT_DOUBLE_EQ(report["p50"].get<double>(), 15.0);
+    // p99: idx=0.99*1=0.99, lo=0, frac=0.99 → 10+0.99*10=19.9
+    ASSERT_DOUBLE_EQ(report["p99"].get<double>(), 19.9);
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorReset) {
+    PercentileStatsCollector collector("latency_ms");
+    LogEntry e1;
+    e1.message = "first";
+    e1.customFields["latency_ms"] = "100.0";
+    collector.collect(e1);
+    collector.reset();
+
+    LogEntry e2;
+    e2.message = "second";
+    e2.customFields["latency_ms"] = "7.0";
+    collector.collect(e2);
+
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 1u);
+    ASSERT_DOUBLE_EQ(report["p50"].get<double>(), 7.0);
+}
