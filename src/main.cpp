@@ -189,8 +189,10 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
-        if (cliOptions.sortBy.has_value() && *cliOptions.sortBy != filter::SortBy::TIMESTAMP) {
-            std::cerr << "Warning: --sort-by is ignored in --stream mode (sorting requires buffering all entries).\n";
+        const bool nonDefaultSortBy = cliOptions.sortBy.has_value() && *cliOptions.sortBy != filter::SortBy::TIMESTAMP;
+        const bool nonDefaultSortOrder = cliOptions.sortOrder.has_value() && *cliOptions.sortOrder != filter::SortOrder::ASCENDING;
+        if (nonDefaultSortBy || nonDefaultSortOrder) {
+            std::cerr << "Warning: --sort-by/--order are ignored in --stream mode (sorting requires buffering all entries).\n";
         }
 
         // Prepare CSV fields if needed

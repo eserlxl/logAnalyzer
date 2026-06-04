@@ -35,10 +35,11 @@
 ## Features
 
 -   **High-Performance Stream Processing**: Process large log files without loading them into memory.
--   **Advanced Filtering**: Use field-based queries, regex, and logical operators.
--   **Flexible I/O**: Read from files or stdin and export to JSON, CSV, XML, or text.
--   **Built-in Analytics**: Get statistics like frequency counts and value distributions.
+-   **Advanced Filtering**: Use field-based queries, regex, and logical operators, including a rich expression language with 20+ operators, type casts, and nested AND/OR/NOT logic.
+-   **Flexible I/O**: Read from files or stdin and export to JSON, NDJSON (newline-delimited), CSV, XML, or text. NDJSON is also supported in `--stream` mode for tool-chain-friendly output.
+-   **Built-in Analytics**: Compute statistics in batch or stream mode — time-bucket histograms, P50/P95/P99 percentiles, moving average rate (mean/min/max per bucket), gap detection, log level counts, unique message counts, and top-N rankings.
 -   **Rich Data Types**: Filter by semantic versions, IP addresses, and booleans.
+-   **Pagination & Deduplication**: `--limit N` / `--offset N` for cursor-style pagination; `--count` for match counts (like `grep -c`); `--dedup-field FIELD` removes duplicate values before output.
 -   **Configurable**: Use command-line flags or JSON configuration files.
 -   **Extensible C++ API**: Integrate `logAnalyzer` into your C++ projects.
 -   **Multi-File Support**: Parse and analyze multiple log files in a single run.

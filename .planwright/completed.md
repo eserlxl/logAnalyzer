@@ -171,3 +171,81 @@
       Surfaces: docs/cli-reference.md
       Acceptance: --since, --limit, --offset, --count, --dedup-field, --stats-output, ndjson, time_bucket_histogram, percentile_stats, moving_average_rate all documented.
       Verification: cmake --build build -j --output-on-failure
+
+- [x] Implement GapDetectorCollector to fix --find-gaps no-op
+      Mode: repair
+      Surfaces: include/stats/core.h, src/stats/core.cpp, src/stats/analyzer.cpp, src/utils/core.cpp, src/config/cli.cpp
+      Acceptance: --find-gaps 100 on a log with a 200ms gap emits a gap report; factory with threshold_ms param works; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add GapDetectorCollector unit tests
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: 7 tests pass: detects gap, skips below threshold, skips no-timestamp, empty, reset, round-trip, factory.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Fix EntryRateCollector inconsistent duration_sec output schema
+      Mode: repair
+      Surfaces: src/stats/core.cpp
+      Acceptance: duration_sec always emitted as integer; 0 in <2-entries path; actual seconds in success path.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add EntryRateCollector direct unit tests
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: 5 tests: basic rate, single-entry, reset, round-trip, factory.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add find_gaps:N colon shorthand and update --find-gaps CLI test
+      Mode: develop
+      Surfaces: src/config/cli_helpers.cpp, tests/config/cli/analysis.cpp
+      Acceptance: --find-gaps 5000 creates StatisticConfig(FIND_GAPS); --stats find_gaps:2000 works; empty threshold fails.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Extract getDedupKey helper to unify stream and batch dedup logic
+      Mode: improve
+      Surfaces: include/utils/dedup.h, src/main.cpp, tests/utils/dedup.cpp
+      Acceptance: 4 new direct getDedupKey tests pass; stream path uses getDedupKey; utils_dedup green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^utils_dedup$" --output-on-failure
+
+- [x] Update docs/features.md and cli-reference.md for gap detection and stats-in-stream
+      Mode: docs
+      Surfaces: docs/features.md, docs/cli-reference.md
+      Acceptance: Gap detection in features; --find-gaps updated; stats-in-stream noted; --stats NAME includes find_gaps.
+      Verification: cmake --build build -j --output-on-failure
+
+- [x] Add UniqueMessagesCollector and TopMessagesCollector direct unit tests
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: 5 tests pass; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add PERCENTILE_STATS field-param validation in validation.cpp
+      Mode: repair
+      Surfaces: src/config/validation.cpp, tests/config/core/validation.cpp
+      Acceptance: Missing/empty 'field' emits error; valid passes; config_core_validation green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_core_validation$" --output-on-failure
+
+- [x] Warn on --sort-by + --stream (silent no-op)
+      Mode: repair
+      Surfaces: src/main.cpp, tests/config/cli/analysis.cpp
+      Acceptance: --stream --sort-by level emits warning to stderr but succeeds; config_cli_analysis green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add reset/no-timestamp/out-of-order tests for stat collectors
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: 6 tests pass; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add StatisticConfig JSON round-trip tests for new types
+      Mode: improve
+      Surfaces: tests/config/core/json/serialization.cpp
+      Acceptance: 4 types round-trip correctly; config_core_json_serialization green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_core_json_serialization$" --output-on-failure
+
+- [x] Document --expression filter language in cli-reference.md
+      Mode: docs
+      Surfaces: docs/cli-reference.md
+      Acceptance: Expression Filter Reference subsection present; build passes.
+      Verification: cmake --build build -j --output-on-failure

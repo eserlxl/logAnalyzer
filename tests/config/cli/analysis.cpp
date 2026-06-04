@@ -2,6 +2,9 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "cli_helper.h"
+#include "filter/types.h"
+
+using filter::SortOrder;
 
 TEST_F(CLIConfigTest, EnabledStatistics) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "unique_messages", "--stats", "top_messages:5"});
@@ -231,4 +234,21 @@ TEST_F(CLIConfigTest, StreamWithSortByParsesSuccessfully) {
     auto& options = result.value().second;
     ASSERT_TRUE(options.streamMode);
     ASSERT_TRUE(options.sortBy.has_value());
+}
+
+TEST_F(CLIConfigTest, StreamWithOrderDescParsesSuccessfully) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stream", "--order", "desc"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.streamMode);
+    ASSERT_TRUE(options.sortOrder.has_value());
+    ASSERT_EQ(options.sortOrder.value(), SortOrder::DESCENDING);
+}
+
+TEST_F(CLIConfigTest, FindGapsBareName) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "find_gaps"});
+    ASSERT_TRUE(result.has_value());
+    auto& [settings, options] = result.value();
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::FIND_GAPS);
 }

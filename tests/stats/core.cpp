@@ -805,3 +805,63 @@ TEST_F(StatisticsTest, GapDetectorCollectorOutOfOrderEntries) {
     ASSERT_EQ(report["gap_count"], 1);
     ASSERT_EQ(report["gaps"][0]["duration_ms"], 250);
 }
+
+TEST_F(StatisticsTest, CreateCollectorFactoryMovingAverageRateInvalidBucketFallsBackToDefault) {
+    StatisticConfig config;
+    config.type = StatisticType::MOVING_AVERAGE_RATE;
+    config.params["bucket"] = "0";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["bucket_seconds"], 60);
+}
+
+TEST_F(StatisticsTest, GapDetectorCollectorExactlyAtThresholdNotReported) {
+    GapDetectorCollector collector(100);
+    auto base = std::chrono::system_clock::from_time_t(100000);
+    LogEntry e0, e1;
+    e0.message = "a"; e0.timestamp = base;
+    e1.message = "b"; e1.timestamp = base + std::chrono::milliseconds(100);
+    collector.collect(e0);
+    collector.collect(e1);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["gap_count"], 0);
+}
+
+TEST_F(StatisticsTest, UniqueMessagesRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::UNIQUE_MESSAGES), "UNIQUE_MESSAGES");
+    auto opt = Utils::stringToStatisticType("UNIQUE_MESSAGES");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::UNIQUE_MESSAGES);
+}
+
+TEST_F(StatisticsTest, TopMessagesRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::TOP_MESSAGES), "TOP_MESSAGES");
+    auto opt = Utils::stringToStatisticType("TOP_MESSAGES");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::TOP_MESSAGES);
+}
+
+TEST_F(StatisticsTest, LogLevelCountRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::LOG_LEVEL_COUNT), "COUNT_BY_LEVEL");
+    auto opt = Utils::stringToStatisticType("COUNT_BY_LEVEL");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::LOG_LEVEL_COUNT);
+    auto opt2 = Utils::stringToStatisticType("LOG_LEVEL_COUNT");
+    ASSERT_TRUE(opt2.has_value());
+    ASSERT_EQ(*opt2, StatisticType::LOG_LEVEL_COUNT);
+}
+
+TEST_F(StatisticsTest, FieldValueCountRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::FIELD_VALUE_COUNT), "FIELD_VALUE_COUNT");
+    auto opt = Utils::stringToStatisticType("FIELD_VALUE_COUNT");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::FIELD_VALUE_COUNT);
+}
+
+TEST_F(StatisticsTest, TopNFieldValuesRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::TOP_N_FIELD_VALUES), "TOP_N_FIELD_VALUES");
+    auto opt = Utils::stringToStatisticType("TOP_N_FIELD_VALUES");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::TOP_N_FIELD_VALUES);
+}
