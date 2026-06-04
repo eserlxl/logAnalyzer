@@ -218,6 +218,17 @@ std::shared_ptr<IStatisticCollector> LogAnalyzer::createStatisticCollector(const
             }
             return std::make_shared<PercentileStatsCollector>(it->second);
         }
+        case StatisticType::MOVING_AVERAGE_RATE: {
+            int bucketSeconds = 60;
+            auto itBucket = config.params.find("bucket");
+            if (itBucket != config.params.end()) {
+                int parsed = 0;
+                if (tryParseStrictPositiveInt(itBucket->second, parsed)) {
+                    bucketSeconds = parsed;
+                }
+            }
+            return std::make_shared<MovingAverageRateCollector>(bucketSeconds);
+        }
         case StatisticType::UNKNOWN:
         default:
             std::cerr << "Warning: Attempted to create unknown statistic type." << '\n';

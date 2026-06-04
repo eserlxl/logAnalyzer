@@ -157,6 +157,7 @@ std::string statisticTypeToString(StatisticType type) {
         case StatisticType::TOP_N_FIELD_VALUES: return "TOP_N_FIELD_VALUES";
         case StatisticType::TIME_BUCKET_HISTOGRAM: return "TIME_BUCKET_HISTOGRAM";
         case StatisticType::PERCENTILE_STATS: return "PERCENTILE_STATS";
+        case StatisticType::MOVING_AVERAGE_RATE: return "MOVING_AVERAGE_RATE";
         default: return "UNKNOWN";
     }
 }
@@ -173,6 +174,7 @@ std::optional<StatisticType> stringToStatisticType(const std::string& typeStr) {
     if (upperTypeStr == "TOP_N_FIELD_VALUES") return StatisticType::TOP_N_FIELD_VALUES;
     if (upperTypeStr == "TIME_BUCKET_HISTOGRAM") return StatisticType::TIME_BUCKET_HISTOGRAM;
     if (upperTypeStr == "PERCENTILE_STATS") return StatisticType::PERCENTILE_STATS;
+    if (upperTypeStr == "MOVING_AVERAGE_RATE") return StatisticType::MOVING_AVERAGE_RATE;
     return std::nullopt;
 }
 

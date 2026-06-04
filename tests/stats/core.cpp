@@ -427,3 +427,76 @@ TEST_F(StatisticsTest, PercentileStatsCollectorReset) {
     ASSERT_EQ(report["count"], 1u);
     ASSERT_DOUBLE_EQ(report["p50"].get<double>(), 7.0);
 }
+
+TEST_F(StatisticsTest, MovingAverageRateCollectorBasic) {
+    // 6 entries across 3 buckets (2 per bucket) with bucket=10s
+    MovingAverageRateCollector collector(10);
+    auto base = std::chrono::system_clock::from_time_t(1000);
+    for (int b = 0; b < 3; ++b) {
+        LogEntry e1, e2;
+        e1.message = "a"; e1.timestamp = base + std::chrono::seconds(b * 10);
+        e2.message = "b"; e2.timestamp = base + std::chrono::seconds(b * 10 + 4);
+        collector.collect(e1);
+        collector.collect(e2);
+    }
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["name"], "moving_average_rate");
+    ASSERT_EQ(report["bucket_seconds"], 10);
+    ASSERT_EQ(report["bucket_count"], 3);
+    ASSERT_EQ(report["total_entries"], 6);
+    ASSERT_DOUBLE_EQ(report["mean_per_bucket"].get<double>(), 2.0);
+    ASSERT_EQ(report["min_per_bucket"], 2);
+    ASSERT_EQ(report["max_per_bucket"], 2);
+}
+
+TEST_F(StatisticsTest, MovingAverageRateCollectorSkipsNoTimestamp) {
+    MovingAverageRateCollector collector(60);
+    LogEntry e;
+    e.message = "no timestamp";
+    collector.collect(e);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["bucket_count"], 0);
+    ASSERT_EQ(report["total_entries"], 0);
+    ASSERT_TRUE(report["mean_per_bucket"].is_null());
+}
+
+TEST_F(StatisticsTest, MovingAverageRateCollectorMinMax) {
+    // bucket 0: 3 entries, bucket 1: 1 entry
+    MovingAverageRateCollector collector(10);
+    auto base = std::chrono::system_clock::from_time_t(2000);
+    for (int i = 0; i < 3; ++i) {
+        LogEntry e; e.message = "x"; e.timestamp = base;
+        collector.collect(e);
+    }
+    LogEntry e2; e2.message = "y"; e2.timestamp = base + std::chrono::seconds(10);
+    collector.collect(e2);
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["min_per_bucket"], 1);
+    ASSERT_EQ(report["max_per_bucket"], 3);
+    ASSERT_DOUBLE_EQ(report["mean_per_bucket"].get<double>(), 2.0);
+}
+
+TEST_F(StatisticsTest, MovingAverageRateRoundTrip) {
+    ASSERT_EQ(Utils::statisticTypeToString(StatisticType::MOVING_AVERAGE_RATE), "MOVING_AVERAGE_RATE");
+    auto opt = Utils::stringToStatisticType("MOVING_AVERAGE_RATE");
+    ASSERT_TRUE(opt.has_value());
+    ASSERT_EQ(*opt, StatisticType::MOVING_AVERAGE_RATE);
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryMovingAverageRateDefault) {
+    StatisticConfig config;
+    config.type = StatisticType::MOVING_AVERAGE_RATE;
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    ASSERT_EQ(collector->getName(), "moving_average_rate");
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryMovingAverageRateBucketParam) {
+    StatisticConfig config;
+    config.type = StatisticType::MOVING_AVERAGE_RATE;
+    config.params["bucket"] = "30";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    const json report = collector->generateReport();
+    ASSERT_EQ(report["bucket_seconds"], 30);
+}

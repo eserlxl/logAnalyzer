@@ -339,6 +339,43 @@ json PercentileStatsCollector::generateReport() const {
     return report;
 }
 
+// MovingAverageRateCollector
+MovingAverageRateCollector::MovingAverageRateCollector(int bucketSeconds)
+    : _bucketSeconds(bucketSeconds > 0 ? bucketSeconds : 60) {}
+
+void MovingAverageRateCollector::collect(const LogEntry& entry) {
+    if (!entry.timestamp) return;
+    long long epoch = std::chrono::duration_cast<std::chrono::seconds>(
+        entry.timestamp->time_since_epoch()).count();
+    long long bucket = (epoch / _bucketSeconds) * _bucketSeconds;
+    _counts[bucket]++;
+    _total++;
+}
+
+json MovingAverageRateCollector::generateReport() const {
+    json report;
+    report["name"] = "moving_average_rate";
+    report["bucket_seconds"] = _bucketSeconds;
+    report["bucket_count"] = static_cast<int>(_counts.size());
+    report["total_entries"] = _total;
+    if (_counts.empty()) {
+        report["mean_per_bucket"] = nullptr;
+        report["min_per_bucket"] = nullptr;
+        report["max_per_bucket"] = nullptr;
+        return report;
+    }
+    int minCount = std::numeric_limits<int>::max();
+    int maxCount = std::numeric_limits<int>::min();
+    for (const auto& [bucket, count] : _counts) {
+        if (count < minCount) minCount = count;
+        if (count > maxCount) maxCount = count;
+    }
+    report["mean_per_bucket"] = static_cast<double>(_total) / static_cast<double>(_counts.size());
+    report["min_per_bucket"] = minCount;
+    report["max_per_bucket"] = maxCount;
+    return report;
+}
+
 // Assuming 'Statistics' is a namespace based on header file content not defining a Statistics class.
 namespace Statistics {
 
@@ -430,6 +467,16 @@ namespace Statistics {
                 auto it = config.params.find("field");
                 if (it == config.params.end() || it->second.empty()) return nullptr;
                 return std::make_unique<PercentileStatsCollector>(it->second);
+            }
+            case StatisticType::MOVING_AVERAGE_RATE: {
+                int bucketSeconds = 60;
+                if (config.params.count("bucket")) {
+                    int parsed = 0;
+                    if (tryParseStrictPositiveInt(config.params.at("bucket"), parsed)) {
+                        bucketSeconds = parsed;
+                    }
+                }
+                return std::make_unique<MovingAverageRateCollector>(bucketSeconds);
             }
             case StatisticType::UNKNOWN:
             default:

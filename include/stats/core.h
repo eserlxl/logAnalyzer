@@ -23,6 +23,7 @@ enum class StatisticType {
     TOP_N_FIELD_VALUES,     // New: Report top N most frequent values for a specified field
     TIME_BUCKET_HISTOGRAM,  // Per-bucket entry count grouped by configurable time window
     PERCENTILE_STATS,       // P50/P95/P99 for a named numeric custom field
+    MOVING_AVERAGE_RATE,    // Mean/min/max entries per configurable time bucket
     UNKNOWN
 };
 
@@ -219,6 +220,19 @@ public:
 private:
     std::string _fieldName;
     std::vector<double> _values;
+};
+
+class MovingAverageRateCollector : public IStatisticCollector {
+public:
+    explicit MovingAverageRateCollector(int bucketSeconds = 60);
+    void collect(const LogEntry& entry) override;
+    json generateReport() const override;
+    std::string getName() const override { return "moving_average_rate"; }
+    void reset() override { _counts.clear(); _total = 0; }
+private:
+    int _bucketSeconds;
+    std::map<long long, int> _counts;
+    int _total = 0;
 };
 
 namespace Statistics {
