@@ -87,3 +87,51 @@
       Surfaces: docs/features.md
       Acceptance: Flexible Export row updated with NDJSON; Statistical Analysis mentions time-bucket histograms and percentiles; Output Control row added.
       Verification: cmake --build build -j --output-on-failure
+
+- [x] Enforce --offset N in stream path
+      Mode: repair
+      Surfaces: src/main.cpp
+      Acceptance: --stream --offset 2 skips first 2 matching entries; --stream --offset 2 --limit 3 skips 2 then emits 3; skipped entries not counted.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
+
+- [x] Add PERCENTILE_STATS CLI --stats parsing tests
+      Mode: improve
+      Surfaces: tests/config/cli/analysis.cpp
+      Acceptance: PercentileStatsKVForm and PercentileStatsBareNameProducesConfigWithoutField pass; config_cli_analysis green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add PercentileStatsCollector edge-case and reset tests
+      Mode: improve
+      Surfaces: tests/stats/core.cpp
+      Acceptance: Single-value, two-values, and reset tests pass; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add percentile_stats:field_name colon shorthand to parseStatisticConfig
+      Mode: develop
+      Surfaces: src/config/cli_helpers.cpp, tests/config/cli/analysis.cpp
+      Acceptance: --stats percentile_stats:latency_ms produces correct StatisticConfig; empty field returns nullopt; config_cli_analysis green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add --since DURATION relative time filter shorthand
+      Mode: develop
+      Surfaces: include/config/cli.h, src/config/cli.cpp, tests/config/cli/filtering.cpp
+      Acceptance: --since 1h sets startTime to now-1h; --since + --start yields InvalidCLIOption; config_cli_filtering green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
+
+- [x] Add --stats-output PATH option
+      Mode: develop
+      Surfaces: include/config/cli.h, src/config/cli.cpp, src/main.cpp, tests/config/cli/analysis.cpp
+      Acceptance: --stats-output file writes stats JSON to file; entry output goes to stdout; config_cli_analysis green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_analysis$" --output-on-failure
+
+- [x] Add MOVING_AVERAGE_RATE statistic collector
+      Mode: develop
+      Surfaces: include/stats/core.h, src/stats/core.cpp, src/stats/analyzer.cpp, src/utils/core.cpp, tests/stats/core.cpp
+      Acceptance: Mean/min/max per bucket; skips no-timestamp; bucket param overrides default 60s; round-trip passes; stats_core green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^stats_core$" --output-on-failure
+
+- [x] Add --dedup-field FIELD option
+      Mode: develop
+      Surfaces: include/config/cli.h, src/config/cli.cpp, src/main.cpp, tests/config/cli/filtering.cpp
+      Acceptance: --dedup-field message keeps first per unique message; absent custom field treats each entry as unique; config_cli_filtering green.
+      Verification: cmake --build build -j && ctest --test-dir build -R "^config_cli_filtering$" --output-on-failure
