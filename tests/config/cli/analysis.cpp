@@ -128,3 +128,22 @@ TEST_F(CLIConfigTest, TimeBucketHistogramStatKVForm) {
     ASSERT_TRUE(settings.statisticConfigs[0].params.contains("bucket"));
     ASSERT_EQ(settings.statisticConfigs[0].params.at("bucket"), "30");
 }
+
+TEST_F(CLIConfigTest, PercentileStatsKVForm) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=percentile_stats,field=latency_ms"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::PERCENTILE_STATS);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("field"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("field"), "latency_ms");
+}
+
+TEST_F(CLIConfigTest, PercentileStatsBareNameProducesConfigWithoutField) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "percentile_stats"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::PERCENTILE_STATS);
+    ASSERT_FALSE(settings.statisticConfigs[0].params.contains("field"));
+}
