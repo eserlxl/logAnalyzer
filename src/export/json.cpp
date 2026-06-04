@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <cctype>
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
@@ -203,11 +204,36 @@ namespace {
         return buffer;
     }
 
+    // Coerce an arbitrary key into a well-formed XML element name. XML Names start
+    // with a letter, '_' or ':' and may otherwise contain digits, '-' and '.'. Any
+    // other character (e.g. '&', '<', a space) is mapped to '_', and a '_' is
+    // prepended when the first character is not a valid start char (e.g. a leading
+    // digit), so an arbitrary log key never produces malformed XML.
+    std::string sanitizeXmlName(const std::string& key) {
+        const auto isNameStart = [](unsigned char c) {
+            return std::isalpha(c) != 0 || c == '_' || c == ':';
+        };
+        const auto isNameChar = [&](unsigned char c) {
+            return isNameStart(c) || std::isdigit(c) != 0 || c == '-' || c == '.';
+        };
+        std::string result;
+        result.reserve(key.size() + 1);
+        for (char ch : key) {
+            const auto uc = static_cast<unsigned char>(ch);
+            result += isNameChar(uc) ? ch : '_';
+        }
+        if (result.empty() || !isNameStart(static_cast<unsigned char>(result.front()))) {
+            result.insert(result.begin(), '_');
+        }
+        return result;
+    }
+
     void jsonToXml(const json& j, std::ostream& os, int indentLevel) {
         std::string indent(indentLevel * 2, ' ');
         if (j.is_object()) {
             for (auto it = j.begin(); it != j.end(); ++it) {
-                os << indent << "<" << xmlEscape(it.key()) << ">";
+                const std::string tag = sanitizeXmlName(it.key());
+                os << indent << "<" << tag << ">";
                 if (it.value().is_primitive() || it.value().is_null()) {
                     os << xmlEscape(it.value().dump());
                 } else {
@@ -215,7 +241,7 @@ namespace {
                     jsonToXml(it.value(), os, indentLevel + 1);
                     os << indent;
                 }
-                os << "</" << xmlEscape(it.key()) << '\n';
+                os << "</" << tag << ">" << '\n';
             }
         } else if (j.is_array()) {
             for (const auto& item : j) {
@@ -285,7 +311,8 @@ void Exporter::exportAsXml(
             }, fieldMapping.field);
 
             if (!tagName.empty()) {
-                os << "    <" << xmlEscape(tagName) << ">";
+                const std::string xmlTag = sanitizeXmlName(tagName);
+                os << "    <" << xmlTag << ">";
                 if (isStructured) {
                     try {
                         json structuredJson = json::parse(value);
@@ -298,7 +325,7 @@ void Exporter::exportAsXml(
                 } else {
                     os << xmlEscape(value);
                 }
-                os << "</" << xmlEscape(tagName) << '\n';
+                os << "</" << xmlTag << ">" << '\n';
             }
         }
         os << "  </entry>" << '\n';

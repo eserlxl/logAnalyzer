@@ -125,3 +125,68 @@ TEST(ExporterErrorHandlingTest, XmlFormatDoesNotThrowExceptionAndExports) {
     ASSERT_TRUE(output.find("</entry>") != std::string::npos);
     ASSERT_TRUE(output.find("</log>") != std::string::npos);
 }
+
+// Every field closing tag must include its '>' so the XML is well-formed.
+TEST(ExporterXmlTest, FieldClosingTagsAreWellFormed) {
+    Exporter exporter;
+    std::vector<LogEntry> entries;
+    entries.push_back(createLogEntry(1, LogLevel::INFO, "msg"));
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::XML;
+
+    exporter.exportLogEntries(ss, entries, settings);
+    const std::string output = ss.str();
+    SCOPED_TRACE(output);
+
+    ASSERT_NE(output.find("<MESSAGE>msg</MESSAGE>"), std::string::npos);
+    ASSERT_NE(output.find("<LEVEL>INFO</LEVEL>"), std::string::npos);
+    // A closing tag immediately followed by a newline (no '>') must not occur.
+    ASSERT_EQ(output.find("</MESSAGE\n"), std::string::npos);
+}
+
+// XML metacharacters in field values are escaped to entity references.
+TEST(ExporterXmlTest, EscapesSpecialCharactersInValues) {
+    Exporter exporter;
+    std::vector<LogEntry> entries;
+    entries.push_back(createLogEntry(1, LogLevel::INFO, "a<b>&\"'"));
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::XML;
+
+    exporter.exportLogEntries(ss, entries, settings);
+    const std::string output = ss.str();
+    SCOPED_TRACE(output);
+
+    ASSERT_NE(output.find("<MESSAGE>a&lt;b&gt;&amp;&quot;&apos;</MESSAGE>"), std::string::npos);
+}
+
+// Custom-field keys become element names, so arbitrary keys (spaces, leading
+// digits, '&') must be coerced into well-formed XML Names.
+TEST(ExporterXmlTest, SanitizesCustomFieldKeys) {
+    Exporter exporter;
+    std::vector<LogEntry> entries;
+    LogEntry entry = createLogEntry(1, LogLevel::INFO, "msg");
+    entry.customFields = {{"1bad&key", "v1"}, {"a b", "v2"}};
+    entries.push_back(entry);
+
+    std::stringstream ss;
+    ExportSettings settings;
+    settings.format = ExportFormat::XML;
+    // Emit every custom field as its own element.
+    settings.fieldsToExport = {
+        ExportFieldMapping(std::string("1bad&key")),
+        ExportFieldMapping(std::string("a b")),
+    };
+
+    exporter.exportLogEntries(ss, entries, settings);
+    const std::string output = ss.str();
+    SCOPED_TRACE(output);
+
+    ASSERT_NE(output.find("<_1bad_key>v1</_1bad_key>"), std::string::npos);
+    ASSERT_NE(output.find("<a_b>v2</a_b>"), std::string::npos);
+    ASSERT_EQ(output.find("<1bad&key>"), std::string::npos);
+    ASSERT_EQ(output.find("<a b>"), std::string::npos);
+}
