@@ -223,3 +223,12 @@ TEST_F(CLIConfigTest, FindGapsColonShorthandEmptyThresholdFails) {
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }
+
+TEST_F(CLIConfigTest, StreamWithSortByParsesSuccessfully) {
+    // --sort-by + --stream is a runtime warning (not a parse error); parseCLI must succeed.
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stream", "--sort-by", "level"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_TRUE(options.streamMode);
+    ASSERT_TRUE(options.sortBy.has_value());
+}

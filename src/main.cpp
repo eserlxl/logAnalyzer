@@ -189,6 +189,10 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        if (cliOptions.sortBy.has_value() && *cliOptions.sortBy != filter::SortBy::TIMESTAMP) {
+            std::cerr << "Warning: --sort-by is ignored in --stream mode (sorting requires buffering all entries).\n";
+        }
+
         // Prepare CSV fields if needed
         std::vector<ExportFieldMapping> csvFieldsToExport;
         if (cliOptions.outputFormat == "csv") {
