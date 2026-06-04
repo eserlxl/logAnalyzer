@@ -244,22 +244,7 @@ int main(int argc, char *argv[]) {
         auto streamEntryCallback = [&](const LogEntry &entry) -> bool {
             if (rootFilter->matches(entry) && expressionMatches(entry)) {
                 if (!cliOptions.dedupField.empty()) {
-                    const std::string& df = cliOptions.dedupField;
-                    std::string key;
-                    if (df == "level") {
-                        key = Utils::logLevelToString(entry.level);
-                    } else if (df == "message") {
-                        key = entry.message;
-                    } else if (df == "source") {
-                        key = entry.sourceFile;
-                    } else {
-                        auto it = entry.customFields.find(df);
-                        if (it == entry.customFields.end()) {
-                            key = "__absent__" + std::to_string(streamDedupIdx++);
-                        } else {
-                            key = it->second;
-                        }
-                    }
+                    std::string key = Utils::getDedupKey(entry, cliOptions.dedupField, streamDedupIdx);
                     if (!streamDedupSeen.insert(key).second) return true;
                 }
                 if (cliOptions.offset && streamSkipCount < *cliOptions.offset) {

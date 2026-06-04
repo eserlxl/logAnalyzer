@@ -76,3 +76,30 @@ TEST_F(DedupFieldTest, EmptyFieldIsNoOp) {
     Utils::applyDedupField(entries, "");
     ASSERT_EQ(entries.size(), 2u);
 }
+
+TEST_F(DedupFieldTest, GetDedupKeyLevel) {
+    LogEntry e = makeEntry(LogLevel::ERROR, "msg");
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "level", idx), "ERROR");
+    ASSERT_EQ(idx, 0u);
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyMessage) {
+    LogEntry e = makeEntry(LogLevel::INFO, "hello world");
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "message", idx), "hello world");
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyCustom) {
+    LogEntry e = makeEntry(LogLevel::INFO, "x", "f.cpp", {{"txid", "abc123"}});
+    size_t idx = 0;
+    ASSERT_EQ(Utils::getDedupKey(e, "txid", idx), "abc123");
+}
+
+TEST_F(DedupFieldTest, GetDedupKeyAbsent) {
+    LogEntry e = makeEntry(LogLevel::INFO, "x");
+    size_t idx = 5;
+    std::string key = Utils::getDedupKey(e, "missing", idx);
+    ASSERT_EQ(key, "__absent__5");
+    ASSERT_EQ(idx, 6u);
+}

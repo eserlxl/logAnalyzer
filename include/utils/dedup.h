@@ -13,6 +13,18 @@
 
 namespace Utils {
 
+// Returns the dedup key for `entry` under `field`.
+// `absentIdx` is incremented each time a custom field is absent, making each
+// absent entry unique (never collapsed into the same bucket).
+inline std::string getDedupKey(const LogEntry& entry, const std::string& field, size_t& absentIdx) {
+    if (field == "level") return logLevelToString(entry.level);
+    if (field == "message") return entry.message;
+    if (field == "source") return entry.sourceFile;
+    auto it = entry.customFields.find(field);
+    if (it == entry.customFields.end()) return "__absent__" + std::to_string(absentIdx++);
+    return it->second;
+}
+
 // Keeps only the first entry per unique value of `field`.
 // Standard field names: "level", "message", "source". Any other name is
 // treated as a custom field key. Entries where the custom field is absent
@@ -25,22 +37,7 @@ inline void applyDedupField(std::vector<LogEntry>& entries, std::string_view fie
     entries.erase(
         std::remove_if(entries.begin(), entries.end(),
             [&](const LogEntry& entry) {
-                std::string key;
-                if (fieldStr == "level") {
-                    key = logLevelToString(entry.level);
-                } else if (fieldStr == "message") {
-                    key = entry.message;
-                } else if (fieldStr == "source") {
-                    key = entry.sourceFile;
-                } else {
-                    auto it = entry.customFields.find(fieldStr);
-                    if (it == entry.customFields.end()) {
-                        key = "__absent__" + std::to_string(idx++);
-                    } else {
-                        key = it->second;
-                    }
-                }
-                return !seen.insert(key).second;
+                return !seen.insert(getDedupKey(entry, fieldStr, idx)).second;
             }),
         entries.end());
 }
