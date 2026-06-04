@@ -434,10 +434,21 @@ int main(int argc, char *argv[]) {
                 analyzer.processEntryForStatistics(entry);
             }
 
-            *outputStream << "\n--- Statistics ---\n";
             auto reports = analyzer.getAllStatisticReports();
-            for (const auto& reportPair : reports) {
-                *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+            if (!cliOptions.statsOutputPath.empty()) {
+                std::ofstream statsFile(cliOptions.statsOutputPath);
+                if (!statsFile.is_open()) {
+                    std::cerr << "Error: Could not open stats output file: " << cliOptions.statsOutputPath << '\n';
+                    return 1;
+                }
+                for (const auto& reportPair : reports) {
+                    statsFile << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                }
+            } else {
+                *outputStream << "\n--- Statistics ---\n";
+                for (const auto& reportPair : reports) {
+                    *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                }
             }
         }
 }

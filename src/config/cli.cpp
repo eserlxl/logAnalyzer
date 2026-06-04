@@ -173,8 +173,10 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
     app.add_flag("--stdin", appOptions.readFromStdin, "Read log entries from standard input (stdin) if no file paths are provided.");
     
     app.add_option("--stats", appOptions.enabledStatistics, "Enable statistics collectors (e.g., unique_messages, 'type=TOP_MESSAGES,top_n=5')");
-    // Delimiter removed to support complex strings with commas. 
+    // Delimiter removed to support complex strings with commas.
     // Multiple stats should be provided via multiple --stats flags.
+
+    app.add_option("--stats-output", appOptions.statsOutputPath, "Write statistics JSON to this file instead of stdout");
 
     app.add_option("--top-n", appOptions.topMessagesCount, "Number of top messages to show for top_messages statistic (Deprecated: use --stats \"type=TOP_MESSAGES,top_n=X\")") 
        ->check(CLI::PositiveNumber); 

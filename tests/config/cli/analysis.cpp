@@ -163,3 +163,10 @@ TEST_F(CLIConfigTest, PercentileStatsColonShorthandEmptyFieldFails) {
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
 }
+
+TEST_F(CLIConfigTest, StatsOutputPath) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "unique_messages", "--stats-output", "stats.json"});
+    ASSERT_TRUE(result.has_value());
+    auto& options = result.value().second;
+    ASSERT_EQ(options.statsOutputPath, "stats.json");
+}
