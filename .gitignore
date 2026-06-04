@@ -395,6 +395,7 @@ logAnalyzer.*
 .antigravity/
 .gemini/
 .codex/
+.planwright/
 
 ###############################################################################
 # RELEASES
