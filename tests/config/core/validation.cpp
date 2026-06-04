@@ -323,6 +323,14 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_Valid) {
     ASSERT_TRUE(errors.empty());
 }
 
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_LeadingTrailingWhitespaceAccepted) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::PERCENTILE_STATS, {{"field", " latency_ms "}}}
+    };
+    errors = settings.validate();
+    ASSERT_TRUE(errors.empty()) << "Field with leading/trailing whitespace should pass (trim semantics)";
+}
+
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_StandardFieldAccepted) {
     for (const auto& fieldName : {"lineNumber", "id", "line_number"}) {
         settings.statisticConfigs = {

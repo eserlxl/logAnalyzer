@@ -153,6 +153,16 @@ TEST_F(CLIConfigTest, TimeBucketHistogramStatKVForm) {
     ASSERT_EQ(settings.statisticConfigs[0].params.at("bucket"), "30");
 }
 
+TEST_F(CLIConfigTest, PercentileStatsKVFormWithStandardField) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=percentile_stats,field=lineNumber"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::PERCENTILE_STATS);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("field"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("field"), "lineNumber");
+}
+
 TEST_F(CLIConfigTest, PercentileStatsKVForm) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=percentile_stats,field=latency_ms"});
     ASSERT_TRUE(result.has_value());
@@ -325,4 +335,60 @@ TEST_F(CLIConfigTest, StatsIntervalNegativeRejected) {
     auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats-interval", "-1"});
     ASSERT_FALSE(result.has_value());
     ASSERT_EQ(result.error().code, Code::InvalidCLIOption);
+}
+
+TEST_F(CLIConfigTest, FieldValueCountBareName) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "field_value_count"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::FIELD_VALUE_COUNT);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.empty());
+}
+
+TEST_F(CLIConfigTest, FieldValueCountKVForm) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=field_value_count,target_field=level"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::FIELD_VALUE_COUNT);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.contains("target_field"));
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("target_field"), "level");
+}
+
+TEST_F(CLIConfigTest, TopNFieldValuesBareName) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "top_n_field_values"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TOP_N_FIELD_VALUES);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.empty());
+}
+
+TEST_F(CLIConfigTest, TopNFieldValuesKVForm) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "type=top_n_field_values,target_field=level,top_n=3"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::TOP_N_FIELD_VALUES);
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("target_field"), "level");
+    ASSERT_EQ(settings.statisticConfigs[0].params.at("top_n"), "3");
+}
+
+TEST_F(CLIConfigTest, UniqueMessagesBareNameProducesConfig) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "unique_messages"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::UNIQUE_MESSAGES);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.empty());
+}
+
+TEST_F(CLIConfigTest, EntryRateBareNameProducesConfig) {
+    auto result = parse({"log_analyzer", "dummy_log_file.log", "--stats", "entry_rate"});
+    ASSERT_TRUE(result.has_value());
+    auto& settings = result.value().first;
+    ASSERT_EQ(settings.statisticConfigs.size(), 1u);
+    ASSERT_EQ(settings.statisticConfigs[0].type, StatisticType::ENTRY_RATE);
+    ASSERT_TRUE(settings.statisticConfigs[0].params.empty());
 }

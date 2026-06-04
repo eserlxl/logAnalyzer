@@ -118,6 +118,18 @@ logAnalyzer app.log --stream --stats "percentile_stats:response_time" --stats-in
 
 # Stream and emit a moving average rate report every 1000 entries (60s buckets)
 logAnalyzer app.log --stream --stats "moving_average_rate:60" --stats-interval 1000
+
+# Count how many times each log level appears across all entries
+logAnalyzer app.log --stats count_by_level
+
+# Get a breakdown of source files with their entry counts
+logAnalyzer app.log --stats "type=field_value_count,target_field=source"
+
+# Find the top 5 source files generating the most ERROR entries
+logAnalyzer app.log --level ERROR --stats "type=top_n_field_values,target_field=source,top_n=5"
+
+# Detect time gaps in the log stream longer than 5 seconds
+logAnalyzer app.log --find-gaps 5000
 ```
 
 ### Example 7: Custom Export
