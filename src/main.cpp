@@ -238,8 +238,29 @@ int main(int argc, char *argv[]) {
 
         size_t streamMatchCount = 0;
         size_t streamSkipCount = 0;
+        size_t streamDedupIdx = 0;
+        std::unordered_set<std::string> streamDedupSeen;
         auto streamEntryCallback = [&](const LogEntry &entry) -> bool {
             if (rootFilter->matches(entry) && expressionMatches(entry)) {
+                if (!cliOptions.dedupField.empty()) {
+                    const std::string& df = cliOptions.dedupField;
+                    std::string key;
+                    if (df == "level") {
+                        key = Utils::logLevelToString(entry.level);
+                    } else if (df == "message") {
+                        key = entry.message;
+                    } else if (df == "source") {
+                        key = entry.sourceFile;
+                    } else {
+                        auto it = entry.customFields.find(df);
+                        if (it == entry.customFields.end()) {
+                            key = "__absent__" + std::to_string(streamDedupIdx++);
+                        } else {
+                            key = it->second;
+                        }
+                    }
+                    if (!streamDedupSeen.insert(key).second) return true;
+                }
                 if (cliOptions.offset && streamSkipCount < *cliOptions.offset) {
                     ++streamSkipCount;
                     return true;
@@ -248,6 +269,9 @@ int main(int argc, char *argv[]) {
                     return false;
                 }
                 ++streamMatchCount;
+                if (statisticsEnabled) {
+                    analyzer.processEntryForStatistics(entry);
+                }
                 if (!cliOptions.countOnly) {
                     if (cliOptions.outputFormat == "text") {
                         FormattingOptions fmtOptions;
@@ -312,6 +336,25 @@ int main(int argc, char *argv[]) {
 
         if (cliOptions.countOnly) {
             *outputStream << streamMatchCount << '\n';
+        }
+
+        if (statisticsEnabled) {
+            auto reports = analyzer.getAllStatisticReports();
+            if (!cliOptions.statsOutputPath.empty()) {
+                std::ofstream statsFile(cliOptions.statsOutputPath);
+                if (!statsFile.is_open()) {
+                    std::cerr << "Error: Could not open stats output file: " << cliOptions.statsOutputPath << '\n';
+                    return 1;
+                }
+                for (const auto& reportPair : reports) {
+                    statsFile << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                }
+            } else {
+                *outputStream << "\n--- Statistics ---\n";
+                for (const auto& reportPair : reports) {
+                    *outputStream << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                }
+            }
         }
 
     } else {
