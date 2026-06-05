@@ -34,6 +34,30 @@
 #include "export/csv.h"
 #include "filter/expression.h"
 
+namespace {
+
+// Single source of truth for constructing the analyzer's parser from a settings
+// snapshot. All LogAnalyzer parser-creation sites (both constructors and their
+// fallback paths, setSettings, and setCustomLogLevelMapping) route through here so
+// the DefaultLogParser::create argument list lives in exactly one place.
+ErrorCode::Result<std::unique_ptr<DefaultLogParser>> makeConfiguredParser(
+    const LogAnalyzerSettings& settings,
+    const std::map<std::string, LogLevel, LogAnalyzerInternal::CaseInsensitiveLess>& customLogLevelMapping) {
+    return DefaultLogParser::create(
+        settings.lineParsePattern,
+        settings.fieldMappings,
+        customLogLevelMapping,
+        settings.logEntryStartPattern,
+        settings.caseSensitiveParsing,
+        settings.parserErrorAction.value_or(ParserErrorAction::Warn),
+        settings.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
+        true,        // threadSafe: LogAnalyzer should use a thread-safe parser
+        std::nullopt // errorHandler: default to internal logging
+    );
+}
+
+} // namespace
+
 LogAnalyzer::LogAnalyzer()
     : currentSettings_(),
       customLogLevelMapping_(currentSettings_.customLogLevelMappings), // Initialize with settings' mappings
@@ -41,17 +65,7 @@ LogAnalyzer::LogAnalyzer()
       logReader_(std::make_unique<LogReader>(*this)),
       logWriter_(std::make_unique<LogWriter>(*this))
 {
-    auto parser_or_error = DefaultLogParser::create(
-        currentSettings_.lineParsePattern,
-        currentSettings_.fieldMappings,
-        customLogLevelMapping_,
-        currentSettings_.logEntryStartPattern,
-        currentSettings_.caseSensitiveParsing,
-        currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
-        currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
-        true,
-        std::nullopt
-    );
+    auto parser_or_error = makeConfiguredParser(currentSettings_, customLogLevelMapping_);
 
     if (parser_or_error) {
         currentParser_ = std::move(*parser_or_error);
@@ -61,17 +75,7 @@ LogAnalyzer::LogAnalyzer()
                   << parser_or_error.error().message << ". Falling back to built-in defaults." << '\n';
         currentSettings_ = LogAnalyzerSettings{};
         customLogLevelMapping_ = currentSettings_.customLogLevelMappings;
-        auto fallback_or_error = DefaultLogParser::create(
-            currentSettings_.lineParsePattern,
-            currentSettings_.fieldMappings,
-            customLogLevelMapping_,
-            currentSettings_.logEntryStartPattern,
-            currentSettings_.caseSensitiveParsing,
-            currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
-            currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
-            true,
-            std::nullopt
-        );
+        auto fallback_or_error = makeConfiguredParser(currentSettings_, customLogLevelMapping_);
         if (!fallback_or_error) {
             std::cerr << "Fatal Error: Failed to initialize fallback parser in default constructor: "
                       << fallback_or_error.error().message << '\n';
@@ -96,17 +100,7 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
       logReader_(std::make_unique<LogReader>(*this)),
       logWriter_(std::make_unique<LogWriter>(*this))
 {
-    auto parser_or_error = DefaultLogParser::create(
-        currentSettings_.lineParsePattern,
-        currentSettings_.fieldMappings,
-        customLogLevelMapping_,
-        currentSettings_.logEntryStartPattern,
-        currentSettings_.caseSensitiveParsing,
-        currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
-        currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
-        true,
-        std::nullopt
-    );
+    auto parser_or_error = makeConfiguredParser(currentSettings_, customLogLevelMapping_);
 
     if (parser_or_error) {
         currentParser_ = std::move(*parser_or_error);
@@ -115,17 +109,7 @@ LogAnalyzer::LogAnalyzer(const LogAnalyzerSettings& settings)
                   << parser_or_error.error().message << ". Falling back to built-in defaults." << '\n';
         currentSettings_ = LogAnalyzerSettings{};
         customLogLevelMapping_ = currentSettings_.customLogLevelMappings;
-        auto fallback_or_error = DefaultLogParser::create(
-            currentSettings_.lineParsePattern,
-            currentSettings_.fieldMappings,
-            customLogLevelMapping_,
-            currentSettings_.logEntryStartPattern,
-            currentSettings_.caseSensitiveParsing,
-            currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
-            currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
-            true,
-            std::nullopt
-        );
+        auto fallback_or_error = makeConfiguredParser(currentSettings_, customLogLevelMapping_);
         if (!fallback_or_error) {
             std::cerr << "Fatal Error: Failed to initialize fallback parser in settings constructor: "
                       << fallback_or_error.error().message << '\n';
@@ -164,17 +148,7 @@ ErrorCode::Result<void> LogAnalyzer::setSettings(const LogAnalyzerSettings& sett
         }
     }
 
-    auto parser_or_error = DefaultLogParser::create(
-        settings.lineParsePattern,
-        settings.fieldMappings,
-        newCustomLogLevelMapping,
-        settings.logEntryStartPattern,
-        settings.caseSensitiveParsing,
-        settings.parserErrorAction.value_or(ParserErrorAction::Warn),
-        settings.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
-        true, // threadSafe: LogAnalyzer should use a thread-safe parser
-        std::nullopt // errorHandler: No specific error handler for now, default to internal logging
-    );
+    auto parser_or_error = makeConfiguredParser(settings, newCustomLogLevelMapping);
     if (parser_or_error) {
         std::unique_lock<std::shared_mutex> lock(stateMutex_);
         currentSettings_ = settings;
@@ -209,17 +183,7 @@ void LogAnalyzer::setCustomLogLevelMapping(std::string_view levelString, LogLeve
     // Recreate the parser with the updated customLogLevelMapping_
     // This assumes that other settings (pattern, fieldMappings) are not changing,
     // and customLogLevelMapping_ is independent from currentSettings_.
-    auto parser_or_error = DefaultLogParser::create(
-        currentSettings_.lineParsePattern,
-        currentSettings_.fieldMappings,
-        customLogLevelMapping_,
-        currentSettings_.logEntryStartPattern,
-        currentSettings_.caseSensitiveParsing, // Pass caseSensitiveParsing
-        currentSettings_.parserErrorAction.value_or(ParserErrorAction::Warn),
-        currentSettings_.maxMultilineBufferSize.value_or(DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE),
-        true, // threadSafe: LogAnalyzer should use a thread-safe parser
-        std::nullopt // errorHandler: No specific error handler for now, default to internal logging
-    );
+    auto parser_or_error = makeConfiguredParser(currentSettings_, customLogLevelMapping_);
 
     if (parser_or_error) {
         currentParser_ = std::move(*parser_or_error);
