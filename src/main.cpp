@@ -387,24 +387,11 @@ int main(int argc, char *argv[]) {
         const SortOrder sortOrder = cliOptions.sortOrder.value_or(SortOrder::ASCENDING);
         if (sortBy != SortBy::TIMESTAMP || sortOrder != SortOrder::ASCENDING) {
             std::sort(filteredEntries.begin(), filteredEntries.end(), [&](const LogEntry& a, const LogEntry& b) {
-                auto less = [&](const auto& lhs, const auto& rhs) {
-                    return sortOrder == SortOrder::ASCENDING ? lhs < rhs : lhs > rhs;
-                };
-
-                switch (sortBy) {
-                    case SortBy::TIMESTAMP:
-                        return less(a.timestamp, b.timestamp);
-                    case SortBy::LEVEL:
-                        return less(a.level, b.level);
-                    case SortBy::MESSAGE:
-                        return less(a.message, b.message);
-                    case SortBy::SOURCE:
-                        return less(a.sourceFile, b.sourceFile);
-                    case SortBy::THREAD_ID:
-                        return less(a.threadId, b.threadId);
-                    default:
-                        return less(a.message, b.message);
-                }
+                // Single source of truth: delegate to the library comparator, reversing
+                // argument order for descending (as src/filter/analyzer.cpp:sortEntries does).
+                return sortOrder == SortOrder::ASCENDING
+                    ? LogAnalyzer::lessByField(a, b, sortBy)
+                    : LogAnalyzer::lessByField(b, a, sortBy);
             });
         }
 
