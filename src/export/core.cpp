@@ -111,3 +111,30 @@ std::string Exporter::formatCsvField(const std::string& value, char separator) {
     escaped += "\"";
     return escaped;
 }
+
+std::string Exporter::standardFieldValue(
+    const LogEntry& entry,
+    LogEntryField field,
+    const std::optional<std::string>& datetimeFormat) {
+    switch (field) {
+        case LogEntryField::ID:
+            return entry.id ? std::to_string(*entry.id) : "";
+        case LogEntryField::TIMESTAMP:
+            if (entry.timestamp) {
+                return datetimeFormat ?
+                    Utils::formatTimestamp(*entry.timestamp, *datetimeFormat) :
+                    Utils::formatTimestamp(*entry.timestamp);
+            }
+            return "";
+        case LogEntryField::LEVEL: return Utils::logLevelToString(entry.level);
+        case LogEntryField::MESSAGE: return entry.message;
+        case LogEntryField::SOURCE_FILE: return entry.sourceFile;
+        case LogEntryField::LINE_NUMBER:
+            return entry.sourceLineNumber ? std::to_string(*entry.sourceLineNumber) : "";
+        case LogEntryField::THREAD_ID: return entry.threadId.value_or("");
+        case LogEntryField::MODULE: return entry.module.value_or("");
+        case LogEntryField::HOST: return entry.host.value_or("");
+        case LogEntryField::STRUCTURED_FIELD: return entry.structuredData.value_or("");
+        default: return "";
+    }
+}

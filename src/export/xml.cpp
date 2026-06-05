@@ -110,27 +110,13 @@ void Exporter::exportAsXml(
                     }
                 } else if constexpr (std::is_same_v<T, LogEntryField>) {
                     tagName = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(arg) : fieldMapping.customHeader;
-                    switch (arg) {
-                        case LogEntryField::ID: value = entry.id.has_value() ? std::to_string(entry.id.value()) : ""; break;
-                        case LogEntryField::TIMESTAMP:
-                            if (entry.timestamp.has_value()) {
-                                value = fieldMapping.datetimeFormat.has_value() ? Utils::formatTimestamp(entry.timestamp.value(), *fieldMapping.datetimeFormat) : Utils::formatTimestamp(entry.timestamp.value());
-                            }
-                            break;
-                        case LogEntryField::LEVEL: value = Utils::logLevelToString(entry.level); break;
-                        case LogEntryField::MESSAGE: value = entry.message; break;
-                        case LogEntryField::SOURCE_FILE: value = entry.sourceFile; break;
-                        case LogEntryField::LINE_NUMBER: value = entry.sourceLineNumber.has_value() ? std::to_string(entry.sourceLineNumber.value()) : ""; break;
-                        case LogEntryField::THREAD_ID: value = entry.threadId.value_or(""); break;
-                        case LogEntryField::MODULE: value = entry.module.value_or(""); break;
-                        case LogEntryField::HOST: value = entry.host.value_or(""); break;
-                        case LogEntryField::STRUCTURED_FIELD:
-                            isStructured = true;
-                            if (entry.structuredData.has_value()) {
-                                value = *entry.structuredData;
-                            }
-                            break;
-                        default: break;
+                    if (arg == LogEntryField::STRUCTURED_FIELD) {
+                        // XML expands structured data into nested elements rather than
+                        // emitting the raw string, so keep this case local.
+                        isStructured = true;
+                        value = entry.structuredData.value_or("");
+                    } else {
+                        value = standardFieldValue(entry, arg, fieldMapping.datetimeFormat);
                     }
                 }
             }, fieldMapping.field);

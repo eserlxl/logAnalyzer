@@ -44,27 +44,7 @@ void Exporter::exportAsCsv(
                         value_str = entry.customFields.at(arg);
                     }
                 } else if constexpr (std::is_same_v<T, LogEntryField>) {
-                    switch (arg) {
-                        case LogEntryField::ID:
-                            value_str = entry.id ? std::to_string(*entry.id) : "";
-                            break;
-                        case LogEntryField::TIMESTAMP:
-                            if (entry.timestamp) {
-                                value_str = fieldMapping.datetimeFormat ?
-                                    Utils::formatTimestamp(*entry.timestamp, *fieldMapping.datetimeFormat) :
-                                    Utils::formatTimestamp(*entry.timestamp);
-                            }
-                            break;
-                        case LogEntryField::LEVEL: value_str = Utils::logLevelToString(entry.level); break;
-                        case LogEntryField::MESSAGE: value_str = entry.message; break;
-                        case LogEntryField::SOURCE_FILE: value_str = entry.sourceFile; break;
-                        case LogEntryField::LINE_NUMBER: value_str = entry.sourceLineNumber ? std::to_string(*entry.sourceLineNumber) : ""; break;
-                        case LogEntryField::THREAD_ID: value_str = entry.threadId.value_or(""); break;
-                        case LogEntryField::MODULE: value_str = entry.module.value_or(""); break;
-                        case LogEntryField::HOST: value_str = entry.host.value_or(""); break;
-                        case LogEntryField::STRUCTURED_FIELD: value_str = entry.structuredData.value_or(""); break;
-                        default: break;
-                    }
+                    value_str = standardFieldValue(entry, arg, fieldMapping.datetimeFormat);
                 }
             }, fieldMapping.field);
 

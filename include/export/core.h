@@ -145,6 +145,15 @@ private:
     
         // Helper to format a single CSV field, including quoting and escaping
         std::string formatCsvField(const std::string& value, char separator);
+
+        // Single source of truth for the scalar standard-field -> string mapping shared
+        // by the CSV and XML exporters. Returns the string value for the nine scalar
+        // LogEntryField values (STRUCTURED_FIELD yields the raw structuredData string;
+        // XML expands that itself and so does not route STRUCTURED_FIELD through here).
+        static std::string standardFieldValue(
+            const LogEntry& entry,
+            LogEntryField field,
+            const std::optional<std::string>& datetimeFormat);
     
         // Static constexpr string_views for text format placeholders
         static constexpr std::string_view PLACEHOLDER_LEVEL = "{level}";
