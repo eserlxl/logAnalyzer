@@ -55,15 +55,18 @@ std::string Exporter::formatEntryForText(
     // Resolve a placeholder token (with braces) to its value, or std::nullopt when
     // the token is not a recognized placeholder so it is emitted verbatim.
     const auto resolve = [&](std::string_view token) -> std::optional<std::string> {
+        // PLACEHOLDER_LEVEL stays local because it carries ANSI color; the remaining
+        // scalar fields share Exporter::standardFieldValue (text uses the default
+        // timestamp format, so no per-field datetimeFormat is passed).
         if (token == PLACEHOLDER_LEVEL) return finalLevelStr;
-        if (token == PLACEHOLDER_ID) return entry.id ? std::to_string(*entry.id) : std::string();
-        if (token == PLACEHOLDER_TIMESTAMP) return entry.timestamp ? Utils::formatTimestamp(*entry.timestamp) : std::string();
-        if (token == PLACEHOLDER_MESSAGE) return entry.message;
-        if (token == PLACEHOLDER_SOURCE_FILE) return entry.sourceFile;
-        if (token == PLACEHOLDER_LINE_NUMBER) return entry.sourceLineNumber ? std::to_string(*entry.sourceLineNumber) : std::string();
-        if (token == PLACEHOLDER_THREAD_ID) return entry.threadId.value_or("");
-        if (token == PLACEHOLDER_MODULE) return entry.module.value_or("");
-        if (token == PLACEHOLDER_HOST) return entry.host.value_or("");
+        if (token == PLACEHOLDER_ID) return standardFieldValue(entry, LogEntryField::ID, std::nullopt);
+        if (token == PLACEHOLDER_TIMESTAMP) return standardFieldValue(entry, LogEntryField::TIMESTAMP, std::nullopt);
+        if (token == PLACEHOLDER_MESSAGE) return standardFieldValue(entry, LogEntryField::MESSAGE, std::nullopt);
+        if (token == PLACEHOLDER_SOURCE_FILE) return standardFieldValue(entry, LogEntryField::SOURCE_FILE, std::nullopt);
+        if (token == PLACEHOLDER_LINE_NUMBER) return standardFieldValue(entry, LogEntryField::LINE_NUMBER, std::nullopt);
+        if (token == PLACEHOLDER_THREAD_ID) return standardFieldValue(entry, LogEntryField::THREAD_ID, std::nullopt);
+        if (token == PLACEHOLDER_MODULE) return standardFieldValue(entry, LogEntryField::MODULE, std::nullopt);
+        if (token == PLACEHOLDER_HOST) return standardFieldValue(entry, LogEntryField::HOST, std::nullopt);
         if (token == PLACEHOLDER_CUSTOM_FIELDS) return customFieldsStr;
         if (token.size() > PLACEHOLDER_CUSTOM_PREFIX.size() &&
             token.starts_with(PLACEHOLDER_CUSTOM_PREFIX) &&
