@@ -132,50 +132,9 @@ std::optional<FilterValueType> fromStringToFilterValueType(const std::string& ty
     return std::nullopt;
 }
 
-// SortBy conversions
-std::string toString(SortBy sortBy) {
-    switch (sortBy) {
-        case SortBy::TIMESTAMP: return "TIMESTAMP";
-        case SortBy::LEVEL: return "LEVEL";
-        case SortBy::MESSAGE: return "MESSAGE";
-        case SortBy::SOURCE: return "SOURCE";
-        case SortBy::THREAD_ID: return "THREAD_ID";
-        case SortBy::MODULE: return "MODULE";
-        case SortBy::HOST: return "HOST";
-        case SortBy::ID: return "ID";
-        case SortBy::LINE_NUMBER: return "LINE_NUMBER";
-        default: return "UNKNOWN_SORT_BY";
-    }
-}
-
-std::optional<SortBy> fromStringToSortBy(const std::string& sortByStr) {
-    std::string upperSortByStr = toUpper(sortByStr);
-    if (upperSortByStr == "TIMESTAMP") return SortBy::TIMESTAMP;
-    if (upperSortByStr == "LEVEL") return SortBy::LEVEL;
-    if (upperSortByStr == "MESSAGE") return SortBy::MESSAGE;
-    if (upperSortByStr == "SOURCE") return SortBy::SOURCE;
-    if (upperSortByStr == "THREAD_ID") return SortBy::THREAD_ID;
-    if (upperSortByStr == "MODULE") return SortBy::MODULE;
-    if (upperSortByStr == "HOST") return SortBy::HOST;
-    if (upperSortByStr == "ID") return SortBy::ID;
-    if (upperSortByStr == "LINE_NUMBER") return SortBy::LINE_NUMBER;
-    return std::nullopt;
-}
-
-// SortOrder conversions
-std::string toString(SortOrder sortOrder) {
-    switch (sortOrder) {
-        case SortOrder::ASCENDING: return "ASCENDING";
-        case SortOrder::DESCENDING: return "DESCENDING";
-        default: return "UNKNOWN_SORT_ORDER";
-    }
-}
-
-std::optional<SortOrder> fromStringToSortOrder(const std::string& sortOrderStr) {
-    std::string upperSortOrderStr = toUpper(sortOrderStr);
-    if (upperSortOrderStr == "ASCENDING" || upperSortOrderStr == "ASC") return SortOrder::ASCENDING;
-    if (upperSortOrderStr == "DESCENDING" || upperSortOrderStr == "DESC") return SortOrder::DESCENDING;
-    return std::nullopt;
-}
+// NOTE: SortBy / SortOrder string conversions intentionally live only in
+// Utils:: (src/utils/core.cpp) — see Utils::sortByToString / stringToSortBy /
+// sortOrderToString / stringToSortOrder. The filter:: duplicates were unused
+// and were removed to keep a single source of truth.
 
 } // namespace filter
