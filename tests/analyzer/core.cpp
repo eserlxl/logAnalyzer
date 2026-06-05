@@ -162,14 +162,14 @@ TEST_F(LogAnalyzerTest, LoadAndReplaceResetsStatisticsToCurrentDataset) {
         std::ofstream ofs(firstFile);
         ofs << "2023-01-01 10:00:00 INFO: First 1\n2023-01-01 10:01:00 INFO: First 2\n";
     }
-    analyzer.loadAndReplace(firstFile, ParserErrorAction::Warn);
+    (void)analyzer.loadAndReplace(firstFile, ParserErrorAction::Warn);
     std::remove(firstFile.c_str());
     const std::string secondFile = "test_load_replace_stats_second.log";
     {
         std::ofstream ofs(secondFile);
         ofs << "2023-01-01 11:00:00 ERROR: Second 1\n";
     }
-    analyzer.loadAndReplace(secondFile, ParserErrorAction::Warn);
+    (void)analyzer.loadAndReplace(secondFile, ParserErrorAction::Warn);
     std::remove(secondFile.c_str());
     const auto reports = analyzer.getAllStatisticReports();
     ASSERT_TRUE(reports.contains("log_level_count"));
@@ -183,7 +183,7 @@ TEST_F(LogAnalyzerTest, ClearResetsStatistics) {
         std::ofstream ofs(filePath);
         ofs << "2023-01-01 10:00:00 INFO: Entry 1\n";
     }
-    analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    (void)analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     analyzer.clear();
     EXPECT_EQ(analyzer.getAllStatisticReports().at("log_level_count")["total_entries"], 0);
@@ -201,13 +201,13 @@ TEST_F(LogAnalyzerTest, StatisticCollectorLifecycleApisWork) {
 TEST_F(LogAnalyzerTest, InvalidStatisticConfigDoesNotThrowOnSetSettings) {
     LogAnalyzerSettings settings;
     settings.statisticConfigs = {{StatisticType::FIELD_VALUE_COUNT, {}}};
-    EXPECT_NO_THROW({ analyzer.setSettings(settings); });
+    EXPECT_NO_THROW({ (void)analyzer.setSettings(settings); });
 }
 
 TEST_F(LogAnalyzerTest, NonPositiveTopNDefaultsForTopMessagesCollector) {
     LogAnalyzerSettings settings;
     settings.statisticConfigs = {{StatisticType::TOP_MESSAGES, {{"top_n", "0"}}}};
-    analyzer.setSettings(settings);
+    (void)analyzer.setSettings(settings);
     const auto report = analyzer.getAllStatisticReports(); // Simplified
 }
 
@@ -220,12 +220,12 @@ TEST_F(LogAnalyzerTest, LoadAndReplaceSupportsMultilineEntries) {
         FieldMapping(LogEntryField::LEVEL, std::optional<size_t>(2)), 
         FieldMapping(LogEntryField::MESSAGE, std::optional<size_t>(3)) 
     };
-    analyzer.setSettings(settings);
+    (void)analyzer.setSettings(settings);
     const std::string filePath = "test_multiline_load.log";
     std::ofstream ofs(filePath);
     ofs << "2023-01-01 10:00:00 INFO: Entry one line 1\n  Entry one line 2\n";
     ofs.close();
-    analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    (void)analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     EXPECT_EQ(analyzer.getEntries().size(), 1);
 }
@@ -235,12 +235,12 @@ TEST_F(LogAnalyzerTest, SnapshotAccessorsReturnIndependentCopies) {
     std::ofstream ofs(filePath);
     ofs << "2023-01-01 10:00:00 INFO: first\n";
     ofs.close();
-    analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    (void)analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     auto entriesSnapshot = analyzer.getEntriesSnapshot();
     std::ofstream ofs2(filePath, std::ios::trunc);
     ofs2 << "2023-01-01 10:00:01 INFO: second\n";
     ofs2.close();
-    analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    (void)analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     EXPECT_EQ(entriesSnapshot.size(), 1);
 }
@@ -250,12 +250,12 @@ TEST_F(LogAnalyzerTest, ReferenceAccessorsReturnStableSnapshots) {
     std::ofstream ofs(filePath);
     ofs << "2023-01-01 10:00:00 INFO: one\n";
     ofs.close();
-    analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    (void)analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     const auto& entriesRefSnapshot = analyzer.getEntries();
     std::ofstream ofs2(filePath, std::ios::trunc);
     ofs2 << "2023-01-01 10:00:01 INFO: two\n";
     ofs2.close();
-    analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    (void)analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
     std::remove(filePath.c_str());
     EXPECT_EQ(entriesRefSnapshot.size(), 1);
 }
@@ -269,7 +269,7 @@ TEST_F(LogAnalyzerTest, ConcurrentSnapshotAccessDuringLoad) {
     while (futureLoad.wait_for(std::chrono::milliseconds(1)) != std::future_status::ready) {
         analyzer.getEntriesSnapshot();
     }
-    futureLoad.get();
+    (void)futureLoad.get();
     std::remove(filePath.c_str());
     SUCCEED();
 }

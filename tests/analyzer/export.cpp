@@ -20,14 +20,14 @@ protected:
 TEST_F(LogAnalyzerExportTest, ExportAsCsvEdgeCases) {
     std::stringstream ss;
     FilterExpression expression;
-    analyzer.exportAsCsv(ss, expression, true);
+    (void)analyzer.exportAsCsv(ss, expression, true);
     ASSERT_FALSE(ss.str().empty());
 }
 
 TEST_F(LogAnalyzerExportTest, ExportAsJsonEdgeCases) {
     FilterExpression emptyFilter;
     std::stringstream ssEmptyNoSummary;
-    analyzer.exportAsJson(ssEmptyNoSummary, emptyFilter, false);
+    (void)analyzer.exportAsJson(ssEmptyNoSummary, emptyFilter, false);
     nlohmann::json jEmpty = nlohmann::json::parse(ssEmptyNoSummary.str());
     ASSERT_EQ(jEmpty["summary"]["count"], 0);
     ASSERT_TRUE(jEmpty["entries"].empty());
@@ -43,7 +43,7 @@ TEST_F(LogAnalyzerExportTest, ExportAsJsonEdgeCases) {
 
     std::stringstream ss;
     FilterExpression allFilter;
-    analyzer.exportAsJson(ss, allFilter, true);
+    (void)analyzer.exportAsJson(ss, allFilter, true);
     nlohmann::json j = nlohmann::json::parse(ss.str());
     ASSERT_EQ(j["summary"]["count"], 2);
     ASSERT_EQ(j["entries"].size(), 2);
@@ -68,7 +68,7 @@ TEST_F(LogAnalyzerExportTest, ConcurrentLoadAsyncWithFilterAndExport) {
         auto filtered = analyzer.getFilteredEntries(all);
         ASSERT_TRUE(filtered.has_value());
         std::stringstream jsonOut;
-        ASSERT_NO_THROW(analyzer.exportAsJson(jsonOut, all, false));
+        ASSERT_NO_THROW((void)analyzer.exportAsJson(jsonOut, all, false));
         nlohmann::json j;
         ASSERT_NO_THROW(j = nlohmann::json::parse(jsonOut.str()));
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

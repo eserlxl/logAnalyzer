@@ -26,7 +26,7 @@ TEST(LogParserErrorHandling, VariousActions) {
 
     auto warnParserResult = DefaultLogParser::create(pattern, mappings, {}, std::nullopt, std::nullopt, ParserErrorAction::Warn, DefaultLogParser::DEFAULT_MAX_BUFFER_SIZE, false, std::nullopt);
     std::unique_ptr<ILogParser> warnParser = std::move(warnParserResult.value());
-    warnParser->parseLine(logLine, lineNumber, sourceFile);
+    (void)warnParser->parseLine(logLine, lineNumber, sourceFile);
 }
 
 // Test invalid main regex pattern

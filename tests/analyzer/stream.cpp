@@ -139,7 +139,7 @@ TEST_F(LogAnalyzerStreamTest, ConcurrentAppendAndFilterIsStable) {
         observedMax = std::max(observedMax, filteredResult->size());
 
         std::stringstream ss;
-        ASSERT_NO_THROW(analyzer.exportAsJson(ss, all, false));
+        ASSERT_NO_THROW((void)analyzer.exportAsJson(ss, all, false));
         nlohmann::json j;
         ASSERT_NO_THROW(j = nlohmann::json::parse(ss.str()));
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

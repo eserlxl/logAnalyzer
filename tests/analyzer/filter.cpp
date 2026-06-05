@@ -73,6 +73,8 @@ TEST_F(LogAnalyzerFilterTest, SortedFilteredEntriesMaintainOrderingAndMembership
             case SortBy::THREAD_ID:
                 if (lhs.threadId.has_value() && rhs.threadId.has_value()) return *lhs.threadId < *rhs.threadId;
                 return lhs.threadId.has_value() < rhs.threadId.has_value();
+            default:
+                return false;
         }
         return false;
     };
