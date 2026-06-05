@@ -160,6 +160,10 @@ TEST(UtilsEnumConversionTest, SortByToString) {
     EXPECT_EQ(Utils::sortByToString(SortBy::MESSAGE), "MESSAGE");
     EXPECT_EQ(Utils::sortByToString(SortBy::SOURCE), "SOURCE");
     EXPECT_EQ(Utils::sortByToString(SortBy::THREAD_ID), "THREAD_ID");
+    EXPECT_EQ(Utils::sortByToString(SortBy::MODULE), "MODULE");
+    EXPECT_EQ(Utils::sortByToString(SortBy::HOST), "HOST");
+    EXPECT_EQ(Utils::sortByToString(SortBy::ID), "ID");
+    EXPECT_EQ(Utils::sortByToString(SortBy::LINE_NUMBER), "LINE_NUMBER");
 }
 
 TEST(UtilsEnumConversionTest, StringToSortBy) {
@@ -171,6 +175,11 @@ TEST(UtilsEnumConversionTest, StringToSortBy) {
     EXPECT_EQ(Utils::stringToSortBy("SOURCE").value(), SortBy::SOURCE);
     EXPECT_EQ(Utils::stringToSortBy("THREAD_ID").value(), SortBy::THREAD_ID);
     EXPECT_EQ(Utils::stringToSortBy("thread").value(), SortBy::THREAD_ID); // Alias
+    EXPECT_EQ(Utils::stringToSortBy("MODULE").value(), SortBy::MODULE);
+    EXPECT_EQ(Utils::stringToSortBy("HOST").value(), SortBy::HOST);
+    EXPECT_EQ(Utils::stringToSortBy("ID").value(), SortBy::ID);
+    EXPECT_EQ(Utils::stringToSortBy("LINE_NUMBER").value(), SortBy::LINE_NUMBER);
+    EXPECT_EQ(Utils::stringToSortBy("line").value(), SortBy::LINE_NUMBER); // Alias
     EXPECT_FALSE(Utils::stringToSortBy("SIZE").has_value());
 }
 

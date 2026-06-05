@@ -4,7 +4,7 @@
 | ---------------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Memory-Efficient Processing** | Handles massive files with minimal memory usage using the `--stream` mode.                              |
 | **Multi-File Support**       | Parses and analyzes multiple log files in a single run.                                                 |
-| **Sorting**                  | Sort results by timestamp, log level, message, or other fields in ascending or descending order.        |
+| **Sorting**                  | Sort results by timestamp, log level, message, source, thread id, module, host, id, or line number in ascending or descending order. |
 | **Structured FieldParsing** | Automatically parses log messages into fields using custom patterns (regex) or by natively parsing full JSON log lines. |
 | **Keyword & Regex Filtering**| Filter by log level, keywords, and case-sensitive/insensitive regular expressions. Supports `--min-level` / `--max-level` for inclusive severity range filtering. |
 | **Field-Value Matching**     | Match field values with case-sensitive/insensitive text, regex, and glob patterns.                      |

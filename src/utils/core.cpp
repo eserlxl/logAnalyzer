@@ -230,6 +230,10 @@ std::string sortByToString(filter::SortBy sort) {
         case filter::SortBy::MESSAGE: return "MESSAGE";
         case filter::SortBy::SOURCE: return "SOURCE";
         case filter::SortBy::THREAD_ID: return "THREAD_ID";
+        case filter::SortBy::MODULE: return "MODULE";
+        case filter::SortBy::HOST: return "HOST";
+        case filter::SortBy::ID: return "ID";
+        case filter::SortBy::LINE_NUMBER: return "LINE_NUMBER";
         default: return "UNKNOWN";
     }
 }
@@ -243,6 +247,10 @@ std::optional<filter::SortBy> stringToSortBy(const std::string& sortStr) {
     if (upperSortStr == "MESSAGE" || upperSortStr == "MSG") return filter::SortBy::MESSAGE;
     if (upperSortStr == "SOURCE") return filter::SortBy::SOURCE;
     if (upperSortStr == "THREAD_ID" || upperSortStr == "THREAD") return filter::SortBy::THREAD_ID;
+    if (upperSortStr == "MODULE") return filter::SortBy::MODULE;
+    if (upperSortStr == "HOST") return filter::SortBy::HOST;
+    if (upperSortStr == "ID") return filter::SortBy::ID;
+    if (upperSortStr == "LINE_NUMBER" || upperSortStr == "LINENUMBER" || upperSortStr == "LINE") return filter::SortBy::LINE_NUMBER;
     return std::nullopt;
 }
 

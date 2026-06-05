@@ -89,7 +89,7 @@ ip(client_ip) = 10.0.0.1
 
 | Option                 | Shorthand | Description                                                                                         | Default     |
 | :--------------------- | :-------- | :-------------------------------------------------------------------------------------------------- | :---------- |
-| `--sort-by FIELD`      |           | Sorts the output by a specific field. Supported values include `time`/`timestamp`, `level`, `msg`/`message`, `source`/`source_file`, and `thread`/`thread_id`. | `timestamp` |
+| `--sort-by FIELD`      |           | Sorts the output by a specific field. Supported values: `time`/`timestamp`, `level`, `msg`/`message`, `source`/`source_file`, `thread`/`thread_id`, `module`, `host`, `id`, and `line`/`line_number`. Entries missing an optional field (`module`, `host`, `id`, `line_number`, `thread_id`) sort first in ascending order; `id` and `line_number` sort numerically. | `timestamp` |
 | `--order ORDER`        |           | Sets the sorting order. Available orders: `asc`/`ascending` and `desc`/`descending`.                | `ascending` |
 
 

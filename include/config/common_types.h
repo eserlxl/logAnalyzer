@@ -36,7 +36,11 @@ namespace Config {
         {"time", filter::SortBy::TIMESTAMP}, {"timestamp", filter::SortBy::TIMESTAMP}, 
         {"level", filter::SortBy::LEVEL}, {"msg", filter::SortBy::MESSAGE}, {"message", filter::SortBy::MESSAGE},
         {"source", filter::SortBy::SOURCE}, {"source_file", filter::SortBy::SOURCE},
-        {"thread", filter::SortBy::THREAD_ID}, {"thread_id", filter::SortBy::THREAD_ID}
+        {"thread", filter::SortBy::THREAD_ID}, {"thread_id", filter::SortBy::THREAD_ID},
+        {"module", filter::SortBy::MODULE},
+        {"host", filter::SortBy::HOST},
+        {"id", filter::SortBy::ID},
+        {"line", filter::SortBy::LINE_NUMBER}, {"line_number", filter::SortBy::LINE_NUMBER}, {"linenumber", filter::SortBy::LINE_NUMBER}
     };
 
     // Case-insensitive map for SortOrder strings

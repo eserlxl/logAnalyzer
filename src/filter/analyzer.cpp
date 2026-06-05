@@ -228,6 +228,15 @@ bool LogAnalyzer::lessByField(const LogEntry& lhs, const LogEntry& rhs, filter::
             if (!lhs.threadId.has_value()) return true;
             if (!rhs.threadId.has_value()) return false;
             return lhs.threadId.value() < rhs.threadId.value();
+        case filter::SortBy::MODULE:
+            // std::optional orders nullopt before any value, matching the TIMESTAMP case.
+            return lhs.module < rhs.module;
+        case filter::SortBy::HOST:
+            return lhs.host < rhs.host;
+        case filter::SortBy::ID:
+            return lhs.id < rhs.id;
+        case filter::SortBy::LINE_NUMBER:
+            return lhs.sourceLineNumber < rhs.sourceLineNumber;
         default:
             return false;
     }

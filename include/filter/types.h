@@ -13,7 +13,11 @@ enum class SortBy : uint8_t {
     LEVEL,     // Sort by the log level (e.g., INFO, WARN, ERROR).
     MESSAGE,   // Sort by the content of the log message.
     SOURCE,    // Sort by the source of the log (e.g., file name, component name).
-    THREAD_ID  // Sort by the thread identifier, if available.
+    THREAD_ID, // Sort by the thread identifier, if available.
+    MODULE,    // Sort by the module/component name, if available.
+    HOST,      // Sort by the originating host, if available.
+    ID,        // Sort by the numeric entry id, if available.
+    LINE_NUMBER // Sort by the source line number, if available.
 };
 
 // Enum for the order in which sorted results should be presented.
