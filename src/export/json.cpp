@@ -81,6 +81,98 @@ void from_json(const nlohmann::json& j, ExportFieldMapping& efm) {
     }
 }
 
+namespace {
+
+// Build the per-entry JSON object shared by the JSON and NDJSON exporters.
+// Emits typed values (numeric id/lineNumber, parsed STRUCTURED_FIELD) and applies
+// the standard-field/non-null inclusion rule.
+json buildEntryJson(const LogEntry& entry, const std::vector<ExportFieldMapping>& fieldsToExport) {
+    json entryJson;
+    for (const auto& fieldMapping : fieldsToExport) {
+        std::string key;
+        json value_json;
+
+        std::visit([&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, std::string>) {
+                key = arg;
+                if (entry.customFields.count(key)) {
+                    value_json = entry.customFields.at(key);
+                } else {
+                    value_json = nullptr;
+                }
+            } else if constexpr (std::is_same_v<T, LogEntryField>) {
+                LogEntryField fieldEnum = arg;
+                key = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(fieldEnum) : fieldMapping.customHeader;
+
+                switch (fieldEnum) {
+                    case LogEntryField::ID:
+                        value_json = entry.id ? json(*entry.id) : nullptr;
+                        break;
+                    case LogEntryField::TIMESTAMP: {
+                        if (entry.timestamp) {
+                            if (fieldMapping.datetimeFormat) {
+                                value_json = Utils::formatTimestamp(*entry.timestamp, *fieldMapping.datetimeFormat);
+                            } else {
+                                value_json = Utils::formatTimestamp(*entry.timestamp);
+                            }
+                        } else {
+                            value_json = nullptr;
+                        }
+                        break;
+                    }
+                    case LogEntryField::LEVEL:
+                        value_json = Utils::logLevelToString(entry.level);
+                        break;
+                    case LogEntryField::MESSAGE:
+                        value_json = entry.message;
+                        break;
+                    case LogEntryField::SOURCE_FILE:
+                        value_json = entry.sourceFile;
+                        break;
+                    case LogEntryField::LINE_NUMBER:
+                        value_json = entry.sourceLineNumber ? json(*entry.sourceLineNumber) : nullptr;
+                        break;
+                    case LogEntryField::THREAD_ID:
+                        value_json = entry.threadId ? json(*entry.threadId) : nullptr;
+                        break;
+                    case LogEntryField::MODULE:
+                        value_json = entry.module ? json(*entry.module) : nullptr;
+                        break;
+                    case LogEntryField::HOST:
+                        value_json = entry.host ? json(*entry.host) : nullptr;
+                        break;
+                    case LogEntryField::STRUCTURED_FIELD:
+                        if (entry.structuredData.has_value()) {
+                            try {
+                                value_json = json::parse(entry.structuredData.value());
+                            } catch (const json::parse_error&) {
+                                value_json = entry.structuredData.value();
+                            }
+                        } else {
+                            value_json = nullptr;
+                        }
+                        break;
+                    case LogEntryField::UNKNOWN:
+                    default:
+                        value_json = nullptr;
+                        break;
+                }
+            }
+        }, fieldMapping.field);
+
+        if (!key.empty()) {
+            bool isStandardField = std::holds_alternative<LogEntryField>(fieldMapping.field);
+            if (isStandardField || !value_json.is_null()) {
+                entryJson[key] = value_json;
+            }
+        }
+    }
+    return entryJson;
+}
+
+} // namespace
+
 void Exporter::exportAsJson(
     std::ostream& os,
     const std::vector<LogEntry>& entries,
@@ -92,92 +184,9 @@ void Exporter::exportAsJson(
     std::vector<ExportFieldMapping> fieldsToExport = getEffectiveExportFieldMappings(entries, settings);
 
     for (const auto& entry : entries) {
-        json entryJson;
-        
-        for (const auto& fieldMapping : fieldsToExport) {
-            std::string key;
-            json value_json;
-
-            std::visit([&](auto&& arg) {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, std::string>) {
-                    key = arg;
-                    if (entry.customFields.count(key)) {
-                        value_json = entry.customFields.at(key);
-                    } else {
-                        value_json = nullptr;
-                    }
-                } else if constexpr (std::is_same_v<T, LogEntryField>) {
-                    LogEntryField fieldEnum = arg;
-                    key = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(fieldEnum) : fieldMapping.customHeader;
-
-                    switch (fieldEnum) {
-                        case LogEntryField::ID:
-                            value_json = entry.id ? json(*entry.id) : nullptr;
-                            break;
-                        case LogEntryField::TIMESTAMP: {
-                            if (entry.timestamp) {
-                                if (fieldMapping.datetimeFormat) {
-                                    value_json = Utils::formatTimestamp(*entry.timestamp, *fieldMapping.datetimeFormat);
-                                } else {
-                                    value_json = Utils::formatTimestamp(*entry.timestamp);
-                                }
-                            } else {
-                                value_json = nullptr;
-                            }
-                            break;
-                        }
-                        case LogEntryField::LEVEL:
-                            value_json = Utils::logLevelToString(entry.level);
-                            break;
-                        case LogEntryField::MESSAGE:
-                            value_json = entry.message;
-                            break;
-                        case LogEntryField::SOURCE_FILE:
-                            value_json = entry.sourceFile;
-                            break;
-                        case LogEntryField::LINE_NUMBER:
-                            value_json = entry.sourceLineNumber ? json(*entry.sourceLineNumber) : nullptr;
-                            break;
-                        case LogEntryField::THREAD_ID:
-                            value_json = entry.threadId ? json(*entry.threadId) : nullptr;
-                            break;
-                        case LogEntryField::MODULE:
-                            value_json = entry.module ? json(*entry.module) : nullptr;
-                            break;
-                        case LogEntryField::HOST:
-                            value_json = entry.host ? json(*entry.host) : nullptr;
-                            break;
-                        case LogEntryField::STRUCTURED_FIELD:
-                            if (entry.structuredData.has_value()) {
-                                try {
-                                    value_json = json::parse(entry.structuredData.value());
-                                } catch (const json::parse_error&) {
-                                    value_json = entry.structuredData.value();
-                                }
-                            } else {
-                                value_json = nullptr;
-                            }
-                            break;
-                        case LogEntryField::UNKNOWN:
-                        default:
-                            value_json = nullptr;
-                            break;
-                    }
-                }
-            }, fieldMapping.field);
-
-            if (!key.empty()) {
-                bool isStandardField = std::holds_alternative<LogEntryField>(fieldMapping.field);
-
-                if (isStandardField || !value_json.is_null()) {
-                    entryJson[key] = value_json;
-                }
-            }
-        }
-        j["entries"].push_back(entryJson);
+        j["entries"].push_back(buildEntryJson(entry, fieldsToExport));
     }
-    
+
     j["summary"] = {
         {"count", entries.size()}
     };
@@ -201,90 +210,8 @@ void Exporter::exportAsNdjson(
     }
 
     for (const auto& entry : entries) {
-        json entryJson;
-
-        for (const auto& fieldMapping : fieldsToExport) {
-            std::string key;
-            json value_json;
-
-            std::visit([&](auto&& arg) {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, std::string>) {
-                    key = arg;
-                    if (entry.customFields.count(key)) {
-                        value_json = entry.customFields.at(key);
-                    } else {
-                        value_json = nullptr;
-                    }
-                } else if constexpr (std::is_same_v<T, LogEntryField>) {
-                    LogEntryField fieldEnum = arg;
-                    key = fieldMapping.customHeader.empty() ? Utils::logEntryFieldToString(fieldEnum) : fieldMapping.customHeader;
-
-                    switch (fieldEnum) {
-                        case LogEntryField::ID:
-                            value_json = entry.id ? json(*entry.id) : nullptr;
-                            break;
-                        case LogEntryField::TIMESTAMP: {
-                            if (entry.timestamp) {
-                                if (fieldMapping.datetimeFormat) {
-                                    value_json = Utils::formatTimestamp(*entry.timestamp, *fieldMapping.datetimeFormat);
-                                } else {
-                                    value_json = Utils::formatTimestamp(*entry.timestamp);
-                                }
-                            } else {
-                                value_json = nullptr;
-                            }
-                            break;
-                        }
-                        case LogEntryField::LEVEL:
-                            value_json = Utils::logLevelToString(entry.level);
-                            break;
-                        case LogEntryField::MESSAGE:
-                            value_json = entry.message;
-                            break;
-                        case LogEntryField::SOURCE_FILE:
-                            value_json = entry.sourceFile;
-                            break;
-                        case LogEntryField::LINE_NUMBER:
-                            value_json = entry.sourceLineNumber ? json(*entry.sourceLineNumber) : nullptr;
-                            break;
-                        case LogEntryField::THREAD_ID:
-                            value_json = entry.threadId ? json(*entry.threadId) : nullptr;
-                            break;
-                        case LogEntryField::MODULE:
-                            value_json = entry.module ? json(*entry.module) : nullptr;
-                            break;
-                        case LogEntryField::HOST:
-                            value_json = entry.host ? json(*entry.host) : nullptr;
-                            break;
-                        case LogEntryField::STRUCTURED_FIELD:
-                            if (entry.structuredData.has_value()) {
-                                try {
-                                    value_json = json::parse(entry.structuredData.value());
-                                } catch (const json::parse_error&) {
-                                    value_json = entry.structuredData.value();
-                                }
-                            } else {
-                                value_json = nullptr;
-                            }
-                            break;
-                        case LogEntryField::UNKNOWN:
-                        default:
-                            value_json = nullptr;
-                            break;
-                    }
-                }
-            }, fieldMapping.field);
-
-            if (!key.empty()) {
-                bool isStandardField = std::holds_alternative<LogEntryField>(fieldMapping.field);
-                if (isStandardField || !value_json.is_null()) {
-                    entryJson[key] = value_json;
-                }
-            }
-        }
         // Each entry on its own line, compact (no indent)
-        os << entryJson.dump() << '\n';
+        os << buildEntryJson(entry, fieldsToExport).dump() << '\n';
     }
 }
 
