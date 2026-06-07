@@ -15,6 +15,7 @@ Run `logAnalyzer --help` for a full list of commands.
 | `--color OPT`          |           | Controls colorized output. Options are `always`, `auto` (default, colors if stdout is a TTY and not redirected), or `never`.                                                              | `auto`     |
 | `--stream`             |           | Enables memory-efficient stream processing for very large files, avoiding full memory load. **Caution:** Some features (e.g., sorting) are incompatible with stream mode.           | `false`    |
 | `--stdin` |           | Reads log entries from standard input (e.g., from a pipe). This mode is automatically enabled if `-` is used as a log file path. See Example 5 for details.                                           | `false`    |
+| `--exit-code`          |           | Exit with status `0` if at least one entry matched, `1` if none (grep-style, for shell scripting such as `if logAnalyzer ... --exit-code; then`). Without the flag the success status is always `0`. Errors still exit non-zero. Works in both batch and stream mode. | `false`    |
 
 
 ### Parsing

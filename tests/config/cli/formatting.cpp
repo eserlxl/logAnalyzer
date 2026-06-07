@@ -489,6 +489,22 @@ TEST(CliHelpersParseFieldAlias, NonGreedyFieldSplitsOnFirstAs) {
     EXPECT_EQ(alias, "b as c");
 }
 
+// --- CLIConfigHelpers::resolveExitCode (grep-style --exit-code) ---
+
+TEST(CliHelpersResolveExitCode, ModeOffAlwaysZero) {
+    EXPECT_EQ(CLIConfigHelpers::resolveExitCode(false, 0), 0);
+    EXPECT_EQ(CLIConfigHelpers::resolveExitCode(false, 5), 0);
+}
+
+TEST(CliHelpersResolveExitCode, ModeOnNoMatchesIsOne) {
+    EXPECT_EQ(CLIConfigHelpers::resolveExitCode(true, 0), 1);
+}
+
+TEST(CliHelpersResolveExitCode, ModeOnWithMatchesIsZero) {
+    EXPECT_EQ(CLIConfigHelpers::resolveExitCode(true, 1), 0);
+    EXPECT_EQ(CLIConfigHelpers::resolveExitCode(true, 1000), 0);
+}
+
 // --- Notes from Audit ---
 // - TTY Detection Logic for --color auto: This unit test suite focuses on CLI argument parsing. The actual TTY
 //   detection logic that --color auto relies on is likely handled by a lower-level library or system call,

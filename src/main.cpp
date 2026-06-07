@@ -8,6 +8,7 @@
 #include "utils/dedup.h"
 #include "utils/string.h"
 #include "config/cli.h"
+#include "config/cli_helpers.h"
 #include "filter/concrete_filters.h"
 #include "filter/parser.h"
 #include "filter/types.h"
@@ -195,6 +196,9 @@ int main(int argc, char *argv[]) {
         inputPaths.push_back(std::string(Utils::STDIN_FILE_PATH));
     }
 
+    // Number of entries that matched and were output; drives --exit-code.
+    std::size_t matchCount = 0;
+
     if (cliOptions.streamMode) {
         if (cliOptions.outputFormat != "text" && cliOptions.outputFormat != "csv" && cliOptions.outputFormat != "ndjson") {
             std::cerr << "Error: Streaming mode only supports 'text', 'csv', or 'ndjson' output format." << '\n';
@@ -347,6 +351,7 @@ int main(int argc, char *argv[]) {
             std::cerr << "Error during stream analysis: " << res.error().toString() << '\n';
             return 1;
         }
+        matchCount = streamMatchCount;
 
         if (cliOptions.countOnly) {
             *outputStream << streamMatchCount << '\n';
@@ -441,10 +446,12 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        matchCount = filteredEntries.size();
+
         // Apply --count: print count and exit (after stats so --count + --stats both work)
         if (cliOptions.countOnly) {
             *outputStream << filteredEntries.size() << '\n';
-            return 0;
+            return CLIConfigHelpers::resolveExitCode(cliOptions.exitCodeMode, matchCount);
         }
 
         ExportSettings exportSettings;
@@ -503,5 +510,5 @@ int main(int argc, char *argv[]) {
         }
 }
 
-    return 0;
+    return CLIConfigHelpers::resolveExitCode(cliOptions.exitCodeMode, matchCount);
 }

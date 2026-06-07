@@ -75,6 +75,7 @@ public:
         std::string statsOutputPath;  // --stats-output PATH: write stats JSON here instead of stdout
         std::string dedupField;       // --dedup-field FIELD: keep only first entry per unique FIELD value
         bool dedupKeepLast = false;   // --dedup-keep-last: keep the last (not first) entry per unique FIELD value (batch only)
+        bool exitCodeMode = false;    // --exit-code: exit 0 if >=1 entry matched, 1 if none (grep-style, for scripting)
         std::optional<size_t> statsInterval; // --stats-interval N: emit partial stats every N matching entries in stream mode
     };
 

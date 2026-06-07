@@ -183,6 +183,7 @@ Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCL
 
     app.add_option("--dedup-field", appOptions.dedupField, "Keep only the first entry per unique value of FIELD. Standard fields: level, message, source (alias: source_file), id, lineNumber (alias: line_number, line), threadId (alias: thread_id, tid), module, host, timestamp (alias: time). Any other name is treated as a custom field key.");
     app.add_flag("--dedup-keep-last", appOptions.dedupKeepLast, "With --dedup-field, keep the last entry per unique value instead of the first (batch mode only; ignored with --stream).");
+    app.add_flag("--exit-code", appOptions.exitCodeMode, "Exit with status 0 if at least one entry matched, 1 if none (grep-style, for scripting). Errors still exit non-zero.");
 
     app.add_option("--stats-interval", appOptions.statsInterval, "In stream mode: emit a partial stats report every N matching entries (N must be > 0)")
        ->check(CLI::PositiveNumber);
