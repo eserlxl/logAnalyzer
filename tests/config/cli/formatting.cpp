@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "cli_helper.h"
+#include "config/cli_helpers.h"
 #include "export/core.h"
 #include "filter/types.h" // For SortBy, SortOrder
 
@@ -441,6 +442,51 @@ TEST_F(CLIConfigTest, MultipleSortOrderOptions) {
     ASSERT_EQ(options.sortOrder.value(), SortOrder::DESCENDING); // Last --order option wins
     ASSERT_TRUE(settings.exportSettings.sortOrder.has_value());
     ASSERT_EQ(settings.exportSettings.sortOrder.value(), SortOrder::DESCENDING);
+}
+
+// --- Direct unit tests for CLIConfigHelpers::parseFieldAlias ---
+
+TEST(CliHelpersParseFieldAlias, ParsesExplicitAlias) {
+    const auto [field, alias] = CLIConfigHelpers::parseFieldAlias("timestamp as Time");
+    EXPECT_EQ(field, "timestamp");
+    EXPECT_EQ(alias, "Time");
+}
+
+TEST(CliHelpersParseFieldAlias, AsKeywordIsCaseInsensitive) {
+    const auto [field, alias] = CLIConfigHelpers::parseFieldAlias("level AS L");
+    EXPECT_EQ(field, "level");
+    EXPECT_EQ(alias, "L");
+}
+
+TEST(CliHelpersParseFieldAlias, BareFieldAliasesToItself) {
+    const auto [field, alias] = CLIConfigHelpers::parseFieldAlias("message");
+    EXPECT_EQ(field, "message");
+    EXPECT_EQ(alias, "message");
+}
+
+TEST(CliHelpersParseFieldAlias, TrimsSurroundingWhitespace) {
+    const auto [field, alias] = CLIConfigHelpers::parseFieldAlias("  host  as  H  ");
+    EXPECT_EQ(field, "host");
+    EXPECT_EQ(alias, "H");
+}
+
+TEST(CliHelpersParseFieldAlias, EmptyAliasYieldsEmptyPair) {
+    const auto [field, alias] = CLIConfigHelpers::parseFieldAlias("x as ");
+    EXPECT_EQ(field, "");
+    EXPECT_EQ(alias, "");
+}
+
+TEST(CliHelpersParseFieldAlias, EmptyFieldYieldsEmptyPair) {
+    const auto [field, alias] = CLIConfigHelpers::parseFieldAlias(" as Y");
+    EXPECT_EQ(field, "");
+    EXPECT_EQ(alias, "");
+}
+
+TEST(CliHelpersParseFieldAlias, NonGreedyFieldSplitsOnFirstAs) {
+    // The field group is non-greedy, so the first " as " splits field from alias.
+    const auto [field, alias] = CLIConfigHelpers::parseFieldAlias("a as b as c");
+    EXPECT_EQ(field, "a");
+    EXPECT_EQ(alias, "b as c");
 }
 
 // --- Notes from Audit ---
