@@ -108,6 +108,7 @@ ip(client_ip) = 10.0.0.1
 | `--offset N`            |           | Skips the first N matching entries before output begins. Combine with `--limit` for pagination (e.g., `--offset 200 --limit 100`).       | `0`                             |
 | `--count`               |           | Prints only the count of matching entries and exits (like `grep -c`). No per-entry output. Works in both batch and stream mode.         | `false`                         |
 | `--dedup-field FIELD`   |           | Keeps only the first entry per unique value of FIELD. Standard fields: `level`, `message`, `source` (alias: `source_file`), `id`, `lineNumber` (alias: `line_number`, `line`), `threadId` (alias: `thread_id`, `tid`), `module`, `host`, `timestamp` (alias: `time`). Any other name is treated as a custom field key. Entries where an optional standard field or custom field is absent are each treated as unique. Applies before `--offset`/`--limit`. | |
+| `--dedup-keep-last`     |           | With `--dedup-field`, keep the **last** entry per unique value instead of the first (e.g. the latest event per `session_id`), preserving original order. Batch mode only; ignored with a warning under `--stream` (keeping the last requires buffering all entries). | `false` |
 
 
 ### Statistics

@@ -51,17 +51,39 @@ inline std::string getDedupKey(const LogEntry& entry, const std::string& field, 
 // "module", "host", "timestamp" (alias: "time"). Any other name is treated as a
 // custom field key. Entries where an optional standard field or custom field is absent
 // are each treated as unique (never merged with each other).
-inline void applyDedupField(std::vector<LogEntry>& entries, std::string_view field) {
+// When `keepLast` is true, the last entry per unique value is kept (instead of
+// the first), preserving the original relative order of the kept entries. This
+// is useful for "latest state per key" views (e.g. the last event per session).
+inline void applyDedupField(std::vector<LogEntry>& entries, std::string_view field,
+                            bool keepLast = false) {
     if (field.empty()) return;
     const std::string fieldStr(field);
     std::unordered_set<std::string> seen;
     size_t idx = 0;
-    entries.erase(
-        std::remove_if(entries.begin(), entries.end(),
-            [&](const LogEntry& entry) {
-                return !seen.insert(getDedupKey(entry, fieldStr, idx)).second;
-            }),
-        entries.end());
+    if (!keepLast) {
+        entries.erase(
+            std::remove_if(entries.begin(), entries.end(),
+                [&](const LogEntry& entry) {
+                    return !seen.insert(getDedupKey(entry, fieldStr, idx)).second;
+                }),
+            entries.end());
+        return;
+    }
+    // keepLast: scan from the end so the first key seen is the last occurrence,
+    // then compact in place keeping those entries in their original order.
+    std::vector<bool> keep(entries.size(), false);
+    for (std::size_t i = entries.size(); i-- > 0;) {
+        if (seen.insert(getDedupKey(entries[i], fieldStr, idx)).second) {
+            keep[i] = true;
+        }
+    }
+    std::size_t write = 0;
+    for (std::size_t read = 0; read < entries.size(); ++read) {
+        if (keep[read]) {
+            entries[write++] = std::move(entries[read]);
+        }
+    }
+    entries.erase(entries.begin() + static_cast<std::ptrdiff_t>(write), entries.end());
 }
 
 } // namespace Utils

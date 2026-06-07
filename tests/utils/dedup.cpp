@@ -278,3 +278,46 @@ TEST_F(DedupFieldTest, DedupById) {
     ASSERT_EQ(entries[1].id.value(), 6u);
     ASSERT_EQ(entries[2].id.value(), 7u);
 }
+
+TEST_F(DedupFieldTest, KeepLastByCustomFieldKeepsLastOccurrenceInOrder) {
+    std::vector<LogEntry> entries = {
+        makeEntry(LogLevel::INFO, "first-s1", "f.cpp", {{"session", "s1"}}),
+        makeEntry(LogLevel::INFO, "first-s2", "f.cpp", {{"session", "s2"}}),
+        makeEntry(LogLevel::INFO, "last-s1", "f.cpp", {{"session", "s1"}}),
+        makeEntry(LogLevel::INFO, "last-s2", "f.cpp", {{"session", "s2"}}),
+    };
+    Utils::applyDedupField(entries, "session", /*keepLast=*/true);
+    ASSERT_EQ(entries.size(), 2u);
+    // The last occurrence of each key survives, in original relative order.
+    EXPECT_EQ(entries[0].message, "last-s1");
+    EXPECT_EQ(entries[1].message, "last-s2");
+}
+
+TEST_F(DedupFieldTest, KeepLastByMessageDiffersFromKeepFirst) {
+    const std::vector<LogEntry> base = {
+        makeEntry(LogLevel::INFO, "hello", "a.cpp"),
+        makeEntry(LogLevel::WARNING, "hello", "b.cpp"),
+        makeEntry(LogLevel::ERROR, "world", "c.cpp"),
+    };
+
+    std::vector<LogEntry> first = base;
+    Utils::applyDedupField(first, "message", /*keepLast=*/false);
+    ASSERT_EQ(first.size(), 2u);
+    EXPECT_EQ(first[0].sourceFile, "a.cpp");  // first "hello"
+
+    std::vector<LogEntry> last = base;
+    Utils::applyDedupField(last, "message", /*keepLast=*/true);
+    ASSERT_EQ(last.size(), 2u);
+    EXPECT_EQ(last[0].sourceFile, "b.cpp");   // last "hello"
+    EXPECT_EQ(last[1].sourceFile, "c.cpp");
+}
+
+TEST_F(DedupFieldTest, KeepLastDefaultParamIsKeepFirst) {
+    std::vector<LogEntry> entries = {
+        makeEntry(LogLevel::INFO, "x", "a.cpp"),
+        makeEntry(LogLevel::INFO, "x", "b.cpp"),
+    };
+    Utils::applyDedupField(entries, "message");  // default keepLast=false
+    ASSERT_EQ(entries.size(), 1u);
+    EXPECT_EQ(entries[0].sourceFile, "a.cpp");
+}

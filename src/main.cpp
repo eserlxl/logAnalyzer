@@ -207,6 +207,10 @@ int main(int argc, char *argv[]) {
             std::cerr << "Warning: --sort-by/--order are ignored in --stream mode (sorting requires buffering all entries).\n";
         }
 
+        if (cliOptions.dedupKeepLast && !cliOptions.dedupField.empty()) {
+            std::cerr << "Warning: --dedup-keep-last is ignored in --stream mode (keeping first; last requires buffering all entries).\n";
+        }
+
         // Prepare CSV fields if needed
         std::vector<ExportFieldMapping> csvFieldsToExport;
         if (cliOptions.outputFormat == "csv") {
@@ -395,8 +399,8 @@ int main(int argc, char *argv[]) {
             });
         }
 
-        // Apply --dedup-field: keep only first entry per unique value of the named field
-        Utils::applyDedupField(filteredEntries, cliOptions.dedupField);
+        // Apply --dedup-field: keep first (or, with --dedup-keep-last, last) entry per unique field value
+        Utils::applyDedupField(filteredEntries, cliOptions.dedupField, cliOptions.dedupKeepLast);
 
         // Apply --offset: skip first N matching entries
         if (cliOptions.offset && *cliOptions.offset > 0) {
