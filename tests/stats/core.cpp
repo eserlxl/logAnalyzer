@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "stats/core.h"
+#include "stats/helpers.h"
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
 #include <vector>
@@ -420,6 +421,69 @@ TEST_F(StatisticsTest, CreateCollectorFactoryPercentileStatsMissingField) {
     config.type = StatisticType::PERCENTILE_STATS;
     auto collector = Statistics::createCollector(config);
     ASSERT_EQ(collector, nullptr);
+}
+
+TEST_F(StatisticsTest, ParsePercentileList) {
+    std::vector<double> out;
+    ASSERT_TRUE(stats::detail::parsePercentileList("50,90,99.9", out));
+    ASSERT_EQ(out.size(), 3u);
+    EXPECT_DOUBLE_EQ(out[0], 50.0);
+    EXPECT_DOUBLE_EQ(out[1], 90.0);
+    EXPECT_DOUBLE_EQ(out[2], 99.9);
+
+    ASSERT_TRUE(stats::detail::parsePercentileList("50;90", out));
+    ASSERT_EQ(out.size(), 2u);
+    EXPECT_DOUBLE_EQ(out[0], 50.0);
+    EXPECT_DOUBLE_EQ(out[1], 90.0);
+
+    ASSERT_TRUE(stats::detail::parsePercentileList("  50 , 90 ", out));  // trimmed
+    ASSERT_EQ(out.size(), 2u);
+
+    ASSERT_TRUE(stats::detail::parsePercentileList("100", out));  // boundary accepted
+    ASSERT_EQ(out.size(), 1u);
+    EXPECT_DOUBLE_EQ(out[0], 100.0);
+
+    for (const char* bad : {"0", "-5", "150", "abc", "", "50,"}) {
+        EXPECT_FALSE(stats::detail::parsePercentileList(bad, out))
+            << "'" << bad << "' should be rejected";
+    }
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryPercentileStatsCustomPercentiles) {
+    StatisticConfig config;
+    config.type = StatisticType::PERCENTILE_STATS;
+    config.params["field"] = "latency_ms";
+    config.params["percentiles"] = "50;90";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    for (const char* v : {"10.0", "20.0"}) {
+        LogEntry e;
+        e.message = "test";
+        e.customFields["latency_ms"] = v;
+        collector->collect(e);
+    }
+    const json report = collector->generateReport();
+    EXPECT_TRUE(report.contains("p50"));
+    EXPECT_TRUE(report.contains("p90"));
+    EXPECT_FALSE(report.contains("p95"));
+    EXPECT_FALSE(report.contains("p99"));
+}
+
+TEST_F(StatisticsTest, CreateCollectorFactoryPercentileStatsMalformedPercentilesUsesDefault) {
+    StatisticConfig config;
+    config.type = StatisticType::PERCENTILE_STATS;
+    config.params["field"] = "latency_ms";
+    config.params["percentiles"] = "bad";
+    auto collector = Statistics::createCollector(config);
+    ASSERT_NE(collector, nullptr);
+    LogEntry e;
+    e.message = "test";
+    e.customFields["latency_ms"] = "10.0";
+    collector->collect(e);
+    const json report = collector->generateReport();
+    EXPECT_TRUE(report.contains("p50"));
+    EXPECT_TRUE(report.contains("p95"));
+    EXPECT_TRUE(report.contains("p99"));
 }
 
 TEST_F(StatisticsTest, PercentileStatsCollectorSingleValue) {
