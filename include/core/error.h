@@ -101,8 +101,11 @@ struct Error : public std::runtime_error {
             case Code::BufferLimitExceeded: return "BufferLimitExceeded";
             case Code::ConversionError: return "ConversionError";
             case Code::JsonParseError: return "JsonParseError";
+            case Code::JsonTypeError: return "JsonTypeError";
+            case Code::MissingField: return "MissingField";
             case Code::NotImplemented: return "NotImplemented";
             case Code::FieldNotFound: return "FieldNotFound";
+            case Code::UnknownJsonError: return "UnknownJsonError";
             case Code::ValidationError: return "ValidationError";
             case Code::Unexpected: return "Unexpected";
             default: return "UnknownCode";
