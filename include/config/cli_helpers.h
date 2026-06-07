@@ -25,6 +25,20 @@ inline int resolveExitCode(bool exitCodeMode, std::size_t matchCount) {
     return (exitCodeMode && matchCount == 0) ? 1 : 0;
 }
 
+// Decide whether to emit ANSI color. An explicit --color always/never always
+// wins; AUTO emits color only to an interactive terminal that is not redirected
+// to a file and when the NO_COLOR convention (no-color.org) is not signalled.
+inline bool shouldUseColor(Config::ColorOption opt, bool isTerminal,
+                           bool outputIsFile, bool noColorEnv) {
+    if (opt == Config::ColorOption::ALWAYS) {
+        return true;
+    }
+    if (opt == Config::ColorOption::NEVER) {
+        return false;
+    }
+    return isTerminal && !outputIsFile && !noColorEnv;
+}
+
 } // namespace CLIConfigHelpers
 
 #endif // CONFIG_CLI_HELPERS_H

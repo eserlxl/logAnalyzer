@@ -505,6 +505,32 @@ TEST(CliHelpersResolveExitCode, ModeOnWithMatchesIsZero) {
     EXPECT_EQ(CLIConfigHelpers::resolveExitCode(true, 1000), 0);
 }
 
+// --- CLIConfigHelpers::shouldUseColor (NO_COLOR-aware color decision) ---
+
+TEST(CliHelpersShouldUseColor, AlwaysWinsOverNoColorAndRedirection) {
+    using Config::ColorOption;
+    EXPECT_TRUE(CLIConfigHelpers::shouldUseColor(ColorOption::ALWAYS, false, true, true));
+    EXPECT_TRUE(CLIConfigHelpers::shouldUseColor(ColorOption::ALWAYS, true, false, false));
+}
+
+TEST(CliHelpersShouldUseColor, NeverIsAlwaysFalse) {
+    using Config::ColorOption;
+    EXPECT_FALSE(CLIConfigHelpers::shouldUseColor(ColorOption::NEVER, true, false, false));
+    EXPECT_FALSE(CLIConfigHelpers::shouldUseColor(ColorOption::NEVER, true, false, true));
+}
+
+TEST(CliHelpersShouldUseColor, AutoColorsOnlyOnInteractiveTerminal) {
+    using Config::ColorOption;
+    // Terminal, not redirected, NO_COLOR unset -> color.
+    EXPECT_TRUE(CLIConfigHelpers::shouldUseColor(ColorOption::AUTO, true, false, false));
+    // NO_COLOR set suppresses auto color.
+    EXPECT_FALSE(CLIConfigHelpers::shouldUseColor(ColorOption::AUTO, true, false, true));
+    // Not a terminal -> no color.
+    EXPECT_FALSE(CLIConfigHelpers::shouldUseColor(ColorOption::AUTO, false, false, false));
+    // Output redirected to a file -> no color.
+    EXPECT_FALSE(CLIConfigHelpers::shouldUseColor(ColorOption::AUTO, true, true, false));
+}
+
 // --- Notes from Audit ---
 // - TTY Detection Logic for --color auto: This unit test suite focuses on CLI argument parsing. The actual TTY
 //   detection logic that --color auto relies on is likely handled by a lower-level library or system call,

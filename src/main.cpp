@@ -15,6 +15,7 @@
 #include "stats/core.h"
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -108,8 +109,12 @@ int main(int argc, char *argv[]) {
         isatty(fileno(stdout)) != 0;
 #endif
 
-    bool useColors = (cliOptions.colorOption == CLIConfig::ColorOption::ALWAYS) ||
-                     (cliOptions.colorOption == CLIConfig::ColorOption::AUTO && isTerminalOutput && cliOptions.outputPath.empty());
+    // Honor the NO_COLOR convention (no-color.org): a non-empty NO_COLOR suppresses
+    // color in auto mode (an explicit --color always/never still wins).
+    const char* noColorEnv = std::getenv("NO_COLOR");
+    const bool noColor = (noColorEnv != nullptr && noColorEnv[0] != '\0');
+    const bool useColors = CLIConfigHelpers::shouldUseColor(
+        cliOptions.colorOption, isTerminalOutput, !cliOptions.outputPath.empty(), noColor);
 
     auto rootFilter = std::make_shared<CompositeFilter>(CompositeFilter::Logic::AND);
     std::optional<filter::FilterExpression> parsedExpression;
