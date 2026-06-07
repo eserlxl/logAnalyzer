@@ -35,19 +35,6 @@ CompositeFilter::Logic toCompositeLogic(filter::FilterLogicalOperator op) {
         ? CompositeFilter::Logic::OR
         : CompositeFilter::Logic::AND;
 }
-
-void writeCsvEscaped(std::ostream& os, std::string value, char separator) {
-    const bool needsQuotes = value.find(separator) != std::string::npos
-        || value.find('"') != std::string::npos
-        || value.find('\n') != std::string::npos
-        || value.find('\r') != std::string::npos;
-    if (!needsQuotes) {
-        os << value;
-        return;
-    }
-    Utils::replaceAll(value, "\"", "\"\"");
-    os << '"' << value << '"';
-}
 } // namespace
 
 int main(int argc, char *argv[]) {
@@ -261,7 +248,7 @@ int main(int argc, char *argv[]) {
                 }
                 
                 // Escape header
-                 writeCsvEscaped(*outputStream, header, cliOptions.csvSeparator);
+                 *outputStream << Exporter::formatCsvField(header, cliOptions.csvSeparator);
                  
                  if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
             }
@@ -342,7 +329,7 @@ int main(int argc, char *argv[]) {
                                 }
                             }, fieldMapping.field);
 
-                            writeCsvEscaped(*outputStream, value, cliOptions.csvSeparator);
+                            *outputStream << Exporter::formatCsvField(value, cliOptions.csvSeparator);
                             if (i < csvFieldsToExport.size() - 1) *outputStream << cliOptions.csvSeparator;
                         }
                         *outputStream << '\n';

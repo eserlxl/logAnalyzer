@@ -97,9 +97,13 @@ class Exporter {
 public:
     // New unified export method that takes ExportSettings
     void exportLogEntries(
-        std::ostream& os, 
-        const std::vector<LogEntry>& entries, 
+        std::ostream& os,
+        const std::vector<LogEntry>& entries,
         const ExportSettings& settings);
+
+    // Format a single CSV field with RFC 4180 quoting/escaping. Public and static
+    // so both the batch CSV exporter and the streaming CSV path share one escaper.
+    static std::string formatCsvField(const std::string& value, char separator);
 
 private:
     // Exports filtered log entries as JSON
@@ -143,9 +147,6 @@ private:
             const std::vector<LogEntry>& entries, 
             const ExportSettings& settings);
     
-        // Helper to format a single CSV field, including quoting and escaping
-        std::string formatCsvField(const std::string& value, char separator);
-
         // Single source of truth for the scalar standard-field -> string mapping shared
         // by the CSV and XML exporters. Returns the string value for the nine scalar
         // LogEntryField values (STRUCTURED_FIELD yields the raw structuredData string;

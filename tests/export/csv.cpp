@@ -243,3 +243,21 @@ TEST(ExporterCsvTest, QuotingAndEscaping_AllSpecialChars) {
     exporter.exportLogEntries(ss, entries, settings);
     ASSERT_EQ(ss.str(), "\"Hello, \"\"World\"\"!\nThis is a test\r\nwith all,special\"\"characters.\"\n");
 }
+
+// Direct coverage of the shared escaper now used by both batch and stream CSV.
+TEST(ExporterCsvTest, FormatCsvFieldQuotingRules) {
+    // Plain value: returned as-is.
+    EXPECT_EQ(Exporter::formatCsvField("plain", ','), "plain");
+    // Empty value: quoted (consistent across batch and stream output).
+    EXPECT_EQ(Exporter::formatCsvField("", ','), "\"\"");
+    // Contains the separator: quoted.
+    EXPECT_EQ(Exporter::formatCsvField("a,b", ','), "\"a,b\"");
+    // Embedded quote: quoted with the quote doubled.
+    EXPECT_EQ(Exporter::formatCsvField("a\"b", ','), "\"a\"\"b\"");
+    // Embedded newline / carriage return: quoted.
+    EXPECT_EQ(Exporter::formatCsvField("a\nb", ','), "\"a\nb\"");
+    EXPECT_EQ(Exporter::formatCsvField("a\rb", ','), "\"a\rb\"");
+    // A non-comma separator: a comma in the value does not force quoting.
+    EXPECT_EQ(Exporter::formatCsvField("a,b", ';'), "a,b");
+    EXPECT_EQ(Exporter::formatCsvField("a;b", ';'), "\"a;b\"");
+}
