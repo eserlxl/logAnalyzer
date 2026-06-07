@@ -11,6 +11,8 @@ using stats::detail::normalizeTargetFieldName;
 using stats::detail::trimInPlace;
 using stats::detail::tryParseStrictPositiveInt;
 using stats::detail::extractFieldValue;
+using stats::detail::parsePercentileList;
+using stats::detail::percentileKey;
 
 // UniqueMessagesCollector implementation
 void UniqueMessagesCollector::collect(const LogEntry& entry) {
@@ -206,8 +208,20 @@ json TimeBucketHistogramCollector::generateReport() const {
 }
 
 // PercentileStatsCollector
+namespace {
+// The historical default percentile set, used when no custom percentiles are given.
+const std::vector<double> kDefaultPercentiles{50.0, 95.0, 99.0};
+} // namespace
+
 PercentileStatsCollector::PercentileStatsCollector(std::string fieldName)
-    : _fieldName(std::move(fieldName)) {}
+    : _fieldName(std::move(fieldName)), _percentiles(kDefaultPercentiles) {}
+
+PercentileStatsCollector::PercentileStatsCollector(std::string fieldName, std::vector<double> percentiles)
+    : _fieldName(std::move(fieldName)), _percentiles(std::move(percentiles)) {
+    if (_percentiles.empty()) {
+        _percentiles = kDefaultPercentiles;
+    }
+}
 
 void PercentileStatsCollector::collect(const LogEntry& entry) {
     std::string valueStr;
@@ -231,9 +245,9 @@ json PercentileStatsCollector::generateReport() const {
     report["field"] = _fieldName;
     report["count"] = _values.size();
     if (_values.empty()) {
-        report["p50"] = nullptr;
-        report["p95"] = nullptr;
-        report["p99"] = nullptr;
+        for (const double p : _percentiles) {
+            report[percentileKey(p)] = nullptr;
+        }
         return report;
     }
     std::vector<double> sorted = _values;
@@ -245,9 +259,9 @@ json PercentileStatsCollector::generateReport() const {
         if (lo + 1 >= sorted.size()) return sorted.back();
         return sorted[lo] + frac * (sorted[lo + 1] - sorted[lo]);
     };
-    report["p50"] = percentile(0.50);
-    report["p95"] = percentile(0.95);
-    report["p99"] = percentile(0.99);
+    for (const double p : _percentiles) {
+        report[percentileKey(p)] = percentile(p / 100.0);
+    }
     return report;
 }
 
@@ -410,6 +424,15 @@ namespace Statistics {
             case StatisticType::PERCENTILE_STATS: {
                 auto it = config.params.find("field");
                 if (it == config.params.end() || it->second.empty()) return nullptr;
+                auto pIt = config.params.find("percentiles");
+                if (pIt != config.params.end()) {
+                    std::vector<double> percentiles;
+                    if (parsePercentileList(pIt->second, percentiles)) {
+                        return std::make_unique<PercentileStatsCollector>(it->second, std::move(percentiles));
+                    }
+                    // Malformed percentiles fall back to the default set; validation
+                    // (validateSettings) reports the error before this point.
+                }
                 return std::make_unique<PercentileStatsCollector>(it->second);
             }
             case StatisticType::MOVING_AVERAGE_RATE: {

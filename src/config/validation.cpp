@@ -147,6 +147,14 @@ std::vector<std::string> LogAnalyzerSettings::validate() const {
                     errors.push_back("Statistic 'PERCENTILE_STATS' requires a 'field' parameter.");
                 }
             }
+            auto it_pct = sc.params.find("percentiles");
+            if (it_pct != sc.params.end()) {
+                std::vector<double> parsed;
+                if (!stats::detail::parsePercentileList(it_pct->second, parsed)) {
+                    errors.push_back("Statistic 'PERCENTILE_STATS' has invalid 'percentiles': "
+                                     "expected a comma- or semicolon-separated list of numbers in (0, 100].");
+                }
+            }
         }
     }
 

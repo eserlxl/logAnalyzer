@@ -210,16 +210,19 @@ private:
     std::map<long long, int> _counts; // key: bucket start epoch seconds
 };
 
-// P50/P95/P99 for a named numeric field (standard LogEntry field such as lineNumber or id, or a custom field key)
+// Percentiles for a named numeric field (standard LogEntry field such as lineNumber
+// or id, or a custom field key). Defaults to P50/P95/P99; a custom set may be supplied.
 class PercentileStatsCollector : public IStatisticCollector {
 public:
     explicit PercentileStatsCollector(std::string fieldName);
+    PercentileStatsCollector(std::string fieldName, std::vector<double> percentiles);
     void collect(const LogEntry& entry) override;
     json generateReport() const override;
     std::string getName() const override { return "percentile_stats"; }
     void reset() override { _values.clear(); }
 private:
     std::string _fieldName;
+    std::vector<double> _percentiles;
     std::vector<double> _values;
 };
 

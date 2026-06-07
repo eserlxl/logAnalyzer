@@ -8,9 +8,12 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <cstdlib>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace stats::detail {
 
@@ -64,6 +67,56 @@ inline void trimInPlace(std::string& value) {
     }
     const auto last = value.find_last_not_of(" \t");
     value = value.substr(first, last - first + 1);
+}
+
+// Parse a comma- or semicolon-separated list of percentiles (each strictly in
+// the (0, 100] range) into `out`. Returns false on an empty list, an empty/blank
+// token, a non-numeric token, or any value outside (0, 100]. Leading/trailing
+// whitespace around each token is ignored.
+inline bool parsePercentileList(std::string_view value, std::vector<double>& out) {
+    out.clear();
+    const auto flush = [&out](std::string token) -> bool {
+        const auto first = token.find_first_not_of(" \t");
+        if (first == std::string::npos) {
+            return false;
+        }
+        const auto last = token.find_last_not_of(" \t");
+        token = token.substr(first, last - first + 1);
+        const char* begin = token.c_str();
+        char* end = nullptr;
+        const double parsed = std::strtod(begin, &end);
+        if (end != begin + token.size()) {
+            return false;
+        }
+        if (!(parsed > 0.0 && parsed <= 100.0)) {
+            return false;
+        }
+        out.push_back(parsed);
+        return true;
+    };
+    std::string current;
+    for (const char c : value) {
+        if (c == ',' || c == ';') {
+            if (!flush(current)) {
+                return false;
+            }
+            current.clear();
+        } else {
+            current.push_back(c);
+        }
+    }
+    if (!flush(current)) {
+        return false;
+    }
+    return !out.empty();
+}
+
+// Format a percentile value as a report key, e.g. 50 -> "p50", 99.9 -> "p99.9".
+// Default stream formatting drops trailing zeros so whole numbers stay compact.
+inline std::string percentileKey(double percentile) {
+    std::ostringstream oss;
+    oss << percentile;
+    return "p" + oss.str();
 }
 
 inline std::string extractFieldValue(const LogEntry& entry,

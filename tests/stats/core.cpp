@@ -451,6 +451,40 @@ TEST_F(StatisticsTest, PercentileStatsCollectorTwoValues) {
     ASSERT_DOUBLE_EQ(report["p99"].get<double>(), 19.9);
 }
 
+TEST_F(StatisticsTest, PercentileStatsCollectorCustomPercentiles) {
+    PercentileStatsCollector collector("latency_ms", {50.0, 90.0, 99.9});
+    for (const char* v : {"10.0", "20.0"}) {
+        LogEntry e;
+        e.message = "test";
+        e.customFields["latency_ms"] = v;
+        collector.collect(e);
+    }
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 2u);
+    // Only the requested percentile keys are present.
+    EXPECT_TRUE(report.contains("p50"));
+    EXPECT_TRUE(report.contains("p90"));
+    EXPECT_TRUE(report.contains("p99.9"));
+    EXPECT_FALSE(report.contains("p95"));
+    EXPECT_FALSE(report.contains("p99"));
+    // Linear interpolation over [10, 20]: p50→15, p90→19, p99.9→19.99.
+    EXPECT_NEAR(report["p50"].get<double>(), 15.0, 1e-9);
+    EXPECT_NEAR(report["p90"].get<double>(), 19.0, 1e-9);
+    EXPECT_NEAR(report["p99.9"].get<double>(), 19.99, 1e-9);
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorEmptyCustomFallsBackToDefault) {
+    PercentileStatsCollector collector("latency_ms", {});
+    LogEntry e;
+    e.message = "test";
+    e.customFields["latency_ms"] = "42.0";
+    collector.collect(e);
+    const json report = collector.generateReport();
+    EXPECT_TRUE(report.contains("p50"));
+    EXPECT_TRUE(report.contains("p95"));
+    EXPECT_TRUE(report.contains("p99"));
+}
+
 TEST_F(StatisticsTest, PercentileStatsCollectorReset) {
     PercentileStatsCollector collector("latency_ms");
     LogEntry e1;

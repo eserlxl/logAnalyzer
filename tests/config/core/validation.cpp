@@ -323,6 +323,26 @@ TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_Valid) {
     ASSERT_TRUE(errors.empty());
 }
 
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_CustomPercentilesValid) {
+    settings.statisticConfigs = {
+        StatisticConfig{StatisticType::PERCENTILE_STATS,
+                        {{"field", "latency_ms"}, {"percentiles", "50,90,99.9"}}}
+    };
+    errors = settings.validate();
+    ASSERT_TRUE(errors.empty());
+}
+
+TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_InvalidPercentileRejected) {
+    for (const char* bad : {"150", "0", "-5", "abc", "50,,90", "50;200", ""}) {
+        settings.statisticConfigs = {
+            StatisticConfig{StatisticType::PERCENTILE_STATS,
+                            {{"field", "latency_ms"}, {"percentiles", bad}}}
+        };
+        errors = settings.validate();
+        EXPECT_FALSE(errors.empty()) << "percentiles='" << bad << "' should be rejected";
+    }
+}
+
 TEST_F(ConfigValidationTest, ValidateStatisticConfig_PercentileStats_LeadingTrailingWhitespaceAccepted) {
     settings.statisticConfigs = {
         StatisticConfig{StatisticType::PERCENTILE_STATS, {{"field", " latency_ms "}}}
