@@ -5,6 +5,7 @@
 #include "stats/helpers.h"
 #include <chrono>
 #include <limits>
+#include <numeric>
 #include <vector>
 
 using stats::detail::normalizeTargetFieldName;
@@ -245,6 +246,9 @@ json PercentileStatsCollector::generateReport() const {
     report["field"] = _fieldName;
     report["count"] = _values.size();
     if (_values.empty()) {
+        report["min"] = nullptr;
+        report["max"] = nullptr;
+        report["mean"] = nullptr;
         for (const double p : _percentiles) {
             report[percentileKey(p)] = nullptr;
         }
@@ -252,6 +256,10 @@ json PercentileStatsCollector::generateReport() const {
     }
     std::vector<double> sorted = _values;
     std::sort(sorted.begin(), sorted.end());
+    report["min"] = sorted.front();
+    report["max"] = sorted.back();
+    report["mean"] = std::accumulate(_values.begin(), _values.end(), 0.0) /
+                     static_cast<double>(_values.size());
     auto percentile = [&](double p) -> double {
         double idx = p * static_cast<double>(sorted.size() - 1);
         size_t lo = static_cast<size_t>(idx);

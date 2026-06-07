@@ -485,6 +485,30 @@ TEST_F(StatisticsTest, PercentileStatsCollectorEmptyCustomFallsBackToDefault) {
     EXPECT_TRUE(report.contains("p99"));
 }
 
+TEST_F(StatisticsTest, PercentileStatsCollectorReportsMinMaxMean) {
+    PercentileStatsCollector collector("latency_ms");
+    for (const char* v : {"10.0", "20.0", "30.0"}) {
+        LogEntry e;
+        e.message = "test";
+        e.customFields["latency_ms"] = v;
+        collector.collect(e);
+    }
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 3u);
+    EXPECT_DOUBLE_EQ(report["min"].get<double>(), 10.0);
+    EXPECT_DOUBLE_EQ(report["max"].get<double>(), 30.0);
+    EXPECT_DOUBLE_EQ(report["mean"].get<double>(), 20.0);
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorEmptyReportsNullMinMaxMean) {
+    PercentileStatsCollector collector("latency_ms");
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 0u);
+    EXPECT_TRUE(report["min"].is_null());
+    EXPECT_TRUE(report["max"].is_null());
+    EXPECT_TRUE(report["mean"].is_null());
+}
+
 TEST_F(StatisticsTest, PercentileStatsCollectorReset) {
     PercentileStatsCollector collector("latency_ms");
     LogEntry e1;
