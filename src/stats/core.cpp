@@ -4,6 +4,7 @@
 #include "stats/core.h"
 #include "stats/helpers.h"
 #include <chrono>
+#include <cmath>
 #include <limits>
 #include <numeric>
 #include <vector>
@@ -249,6 +250,7 @@ json PercentileStatsCollector::generateReport() const {
         report["min"] = nullptr;
         report["max"] = nullptr;
         report["mean"] = nullptr;
+        report["stddev"] = nullptr;
         for (const double p : _percentiles) {
             report[percentileKey(p)] = nullptr;
         }
@@ -258,8 +260,16 @@ json PercentileStatsCollector::generateReport() const {
     std::sort(sorted.begin(), sorted.end());
     report["min"] = sorted.front();
     report["max"] = sorted.back();
-    report["mean"] = std::accumulate(_values.begin(), _values.end(), 0.0) /
-                     static_cast<double>(_values.size());
+    const double mean = std::accumulate(_values.begin(), _values.end(), 0.0) /
+                        static_cast<double>(_values.size());
+    report["mean"] = mean;
+    // Population standard deviation over all collected values.
+    double sumSquaredDeviations = 0.0;
+    for (const double value : _values) {
+        const double deviation = value - mean;
+        sumSquaredDeviations += deviation * deviation;
+    }
+    report["stddev"] = std::sqrt(sumSquaredDeviations / static_cast<double>(_values.size()));
     auto percentile = [&](double p) -> double {
         double idx = p * static_cast<double>(sorted.size() - 1);
         size_t lo = static_cast<size_t>(idx);

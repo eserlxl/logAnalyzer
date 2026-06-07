@@ -507,6 +507,34 @@ TEST_F(StatisticsTest, PercentileStatsCollectorEmptyReportsNullMinMaxMean) {
     EXPECT_TRUE(report["min"].is_null());
     EXPECT_TRUE(report["max"].is_null());
     EXPECT_TRUE(report["mean"].is_null());
+    EXPECT_TRUE(report["stddev"].is_null());
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorReportsStdDev) {
+    PercentileStatsCollector collector("latency_ms");
+    for (const char* v : {"10.0", "20.0", "30.0"}) {
+        LogEntry e;
+        e.message = "test";
+        e.customFields["latency_ms"] = v;
+        collector.collect(e);
+    }
+    const json report = collector.generateReport();
+    ASSERT_EQ(report["count"], 3u);
+    EXPECT_DOUBLE_EQ(report["mean"].get<double>(), 20.0);
+    // Population stddev of {10,20,30}: sqrt(((10)^2+0+(10)^2)/3) = sqrt(200/3).
+    EXPECT_NEAR(report["stddev"].get<double>(), 8.16496580927726, 1e-9);
+}
+
+TEST_F(StatisticsTest, PercentileStatsCollectorStdDevZeroForIdenticalValues) {
+    PercentileStatsCollector collector("latency_ms");
+    for (int i = 0; i < 4; ++i) {
+        LogEntry e;
+        e.message = "test";
+        e.customFields["latency_ms"] = "42.0";
+        collector.collect(e);
+    }
+    const json report = collector.generateReport();
+    EXPECT_DOUBLE_EQ(report["stddev"].get<double>(), 0.0);
 }
 
 TEST_F(StatisticsTest, PercentileStatsCollectorReset) {
