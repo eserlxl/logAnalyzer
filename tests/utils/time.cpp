@@ -3,11 +3,13 @@
 
 #include "gtest/gtest.h"
 #include "utils/core.h"
+#include "utils/time.h"
 #include <string>
 #include <chrono>
 #include <optional>
 #include <cstdlib>
 #include <climits>
+#include <thread>
 
 namespace {
 class ScopedTimezone {
@@ -338,4 +340,51 @@ TEST(UtilsTime, ParseAbsoluteTimeRespectsDstAutoDetection) {
 
     auto expected = createTimePoint(2023, 7, 1, 12, 0, 0);
     EXPECT_EQ(parsed.value(), expected);
+}
+
+// --- HighResTimer (public C++ API in utils/time.h) ---
+
+// The elapsed* accessors must report the same frozen interval in consistent
+// units once the timer is stopped (so the ratios are exact up to rounding).
+TEST(HighResTimerTest, ElapsedUnitsAreConsistentWhenStopped) {
+    Utils::HighResTimer timer;
+    timer.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    timer.stop();
+
+    const double sec = timer.elapsedSeconds();
+    const double ms = timer.elapsedMilliseconds();
+    const double us = timer.elapsedMicroseconds();
+    const double ns = timer.elapsedNanoseconds();
+
+    EXPECT_GT(ms, 0.0);
+    EXPECT_NEAR(ms, sec * 1000.0, ms * 1e-6 + 1e-9);
+    EXPECT_NEAR(us, ms * 1000.0, us * 1e-6 + 1e-9);
+    EXPECT_NEAR(ns, us * 1000.0, ns * 1e-6 + 1e-9);
+}
+
+// After stop(), the reported elapsed time must not keep advancing.
+TEST(HighResTimerTest, StopFreezesElapsed) {
+    Utils::HighResTimer timer;
+    timer.start();
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    timer.stop();
+
+    const double first = timer.elapsedSeconds();
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    const double second = timer.elapsedSeconds();
+
+    EXPECT_DOUBLE_EQ(first, second);
+}
+
+// A timer that is still running keeps accumulating time across reads.
+TEST(HighResTimerTest, RunningTimerAccumulates) {
+    Utils::HighResTimer timer;
+    timer.start();
+    const double first = timer.elapsedMilliseconds();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    const double second = timer.elapsedMilliseconds();
+
+    EXPECT_GE(second, first);
+    EXPECT_GT(second, 0.0);
 }
