@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Eser KUBALI
 
 #include "config/cli.h"
+#include "config/cli_helpers.h"
 #include "config/common_types.h"
 #include "config/utils.h"
 #include "utils/core.h"
@@ -23,18 +24,13 @@
 
 using namespace ErrorCode;
 
-namespace CLIConfigHelpers {
-    void trimInPlace(std::string& s);
-    std::optional<StatisticConfig> parseStatisticConfig(const std::string& statStr);
-    std::pair<std::string, std::string> parseFieldAlias(const std::string& fieldStr);
-}
-
 // CLI Parsing
 Result<std::pair<LogAnalyzerSettings, CLIConfig::CLIOptions>> CLIConfig::parseCLI(int argc, const char *const *argv) {
     LogAnalyzerSettings settings;
     CLIOptions appOptions;
     CLI::App app{"Log Analyzer Tool"};
     app.set_version_flag("--version", PROJECT_VERSION);
+    app.footer(CLIConfigHelpers::usageExamples());
 
     app.set_config("--config", appOptions.configPath, "Read options from a configuration file", false);
 

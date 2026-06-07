@@ -531,6 +531,18 @@ TEST(CliHelpersShouldUseColor, AutoColorsOnlyOnInteractiveTerminal) {
     EXPECT_FALSE(CLIConfigHelpers::shouldUseColor(ColorOption::AUTO, true, true, false));
 }
 
+// --- CLIConfigHelpers::usageExamples (--help examples block) ---
+
+TEST(CliHelpersUsageExamples, ContainsRunnableExamples) {
+    const std::string examples = CLIConfigHelpers::usageExamples();
+    EXPECT_NE(examples.find("Examples:"), std::string::npos);
+    EXPECT_NE(examples.find("logAnalyzer"), std::string::npos);
+    EXPECT_NE(examples.find("--level"), std::string::npos);
+    EXPECT_NE(examples.find("--expression"), std::string::npos);
+    EXPECT_NE(examples.find("--stats"), std::string::npos);
+    EXPECT_NE(examples.find("docs/cli-reference.md"), std::string::npos);
+}
+
 // --- Notes from Audit ---
 // - TTY Detection Logic for --color auto: This unit test suite focuses on CLI argument parsing. The actual TTY
 //   detection logic that --color auto relies on is likely handled by a lower-level library or system call,

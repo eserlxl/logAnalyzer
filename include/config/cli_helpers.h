@@ -39,6 +39,21 @@ inline bool shouldUseColor(Config::ColorOption opt, bool isTerminal,
     return isTerminal && !outputIsFile && !noColorEnv;
 }
 
+// Worked examples appended to --help (CLI11 footer) so a first-time user has a
+// runnable starting point instead of only the flat option list.
+inline std::string usageExamples() {
+    return
+        "Examples:\n"
+        "  logAnalyzer app.log --level ERROR\n"
+        "  logAnalyzer app.log --keyword database --keyword timeout --logic OR\n"
+        "  logAnalyzer app.log --expression '(level=ERROR and msg contains \"auth\") or status_code >= 500'\n"
+        "  logAnalyzer system.log --level ERROR --since 30m --format json --pretty\n"
+        "  logAnalyzer app.log --stats count_by_level --stats 'percentile_stats:latency_ms'\n"
+        "  cat app.log | logAnalyzer - --level WARN\n"
+        "\n"
+        "See docs/cli-reference.md for the full option reference.";
+}
+
 } // namespace CLIConfigHelpers
 
 #endif // CONFIG_CLI_HELPERS_H
