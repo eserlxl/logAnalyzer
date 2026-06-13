@@ -374,6 +374,11 @@ int main(int argc, char *argv[]) {
                 for (const auto& reportPair : reports) {
                     statsFile << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
                 }
+                statsFile.flush();
+                if (!statsFile.good()) {
+                    std::cerr << "Error: failed to write stats output to " << cliOptions.statsOutputPath << '\n';
+                    return 1;
+                }
             } else {
                 std::cerr << "\n--- Statistics ---\n";
                 for (const auto& reportPair : reports) {
@@ -443,6 +448,11 @@ int main(int argc, char *argv[]) {
                 }
                 for (const auto& reportPair : reports) {
                     statsFile << reportPair.second.dump(cliOptions.prettyPrint ? 4 : -1) << '\n';
+                }
+                statsFile.flush();
+                if (!statsFile.good()) {
+                    std::cerr << "Error: failed to write stats output to " << cliOptions.statsOutputPath << '\n';
+                    return 1;
                 }
             } else {
                 std::cerr << "\n--- Statistics ---\n";
