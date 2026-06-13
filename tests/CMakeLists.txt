@@ -57,6 +57,7 @@ set(TEST_SOURCES
     "config/merge.cpp"
     "config/utils.cpp"
     "core/error.cpp"
+    "core/case_insensitive_less.cpp"
     "core/log/parser.cpp"
     "core/log/json_parser.cpp"
     "core/log/parser_utils.cpp"
