@@ -164,5 +164,12 @@ foreach(TEST_SOURCE IN LISTS TEST_SOURCES)
     add_test(NAME ${TEST_NAME}
         COMMAND $<TARGET_FILE:${TEST_NAME}>
     )
+
+    # When ASan is enabled, set the options on the test itself — this is the
+    # ENVIRONMENT property ctest actually consumes when running the test.
+    if(ENABLE_ASAN)
+        set_tests_properties(${TEST_NAME} PROPERTIES
+            ENVIRONMENT "ASAN_OPTIONS=${LOGANALYZER_TEST_ASAN_OPTIONS}")
+    endif()
 endforeach()
 

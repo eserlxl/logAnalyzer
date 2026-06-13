@@ -2,17 +2,20 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Copyright (c) 2026 Eser KUBALI
 
+# Options applied to test executables' ctest environment when ASan is enabled.
+# Consumed in tests/CMakeLists.txt via set_tests_properties(... ENVIRONMENT ...),
+# which is the property ctest actually reads (a target ENVIRONMENT property is not).
+set(LOGANALYZER_TEST_ASAN_OPTIONS
+    "quarantine_size_mb=64:thread_local_quarantine_size_kb=1024:malloc_context_size=10:symbolize=0:detect_leaks=0")
+
 function(loganalyzer_apply_sanitizers_and_coverage target)
     if(ENABLE_ASAN)
         message(STATUS "Enabling AddressSanitizer (ASan) for target: ${target}")
         target_compile_options(${target} PUBLIC -fsanitize=address)
         target_link_options(${target} PUBLIC -fsanitize=address)
-        # Apply ASAN_OPTIONS environment for test executables
-        if(TARGET ${target} AND "${target}" MATCHES "test_") # Heuristic: targets starting with test_
-             set_target_properties(${target} PROPERTIES
-                ENVIRONMENT "ASAN_OPTIONS=quarantine_size_mb=64:thread_local_quarantine_size_kb=1024:malloc_context_size=10:symbolize=0:detect_leaks=0"
-            )
-        endif()
+        # ASAN_OPTIONS for test executables is applied as a ctest test property in
+        # tests/CMakeLists.txt (see LOGANALYZER_TEST_ASAN_OPTIONS); a target ENVIRONMENT
+        # property set here would not be read by ctest.
     endif()
 
     if(ENABLE_UBSAN)
