@@ -129,7 +129,7 @@ logAnalyzer app.log --stats "type=field_value_count,target_field=source"
 logAnalyzer app.log --level ERROR --stats "type=top_n_field_values,target_field=source,top_n=5"
 
 # Detect time gaps in the log stream longer than 5 seconds
-logAnalyzer app.log --find-gaps 5000
+logAnalyzer app.log --stats "find_gaps:5000"
 ```
 
 ### Example 7: Custom Export
