@@ -63,7 +63,25 @@ TEST_F(LogAnalyzerTest, SetCustomLogLevelMappingDoesNotThrowAfterRejectedSetting
     EXPECT_NO_THROW({ analyzer.setCustomLogLevelMapping("VERBOSE", LogLevel::DEBUG); });
 }
 
-TEST_F(LogAnalyzerTest, DefaultLogLevelMapping) { SUCCEED(); }
+TEST_F(LogAnalyzerTest, DefaultLogLevelMapping) {
+    const std::string filePath = "test_default_level_mapping.log";
+    {
+        std::ofstream ofs(filePath);
+        ofs << "2023-01-01 10:00:00 DEBUG: debug line\n"
+            << "2023-01-01 10:00:01 INFO: info line\n"
+            << "2023-01-01 10:00:02 WARNING: warning line\n"
+            << "2023-01-01 10:00:03 ERROR: error line\n";
+    }
+    auto result = analyzer.loadAndReplace(filePath, ParserErrorAction::Warn);
+    std::remove(filePath.c_str());
+    ASSERT_TRUE(result.has_value()) << result.error().toString();
+    auto entries = analyzer.getEntriesSnapshot();
+    ASSERT_EQ(entries.size(), 4);
+    EXPECT_EQ(entries[0].level, LogLevel::DEBUG);
+    EXPECT_EQ(entries[1].level, LogLevel::INFO);
+    EXPECT_EQ(entries[2].level, LogLevel::WARNING);
+    EXPECT_EQ(entries[3].level, LogLevel::ERROR);
+}
 
 TEST_F(LogAnalyzerTest, AnalyzeStreamFileOpenError) {
     ErrorCode::Result<AnalysisReport> result;
