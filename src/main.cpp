@@ -89,6 +89,20 @@ int main(int argc, char *argv[]) {
         outputStream = &outFile;
     }
 
+    // operator<< does not throw on a failed write (disk full, broken pipe); it only
+    // sets failbit/badbit. Flush and check so a truncated/failed write is reported and
+    // surfaced as a non-zero exit instead of a silent success.
+    auto outputWriteOk = [&]() -> bool {
+        outputStream->flush();
+        if (outputStream->good()) {
+            return true;
+        }
+        std::cerr << "Error: failed to write output"
+                  << (cliOptions.outputPath.empty() ? "" : " to " + cliOptions.outputPath)
+                  << '\n';
+        return false;
+    };
+
     const bool isTerminalOutput =
 #if defined(_WIN32)
         _isatty(_fileno(stdout)) != 0;
@@ -443,6 +457,9 @@ int main(int argc, char *argv[]) {
         // Apply --count: print count and exit (after stats so --count + --stats both work)
         if (cliOptions.countOnly) {
             *outputStream << filteredEntries.size() << '\n';
+            if (!outputWriteOk()) {
+                return 1;
+            }
             return CLIConfigHelpers::resolveExitCode(cliOptions.exitCodeMode, matchCount);
         }
 
@@ -502,5 +519,8 @@ int main(int argc, char *argv[]) {
         }
 }
 
+    if (!outputWriteOk()) {
+        return 1;
+    }
     return CLIConfigHelpers::resolveExitCode(cliOptions.exitCodeMode, matchCount);
 }
