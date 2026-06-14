@@ -49,6 +49,7 @@ set(TEST_SOURCES
     "config/cli/analysis.cpp"
     "config/cli/errors.cpp"
     "config/cli/defaults.cpp"
+    "config/cli_helpers.cpp"
     "config/core/basic.cpp"
     "config/core/json/deserialization.cpp"
     "config/core/json/serialization.cpp"
