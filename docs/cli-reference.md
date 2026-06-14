@@ -121,4 +121,4 @@ ip(client_ip) = 10.0.0.1
 | `--stats-interval N` |         | In `--stream` mode, emit an intermediate statistics report to stderr every N matching entries (N must be > 0). Has no effect without `--stream`. |  |
 | `--top-n N`        | Sets the number of top items to display for statistics like `top_messages` if not specified directly (e.g., `top_messages:10`). (Deprecated) | `10`    |
 | `--stats-window SEC` | Shows log frequency distribution over a time window in seconds. (Deprecated)                                                   |         |
-| `--find-gaps MS`   | Detects and reports time gaps in logs longer than MS milliseconds. Creates a `gap_detector` statistic collector reporting each gap's start, end, and duration. Equivalent to `--stats find_gaps:MS`. |         |
+| `--find-gaps MS`   | Detects and reports time gaps in logs longer than MS milliseconds. Creates a `gap_detector` statistic collector reporting each gap's start, end, and duration. Equivalent to `--stats find_gaps:MS`. (Deprecated) |         |
