@@ -102,6 +102,7 @@ set(TEST_SOURCES
     "stats/core.cpp"
     "stats/analyzer.cpp"
     "utils/time.cpp"
+    "utils/time_parser.cpp"
     "utils/enum.cpp"
     "utils/string.cpp"
     "utils/dedup.cpp"
