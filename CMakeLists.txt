@@ -127,6 +127,12 @@ if(NOT TARGET GTest::gtest AND NOT TARGET gtest)
 
         # For Windows: Prevent overriding the parent project's compiler/linker settings
         set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        # Don't let the fetched GoogleTest contribute its own install() rules to
+        # this project: with cmake_minimum_required(3.14), FetchContent does not
+        # add it EXCLUDE_FROM_ALL, so INSTALL_GTEST (default ON) would otherwise
+        # install GoogleTest's headers and libraries into the consumer's prefix
+        # alongside logAnalyzer. Tests still build and link against it normally.
+        set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
         if(_gtest_source_dir)
             FetchContent_Declare(
                 googletest
