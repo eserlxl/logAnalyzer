@@ -255,7 +255,7 @@ These examples demonstrate more advanced command-line filtering and parsing capa
   ```
 - **JSON filter expression workflows (C++ API):**
   For C++ developers, you can build, serialize, and deserialize nested filter-expression trees via the `filter::FilterExpression` JSON APIs.
-  (See tests under `tests/filter/core_json/*` and the [API Reference](docs/api-reference.md) for details).
+  (See tests under `tests/filter/core_json/*` and the [API Reference](api-reference.md) for details).
 - **Multi-line entry parsing**:
   Handle log entries that span multiple lines by defining patterns for start and end, and buffering settings.
   ```bash
