@@ -100,6 +100,7 @@ set(TEST_SOURCES
     "filter/iteration/13.cpp"
     "filter/iteration/15.cpp"
     "stats/core.cpp"
+    "stats/analyzer.cpp"
     "utils/time.cpp"
     "utils/enum.cpp"
     "utils/string.cpp"
