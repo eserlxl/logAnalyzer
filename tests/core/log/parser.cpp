@@ -413,16 +413,24 @@ TEST(LogParserErrorHandling, CompleteFailureActions) {
     std::stringstream cerrBufferWarn;
     std::streambuf* oldCerrWarn = std::cerr.rdbuf(cerrBufferWarn.rdbuf());
 
-    // When a line doesn't match the pattern, parseLine returns std::unexpected.
-    // processLine captures this and returns it in the optional.
-    // So, warnEntryResult should have a value (the optional), but the expected inside should NOT have a value.
+    // Under the Warn action, a non-matching line does not produce std::unexpected:
+    // parseLine returns a partial LogEntry (UNKNOWN level, the original line in the
+    // message, and the parse error captured in parsingErrors) so the stream keeps going.
     Result<LogEntry> warnEntryResult = warnParser->parseLine(nonMatchingLogLine, lineNumber, sourceFile);
-    ASSERT_TRUE(warnEntryResult.has_value()) << "Expected parseLine to return a value (even if an error LogEntry) when Warn action is set."; // Revert to original expectation for testing.
-    
-    // The subsequent checks will need to be adapted if the return type is indeed 'unexpected'.
-    // For now, focus on the initial assertion.
-    // ASSERT_EQ(warnEntryResult.value().error().code, Code::MalformedLogEntry); // This will likely fail or segfault if has_value() is false.
-    // ASSERT_NE(warnEntryResult.value().error().message.find("Line does not match log pattern"), std::string::npos); // Similarly for message.
+    ASSERT_TRUE(warnEntryResult.has_value()) << "Expected parseLine to return a partial LogEntry (not unexpected) under the Warn action.";
+
+    // Verify the partial-entry contract. This was previously unchecked: the deeper
+    // assertions here were disabled invalid code that called .error() on a LogEntry value.
+    const LogEntry& warnEntry = warnEntryResult.value();
+    EXPECT_EQ(warnEntry.level, LogLevel::UNKNOWN);
+    EXPECT_NE(warnEntry.message.find("Parse failed (warn)"), std::string::npos);
+    EXPECT_NE(warnEntry.message.find(nonMatchingLogLine), std::string::npos);
+    ASSERT_TRUE(warnEntry.sourceLineNumber.has_value());
+    EXPECT_EQ(warnEntry.sourceLineNumber.value(), lineNumber);
+    EXPECT_EQ(warnEntry.sourceFile, sourceFile);
+    ASSERT_FALSE(warnEntry.parsingErrors.empty());
+    EXPECT_EQ(warnEntry.parsingErrors.front().code, Code::MalformedLogEntry);
+    EXPECT_NE(warnEntry.parsingErrors.front().message.find("does not match log pattern"), std::string::npos);
  
 
     // Test Warn action logging (this is separate from the return value).
